@@ -1,0 +1,13 @@
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+nbactions.xml
+*.class
+*.log
+*.jar
+*.war
+*.ear
+hs_err_pid*

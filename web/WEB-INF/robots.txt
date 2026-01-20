@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /docente/
+Disallow: /padre/
+Disallow: /*.jsp
+Disallow: /*Servlet
+Disallow: /private/
