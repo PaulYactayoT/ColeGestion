@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.sql.Timestamp;  // IMPORTACIÓN NECESARIA
 
 /**
  * Clase que representa una Asistencia en el sistema de gestión escolar
@@ -219,12 +220,22 @@ public class Asistencia {
         this.fechaRegistro = fechaRegistro; 
     }
     
+    // MÉTODO SOBRECARGADO PARA ACEPTAR TIMESTAMP DESDE LA BASE DE DATOS - ¡CORRECCIÓN!
+    public void setFechaRegistro(Timestamp timestamp) {
+        this.fechaRegistro = timestamp != null ? timestamp.toLocalDateTime() : null;
+    }
+    
     public LocalDateTime getFechaActualizacion() { 
         return fechaActualizacion; 
     }
     
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) { 
         this.fechaActualizacion = fechaActualizacion; 
+    }
+    
+    // MÉTODO SOBRECARGADO PARA ACEPTAR TIMESTAMP DESDE LA BASE DE DATOS - ¡CORRECCIÓN!
+    public void setFechaActualizacion(Timestamp timestamp) {
+        this.fechaActualizacion = timestamp != null ? timestamp.toLocalDateTime() : null;
     }
     
     public boolean isActivo() { 
@@ -371,6 +382,23 @@ public class Asistencia {
         }
     }
     
+    // Método para obtener la fecha de registro formateada
+    public String getFechaRegistroFormateada() {
+        return fechaRegistro != null ? 
+               fechaRegistro.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) : "";
+    }
+    
+    // Método para obtener la fecha de actualización formateada
+    public String getFechaActualizacionFormateada() {
+        return fechaActualizacion != null ? 
+               fechaActualizacion.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) : "";
+    }
+    
+    // Método para obtener la descripción del estado
+    public String getDescripcionEstado() {
+        return estado != null ? estado.getDescripcion() : "Desconocido";
+    }
+    
     @Override
     public String toString() {
         return String.format(
@@ -384,6 +412,25 @@ public class Asistencia {
             estado != null ? estado.getDescripcion() : "N/A",
             observaciones != null ? observaciones : ""
         );
+    }
+    
+    // Método para información detallada
+    public String toDetailedString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== ASISTENCIA DETALLADA ===\n");
+        sb.append("ID: ").append(id).append("\n");
+        sb.append("Alumno: ").append(getAlumnoNombreCompleto()).append(" (ID: ").append(alumnoId).append(")\n");
+        sb.append("Curso: ").append(cursoNombre != null ? cursoNombre : "N/A").append(" (ID: ").append(cursoId).append("\n");
+        sb.append("Turno: ").append(turnoNombre != null ? turnoNombre : "N/A").append(" (ID: ").append(turnoId).append("\n");
+        sb.append("Fecha: ").append(getFechaFormateada()).append("\n");
+        sb.append("Hora: ").append(getHoraClaseFormateada()).append("\n");
+        sb.append("Estado: ").append(getDescripcionEstado()).append("\n");
+        sb.append("Observaciones: ").append(observaciones != null ? observaciones : "Ninguna").append("\n");
+        sb.append("Registrado por: ").append(registradoPor).append("\n");
+        sb.append("Fecha registro: ").append(getFechaRegistroFormateada()).append("\n");
+        sb.append("Fecha actualización: ").append(getFechaActualizacionFormateada()).append("\n");
+        sb.append("Activo: ").append(activo ? "Sí" : "No").append("\n");
+        return sb.toString();
     }
     
     @Override

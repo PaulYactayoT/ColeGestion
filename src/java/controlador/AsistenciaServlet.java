@@ -14,6 +14,8 @@ import modelo.Curso;
 import modelo.CursoDAO;
 import modelo.Profesor;
 import modelo.Padre;
+import modelo.Alumno;
+import modelo.AlumnoDAO;
 
 public class AsistenciaServlet extends HttpServlet {
 
@@ -329,17 +331,21 @@ public class AsistenciaServlet extends HttpServlet {
         try {
             String cursoIdParam = request.getParameter("curso_id");
             String fechaParam = request.getParameter("fecha");
+            String turnoIdParam = request.getParameter("turno_id");
+            String horaClaseParam = request.getParameter("hora_clase");
 
             CursoDAO cursoDAO = new CursoDAO();
             List<Curso> cursos = cursoDAO.listarPorProfesor(docente.getId());
 
             // Validar que el curso solicitado pertenece al docente
+            Curso cursoSeleccionado = null;
             if (cursoIdParam != null && !cursoIdParam.isEmpty()) {
                 int cursoId = Integer.parseInt(cursoIdParam);
                 boolean cursoValido = false;
                 for (Curso curso : cursos) {
                     if (curso.getId() == cursoId) {
                         cursoValido = true;
+                        cursoSeleccionado = curso;
                         break;
                     }
                 }
@@ -359,19 +365,141 @@ public class AsistenciaServlet extends HttpServlet {
 
             if ((cursoIdParam == null || cursoIdParam.isEmpty()) && !cursos.isEmpty()) {
                 cursoIdParam = String.valueOf(cursos.get(0).getId());
+                cursoSeleccionado = cursos.get(0);
+            }
+            
+            // OBTENER ALUMNOS DEL CURSO SELECCIONADO USANDO LA TABLA MATRICULA
+            List<Alumno> alumnos = new java.util.ArrayList<>();
+            if (cursoSeleccionado != null) {
+                System.out.println("Curso seleccionado para obtener alumnos: " + cursoSeleccionado.getId() + " - " + cursoSeleccionado.getNombre());
+                
+                // PRIMERO: Intentar obtener alumnos usando la tabla matricula
+                alumnos = obtenerAlumnosPorCursoMatricula(cursoSeleccionado.getId());
+                
+                System.out.println("Alumnos obtenidos via matrícula: " + alumnos.size());
+                
+                // SI NO HAY ALUMNOS: Intentar método alternativo
+                if (alumnos.isEmpty()) {
+                    alumnos = obtenerAlumnosPorCursoAlternativo(cursoSeleccionado.getId());
+                    System.out.println("Alumnos obtenidos via alternativo: " + alumnos.size());
+                }
+                
+                // SI TODAVÍA NO HAY: Mostrar mensaje de error
+                if (alumnos.isEmpty()) {
+                    System.out.println("ADVERTENCIA: No se encontraron alumnos para el curso " + cursoSeleccionado.getNombre());
+                    session.setAttribute("advertencia", "No se encontraron alumnos matriculados en este curso. Verifique que los alumnos estén correctamente matriculados.");
+                }
             }
 
             request.setAttribute("cursos", cursos);
+            request.setAttribute("alumnos", alumnos);
             request.setAttribute("cursoIdParam", cursoIdParam);
             request.setAttribute("fechaParam", fechaParam);
+            request.setAttribute("turnoIdParam", turnoIdParam);
+            request.setAttribute("horaClaseParam", horaClaseParam);
+            request.setAttribute("cursoSeleccionado", cursoSeleccionado);
 
             request.getRequestDispatcher("registrarAsistencia.jsp").forward(request, response);
 
         } catch (Exception e) {
             System.out.println("Error en mostrarFormRegistro:");
+            e.printStackTrace();
             session.setAttribute("error", "Error al cargar cursos: " + e.getMessage());
             response.sendRedirect("AsistenciaServlet?accion=ver");
         }
+    }
+    
+    /**
+     * MÉTODO AUXILIAR: OBTENER ALUMNOS POR CURSO USANDO TABLA MATRICULA
+     */
+    private List<Alumno> obtenerAlumnosPorCursoMatricula(int cursoId) {
+        List<Alumno> alumnos = new java.util.ArrayList<>();
+        
+        try {
+            String sql = "SELECT a.id, p.nombres, p.apellidos, a.codigo_alumno, " +
+                        "CONCAT(g.nombre, ' - ', g.nivel) as grado_nombre " +
+                        "FROM matricula m " +
+                        "JOIN alumno a ON m.alumno_id = a.id " +
+                        "JOIN persona p ON a.persona_id = p.id " +
+                        "JOIN curso c ON m.curso_id = c.id " +
+                        "JOIN grado g ON a.grado_id = g.id " +
+                        "WHERE m.curso_id = ? " +
+                        "AND m.estado = 'INSCRITO' " +
+                        "AND a.eliminado = 0 AND a.activo = 1 " +
+                        "AND c.eliminado = 0 AND c.activo = 1 " +
+                        "ORDER BY p.apellidos, p.nombres";
+            
+            java.sql.Connection con = conexion.Conexion.getConnection();
+            java.sql.PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, cursoId);
+            java.sql.ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Alumno a = new Alumno();
+                a.setId(rs.getInt("id"));
+                a.setNombres(rs.getString("nombres"));
+                a.setApellidos(rs.getString("apellidos"));
+                a.setCodigoAlumno(rs.getString("codigo_alumno"));
+                a.setGradoNombre(rs.getString("grado_nombre"));
+                alumnos.add(a);
+            }
+            
+            rs.close();
+            ps.close();
+            con.close();
+            
+        } catch (Exception e) {
+            System.out.println("Error en obtenerAlumnosPorCursoMatricula: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return alumnos;
+    }
+    
+    /**
+     * MÉTODO AUXILIAR: OBTENER ALUMNOS POR CURSO (MÉTODO ALTERNATIVO)
+     */
+    private List<Alumno> obtenerAlumnosPorCursoAlternativo(int cursoId) {
+        List<Alumno> alumnos = new java.util.ArrayList<>();
+        
+        try {
+            // Método alternativo: Obtener alumnos del mismo grado que el curso
+            String sql = "SELECT a.id, p.nombres, p.apellidos, a.codigo_alumno, " +
+                        "CONCAT(g.nombre, ' - ', g.nivel) as grado_nombre " +
+                        "FROM alumno a " +
+                        "JOIN persona p ON a.persona_id = p.id " +
+                        "JOIN curso c ON a.grado_id = c.grado_id " +
+                        "JOIN grado g ON a.grado_id = g.id " +
+                        "WHERE c.id = ? " +
+                        "AND a.eliminado = 0 AND a.activo = 1 " +
+                        "AND p.eliminado = 0 AND p.activo = 1 " +
+                        "ORDER BY p.apellidos, p.nombres";
+            
+            java.sql.Connection con = conexion.Conexion.getConnection();
+            java.sql.PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, cursoId);
+            java.sql.ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Alumno a = new Alumno();
+                a.setId(rs.getInt("id"));
+                a.setNombres(rs.getString("nombres"));
+                a.setApellidos(rs.getString("apellidos"));
+                a.setCodigoAlumno(rs.getString("codigo_alumno"));
+                a.setGradoNombre(rs.getString("grado_nombre"));
+                alumnos.add(a);
+            }
+            
+            rs.close();
+            ps.close();
+            con.close();
+            
+        } catch (Exception e) {
+            System.out.println("Error en obtenerAlumnosPorCursoAlternativo: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return alumnos;
     }
 
     /**
@@ -392,11 +520,17 @@ public class AsistenciaServlet extends HttpServlet {
 
         System.out.println("INICIANDO REGISTRO GRUPAL");
 
+        // Variables para poder usarlas en caso de error
+        String fechaStr = null;
+        int cursoId = 0;
+        int turnoId = 0;
+        String horaClase = null;
+
         try {
-            int cursoId = Integer.parseInt(request.getParameter("curso_id"));
-            int turnoId = Integer.parseInt(request.getParameter("turno_id"));
-            String fecha = request.getParameter("fecha");
-            String horaClase = request.getParameter("hora_clase");
+            cursoId = Integer.parseInt(request.getParameter("curso_id"));
+            turnoId = Integer.parseInt(request.getParameter("turno_id"));
+            fechaStr = request.getParameter("fecha");
+            horaClase = request.getParameter("hora_clase");
             String alumnosJson = request.getParameter("alumnos_json");
 
             // VALIDACIÓN CRÍTICA: Verificar que el docente tiene acceso a este curso
@@ -415,11 +549,21 @@ public class AsistenciaServlet extends HttpServlet {
 
             int registradoPor = docente.getId();
 
-            if (alumnosJson == null || alumnosJson.isEmpty()) {
+            // Validar parámetros obligatorios
+            if (alumnosJson == null || alumnosJson.trim().isEmpty()) {
                 session.setAttribute("error", "No se recibieron datos de alumnos");
-                response.sendRedirect("AsistenciaServlet?accion=registrar");
+                // Redirigir manteniendo los parámetros
+                String redirectUrl = "AsistenciaServlet?accion=registrar";
+                redirectUrl += "&curso_id=" + cursoId;
+                redirectUrl += "&turno_id=" + turnoId;
+                redirectUrl += "&fecha=" + (fechaStr != null ? fechaStr : "");
+                redirectUrl += "&hora_clase=" + (horaClase != null ? horaClase : "");
+                response.sendRedirect(redirectUrl);
                 return;
             }
+
+            // Convertir la fecha de String a LocalDate
+            java.time.LocalDate fecha = java.time.LocalDate.parse(fechaStr);
 
             AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
             boolean resultado = asistenciaDAO.registrarAsistenciaGrupal(cursoId, turnoId, fecha, horaClase, alumnosJson, registradoPor);
@@ -430,11 +574,27 @@ public class AsistenciaServlet extends HttpServlet {
                 session.setAttribute("error", "Error al registrar las asistencias grupales");
             }
 
-            response.sendRedirect("AsistenciaServlet?accion=verCurso&curso_id=" + cursoId + "&fecha=" + fecha);
+            response.sendRedirect("AsistenciaServlet?accion=verCurso&curso_id=" + cursoId + "&fecha=" + fechaStr + "&turno_id=" + turnoId);
 
+        } catch (java.time.format.DateTimeParseException e) {
+            session.setAttribute("error", "Formato de fecha incorrecto. Use YYYY-MM-DD");
+            // Redirigir manteniendo los parámetros
+            String redirectUrl = "AsistenciaServlet?accion=registrar";
+            redirectUrl += "&curso_id=" + cursoId;
+            redirectUrl += "&turno_id=" + turnoId;
+            redirectUrl += "&hora_clase=" + (horaClase != null ? horaClase : "");
+            response.sendRedirect(redirectUrl);
+            
         } catch (Exception e) {
+            e.printStackTrace();
             session.setAttribute("error", "Error al registrar asistencias grupales: " + e.getMessage());
-            response.sendRedirect("AsistenciaServlet?accion=registrar");
+            // Redirigir manteniendo los parámetros
+            String redirectUrl = "AsistenciaServlet?accion=registrar";
+            redirectUrl += "&curso_id=" + cursoId;
+            redirectUrl += "&turno_id=" + turnoId;
+            redirectUrl += "&fecha=" + (fechaStr != null ? fechaStr : "");
+            redirectUrl += "&hora_clase=" + (horaClase != null ? horaClase : "");
+            response.sendRedirect(redirectUrl);
         }
     }
 
@@ -442,7 +602,7 @@ public class AsistenciaServlet extends HttpServlet {
      * METODO AUXILIAR PARA VERIFICAR ASIGNACIÓN CURSO-PROFESOR
      */
     private boolean isCursoAssignedToProfesor(int cursoId, int profesorId) {
-        String sql = "SELECT COUNT(*) as count FROM cursos WHERE id = ? AND profesor_id = ?";
+        String sql = "SELECT COUNT(*) as count FROM curso WHERE id = ? AND profesor_id = ?";
         
         try (java.sql.Connection con = conexion.Conexion.getConnection();
              java.sql.PreparedStatement ps = con.prepareStatement(sql)) {

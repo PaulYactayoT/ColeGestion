@@ -26,6 +26,27 @@ public class GradoDAO {
      * @return Lista completa de grados disponibles
      */
     public List<Grado> listar() {
+    List<Grado> lista = new ArrayList<>();
+    // Cambia a consulta directa en lugar de stored procedure
+    String sql = "SELECT * FROM grado WHERE activo = 1 ORDER BY nivel, orden";
+    
+    try (Connection con = Conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        
+        while (rs.next()) {
+            Grado g = mapearResultSet(rs);
+            lista.add(g);
+        }
+        
+    } catch (SQLException e) {
+        System.err.println("Error al listar grados: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return lista;
+}
+   /* public List<Grado> listar() {
         List<Grado> lista = new ArrayList<>();
         String sql = "{CALL obtener_grados()}";
         
@@ -45,7 +66,7 @@ public class GradoDAO {
         
         return lista;
     }
-
+/*
     /**
      * LISTAR SOLO GRADOS ACTIVOS
      * 

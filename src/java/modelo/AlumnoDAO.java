@@ -1,400 +1,402 @@
-/*
- * DAO PARA GESTION DE ALUMNOS
- * 
- * Funcionalidades:
- * - CRUD completo de alumnos
- * - Consultas por grado y curso
- * - Integracion con sistema academico
- */
 package modelo;
 
 import conexion.Conexion;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.text.SimpleDateFormat;
 
 public class AlumnoDAO {
-
-    /**
-     * LISTAR ALUMNOS POR GRADO ACADEMICO
-     * 
-     * @param gradoId Identificador del grado
-     * @return Lista de alumnos pertenecientes al grado especificado
-     */
-    public List<Alumno> listarPorGrado(int gradoId) {
-        List<Alumno> lista = new ArrayList<>();
-        String sql = "{CALL obtener_alumnos_por_grado(?)}";
-
-        try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql)) {
-            
-            cs.setInt(1, gradoId);
-            ResultSet rs = cs.executeQuery();
-            
-            while (rs.next()) {
-                Alumno a = new Alumno();
-                a.setId(rs.getInt("id"));
-                a.setNombres(rs.getString("nombres"));
-                a.setApellidos(rs.getString("apellidos"));
-                a.setCorreo(rs.getString("correo"));
-                
-                // Convertir fecha SQL a LocalDate
-                java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
-                if (fechaNac != null) {
-                    a.setFechaNacimiento(fechaNac.toLocalDate());
-                }
-                
-                a.setGradoId(rs.getInt("grado_id"));
-                
-                // Campos adicionales si existen en el SP
-                try {
-                    a.setCodigoAlumno(rs.getString("codigo_alumno"));
-                    a.setEstadoFromString(rs.getString("estado"));
-                } catch (SQLException e) {
-                    // Campos opcionales, ignorar si no existen
-                }
-                
-                lista.add(a);
-            }
-            
-        } catch (Exception e) {
-            System.out.println("Error al listar alumnos por grado: " + e.getMessage());
-            e.printStackTrace();
-        }
+    
+    // Método para agregar un nuevo alumno (inserción en persona y alumno)
+    public boolean agregar(Alumno alumno) {
+        Connection con = null;
+        PreparedStatement psPersona = null;
+        PreparedStatement psAlumno = null;
+        ResultSet rs = null;
         
-        return lista;
-    }
-
-    /**
-     * LISTAR TODOS LOS ALUMNOS REGISTRADOS
-     * 
-     * @return Lista completa de alumnos
-     */
-    public List<Alumno> listar() {
-        List<Alumno> lista = new ArrayList<>();
-        String sql = "{CALL obtener_alumnos()}";
-
-        try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql); 
-             ResultSet rs = cs.executeQuery()) {
+        try {
+            con = Conexion.getConnection();
+            con.setAutoCommit(false); // Iniciar transacción
             
-            while (rs.next()) {
-                Alumno a = new Alumno();
-                a.setId(rs.getInt("id"));
-                a.setNombres(rs.getString("nombres"));
-                a.setApellidos(rs.getString("apellidos"));
-                a.setCorreo(rs.getString("correo"));
-                
-                // Convertir fecha SQL a LocalDate
-                java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
-                if (fechaNac != null) {
-                    a.setFechaNacimiento(fechaNac.toLocalDate());
-                }
-                
-                a.setGradoId(rs.getInt("grado_id"));
-                
-                // Campos adicionales
-                try {
-                    a.setGradoNombre(rs.getString("grado_nombre"));
-                    a.setCodigoAlumno(rs.getString("codigo_alumno"));
-                    a.setEstadoFromString(rs.getString("estado"));
-                } catch (SQLException e) {
-                    // Campos opcionales
-                }
-                
-                lista.add(a);
-            }
+            // 1. INSERTAR EN TABLA PERSONA
+            String sqlPersona = "INSERT INTO persona (tipo, nombres, apellidos, correo, " +
+                               "telefono, dni, fecha_nacimiento, direccion, activo) " +
+                               "VALUES ('ALUMNO', ?, ?, ?, ?, ?, ?, ?, 1)";
             
-        } catch (Exception e) {
-            System.out.println("Error al listar alumnos: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        return lista;
-    }
-
-    /**
-     * AGREGAR NUEVO ALUMNO
-     * 
-     * @param a Objeto Alumno con datos del nuevo alumno
-     * @return true si el registro fue exitoso
-     */
-    public boolean agregar(Alumno a) {
-        String sql = "{CALL crear_alumno(?, ?, ?, ?, ?)}";
-
-        try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql)) {
+            psPersona = con.prepareStatement(sqlPersona, Statement.RETURN_GENERATED_KEYS);
+            psPersona.setString(1, alumno.getNombres());
+            psPersona.setString(2, alumno.getApellidos());
+            psPersona.setString(3, alumno.getCorreo());
             
-            cs.setString(1, a.getNombres());
-            cs.setString(2, a.getApellidos());
-            cs.setString(3, a.getCorreo());
-            
-            // Convertir LocalDate a SQL Date
-            if (a.getFechaNacimiento() != null) {
-                cs.setDate(4, java.sql.Date.valueOf(a.getFechaNacimiento()));
+            // Campos opcionales
+            if (alumno.getTelefono() != null && !alumno.getTelefono().isEmpty()) {
+                psPersona.setString(4, alumno.getTelefono());
             } else {
-                cs.setNull(4, java.sql.Types.DATE);
+                psPersona.setNull(4, Types.VARCHAR);
             }
             
-            cs.setInt(5, a.getGradoId());
+            if (alumno.getDni() != null && !alumno.getDni().isEmpty()) {
+                psPersona.setString(5, alumno.getDni());
+            } else {
+                psPersona.setNull(5, Types.VARCHAR);
+            }
             
-            cs.executeUpdate();
+            if (alumno.getFechaNacimiento() != null) {
+                psPersona.setDate(6, Date.valueOf(alumno.getFechaNacimiento()));
+            } else {
+                psPersona.setNull(6, Types.DATE);
+            }
             
-            System.out.println("Alumno agregado exitosamente: " + a.getNombreCompleto());
-            return true;
+            if (alumno.getDireccion() != null && !alumno.getDireccion().isEmpty()) {
+                psPersona.setString(7, alumno.getDireccion());
+            } else {
+                psPersona.setNull(7, Types.VARCHAR);
+            }
+            
+            int filasPersona = psPersona.executeUpdate();
+            if (filasPersona == 0) {
+                throw new SQLException("Error al insertar en tabla persona");
+            }
+            
+            // Obtener el ID de la persona insertada
+            rs = psPersona.getGeneratedKeys();
+            int personaId = 0;
+            if (rs.next()) {
+                personaId = rs.getInt(1);
+            }
+            
+            // 2. INSERTAR EN TABLA ALUMNO
+            // Generar código de alumno automático
+            String codigoAlumno = "ALU-" + 
+                                 new SimpleDateFormat("yyyyMMdd").format(new java.util.Date()) + 
+                                 "-" + 
+                                 String.format("%03d", personaId);
+            
+            String sqlAlumno = "INSERT INTO alumno (persona_id, grado_id, codigo_alumno, " +
+                              "fecha_ingreso, estado, activo) " +
+                              "VALUES (?, ?, ?, CURDATE(), 'ACTIVO', 1)";
+            
+            psAlumno = con.prepareStatement(sqlAlumno);
+            psAlumno.setInt(1, personaId);
+            psAlumno.setInt(2, alumno.getGradoId());
+            psAlumno.setString(3, codigoAlumno);
+            
+            int filasAlumno = psAlumno.executeUpdate();
+            
+            con.commit(); // Confirmar transacción
+            return filasAlumno > 0;
             
         } catch (SQLException e) {
-            System.out.println("Error SQL al agregar alumno:");
-            System.out.println("   Código: " + e.getErrorCode());
-            System.out.println("   Estado: " + e.getSQLState());
-            System.out.println("   Mensaje: " + e.getMessage());
+            // Revertir en caso de error
+            try {
+                if (con != null) con.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            System.err.println("Error al agregar alumno: " + e.getMessage());
             e.printStackTrace();
             return false;
-        } catch (Exception e) {
-            System.out.println("Error general al agregar alumno: " + e.getMessage());
-            e.printStackTrace();
-            return false;
+        } finally {
+            // Cerrar recursos
+            try { if (rs != null) rs.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (psPersona != null) psPersona.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (psAlumno != null) psAlumno.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
         }
     }
-
-    /**
-     * OBTENER ALUMNO POR ID
-     * 
-     * @param id Identificador unico del alumno
-     * @return Objeto Alumno con datos completos
-     */
-    public Alumno obtenerPorId(int id) {
-        Alumno a = null;
-        String sql = "{CALL obtener_alumno_por_id(?)}";
-
-        try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql)) {
+    
+    // Método para listar todos los alumnos
+    public List<Alumno> listar() {
+        List<Alumno> lista = new ArrayList<>();
+        String sql = "SELECT a.id, a.persona_id, p.nombres, p.apellidos, p.correo, " +
+                     "p.dni, p.telefono, p.direccion, p.fecha_nacimiento, " +
+                     "a.grado_id, g.nombre as grado_nombre, " +
+                     "a.codigo_alumno, a.estado, a.fecha_ingreso " +
+                     "FROM alumno a " +
+                     "JOIN persona p ON a.persona_id = p.id " +
+                     "LEFT JOIN grado g ON a.grado_id = g.id " +
+                     "WHERE a.eliminado = 0 AND a.activo = 1 " +
+                     "ORDER BY p.apellidos, p.nombres";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             
-            cs.setInt(1, id);
-            ResultSet rs = cs.executeQuery();
-            
-            if (rs.next()) {
-                a = new Alumno();
-                a.setId(rs.getInt("id"));
-                a.setNombres(rs.getString("nombres"));
-                a.setApellidos(rs.getString("apellidos"));
-                a.setCorreo(rs.getString("correo"));
-                
-                // Convertir fechas
-                java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
-                if (fechaNac != null) {
-                    a.setFechaNacimiento(fechaNac.toLocalDate());
-                }
-                
-                java.sql.Date fechaIng = rs.getDate("fecha_ingreso");
-                if (fechaIng != null) {
-                    a.setFechaIngreso(fechaIng.toLocalDate());
-                }
-                
-                a.setGradoId(rs.getInt("grado_id"));
-                
-                // Campos adicionales
-                try {
-                    a.setGradoNombre(rs.getString("grado_nombre"));
-                    a.setCodigoAlumno(rs.getString("codigo_alumno"));
-                    a.setEstadoFromString(rs.getString("estado"));
-                } catch (SQLException e) {
-                    // Campos opcionales
-                }
+            while (rs.next()) {
+                Alumno a = mapearResultSet(rs);
+                lista.add(a);
             }
             
-        } catch (Exception e) {
-            System.out.println("Error al obtener alumno por ID: " + e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("Error al listar alumnos: " + e.getMessage());
             e.printStackTrace();
+        }
+        
+        return lista;
+    }
+    
+    // Método para listar alumnos por grado
+    public List<Alumno> listarPorGrado(int gradoId) {
+        List<Alumno> lista = new ArrayList<>();
+        String sql = "SELECT a.id, a.persona_id, p.nombres, p.apellidos, p.correo, " +
+                     "p.dni, p.telefono, p.direccion, p.fecha_nacimiento, " +
+                     "a.grado_id, g.nombre as grado_nombre, " +
+                     "a.codigo_alumno, a.estado, a.fecha_ingreso " +
+                     "FROM alumno a " +
+                     "JOIN persona p ON a.persona_id = p.id " +
+                     "LEFT JOIN grado g ON a.grado_id = g.id " +
+                     "WHERE a.grado_id = ? AND a.eliminado = 0 AND a.activo = 1 " +
+                     "ORDER BY p.apellidos, p.nombres";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, gradoId);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Alumno a = mapearResultSet(rs);
+                lista.add(a);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error al listar alumnos por grado: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return lista;
+    }
+    
+    // Método para obtener alumno por ID
+    public Alumno obtenerPorId(int id) {
+        String sql = "SELECT a.id, a.persona_id, p.nombres, p.apellidos, p.correo, " +
+                     "p.dni, p.telefono, p.direccion, p.fecha_nacimiento, " +
+                     "a.grado_id, g.nombre as grado_nombre, " +
+                     "a.codigo_alumno, a.estado, a.fecha_ingreso " +
+                     "FROM alumno a " +
+                     "JOIN persona p ON a.persona_id = p.id " +
+                     "LEFT JOIN grado g ON a.grado_id = g.id " +
+                     "WHERE a.id = ? AND a.eliminado = 0";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return mapearResultSet(rs);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error al obtener alumno por ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    // Método para actualizar alumno
+    public boolean actualizar(Alumno alumno) {
+        Connection con = null;
+        PreparedStatement psPersona = null;
+        PreparedStatement psAlumno = null;
+        
+        try {
+            con = Conexion.getConnection();
+            con.setAutoCommit(false);
+            
+            // 1. Actualizar tabla PERSONA
+            String sqlPersona = "UPDATE persona SET nombres = ?, apellidos = ?, correo = ?, " +
+                               "dni = ?, telefono = ?, direccion = ?, fecha_nacimiento = ? " +
+                               "WHERE id = ?";
+            
+            psPersona = con.prepareStatement(sqlPersona);
+            psPersona.setString(1, alumno.getNombres());
+            psPersona.setString(2, alumno.getApellidos());
+            psPersona.setString(3, alumno.getCorreo());
+            
+            // Campos opcionales
+            if (alumno.getDni() != null && !alumno.getDni().isEmpty()) {
+                psPersona.setString(4, alumno.getDni());
+            } else {
+                psPersona.setNull(4, Types.VARCHAR);
+            }
+            
+            if (alumno.getTelefono() != null && !alumno.getTelefono().isEmpty()) {
+                psPersona.setString(5, alumno.getTelefono());
+            } else {
+                psPersona.setNull(5, Types.VARCHAR);
+            }
+            
+            if (alumno.getDireccion() != null && !alumno.getDireccion().isEmpty()) {
+                psPersona.setString(6, alumno.getDireccion());
+            } else {
+                psPersona.setNull(6, Types.VARCHAR);
+            }
+            
+            if (alumno.getFechaNacimiento() != null) {
+                psPersona.setDate(7, Date.valueOf(alumno.getFechaNacimiento()));
+            } else {
+                psPersona.setNull(7, Types.DATE);
+            }
+            
+            psPersona.setInt(8, alumno.getPersonaId());
+            
+            int filasPersona = psPersona.executeUpdate();
+            
+            // 2. Actualizar tabla ALUMNO
+            String sqlAlumno = "UPDATE alumno SET grado_id = ? WHERE id = ?";
+            
+            psAlumno = con.prepareStatement(sqlAlumno);
+            psAlumno.setInt(1, alumno.getGradoId());
+            psAlumno.setInt(2, alumno.getId());
+            
+            int filasAlumno = psAlumno.executeUpdate();
+            
+            con.commit();
+            return (filasPersona > 0 && filasAlumno > 0);
+            
+        } catch (SQLException e) {
+            try {
+                if (con != null) con.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            System.err.println("Error al actualizar alumno: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            // Cerrar recursos
+            try { if (psPersona != null) psPersona.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (psAlumno != null) psAlumno.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
+        }
+    }
+    
+    
+      //
+    
+    
+    // Método auxiliar para mapear ResultSet a objeto Alumno
+    private Alumno mapearResultSet(ResultSet rs) throws SQLException {
+        Alumno a = new Alumno();
+        a.setId(rs.getInt("id"));
+        a.setPersonaId(rs.getInt("persona_id"));
+        a.setNombres(rs.getString("nombres"));
+        a.setApellidos(rs.getString("apellidos"));
+        a.setCorreo(rs.getString("correo"));
+        a.setDni(rs.getString("dni"));
+        a.setTelefono(rs.getString("telefono"));
+        a.setDireccion(rs.getString("direccion"));
+        
+        java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
+        if (fechaNac != null) {
+            a.setFechaNacimiento(fechaNac.toLocalDate());
+        }
+        
+        a.setGradoId(rs.getInt("grado_id"));
+        a.setGradoNombre(rs.getString("grado_nombre"));
+        a.setCodigoAlumno(rs.getString("codigo_alumno"));
+        a.setEstado(rs.getString("estado"));
+        
+        java.sql.Date fechaIng = rs.getDate("fecha_ingreso");
+        if (fechaIng != null) {
+            a.setFechaIngreso(fechaIng.toLocalDate());
         }
         
         return a;
     }
-
-    /**
-     * ACTUALIZAR DATOS DE ALUMNO EXISTENTE
-     * 
-     * @param a Objeto Alumno con datos actualizados
-     * @return true si la actualizacion fue exitosa
-     */
-    public boolean actualizar(Alumno a) {
-        String sql = "{CALL actualizar_alumno(?, ?, ?, ?, ?, ?)}";
-
-        try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql)) {
-            
-            cs.setInt(1, a.getId());
-            cs.setString(2, a.getNombres());
-            cs.setString(3, a.getApellidos());
-            cs.setString(4, a.getCorreo());
-            
-            // Convertir LocalDate a SQL Date
-            if (a.getFechaNacimiento() != null) {
-                cs.setDate(5, java.sql.Date.valueOf(a.getFechaNacimiento()));
-            } else {
-                cs.setNull(5, java.sql.Types.DATE);
-            }
-            
-            cs.setInt(6, a.getGradoId());
-            
-            cs.executeUpdate();
-            
-            System.out.println("Alumno actualizado: " + a.getNombreCompleto());
-            return true;
-            
-        } catch (SQLException e) {
-            System.out.println("Error SQL al actualizar alumno:");
-            System.out.println("   Código: " + e.getErrorCode());
-            System.out.println("   Mensaje: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } catch (Exception e) {
-            System.out.println("Error general al actualizar alumno: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * ELIMINAR ALUMNO POR ID
-     * 
-     * @param id Identificador del alumno a eliminar
-     * @return true si la eliminacion fue exitosa
-     */
-    public boolean eliminar(int id) {
-        String sql = "{CALL eliminar_alumno(?)}";
-
-        try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql)) {
-            
-            cs.setInt(1, id);
-            cs.executeUpdate();
-            
-            System.out.println("Alumno eliminado con ID: " + id);
-            return true;
-            
-        } catch (SQLException e) {
-            System.out.println("Error SQL al eliminar alumno:");
-            System.out.println("   Código: " + e.getErrorCode());
-            System.out.println("   Mensaje: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } catch (Exception e) {
-            System.out.println("Error general al eliminar alumno: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * OBTENER ALUMNOS POR CURSO ESPECIFICO
-     * 
-     * @param cursoId Identificador del curso
-     * @return Lista de alumnos matriculados en el curso
-     */
+    
+    // Método mejorado para obtener alumnos por curso usando la tabla matricula
     public List<Alumno> obtenerAlumnosPorCurso(int cursoId) {
         List<Alumno> lista = new ArrayList<>();
-        String sql = "{CALL obtener_alumnos_por_curso(?)}";
-
-        try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, cursoId);
-            ResultSet rs = cs.executeQuery();
-
+        
+        String sql = "SELECT DISTINCT a.id, a.persona_id, p.nombres, p.apellidos, " +
+                     "a.codigo_alumno, g.nombre as grado_nombre, g.nivel, " +
+                     "p.correo, p.dni, p.telefono " +
+                     "FROM alumno a " +
+                     "JOIN persona p ON a.persona_id = p.id " +
+                     "JOIN grado g ON a.grado_id = g.id " +
+                     "JOIN curso c ON g.id = c.grado_id " +
+                     "JOIN matricula m ON a.id = m.alumno_id AND c.id = m.curso_id " +
+                     "WHERE c.id = ? AND a.eliminado = 0 AND a.activo = 1 " +
+                     "AND p.eliminado = 0 AND p.activo = 1 " +
+                     "AND c.eliminado = 0 AND c.activo = 1 " +
+                     "AND m.estado = 'INSCRITO' " +
+                     "ORDER BY p.apellidos, p.nombres";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, cursoId);
+            System.out.println("Buscando alumnos para curso ID: " + cursoId);
+            
+            ResultSet rs = ps.executeQuery();
+            
             while (rs.next()) {
                 Alumno a = new Alumno();
                 a.setId(rs.getInt("id"));
+                a.setPersonaId(rs.getInt("persona_id"));
                 a.setNombres(rs.getString("nombres"));
                 a.setApellidos(rs.getString("apellidos"));
                 a.setCorreo(rs.getString("correo"));
-                
-                // Convertir fecha
-                java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
-                if (fechaNac != null) {
-                    a.setFechaNacimiento(fechaNac.toLocalDate());
-                }
-                
-                a.setGradoId(rs.getInt("grado_id"));
-                
-                // Campos adicionales
-                try {
-                    a.setGradoNombre(rs.getString("grado_nombre"));
-                    a.setCodigoAlumno(rs.getString("codigo_alumno"));
-                } catch (SQLException e) {
-                    // Campos opcionales
-                }
+                a.setDni(rs.getString("dni"));
+                a.setTelefono(rs.getString("telefono"));
+                a.setCodigoAlumno(rs.getString("codigo_alumno"));
+                a.setGradoNombre(rs.getString("grado_nombre") + " - " + rs.getString("nivel"));
                 
                 lista.add(a);
+                System.out.println("Alumno encontrado: " + a.getNombres() + " " + a.getApellidos());
             }
-
-            System.out.println("Alumnos encontrados para curso " + cursoId + ": " + lista.size());
-
+            
+            System.out.println("Total alumnos encontrados para curso " + cursoId + ": " + lista.size());
+            
         } catch (SQLException e) {
-            System.out.println("Error SQL al obtener alumnos por curso:");
-            System.out.println("   Codigo: " + e.getErrorCode());
-            System.out.println("   Estado: " + e.getSQLState());
-            System.out.println("   Mensaje: " + e.getMessage());
-            e.printStackTrace();
-        } catch (Exception e) {
-            System.out.println("Error general al obtener alumnos por curso");
+            System.err.println("Error al obtener alumnos por curso: " + e.getMessage());
             e.printStackTrace();
         }
-
+        
         return lista;
     }
     
-    /**
-     * BUSCAR ALUMNOS POR NOMBRE O APELLIDO
-     * 
-     * @param busqueda Texto a buscar
-     * @return Lista de alumnos que coinciden con la búsqueda
-     */
-    public List<Alumno> buscarPorNombre(String busqueda) {
+    // Método alternativo usando JOIN con matrícula (más directo)
+    public List<Alumno> obtenerAlumnosPorCurso2(int cursoId) {
         List<Alumno> lista = new ArrayList<>();
-        String sql = "SELECT a.id, p.nombres, p.apellidos, p.correo, p.fecha_nacimiento, " +
-                     "a.grado_id, a.codigo_alumno, a.estado, g.nombre as grado_nombre " +
-                     "FROM alumno a " +
-                     "INNER JOIN persona p ON a.persona_id = p.id " +
-                     "LEFT JOIN grado g ON a.grado_id = g.id " +
-                     "WHERE p.nombres LIKE ? OR p.apellidos LIKE ? " +
+        
+        String sql = "SELECT a.id, p.nombres, p.apellidos, a.codigo_alumno, " +
+                     "CONCAT(g.nombre, ' - ', g.nivel) as grado_nombre " +
+                     "FROM matricula m " +
+                     "JOIN alumno a ON m.alumno_id = a.id " +
+                     "JOIN persona p ON a.persona_id = p.id " +
+                     "JOIN grado g ON a.grado_id = g.id " +
+                     "WHERE m.curso_id = ? " +
+                     "AND m.estado = 'INSCRITO' " +
+                     "AND a.eliminado = 0 AND a.activo = 1 " +
                      "ORDER BY p.apellidos, p.nombres";
-
-        try (Connection con = Conexion.getConnection(); 
+        
+        try (Connection con = Conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
-            String patron = "%" + busqueda + "%";
-            ps.setString(1, patron);
-            ps.setString(2, patron);
-            
+            ps.setInt(1, cursoId);
             ResultSet rs = ps.executeQuery();
-
+            
             while (rs.next()) {
                 Alumno a = new Alumno();
                 a.setId(rs.getInt("id"));
                 a.setNombres(rs.getString("nombres"));
                 a.setApellidos(rs.getString("apellidos"));
-                a.setCorreo(rs.getString("correo"));
-                
-                java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
-                if (fechaNac != null) {
-                    a.setFechaNacimiento(fechaNac.toLocalDate());
-                }
-                
-                a.setGradoId(rs.getInt("grado_id"));
-                a.setGradoNombre(rs.getString("grado_nombre"));
                 a.setCodigoAlumno(rs.getString("codigo_alumno"));
-                a.setEstadoFromString(rs.getString("estado"));
-                
+                a.setGradoNombre(rs.getString("grado_nombre"));
                 lista.add(a);
             }
-
-            System.out.println("Alumnos encontrados en búsqueda: " + lista.size());
-
-        } catch (Exception e) {
-            System.out.println("Error al buscar alumnos: " + e.getMessage());
+            
+        } catch (SQLException e) {
+            System.err.println("Error en obtenerAlumnosPorCurso2: " + e.getMessage());
             e.printStackTrace();
         }
-
+        
         return lista;
     }
 }

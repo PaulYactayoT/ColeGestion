@@ -1,11 +1,11 @@
 /*
- * DAO PARA GESTION DE ASISTENCIAS ESCOLARES
+ * DAO PARA GESTIÓN DE ASISTENCIAS ESCOLARES
  * 
  * Funcionalidades:
  * - Registro individual y grupal de asistencias
  * - Consultas por curso, alumno y fecha
- * - Reportes y resumenes estadisticos
- * - Gestion de ausencias por justificar
+ * - Reportes y resúmenes estadísticos
+ * - Gestión de ausencias por justificar
  */
 package modelo;
 
@@ -45,7 +45,7 @@ public class AsistenciaDAO {
 
         } catch (SQLException e) {
             System.out.println("Error SQL al registrar asistencia:");
-            System.out.println("   Codigo: " + e.getErrorCode());
+            System.out.println("   Código: " + e.getErrorCode());
             System.out.println("   Estado: " + e.getSQLState());
             System.out.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
@@ -58,7 +58,7 @@ public class AsistenciaDAO {
     }
 
     /**
-     * REGISTRAR ASISTENCIAS GRUPALES (MULTIPLES ALUMNOS)
+     * REGISTRAR ASISTENCIAS GRUPALES (MÚLTIPLES ALUMNOS)
      * 
      * @param cursoId Identificador del curso
      * @param turnoId Identificador del turno
@@ -68,7 +68,7 @@ public class AsistenciaDAO {
      * @param registradoPor ID del usuario que registra
      * @return true si al menos un registro fue exitoso
      */
-    public boolean registrarAsistenciaGrupal(int cursoId, int turnoId, String fecha, 
+    public boolean registrarAsistenciaGrupal(int cursoId, int turnoId, LocalDate fecha, 
                                             String horaClase, String alumnosJson, 
                                             int registradoPor) {
         System.out.println("INICIANDO DAO REGISTRO GRUPAL");
@@ -83,17 +83,17 @@ public class AsistenciaDAO {
 
         try {
             con = Conexion.getConnection();
-            con.setAutoCommit(false); // Iniciar transaccion
+            con.setAutoCommit(false); // Iniciar transacción
 
             // Validar JSON
             if (alumnosJson == null || alumnosJson.trim().isEmpty()) {
-                System.out.println("ERROR: JSON de alumnos esta vacio");
+                System.out.println("ERROR: JSON de alumnos está vacío");
                 return false;
             }
 
             String jsonContent = alumnosJson.trim();
             if (!jsonContent.startsWith("[") || !jsonContent.endsWith("]")) {
-                System.out.println("ERROR: Formato JSON invalido - no es un array");
+                System.out.println("ERROR: Formato JSON inválido - no es un array");
                 return false;
             }
 
@@ -149,7 +149,7 @@ public class AsistenciaDAO {
 
                     // Validar datos
                     if (alumnoId <= 0 || estado.isEmpty()) {
-                        System.out.println("   Datos invalidos para alumno, saltando...");
+                        System.out.println("   Datos inválidos para alumno, saltando...");
                         errores++;
                         continue;
                     }
@@ -161,7 +161,7 @@ public class AsistenciaDAO {
                     cs.setDate(4, sqlFecha);
                     cs.setTime(5, sqlHora);
                     cs.setString(6, estado);
-                    cs.setString(7, ""); // Observaciones vacias para registro grupal
+                    cs.setString(7, ""); // Observaciones vacías para registro grupal
                     cs.setInt(8, registradoPor);
 
                     int resultado = cs.executeUpdate();
@@ -179,36 +179,36 @@ public class AsistenciaDAO {
                 }
             }
 
-            // Confirmar transaccion
+            // Confirmar transacción
             con.commit();
-            System.out.println("Transaccion completada. Exitosos: " + exitosos + 
+            System.out.println("Transacción completada. Exitosos: " + exitosos + 
                              ", Errores: " + errores + ", Total: " + objetos.length);
 
             return exitosos > 0;
 
         } catch (SQLException e) {
-            System.out.println("ERROR SQL en transaccion: " + e.getMessage());
+            System.out.println("ERROR SQL en transacción: " + e.getMessage());
             e.printStackTrace();
 
             if (con != null) {
                 try {
                     con.rollback();
-                    System.out.println("Transaccion revertida");
+                    System.out.println("Transacción revertida");
                 } catch (SQLException ex) {
-                    System.out.println("Error al revertir transaccion: " + ex.getMessage());
+                    System.out.println("Error al revertir transacción: " + ex.getMessage());
                 }
             }
             return false;
 
         } catch (Exception e) {
-            System.out.println("ERROR general en transaccion: " + e.getMessage());
+            System.out.println("ERROR general en transacción: " + e.getMessage());
             e.printStackTrace();
 
             if (con != null) {
                 try {
                     con.rollback();
                 } catch (SQLException ex) {
-                    System.out.println("Error al revertir transaccion: " + ex.getMessage());
+                    System.out.println("Error al revertir transacción: " + ex.getMessage());
                 }
             }
             return false;
@@ -264,10 +264,29 @@ public class AsistenciaDAO {
                 a.setEstadoFromString(rs.getString("estado"));
                 a.setObservaciones(rs.getString("observaciones"));
                 a.setRegistradoPor(rs.getInt("registrado_por"));
+                
+                // Manejar fechas de registro y actualización como Timestamp
+                Timestamp fechaRegistro = rs.getTimestamp("fecha_registro");
+                if (fechaRegistro != null) {
+                    a.setFechaRegistro(fechaRegistro);
+                }
+                
+                Timestamp fechaActualizacion = rs.getTimestamp("fecha_actualizacion");
+                if (fechaActualizacion != null) {
+                    a.setFechaActualizacion(fechaActualizacion);
+                }
+                
+                a.setActivo(rs.getBoolean("activo"));
+                
+                // Campos adicionales
                 a.setAlumnoNombre(rs.getString("alumno_nombre"));
                 a.setAlumnoApellidos(rs.getString("alumno_apellidos"));
                 a.setProfesorNombre(rs.getString("profesor_nombre"));
                 a.setTurnoNombre(rs.getString("turno_nombre"));
+                a.setCursoNombre(rs.getString("curso_nombre"));
+                a.setGradoNombre(rs.getString("grado_nombre"));
+                a.setSedeNombre(rs.getString("sede_nombre"));
+                a.setAulaNombre(rs.getString("aula_nombre"));
                 
                 lista.add(a);
             }
@@ -321,9 +340,27 @@ public class AsistenciaDAO {
                 a.setEstadoFromString(rs.getString("estado"));
                 a.setObservaciones(rs.getString("observaciones"));
                 a.setRegistradoPor(rs.getInt("registrado_por"));
+                
+                // Manejar fechas de registro y actualización como Timestamp
+                Timestamp fechaRegistro = rs.getTimestamp("fecha_registro");
+                if (fechaRegistro != null) {
+                    a.setFechaRegistro(fechaRegistro);
+                }
+                
+                Timestamp fechaActualizacion = rs.getTimestamp("fecha_actualizacion");
+                if (fechaActualizacion != null) {
+                    a.setFechaActualizacion(fechaActualizacion);
+                }
+                
+                a.setActivo(rs.getBoolean("activo"));
+                
                 a.setCursoNombre(rs.getString("curso_nombre"));
                 a.setTurnoNombre(rs.getString("turno_nombre"));
                 a.setGradoNombre(rs.getString("grado_nombre"));
+                a.setAlumnoNombre(rs.getString("alumno_nombre"));
+                a.setAlumnoApellidos(rs.getString("alumno_apellidos"));
+                a.setSedeNombre(rs.getString("sede_nombre"));
+                a.setAulaNombre(rs.getString("aula_nombre"));
                 
                 lista.add(a);
             }
@@ -372,6 +409,25 @@ public class AsistenciaDAO {
                 a.setCursoNombre(rs.getString("curso_nombre"));
                 a.setAlumnoId(rs.getInt("alumno_id"));
                 
+                // Campos adicionales si existen
+                try {
+                    a.setAlumnoNombre(rs.getString("alumno_nombre"));
+                } catch (SQLException e) {
+                    // Columna no existe, continuar
+                }
+                
+                try {
+                    a.setAlumnoApellidos(rs.getString("alumno_apellidos"));
+                } catch (SQLException e) {
+                    // Columna no existe, continuar
+                }
+                
+                try {
+                    a.setTurnoNombre(rs.getString("turno_nombre"));
+                } catch (SQLException e) {
+                    // Columna no existe, continuar
+                }
+                
                 lista.add(a);
                 System.out.println("Ausencia: " + a.getFechaFormateada() + " - " + a.getCursoNombre());
             }
@@ -388,13 +444,12 @@ public class AsistenciaDAO {
     }
 
     /**
-     * OBTENER RESUMEN DE ASISTENCIA (si existe el SP en tu BD)
+     * OBTENER RESUMEN DE ASISTENCIA
      */
     public Map<String, Object> obtenerResumenAsistenciaAlumnoTurno(int alumnoId, int turnoId, 
                                                                     int mes, int anio) {
         Map<String, Object> resumen = new HashMap<>();
         
-        // Nota: Este SP no está en tu BD actual, puedes crearlo o calcularlo manualmente
         List<Asistencia> asistencias = obtenerAsistenciasPorAlumnoTurno(alumnoId, turnoId, mes, anio);
         
         int totalClases = asistencias.size();
@@ -430,8 +485,60 @@ public class AsistenciaDAO {
         resumen.put("ausentes", ausentes);
         resumen.put("justificados", justificados);
         resumen.put("porcentajeAsistencia", porcentaje);
+        resumen.put("alumnoId", alumnoId);
+        resumen.put("turnoId", turnoId);
+        resumen.put("mes", mes);
+        resumen.put("anio", anio);
         
         System.out.println("Resumen - Asistencia: " + String.format("%.2f", porcentaje) + "%");
+        
+        return resumen;
+    }
+    
+    /**
+     * OBTENER RESUMEN DE ASISTENCIA POR CURSO
+     */
+    public Map<String, Object> obtenerResumenAsistenciaCurso(int cursoId, int turnoId, 
+                                                             String fecha) {
+        Map<String, Object> resumen = new HashMap<>();
+        List<Asistencia> asistencias = obtenerAsistenciasPorCursoTurnoFecha(cursoId, turnoId, fecha);
+        
+        int totalAlumnos = asistencias.size();
+        int presentes = 0;
+        int tardanzas = 0;
+        int ausentes = 0;
+        int justificados = 0;
+        
+        for (Asistencia a : asistencias) {
+            switch (a.getEstado()) {
+                case PRESENTE:
+                    presentes++;
+                    break;
+                case TARDANZA:
+                    tardanzas++;
+                    break;
+                case AUSENTE:
+                    ausentes++;
+                    break;
+                case JUSTIFICADO:
+                    justificados++;
+                    break;
+            }
+        }
+        
+        double porcentaje = totalAlumnos > 0 
+            ? ((presentes + tardanzas + justificados) * 100.0) / totalAlumnos 
+            : 0.0;
+        
+        resumen.put("totalAlumnos", totalAlumnos);
+        resumen.put("presentes", presentes);
+        resumen.put("tardanzas", tardanzas);
+        resumen.put("ausentes", ausentes);
+        resumen.put("justificados", justificados);
+        resumen.put("porcentajeAsistencia", porcentaje);
+        resumen.put("cursoId", cursoId);
+        resumen.put("turnoId", turnoId);
+        resumen.put("fecha", fecha);
         
         return resumen;
     }
@@ -451,7 +558,7 @@ public class AsistenciaDAO {
             cs.setInt(1, cursoId);
             cs.setInt(2, turnoId);
             cs.setString(3, diaSemana);
-            cs.setTime(4, java.sql.Time.valueOf(horaClase));
+            cs.setTime(4, java.sql.Time.valueOf(horaClase + ":00"));
             cs.setDate(5, java.sql.Date.valueOf(fecha));
             
             ResultSet rs = cs.executeQuery();
@@ -461,6 +568,7 @@ public class AsistenciaDAO {
                 resultado.put("fechaLimite", rs.getTimestamp("fecha_limite"));
                 resultado.put("limiteMinutos", rs.getInt("limite_minutos"));
                 resultado.put("fechaActual", rs.getTimestamp("fecha_actual"));
+                resultado.put("mensaje", rs.getString("mensaje"));
             }
             
         } catch (SQLException e) {
@@ -468,8 +576,162 @@ public class AsistenciaDAO {
             System.out.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
             resultado.put("puedeEditar", false);
+            resultado.put("mensaje", "Error al verificar límite: " + e.getMessage());
         }
         
         return resultado;
+    }
+    
+    /**
+     * ACTUALIZAR ESTADO DE ASISTENCIA
+     */
+    public boolean actualizarAsistencia(int asistenciaId, Asistencia.EstadoAsistencia estado, 
+                                        String observaciones) {
+        String sql = "{CALL actualizar_asistencia(?, ?, ?)}";
+        
+        try (Connection con = Conexion.getConnection();
+             CallableStatement cs = con.prepareCall(sql)) {
+            
+            cs.setInt(1, asistenciaId);
+            cs.setString(2, estado.name());
+            cs.setString(3, observaciones);
+            
+            int resultado = cs.executeUpdate();
+            System.out.println("Asistencia actualizada. Filas afectadas: " + resultado);
+            return resultado > 0;
+            
+        } catch (SQLException e) {
+            System.out.println("Error SQL al actualizar asistencia:");
+            System.out.println("   Mensaje: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * OBTENER ASISTENCIA POR ID
+     */
+    public Asistencia obtenerAsistenciaPorId(int asistenciaId) {
+        String sql = "{CALL obtener_asistencia_por_id(?)}";
+        
+        try (Connection con = Conexion.getConnection();
+             CallableStatement cs = con.prepareCall(sql)) {
+            
+            cs.setInt(1, asistenciaId);
+            ResultSet rs = cs.executeQuery();
+            
+            if (rs.next()) {
+                Asistencia a = new Asistencia();
+                a.setId(rs.getInt("id"));
+                a.setAlumnoId(rs.getInt("alumno_id"));
+                a.setCursoId(rs.getInt("curso_id"));
+                a.setTurnoId(rs.getInt("turno_id"));
+                
+                java.sql.Date sqlFecha = rs.getDate("fecha");
+                if (sqlFecha != null) {
+                    a.setFecha(sqlFecha.toLocalDate());
+                }
+                
+                java.sql.Time sqlHora = rs.getTime("hora_clase");
+                if (sqlHora != null) {
+                    a.setHoraClase(sqlHora.toLocalTime());
+                }
+                
+                a.setEstadoFromString(rs.getString("estado"));
+                a.setObservaciones(rs.getString("observaciones"));
+                a.setRegistradoPor(rs.getInt("registrado_por"));
+                
+                // Manejar fechas de registro y actualización como Timestamp
+                Timestamp fechaRegistro = rs.getTimestamp("fecha_registro");
+                if (fechaRegistro != null) {
+                    a.setFechaRegistro(fechaRegistro);
+                }
+                
+                Timestamp fechaActualizacion = rs.getTimestamp("fecha_actualizacion");
+                if (fechaActualizacion != null) {
+                    a.setFechaActualizacion(fechaActualizacion);
+                }
+                
+                a.setActivo(rs.getBoolean("activo"));
+                
+                // Campos adicionales
+                a.setAlumnoNombre(rs.getString("alumno_nombre"));
+                a.setAlumnoApellidos(rs.getString("alumno_apellidos"));
+                a.setCursoNombre(rs.getString("curso_nombre"));
+                a.setTurnoNombre(rs.getString("turno_nombre"));
+                a.setProfesorNombre(rs.getString("profesor_nombre"));
+                a.setGradoNombre(rs.getString("grado_nombre"));
+                a.setSedeNombre(rs.getString("sede_nombre"));
+                a.setAulaNombre(rs.getString("aula_nombre"));
+                
+                return a;
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("Error SQL al obtener asistencia por ID:");
+            System.out.println("   Mensaje: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    /**
+     * OBTENER ASISTENCIAS POR RANGO DE FECHAS
+     */
+    public List<Asistencia> obtenerAsistenciasPorRangoFechas(String fechaInicio, String fechaFin, 
+                                                               int cursoId, int turnoId) {
+        List<Asistencia> lista = new ArrayList<>();
+        String sql = "{CALL obtener_asistencias_por_rango_fechas(?, ?, ?, ?)}";
+        
+        try (Connection con = Conexion.getConnection();
+             CallableStatement cs = con.prepareCall(sql)) {
+            
+            cs.setDate(1, java.sql.Date.valueOf(fechaInicio));
+            cs.setDate(2, java.sql.Date.valueOf(fechaFin));
+            cs.setInt(3, cursoId);
+            cs.setInt(4, turnoId);
+            
+            ResultSet rs = cs.executeQuery();
+            
+            while (rs.next()) {
+                Asistencia a = new Asistencia();
+                a.setId(rs.getInt("id"));
+                a.setAlumnoId(rs.getInt("alumno_id"));
+                a.setCursoId(rs.getInt("curso_id"));
+                a.setTurnoId(rs.getInt("turno_id"));
+                
+                java.sql.Date sqlFecha = rs.getDate("fecha");
+                if (sqlFecha != null) {
+                    a.setFecha(sqlFecha.toLocalDate());
+                }
+                
+                java.sql.Time sqlHora = rs.getTime("hora_clase");
+                if (sqlHora != null) {
+                    a.setHoraClase(sqlHora.toLocalTime());
+                }
+                
+                a.setEstadoFromString(rs.getString("estado"));
+                a.setObservaciones(rs.getString("observaciones"));
+                a.setRegistradoPor(rs.getInt("registrado_por"));
+                
+                // Campos adicionales
+                a.setAlumnoNombre(rs.getString("alumno_nombre"));
+                a.setAlumnoApellidos(rs.getString("alumno_apellidos"));
+                a.setCursoNombre(rs.getString("curso_nombre"));
+                a.setTurnoNombre(rs.getString("turno_nombre"));
+                
+                lista.add(a);
+            }
+            
+            System.out.println("Asistencias encontradas en rango: " + lista.size());
+            
+        } catch (SQLException e) {
+            System.out.println("Error SQL al obtener asistencias por rango:");
+            System.out.println("   Mensaje: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return lista;
     }
 }
