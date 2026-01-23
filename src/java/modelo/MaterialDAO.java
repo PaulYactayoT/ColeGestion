@@ -81,6 +81,56 @@ public class MaterialDAO {
     }
     
     /**
+     * LISTAR MATERIALES POR CURSO Y PROFESOR
+     */
+    public List<Material> listarPorCursoYProfesor(int cursoId, int profesorId) {
+        List<Material> lista = new ArrayList<>();
+        String sql = "SELECT m.*, " +
+                     "CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre, " +
+                     "c.nombre as curso_nombre " +
+                     "FROM curso_material m " +
+                     "JOIN profesor prof ON m.profesor_id = prof.id " +
+                     "JOIN persona p ON prof.persona_id = p.id " +
+                     "JOIN curso c ON m.curso_id = c.id " +
+                     "WHERE m.curso_id = ? " +
+                     "AND m.profesor_id = ? " +
+                     "AND m.activo = 1 " +
+                     "AND m.eliminado = 0 " +
+                     "ORDER BY m.fecha_subida DESC";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, cursoId);
+            ps.setInt(2, profesorId);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Material m = new Material();
+                m.setId(rs.getInt("id"));
+                m.setCursoId(rs.getInt("curso_id"));
+                m.setProfesorId(rs.getInt("profesor_id"));
+                m.setNombreArchivo(rs.getString("nombre_archivo"));
+                m.setRutaArchivo(rs.getString("ruta_archivo"));
+                m.setTipoArchivo(rs.getString("tipo_archivo"));
+                m.setTamanioArchivo(rs.getLong("tamanio_archivo"));
+                m.setDescripcion(rs.getString("descripcion"));
+                m.setFechaSubida(rs.getTimestamp("fecha_subida"));
+                m.setProfesorNombre(rs.getString("profesor_nombre"));
+                m.setCursoNombre(rs.getString("curso_nombre"));
+                
+                lista.add(m);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error al listar materiales por curso y profesor: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return lista;
+    }
+    
+    /**
      * OBTENER MATERIAL POR ID
      */
     public Material obtenerPorId(int id) {

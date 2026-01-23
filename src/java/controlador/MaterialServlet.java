@@ -46,15 +46,21 @@ public class MaterialServlet extends HttpServlet {
         String accion = request.getParameter("accion");
         
         try {
-            switch (accion != null ? accion : "listar") {
+            switch (accion != null ? accion : "seleccionarCurso") {
+                case "seleccionarCurso":
+                    seleccionarCurso(request, response, docente);
+                    break;
                 case "listar":
                     listarMateriales(request, response, docente);
+                    break;
+                case "verMateriales":
+                    verMateriales(request, response, docente);
                     break;
                 case "eliminar":
                     eliminarMaterial(request, response, session);
                     break;
                 default:
-                    listarMateriales(request, response, docente);
+                    seleccionarCurso(request, response, docente);
                     break;
             }
         } catch (Exception e) {
@@ -92,7 +98,72 @@ public class MaterialServlet extends HttpServlet {
     }
     
     /**
-     * LISTAR TODOS LOS MATERIALES DEL DOCENTE
+     * SELECCIONAR CURSO - Muestra la lista de cursos del profesor
+     */
+    private void seleccionarCurso(HttpServletRequest request, HttpServletResponse response, 
+                                 Profesor docente) throws ServletException, IOException {
+        
+        CursoDAO cursoDAO = new CursoDAO();
+        List<Curso> cursos = cursoDAO.listarPorProfesor(docente.getId());
+        
+        request.setAttribute("cursos", cursos);
+        request.getRequestDispatcher("materialSeleccionCurso.jsp").forward(request, response);
+    }
+    
+    /**
+     * VER MATERIALES DE UN CURSO ESPECÍFICO
+     */
+    private void verMateriales(HttpServletRequest request, HttpServletResponse response, 
+                              Profesor docente) throws ServletException, IOException {
+        
+        String cursoIdStr = request.getParameter("curso_id");
+        if (cursoIdStr == null || cursoIdStr.isEmpty()) {
+            request.getSession().setAttribute("error", "No se especificó el curso");
+            response.sendRedirect("MaterialServlet?accion=seleccionarCurso");
+            return;
+        }
+        
+        try {
+            int cursoId = Integer.parseInt(cursoIdStr);
+            MaterialDAO materialDAO = new MaterialDAO();
+            CursoDAO cursoDAO = new CursoDAO();
+            
+            // Verificar que el profesor tiene acceso a este curso
+            List<Curso> cursosProfesor = cursoDAO.listarPorProfesor(docente.getId());
+            boolean tieneAcceso = false;
+            for (Curso c : cursosProfesor) {
+                if (c.getId() == cursoId) {
+                    tieneAcceso = true;
+                    break;
+                }
+            }
+            
+            if (!tieneAcceso) {
+                request.getSession().setAttribute("error", "No tienes acceso a este curso");
+                response.sendRedirect("MaterialServlet?accion=seleccionarCurso");
+                return;
+            }
+            
+            // Obtener materiales del curso
+            List<Material> materiales = materialDAO.listarPorCursoYProfesor(cursoId, docente.getId());
+            Curso curso = cursoDAO.obtenerPorId(cursoId);
+            
+            request.setAttribute("materiales", materiales);
+            request.setAttribute("curso", curso);
+            request.getRequestDispatcher("materialApoyo.jsp").forward(request, response);
+            
+        } catch (NumberFormatException e) {
+            request.getSession().setAttribute("error", "ID de curso inválido");
+            response.sendRedirect("MaterialServlet?accion=seleccionarCurso");
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.getSession().setAttribute("error", "Error al cargar materiales: " + e.getMessage());
+            response.sendRedirect("MaterialServlet?accion=seleccionarCurso");
+        }
+    }
+    
+    /**
+     * LISTAR MATERIALES DEL DOCENTE, CON POSIBLE FILTRO POR CURSO
      */
     private void listarMateriales(HttpServletRequest request, HttpServletResponse response, 
                                  Profesor docente) throws ServletException, IOException {
@@ -100,10 +171,28 @@ public class MaterialServlet extends HttpServlet {
         MaterialDAO materialDAO = new MaterialDAO();
         CursoDAO cursoDAO = new CursoDAO();
         
-        // Obtener todos los materiales del profesor
-        List<Material> materiales = materialDAO.listarPorProfesor(docente.getId());
+        // Obtener el curso_id si está presente
+        String cursoIdStr = request.getParameter("curso_id");
+        List<Material> materiales;
+        Curso curso = null;
         
-        // Obtener los cursos del docente para el formulario
+        if (cursoIdStr != null && !cursoIdStr.isEmpty()) {
+            try {
+                int cursoId = Integer.parseInt(cursoIdStr);
+                // Listar materiales del curso específico y del profesor
+                materiales = materialDAO.listarPorCursoYProfesor(cursoId, docente.getId());
+                // Obtener el curso para mostrar su nombre
+                curso = cursoDAO.obtenerPorId(cursoId);
+                request.setAttribute("curso", curso);
+            } catch (NumberFormatException e) {
+                materiales = materialDAO.listarPorProfesor(docente.getId());
+            }
+        } else {
+            // Si no hay curso_id, listar todos los materiales del profesor
+            materiales = materialDAO.listarPorProfesor(docente.getId());
+        }
+        
+        // Obtener los cursos del docente
         List<Curso> cursos = cursoDAO.listarPorProfesor(docente.getId());
         
         request.setAttribute("materiales", materiales);
@@ -128,13 +217,13 @@ public class MaterialServlet extends HttpServlet {
             // Validaciones
             if (cursoIdStr == null || cursoIdStr.isEmpty()) {
                 session.setAttribute("error", "Debe seleccionar un curso");
-                response.sendRedirect("MaterialServlet?accion=listar");
+                response.sendRedirect("MaterialServlet?accion=seleccionarCurso");
                 return;
             }
             
             if (filePart == null || filePart.getSize() == 0) {
                 session.setAttribute("error", "Debe seleccionar un archivo");
-                response.sendRedirect("MaterialServlet?accion=listar");
+                response.sendRedirect("MaterialServlet?accion=verMateriales&curso_id=" + cursoIdStr);
                 return;
             }
             
@@ -146,7 +235,7 @@ public class MaterialServlet extends HttpServlet {
             String uploadPath = appPath + File.separator + UPLOAD_DIR;
             File uploadDir = new File(uploadPath);
             if (!uploadDir.exists()) {
-                uploadDir.mkdir();
+                uploadDir.mkdirs();
             }
             
             // Generar nombre único para el archivo
@@ -190,7 +279,13 @@ public class MaterialServlet extends HttpServlet {
             session.setAttribute("error", "Error al subir el archivo: " + e.getMessage());
         }
         
-        response.sendRedirect("MaterialServlet?accion=listar");
+        // Redirigir de regreso al curso
+        String cursoIdStr = request.getParameter("curso_id");
+        if (cursoIdStr != null && !cursoIdStr.isEmpty()) {
+            response.sendRedirect("MaterialServlet?accion=verMateriales&curso_id=" + cursoIdStr);
+        } else {
+            response.sendRedirect("MaterialServlet?accion=seleccionarCurso");
+        }
     }
     
     /**
@@ -200,6 +295,7 @@ public class MaterialServlet extends HttpServlet {
                                  HttpSession session) throws IOException {
         
         String idStr = request.getParameter("id");
+        String cursoIdStr = request.getParameter("curso_id");
         
         if (idStr != null && !idStr.isEmpty()) {
             try {
@@ -231,6 +327,11 @@ public class MaterialServlet extends HttpServlet {
             }
         }
         
-        response.sendRedirect("MaterialServlet?accion=listar");
+        // Redirigir de regreso al curso si hay curso_id
+        if (cursoIdStr != null && !cursoIdStr.isEmpty()) {
+            response.sendRedirect("MaterialServlet?accion=verMateriales&curso_id=" + cursoIdStr);
+        } else {
+            response.sendRedirect("MaterialServlet?accion=seleccionarCurso");
+        }
     }
 }

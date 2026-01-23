@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="modelo.Profesor, modelo.Material, modelo.Curso, java.util.List" %>
+<%@ page import="modelo.Profesor, modelo.Material, modelo.Curso, java.util.List, java.text.SimpleDateFormat" %>
 <%
     Profesor docente = (Profesor) session.getAttribute("docente");
     Curso curso = (Curso) request.getAttribute("curso");
@@ -24,6 +24,8 @@
     if (error != null) {
         session.removeAttribute("error");
     }
+    
+    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 %>
 
 <!DOCTYPE html>
@@ -142,6 +144,8 @@
                 padding: 8px 15px;
                 border-radius: 20px;
                 font-size: 0.85rem;
+                background-color: var(--purple-color);
+                color: white;
             }
             
             .back-button {
@@ -263,25 +267,41 @@
                 <%
                     if (materiales != null && !materiales.isEmpty()) {
                         for (Material mat : materiales) {
+                            // Determinar icono según extensión
+                            String nombreArchivo = mat.getNombreArchivo();
+                            String extension = "";
+                            int dotIndex = nombreArchivo.lastIndexOf('.');
+                            if (dotIndex > 0) {
+                                extension = nombreArchivo.substring(dotIndex + 1).toLowerCase();
+                            }
+                            
+                            String iconClass = "bi-file-earmark";
+                            if (extension.equals("pdf")) {
+                                iconClass = "bi-file-earmark-pdf";
+                            } else if (extension.equals("doc") || extension.equals("docx")) {
+                                iconClass = "bi-file-earmark-word";
+                            } else if (extension.equals("xls") || extension.equals("xlsx")) {
+                                iconClass = "bi-file-earmark-excel";
+                            } else if (extension.equals("ppt") || extension.equals("pptx")) {
+                                iconClass = "bi-file-earmark-ppt";
+                            } else if (extension.equals("zip") || extension.equals("rar")) {
+                                iconClass = "bi-file-earmark-zip";
+                            }
+                            
+                            // Formatear tamaño
+                            String tamanioFormateado = "";
+                            long tamanio = mat.getTamanioArchivo();
+                            if (tamanio < 1024) {
+                                tamanioFormateado = tamanio + " B";
+                            } else if (tamanio < 1024 * 1024) {
+                                tamanioFormateado = String.format("%.1f KB", tamanio / 1024.0);
+                            } else {
+                                tamanioFormateado = String.format("%.1f MB", tamanio / (1024.0 * 1024.0));
+                            }
                 %>
                 <div class="material-card">
                     <div class="row align-items-center">
                         <div class="col-md-1 text-center">
-                            <% 
-                                String extension = mat.getExtension().toLowerCase();
-                                String iconClass = "bi-file-earmark";
-                                if (extension.equals("PDF")) {
-                                    iconClass = "bi-file-earmark-pdf";
-                                } else if (extension.equals("DOC") || extension.equals("DOCX")) {
-                                    iconClass = "bi-file-earmark-word";
-                                } else if (extension.equals("XLS") || extension.equals("XLSX")) {
-                                    iconClass = "bi-file-earmark-excel";
-                                } else if (extension.equals("PPT") || extension.equals("PPTX")) {
-                                    iconClass = "bi-file-earmark-ppt";
-                                } else if (extension.equals("ZIP") || extension.equals("RAR")) {
-                                    iconClass = "bi-file-earmark-zip";
-                                }
-                            %>
                             <i class="bi <%= iconClass%> file-icon"></i>
                         </div>
                         <div class="col-md-7">
@@ -297,14 +317,14 @@
                             </div>
                         </div>
                         <div class="col-md-2 text-center">
-                            <span class="badge badge-custom" style="background-color: var(--purple-color);">
-                                <i class="bi bi-file-earmark"></i> <%= mat.getExtension()%>
+                            <span class="badge badge-custom">
+                                <i class="bi bi-file-earmark"></i> <%= extension.toUpperCase()%>
                             </span>
                             <br>
-                            <small class="text-muted"><%= mat.getTamanioFormateado()%></small>
+                            <small class="text-muted"><%= tamanioFormateado%></small>
                             <br>
                             <small class="text-muted">
-                                <%= new java.text.SimpleDateFormat("dd/MM/yyyy").format(mat.getFechaSubida())%>
+                                <%= sdf.format(mat.getFechaSubida())%>
                             </small>
                         </div>
                         <div class="col-md-2 text-center">
