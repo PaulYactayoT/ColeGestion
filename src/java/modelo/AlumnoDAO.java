@@ -275,9 +275,22 @@ public class AlumnoDAO {
         }
     }
     
-    
-      //
-    
+    // Método para eliminar alumno (eliminación lógica)
+    public boolean eliminar(int id) {
+        String sql = "UPDATE alumno SET eliminado = 1, activo = 0 WHERE id = ?";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Error al eliminar alumno: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
     
     // Método auxiliar para mapear ResultSet a objeto Alumno
     private Alumno mapearResultSet(ResultSet rs) throws SQLException {

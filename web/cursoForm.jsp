@@ -21,13 +21,15 @@
         return;
     }
 
-    Curso c = (Curso) request.getAttribute("cursos");
+    Curso c = (Curso) request.getAttribute("curso");
     List<Grado> grados = (List<Grado>) request.getAttribute("grados");
     List<Profesor> profesores = (List<Profesor>) request.getAttribute("profesores");
     boolean editar = (c != null);
 %>
 
 
+<!DOCTYPE html>
+<html>
 <head>
     <meta charset="UTF-8">
     <title><%= editar ? "Editar Curso" : "Registrar Curso"%></title>
@@ -81,6 +83,13 @@
                        value="<%= editar ? c.getCreditos() : ""%>" required>
             </div>
 
+            <!-- NUEVO: Campo de descripción -->
+            <div class="mb-3">
+                <label class="form-label">Descripción:</label>
+                <textarea name="descripcion" class="form-control" rows="3" 
+                          placeholder="Ingrese una descripción del curso (opcional)"><%= editar && c.getDescripcion() != null ? c.getDescripcion() : ""%></textarea>
+            </div>
+
             <div class="text-end">
                 <a href="CursoServlet" class="btn btn-secondary">Cancelar</a>
                 <button type="submit" class="btn btn-primary">
@@ -122,6 +131,4 @@
         </div>
     </footer>
 </body>
-
-
-
+</html>

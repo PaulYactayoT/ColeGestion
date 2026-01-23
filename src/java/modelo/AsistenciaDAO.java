@@ -1,12 +1,3 @@
-/*
- * DAO PARA GESTIÓN DE ASISTENCIAS ESCOLARES
- * 
- * Funcionalidades:
- * - Registro individual y grupal de asistencias
- * - Consultas por curso, alumno y fecha
- * - Reportes y resúmenes estadísticos
- * - Gestión de ausencias por justificar
- */
 package modelo;
 
 import conexion.Conexion;
@@ -14,6 +5,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class AsistenciaDAO {
@@ -39,19 +31,31 @@ public class AsistenciaDAO {
             cs.setString(7, a.getObservaciones());
             cs.setInt(8, a.getRegistradoPor());
 
-            int resultado = cs.executeUpdate();
-            System.out.println("Asistencia registrada. Filas afectadas: " + resultado);
+            boolean tieneResultados = cs.execute();
+            int resultado = 0;
+            
+            if (tieneResultados) {
+                ResultSet rs = cs.getResultSet();
+                if (rs.next()) {
+                    resultado = rs.getInt("filas_afectadas");
+                }
+                rs.close();
+            } else {
+                resultado = cs.getUpdateCount();
+            }
+            
+            System.out.println("✅ Asistencia registrada. Filas afectadas: " + resultado);
             return resultado > 0;
 
         } catch (SQLException e) {
-            System.out.println("Error SQL al registrar asistencia:");
+            System.out.println("❌ Error SQL al registrar asistencia:");
             System.out.println("   Código: " + e.getErrorCode());
             System.out.println("   Estado: " + e.getSQLState());
             System.out.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
             return false;
         } catch (Exception e) {
-            System.out.println("Error general al registrar asistencia");
+            System.out.println("❌ Error general al registrar asistencia");
             e.printStackTrace();
             return false;
         }
@@ -71,12 +75,14 @@ public class AsistenciaDAO {
     public boolean registrarAsistenciaGrupal(int cursoId, int turnoId, LocalDate fecha, 
                                             String horaClase, String alumnosJson, 
                                             int registradoPor) {
-        System.out.println("INICIANDO DAO REGISTRO GRUPAL");
-        System.out.println("   cursoId: " + cursoId);
-        System.out.println("   turnoId: " + turnoId);
-        System.out.println("   fecha: " + fecha);
-        System.out.println("   horaClase: " + horaClase);
-        System.out.println("   registradoPor: " + registradoPor);
+        System.out.println("🔄 INICIANDO DAO REGISTRO GRUPAL");
+        System.out.println("   📅 Curso ID: " + cursoId);
+        System.out.println("   ⏰ Turno ID: " + turnoId);
+        System.out.println("   📅 Fecha: " + fecha);
+        System.out.println("   ⏰ Hora Clase: " + horaClase);
+        System.out.println("   👤 Registrado por: " + registradoPor);
+        System.out.println("   📊 JSON recibido (primeros 500 chars): " + 
+                         (alumnosJson != null ? alumnosJson.substring(0, Math.min(alumnosJson.length(), 500)) : "NULL"));
 
         Connection con = null;
         CallableStatement cs = null;
@@ -87,21 +93,19 @@ public class AsistenciaDAO {
 
             // Validar JSON
             if (alumnosJson == null || alumnosJson.trim().isEmpty()) {
-                System.out.println("ERROR: JSON de alumnos está vacío");
-                return false;
-            }
-
-            String jsonContent = alumnosJson.trim();
-            if (!jsonContent.startsWith("[") || !jsonContent.endsWith("]")) {
-                System.out.println("ERROR: Formato JSON inválido - no es un array");
+                System.out.println("❌ ERROR: JSON de alumnos está vacío");
                 return false;
             }
 
             // Parsear JSON manualmente
-            String contenido = jsonContent.substring(1, jsonContent.length() - 1);
-            String[] objetos = contenido.split("\\},\\{");
+            List<Map<String, Object>> alumnosList = parseJsonManual(alumnosJson);
+            
+            if (alumnosList.isEmpty()) {
+                System.out.println("❌ ERROR: No se pudieron parsear datos del JSON");
+                return false;
+            }
 
-            System.out.println("Total de alumnos a procesar: " + objetos.length);
+            System.out.println("✅ Total de alumnos a procesar: " + alumnosList.size());
 
             // Preparar el stored procedure
             String sql = "{CALL registrar_asistencia(?, ?, ?, ?, ?, ?, ?, ?)}";
@@ -109,50 +113,37 @@ public class AsistenciaDAO {
 
             // Convertir fecha y hora a tipos SQL
             java.sql.Date sqlFecha = java.sql.Date.valueOf(fecha);
-            java.sql.Time sqlHora = java.sql.Time.valueOf(horaClase);
+            java.sql.Time sqlHora = java.sql.Time.valueOf(horaClase + ":00"); // Asegurar formato HH:MM:SS
 
             int exitosos = 0;
             int errores = 0;
+            int duplicados = 0;
 
-            for (int i = 0; i < objetos.length; i++) {
-                String objeto = objetos[i];
-                
-                // Limpiar el objeto
-                if (i == 0) {
-                    objeto = objeto.substring(1); // Quitar { inicial
-                }
-                if (i == objetos.length - 1) {
-                    objeto = objeto.substring(0, objeto.length() - 1); // Quitar } final
-                }
-                
-                // Parsear manualmente
-                int alumnoId = 0;
-                String estado = "";
-
+            for (Map<String, Object> alumnoMap : alumnosList) {
                 try {
-                    String[] propiedades = objeto.split(",");
-                    for (String prop : propiedades) {
-                        String[] keyValue = prop.split(":");
-                        if (keyValue.length == 2) {
-                            String key = keyValue[0].replace("\"", "").trim();
-                            String value = keyValue[1].replace("\"", "").trim();
-
-                            if ("alumno_id".equals(key)) {
-                                alumnoId = Integer.parseInt(value);
-                            } else if ("estado".equals(key)) {
-                                estado = value;
-                            }
-                        }
+                    Integer alumnoId = null;
+                    String estado = null;
+                    
+                    // Buscar alumno_id en diferentes formatos posibles
+                    if (alumnoMap.containsKey("alumno_id")) {
+                        alumnoId = ((Number) alumnoMap.get("alumno_id")).intValue();
+                    } else if (alumnoMap.containsKey("id")) {
+                        alumnoId = ((Number) alumnoMap.get("id")).intValue();
+                    } else if (alumnoMap.containsKey("alumnoId")) {
+                        alumnoId = ((Number) alumnoMap.get("alumnoId")).intValue();
                     }
-
-                    System.out.println("   Procesando alumno " + alumnoId + " - Estado: " + estado);
-
-                    // Validar datos
-                    if (alumnoId <= 0 || estado.isEmpty()) {
-                        System.out.println("   Datos inválidos para alumno, saltando...");
+                    
+                    if (alumnoMap.containsKey("estado")) {
+                        estado = (String) alumnoMap.get("estado");
+                    }
+                    
+                    if (alumnoId == null || alumnoId <= 0 || estado == null || estado.isEmpty()) {
+                        System.out.println("⚠️ Datos inválidos para alumno: " + alumnoMap);
                         errores++;
                         continue;
                     }
+
+                    System.out.println("   👤 Procesando alumno " + alumnoId + " - Estado: " + estado);
 
                     // Ejecutar stored procedure
                     cs.setInt(1, alumnoId);
@@ -161,54 +152,78 @@ public class AsistenciaDAO {
                     cs.setDate(4, sqlFecha);
                     cs.setTime(5, sqlHora);
                     cs.setString(6, estado);
-                    cs.setString(7, ""); // Observaciones vacías para registro grupal
+                    cs.setString(7, ""); // Observaciones vacías
                     cs.setInt(8, registradoPor);
 
-                    int resultado = cs.executeUpdate();
+                    // Ejecutar y obtener resultado
+                    boolean tieneResultados = cs.execute();
+                    int resultado = 0;
+                    
+                    if (tieneResultados) {
+                        ResultSet rs = cs.getResultSet();
+                        if (rs.next()) {
+                            resultado = rs.getInt("filas_afectadas");
+                        }
+                        rs.close();
+                    } else {
+                        resultado = cs.getUpdateCount();
+                    }
+                    
                     if (resultado > 0) {
                         exitosos++;
-                        System.out.println("   Alumno " + alumnoId + " guardado exitosamente");
+                        System.out.println("   ✅ Alumno " + alumnoId + " guardado exitosamente");
                     } else {
-                        errores++;
-                        System.out.println("   Alumno " + alumnoId + " no se pudo guardar");
+                        // Puede ser un duplicado que no actualizó
+                        duplicados++;
+                        System.out.println("   ⚠️ Alumno " + alumnoId + " ya tenía registro o no se actualizó");
                     }
 
+                } catch (SQLException e) {
+                    // Manejar error de duplicado (código 1062 para MySQL)
+                    if (e.getErrorCode() == 1062) {
+                        duplicados++;
+                        System.out.println("   ⚠️ Alumno duplicado (ya existe registro)");
+                    } else {
+                        errores++;
+                        System.out.println("   ❌ Error SQL procesando alumno: " + e.getMessage());
+                    }
                 } catch (Exception e) {
                     errores++;
-                    System.out.println("   Error procesando alumno: " + e.getMessage());
+                    System.out.println("   ❌ Error procesando alumno: " + e.getMessage());
                 }
             }
 
             // Confirmar transacción
             con.commit();
-            System.out.println("Transacción completada. Exitosos: " + exitosos + 
-                             ", Errores: " + errores + ", Total: " + objetos.length);
+            System.out.println("✅ Transacción completada. Exitosos: " + exitosos + 
+                             ", Errores: " + errores + ", Duplicados: " + duplicados + 
+                             ", Total: " + alumnosList.size());
 
-            return exitosos > 0;
+            return exitosos > 0 || duplicados > 0; // Considerar exitoso si hay exitosos o duplicados
 
         } catch (SQLException e) {
-            System.out.println("ERROR SQL en transacción: " + e.getMessage());
+            System.out.println("❌ ERROR SQL en transacción: " + e.getMessage());
             e.printStackTrace();
 
             if (con != null) {
                 try {
                     con.rollback();
-                    System.out.println("Transacción revertida");
+                    System.out.println("🔄 Transacción revertida");
                 } catch (SQLException ex) {
-                    System.out.println("Error al revertir transacción: " + ex.getMessage());
+                    System.out.println("❌ Error al revertir transacción: " + ex.getMessage());
                 }
             }
             return false;
 
         } catch (Exception e) {
-            System.out.println("ERROR general en transacción: " + e.getMessage());
+            System.out.println("❌ ERROR general en transacción: " + e.getMessage());
             e.printStackTrace();
 
             if (con != null) {
                 try {
                     con.rollback();
                 } catch (SQLException ex) {
-                    System.out.println("Error al revertir transacción: " + ex.getMessage());
+                    System.out.println("❌ Error al revertir transacción: " + ex.getMessage());
                 }
             }
             return false;
@@ -221,8 +236,213 @@ public class AsistenciaDAO {
                     con.close();
                 }
             } catch (SQLException e) {
-                System.out.println("Error cerrando recursos: " + e.getMessage());
+                System.out.println("⚠️ Error cerrando recursos: " + e.getMessage());
             }
+        }
+    }
+
+    /**
+     * MÉTODO AUXILIAR: PARSEAR JSON MANUALMENTE
+     */
+    private List<Map<String, Object>> parseJsonManual(String alumnosJson) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        
+        try {
+            String jsonContent = alumnosJson.trim();
+            
+            // Validar formato básico
+            if (!jsonContent.startsWith("[") || !jsonContent.endsWith("]")) {
+                System.out.println("⚠️ JSON no tiene formato de array");
+                return lista;
+            }
+            
+            // Quitar corchetes y limpiar
+            jsonContent = jsonContent.substring(1, jsonContent.length() - 1).trim();
+            
+            if (jsonContent.isEmpty()) {
+                System.out.println("⚠️ JSON vacío después de quitar corchetes");
+                return lista;
+            }
+            
+            // Dividir por objetos
+            String[] objetos = jsonContent.split("\\},\\{");
+            
+            for (int i = 0; i < objetos.length; i++) {
+                String objeto = objetos[i];
+                
+                // Limpiar el objeto
+                if (i == 0) {
+                    objeto = objeto.replaceFirst("^\\{", "");
+                }
+                if (i == objetos.length - 1) {
+                    objeto = objeto.replaceFirst("\\}$", "");
+                }
+                
+                objeto = objeto.trim();
+                
+                if (objeto.isEmpty()) {
+                    continue;
+                }
+                
+                Map<String, Object> alumnoMap = new HashMap<>();
+                String[] propiedades = objeto.split(",");
+                
+                for (String prop : propiedades) {
+                    String[] keyValue = prop.split(":", 2);
+                    if (keyValue.length == 2) {
+                        String key = keyValue[0].trim()
+                                .replace("\"", "")
+                                .replace("'", "")
+                                .replace("{", "")
+                                .replace("}", "");
+                        String value = keyValue[1].trim()
+                                .replace("\"", "")
+                                .replace("'", "")
+                                .replace("}", "");
+                        
+                        // Manejar diferentes tipos de valores
+                        if (key.equals("alumno_id") || key.equals("id") || key.equals("alumnoId")) {
+                            try {
+                                alumnoMap.put("alumno_id", Integer.parseInt(value));
+                            } catch (NumberFormatException e) {
+                                alumnoMap.put("alumno_id", 0);
+                            }
+                        } else if (key.equals("estado")) {
+                            alumnoMap.put("estado", value);
+                        }
+                    }
+                }
+                
+                if (alumnoMap.containsKey("alumno_id") && alumnoMap.containsKey("estado")) {
+                    lista.add(alumnoMap);
+                }
+            }
+            
+            System.out.println("✅ JSON parseado correctamente. Encontrados: " + lista.size() + " alumnos");
+            
+        } catch (Exception e) {
+            System.out.println("❌ Error parseando JSON: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return lista;
+    }
+
+    /**
+     * REGISTRAR ASISTENCIAS GRUPALES SIMPLIFICADO (sin procedimiento almacenado)
+     * Método alternativo usando PreparedStatement
+     */
+    public boolean registrarAsistenciaGrupalSimple(int cursoId, int turnoId, LocalDate fecha, 
+                                                  String horaClase, String alumnosJson, 
+                                                  int registradoPor) {
+        System.out.println("🔄 REGISTRO GRUPAL SIMPLIFICADO (Batch)");
+        
+        Connection con = null;
+        PreparedStatement ps = null;
+
+        try {
+            con = Conexion.getConnection();
+            con.setAutoCommit(false);
+            
+            // SQL para insertar o actualizar (UPSERT)
+            String sql = "INSERT INTO asistencia " +
+                        "(alumno_id, curso_id, turno_id, fecha, hora_clase, estado, observaciones, registrado_por, fecha_registro) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW()) " +
+                        "ON DUPLICATE KEY UPDATE " +
+                        "estado = VALUES(estado), " +
+                        "observaciones = VALUES(observaciones), " +
+                        "registrado_por = VALUES(registrado_por), " +
+                        "fecha_actualizacion = NOW()";
+            
+            ps = con.prepareStatement(sql);
+            
+            // Parsear JSON
+            List<Map<String, Object>> alumnosList = parseJsonManual(alumnosJson);
+            
+            if (alumnosList.isEmpty()) {
+                System.out.println("❌ No hay alumnos para procesar");
+                return false;
+            }
+            
+            java.sql.Date sqlFecha = java.sql.Date.valueOf(fecha);
+            java.sql.Time sqlHora = java.sql.Time.valueOf(horaClase + ":00");
+            
+            int batchCount = 0;
+            
+            for (Map<String, Object> alumnoMap : alumnosList) {
+                try {
+                    Integer alumnoId = null;
+                    String estado = null;
+                    
+                    if (alumnoMap.containsKey("alumno_id")) {
+                        alumnoId = ((Number) alumnoMap.get("alumno_id")).intValue();
+                    }
+                    
+                    if (alumnoMap.containsKey("estado")) {
+                        estado = (String) alumnoMap.get("estado");
+                    }
+                    
+                    if (alumnoId != null && alumnoId > 0 && estado != null && !estado.isEmpty()) {
+                        ps.setInt(1, alumnoId);
+                        ps.setInt(2, cursoId);
+                        ps.setInt(3, turnoId);
+                        ps.setDate(4, sqlFecha);
+                        ps.setTime(5, sqlHora);
+                        ps.setString(6, estado);
+                        ps.setString(7, ""); // Observaciones
+                        ps.setInt(8, registradoPor);
+                        
+                        ps.addBatch();
+                        batchCount++;
+                        
+                        // Ejecutar batch cada 50 registros para no sobrecargar memoria
+                        if (batchCount % 50 == 0) {
+                            ps.executeBatch();
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println("⚠️ Error agregando alumno a batch: " + e.getMessage());
+                }
+            }
+            
+            // Ejecutar batch final
+            int[] resultados = ps.executeBatch();
+            con.commit();
+            
+            int exitosos = 0;
+            for (int resultado : resultados) {
+                if (resultado >= 0 || resultado == Statement.SUCCESS_NO_INFO) {
+                    exitosos++;
+                }
+            }
+            
+            System.out.println("✅ Batch completado. Exitosos: " + exitosos + " de " + batchCount);
+            return exitosos > 0;
+            
+        } catch (Exception e) {
+            System.out.println("❌ Error en registro batch: " + e.getMessage());
+            e.printStackTrace();
+            
+            if (con != null) {
+                try { 
+                    con.rollback(); 
+                    System.out.println("🔄 Transacción revertida");
+                } catch (SQLException ex) {
+                    System.out.println("❌ Error al revertir: " + ex.getMessage());
+                }
+            }
+            return false;
+            
+        } finally {
+            try { 
+                if (ps != null) ps.close(); 
+            } catch (SQLException e) {}
+            try { 
+                if (con != null) { 
+                    con.setAutoCommit(true); 
+                    con.close(); 
+                } 
+            } catch (SQLException e) {}
         }
     }
 
@@ -232,16 +452,41 @@ public class AsistenciaDAO {
     public List<Asistencia> obtenerAsistenciasPorCursoTurnoFecha(int cursoId, int turnoId, 
                                                                   String fecha) {
         List<Asistencia> lista = new ArrayList<>();
-        String sql = "{CALL obtener_asistencias_por_curso_turno_fecha(?, ?, ?)}";
+        
+        // SQL directo para evitar problemas con stored procedure
+        String sql = "SELECT " +
+                    "a.id, a.alumno_id, a.curso_id, a.turno_id, a.fecha, a.hora_clase, " +
+                    "a.estado, a.observaciones, a.registrado_por, a.fecha_registro, " +
+                    "a.fecha_actualizacion, a.activo, a.eliminado, " +
+                    "CONCAT(p.nombres, ' ', p.apellidos) as alumno_nombre, " +
+                    "p.apellidos as alumno_apellidos, " +
+                    "c.nombre as curso_nombre, " +
+                    "t.nombre as turno_nombre, " +
+                    "g.nombre as grado_nombre, " +
+                    "CONCAT(prof_p.nombres, ' ', prof_p.apellidos) as profesor_nombre " +
+                    "FROM asistencia a " +
+                    "INNER JOIN alumno al ON a.alumno_id = al.id " +
+                    "INNER JOIN persona p ON al.persona_id = p.id " +
+                    "INNER JOIN curso c ON a.curso_id = c.id " +
+                    "INNER JOIN turno t ON a.turno_id = t.id " +
+                    "LEFT JOIN profesor prof ON a.registrado_por = prof.id " +
+                    "LEFT JOIN persona prof_p ON prof.persona_id = prof_p.id " +
+                    "LEFT JOIN grado g ON c.grado_id = g.id " +
+                    "WHERE a.curso_id = ? " +
+                    "AND a.turno_id = ? " +
+                    "AND a.fecha = ? " +
+                    "AND a.eliminado = 0 " +
+                    "AND a.activo = 1 " +
+                    "ORDER BY p.apellidos, p.nombres, a.hora_clase";
 
         try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-            cs.setInt(1, cursoId);
-            cs.setInt(2, turnoId);
-            cs.setDate(3, java.sql.Date.valueOf(fecha));
+            ps.setInt(1, cursoId);
+            ps.setInt(2, turnoId);
+            ps.setDate(3, java.sql.Date.valueOf(fecha));
             
-            ResultSet rs = cs.executeQuery();
+            ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 Asistencia a = new Asistencia();
@@ -285,16 +530,15 @@ public class AsistenciaDAO {
                 a.setTurnoNombre(rs.getString("turno_nombre"));
                 a.setCursoNombre(rs.getString("curso_nombre"));
                 a.setGradoNombre(rs.getString("grado_nombre"));
-                a.setSedeNombre(rs.getString("sede_nombre"));
-                a.setAulaNombre(rs.getString("aula_nombre"));
                 
                 lista.add(a);
             }
 
-            System.out.println("Asistencias encontradas: " + lista.size());
+            System.out.println("✅ Asistencias encontradas: " + lista.size() + 
+                             " para curso " + cursoId + ", fecha " + fecha);
 
         } catch (SQLException e) {
-            System.out.println("Error SQL al obtener asistencias:");
+            System.out.println("❌ Error SQL al obtener asistencias:");
             System.out.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
         }
@@ -365,10 +609,10 @@ public class AsistenciaDAO {
                 lista.add(a);
             }
 
-            System.out.println("Asistencias encontradas: " + lista.size());
+            System.out.println("✅ Asistencias encontradas para alumno " + alumnoId + ": " + lista.size());
 
         } catch (SQLException e) {
-            System.out.println("Error SQL al obtener asistencias por alumno:");
+            System.out.println("❌ Error SQL al obtener asistencias por alumno:");
             System.out.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
         }
@@ -381,15 +625,26 @@ public class AsistenciaDAO {
      */
     public List<Asistencia> obtenerAusenciasPorJustificar(int alumnoId) {
         List<Asistencia> lista = new ArrayList<>();
-        String sql = "{CALL obtener_ausencias_por_justificar(?)}";
+        
+        String sql = "SELECT " +
+                    "a.id, a.fecha, a.hora_clase, a.estado, " +
+                    "c.nombre as curso_nombre, a.alumno_id " +
+                    "FROM asistencia a " +
+                    "JOIN curso c ON a.curso_id = c.id " +
+                    "WHERE a.alumno_id = ? " +
+                    "AND a.estado = 'AUSENTE' " +
+                    "AND a.id NOT IN (SELECT asistencia_id FROM justificacion WHERE estado = 'APROBADO') " +
+                    "AND a.eliminado = 0 " +
+                    "AND a.activo = 1 " +
+                    "ORDER BY a.fecha DESC, a.hora_clase DESC";
 
-        System.out.println("Obteniendo ausencias por justificar para alumno: " + alumnoId);
+        System.out.println("🔍 Obteniendo ausencias por justificar para alumno: " + alumnoId);
 
         try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-            cs.setInt(1, alumnoId);
-            ResultSet rs = cs.executeQuery();
+            ps.setInt(1, alumnoId);
+            ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 Asistencia a = new Asistencia();
@@ -409,33 +664,14 @@ public class AsistenciaDAO {
                 a.setCursoNombre(rs.getString("curso_nombre"));
                 a.setAlumnoId(rs.getInt("alumno_id"));
                 
-                // Campos adicionales si existen
-                try {
-                    a.setAlumnoNombre(rs.getString("alumno_nombre"));
-                } catch (SQLException e) {
-                    // Columna no existe, continuar
-                }
-                
-                try {
-                    a.setAlumnoApellidos(rs.getString("alumno_apellidos"));
-                } catch (SQLException e) {
-                    // Columna no existe, continuar
-                }
-                
-                try {
-                    a.setTurnoNombre(rs.getString("turno_nombre"));
-                } catch (SQLException e) {
-                    // Columna no existe, continuar
-                }
-                
                 lista.add(a);
-                System.out.println("Ausencia: " + a.getFechaFormateada() + " - " + a.getCursoNombre());
+                System.out.println("   📅 Ausencia: " + a.getFechaFormateada() + " - " + a.getCursoNombre());
             }
 
-            System.out.println("Total ausencias encontradas: " + lista.size());
+            System.out.println("✅ Total ausencias encontradas: " + lista.size());
 
         } catch (SQLException e) {
-            System.out.println("Error SQL al obtener ausencias:");
+            System.out.println("❌ Error SQL al obtener ausencias:");
             System.out.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
         }
@@ -490,7 +726,8 @@ public class AsistenciaDAO {
         resumen.put("mes", mes);
         resumen.put("anio", anio);
         
-        System.out.println("Resumen - Asistencia: " + String.format("%.2f", porcentaje) + "%");
+        System.out.println("📊 Resumen - Alumno " + alumnoId + ": " + 
+                         String.format("%.2f", porcentaje) + "% de asistencia");
         
         return resumen;
     }
@@ -540,46 +777,11 @@ public class AsistenciaDAO {
         resumen.put("turnoId", turnoId);
         resumen.put("fecha", fecha);
         
+        System.out.println("📊 Resumen - Curso " + cursoId + ": " + 
+                         totalAlumnos + " alumnos, " + 
+                         String.format("%.2f", porcentaje) + "% de asistencia");
+        
         return resumen;
-    }
-    
-    /**
-     * VERIFICAR SI SE PUEDE EDITAR ASISTENCIA (según límite de tiempo)
-     */
-    public Map<String, Object> verificarLimiteEdicion(int cursoId, int turnoId, 
-                                                      String diaSemana, String horaClase, 
-                                                      String fecha) {
-        Map<String, Object> resultado = new HashMap<>();
-        String sql = "{CALL verificar_limite_edicion_asistencia(?, ?, ?, ?, ?)}";
-        
-        try (Connection con = Conexion.getConnection(); 
-             CallableStatement cs = con.prepareCall(sql)) {
-            
-            cs.setInt(1, cursoId);
-            cs.setInt(2, turnoId);
-            cs.setString(3, diaSemana);
-            cs.setTime(4, java.sql.Time.valueOf(horaClase + ":00"));
-            cs.setDate(5, java.sql.Date.valueOf(fecha));
-            
-            ResultSet rs = cs.executeQuery();
-            
-            if (rs.next()) {
-                resultado.put("puedeEditar", rs.getBoolean("puede_editar"));
-                resultado.put("fechaLimite", rs.getTimestamp("fecha_limite"));
-                resultado.put("limiteMinutos", rs.getInt("limite_minutos"));
-                resultado.put("fechaActual", rs.getTimestamp("fecha_actual"));
-                resultado.put("mensaje", rs.getString("mensaje"));
-            }
-            
-        } catch (SQLException e) {
-            System.out.println("Error al verificar límite de edición:");
-            System.out.println("   Mensaje: " + e.getMessage());
-            e.printStackTrace();
-            resultado.put("puedeEditar", false);
-            resultado.put("mensaje", "Error al verificar límite: " + e.getMessage());
-        }
-        
-        return resultado;
     }
     
     /**
@@ -587,21 +789,22 @@ public class AsistenciaDAO {
      */
     public boolean actualizarAsistencia(int asistenciaId, Asistencia.EstadoAsistencia estado, 
                                         String observaciones) {
-        String sql = "{CALL actualizar_asistencia(?, ?, ?)}";
+        String sql = "UPDATE asistencia SET estado = ?, observaciones = ?, fecha_actualizacion = NOW() " +
+                    "WHERE id = ? AND eliminado = 0";
         
         try (Connection con = Conexion.getConnection();
-             CallableStatement cs = con.prepareCall(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             
-            cs.setInt(1, asistenciaId);
-            cs.setString(2, estado.name());
-            cs.setString(3, observaciones);
+            ps.setString(1, estado.name());
+            ps.setString(2, observaciones);
+            ps.setInt(3, asistenciaId);
             
-            int resultado = cs.executeUpdate();
-            System.out.println("Asistencia actualizada. Filas afectadas: " + resultado);
+            int resultado = ps.executeUpdate();
+            System.out.println("✅ Asistencia actualizada. Filas afectadas: " + resultado);
             return resultado > 0;
             
         } catch (SQLException e) {
-            System.out.println("Error SQL al actualizar asistencia:");
+            System.out.println("❌ Error SQL al actualizar asistencia:");
             System.out.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
             return false;
@@ -612,13 +815,30 @@ public class AsistenciaDAO {
      * OBTENER ASISTENCIA POR ID
      */
     public Asistencia obtenerAsistenciaPorId(int asistenciaId) {
-        String sql = "{CALL obtener_asistencia_por_id(?)}";
+        String sql = "SELECT " +
+                    "a.*, " +
+                    "CONCAT(p.nombres, ' ', p.apellidos) as alumno_nombre, " +
+                    "p.apellidos as alumno_apellidos, " +
+                    "c.nombre as curso_nombre, " +
+                    "t.nombre as turno_nombre, " +
+                    "CONCAT(prof_p.nombres, ' ', prof_p.apellidos) as profesor_nombre, " +
+                    "g.nombre as grado_nombre " +
+                    "FROM asistencia a " +
+                    "INNER JOIN alumno al ON a.alumno_id = al.id " +
+                    "INNER JOIN persona p ON al.persona_id = p.id " +
+                    "INNER JOIN curso c ON a.curso_id = c.id " +
+                    "INNER JOIN turno t ON a.turno_id = t.id " +
+                    "LEFT JOIN profesor prof ON a.registrado_por = prof.id " +
+                    "LEFT JOIN persona prof_p ON prof.persona_id = prof_p.id " +
+                    "LEFT JOIN grado g ON c.grado_id = g.id " +
+                    "WHERE a.id = ? " +
+                    "AND a.eliminado = 0";
         
         try (Connection con = Conexion.getConnection();
-             CallableStatement cs = con.prepareCall(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             
-            cs.setInt(1, asistenciaId);
-            ResultSet rs = cs.executeQuery();
+            ps.setInt(1, asistenciaId);
+            ResultSet rs = ps.executeQuery();
             
             if (rs.next()) {
                 Asistencia a = new Asistencia();
@@ -661,14 +881,12 @@ public class AsistenciaDAO {
                 a.setTurnoNombre(rs.getString("turno_nombre"));
                 a.setProfesorNombre(rs.getString("profesor_nombre"));
                 a.setGradoNombre(rs.getString("grado_nombre"));
-                a.setSedeNombre(rs.getString("sede_nombre"));
-                a.setAulaNombre(rs.getString("aula_nombre"));
                 
                 return a;
             }
             
         } catch (SQLException e) {
-            System.out.println("Error SQL al obtener asistencia por ID:");
+            System.out.println("❌ Error SQL al obtener asistencia por ID:");
             System.out.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
         }
@@ -682,17 +900,34 @@ public class AsistenciaDAO {
     public List<Asistencia> obtenerAsistenciasPorRangoFechas(String fechaInicio, String fechaFin, 
                                                                int cursoId, int turnoId) {
         List<Asistencia> lista = new ArrayList<>();
-        String sql = "{CALL obtener_asistencias_por_rango_fechas(?, ?, ?, ?)}";
+        String sql = "SELECT " +
+                    "a.id, a.alumno_id, a.curso_id, a.turno_id, a.fecha, a.hora_clase, " +
+                    "a.estado, a.observaciones, a.registrado_por, " +
+                    "CONCAT(p.nombres, ' ', p.apellidos) as alumno_nombre, " +
+                    "p.apellidos as alumno_apellidos, " +
+                    "c.nombre as curso_nombre, " +
+                    "t.nombre as turno_nombre " +
+                    "FROM asistencia a " +
+                    "INNER JOIN alumno al ON a.alumno_id = al.id " +
+                    "INNER JOIN persona p ON al.persona_id = p.id " +
+                    "INNER JOIN curso c ON a.curso_id = c.id " +
+                    "INNER JOIN turno t ON a.turno_id = t.id " +
+                    "WHERE a.curso_id = ? " +
+                    "AND a.turno_id = ? " +
+                    "AND a.fecha BETWEEN ? AND ? " +
+                    "AND a.eliminado = 0 " +
+                    "AND a.activo = 1 " +
+                    "ORDER BY a.fecha, a.hora_clase, p.apellidos";
         
         try (Connection con = Conexion.getConnection();
-             CallableStatement cs = con.prepareCall(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             
-            cs.setDate(1, java.sql.Date.valueOf(fechaInicio));
-            cs.setDate(2, java.sql.Date.valueOf(fechaFin));
-            cs.setInt(3, cursoId);
-            cs.setInt(4, turnoId);
+            ps.setInt(1, cursoId);
+            ps.setInt(2, turnoId);
+            ps.setDate(3, java.sql.Date.valueOf(fechaInicio));
+            ps.setDate(4, java.sql.Date.valueOf(fechaFin));
             
-            ResultSet rs = cs.executeQuery();
+            ResultSet rs = ps.executeQuery();
             
             while (rs.next()) {
                 Asistencia a = new Asistencia();
@@ -724,14 +959,165 @@ public class AsistenciaDAO {
                 lista.add(a);
             }
             
-            System.out.println("Asistencias encontradas en rango: " + lista.size());
+            System.out.println("✅ Asistencias encontradas en rango: " + lista.size());
             
         } catch (SQLException e) {
-            System.out.println("Error SQL al obtener asistencias por rango:");
+            System.out.println("❌ Error SQL al obtener asistencias por rango:");
             System.out.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
         }
         
         return lista;
+    }
+    
+    /**
+     * VERIFICAR SI HAY ASISTENCIAS REGISTRADAS PARA UN CURSO EN UNA FECHA
+     */
+    public boolean existenAsistenciasParaCursoFecha(int cursoId, int turnoId, LocalDate fecha) {
+        String sql = "SELECT COUNT(*) as total FROM asistencia " +
+                    "WHERE curso_id = ? AND turno_id = ? AND fecha = ? " +
+                    "AND activo = 1 AND eliminado = 0";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, cursoId);
+            ps.setInt(2, turnoId);
+            ps.setDate(3, java.sql.Date.valueOf(fecha));
+            
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                int total = rs.getInt("total");
+                System.out.println("ℹ️ Asistencias existentes para curso " + cursoId + 
+                                 ", fecha " + fecha + ": " + total);
+                return total > 0;
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("❌ Error al verificar asistencias existentes: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return false;
+    }
+    
+    /**
+     * OBTENER ESTADO DE ASISTENCIA DE UN ALUMNO ESPECÍFICO
+     */
+    public String obtenerEstadoAsistenciaAlumno(int alumnoId, int cursoId, int turnoId, LocalDate fecha) {
+        String sql = "SELECT estado FROM asistencia " +
+                    "WHERE alumno_id = ? AND curso_id = ? AND turno_id = ? AND fecha = ? " +
+                    "AND activo = 1 AND eliminado = 0 " +
+                    "ORDER BY hora_clase DESC LIMIT 1";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, alumnoId);
+            ps.setInt(2, cursoId);
+            ps.setInt(3, turnoId);
+            ps.setDate(4, java.sql.Date.valueOf(fecha));
+            
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getString("estado");
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("❌ Error al obtener estado de asistencia: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    /**
+     * ELIMINAR ASISTENCIA (ELIMINACIÓN LÓGICA)
+     */
+    public boolean eliminarAsistencia(int asistenciaId) {
+        String sql = "UPDATE asistencia SET eliminado = 1, activo = 0, fecha_actualizacion = NOW() " +
+                    "WHERE id = ?";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, asistenciaId);
+            int resultado = ps.executeUpdate();
+            
+            System.out.println("🗑️ Asistencia eliminada lógicamente. ID: " + asistenciaId + 
+                             ", Filas afectadas: " + resultado);
+            return resultado > 0;
+            
+        } catch (SQLException e) {
+            System.out.println("❌ Error al eliminar asistencia: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * OBTENER ESTADÍSTICAS DE ASISTENCIA PARA REPORTES
+     */
+    public Map<String, Object> obtenerEstadisticasAsistencia(int cursoId, int turnoId, 
+                                                             String mes, String anio) {
+        Map<String, Object> estadisticas = new HashMap<>();
+        
+        String sql = "SELECT " +
+                    "COUNT(*) as total_asistencias, " +
+                    "SUM(CASE WHEN estado = 'PRESENTE' THEN 1 ELSE 0 END) as presentes, " +
+                    "SUM(CASE WHEN estado = 'TARDANZA' THEN 1 ELSE 0 END) as tardanzas, " +
+                    "SUM(CASE WHEN estado = 'AUSENTE' THEN 1 ELSE 0 END) as ausentes, " +
+                    "SUM(CASE WHEN estado = 'JUSTIFICADO' THEN 1 ELSE 0 END) as justificados " +
+                    "FROM asistencia " +
+                    "WHERE curso_id = ? " +
+                    "AND turno_id = ? " +
+                    "AND YEAR(fecha) = ? " +
+                    "AND MONTH(fecha) = ? " +
+                    "AND activo = 1 " +
+                    "AND eliminado = 0";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, cursoId);
+            ps.setInt(2, turnoId);
+            ps.setString(3, anio);
+            ps.setString(4, mes);
+            
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                int total = rs.getInt("total_asistencias");
+                int presentes = rs.getInt("presentes");
+                int tardanzas = rs.getInt("tardanzas");
+                int ausentes = rs.getInt("ausentes");
+                int justificados = rs.getInt("justificados");
+                
+                double porcentajeAsistencia = total > 0 
+                    ? ((presentes + tardanzas + justificados) * 100.0) / total 
+                    : 0.0;
+                
+                estadisticas.put("total_asistencias", total);
+                estadisticas.put("presentes", presentes);
+                estadisticas.put("tardanzas", tardanzas);
+                estadisticas.put("ausentes", ausentes);
+                estadisticas.put("justificados", justificados);
+                estadisticas.put("porcentaje_asistencia", porcentajeAsistencia);
+                estadisticas.put("mes", mes);
+                estadisticas.put("anio", anio);
+                estadisticas.put("curso_id", cursoId);
+                estadisticas.put("turno_id", turnoId);
+                
+                System.out.println("📈 Estadísticas obtenidas: " + total + " registros totales");
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("❌ Error al obtener estadísticas: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return estadisticas;
     }
 }

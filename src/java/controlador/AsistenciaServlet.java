@@ -1,6 +1,7 @@
 package controlador;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
@@ -66,6 +67,9 @@ public class AsistenciaServlet extends HttpServlet {
                     break;
                 case "verPadre":
                     verAsistenciasPadreDetalle(request, response);
+                    break;
+                case "verCursoJson":  // NUEVA ACCIÓN: Retorna asistencias en formato JSON
+                    verAsistenciasCursoJson(request, response);
                     break;
                 default:
                     response.sendRedirect("dashboard.jsp");
@@ -136,7 +140,8 @@ public class AsistenciaServlet extends HttpServlet {
             case "docente":
                 // Docente puede ver, verCurso, registrar y registrarGrupal
                 return "ver".equals(accion) || "verCurso".equals(accion) || 
-                       "registrar".equals(accion) || "registrarGrupal".equals(accion);
+                       "registrar".equals(accion) || "registrarGrupal".equals(accion) ||
+                       "verCursoJson".equals(accion); // Agregado para la nueva acción
                 
             case "padre":
                 // Padre solo puede ver y verPadre (sus propias asistencias)
@@ -214,13 +219,15 @@ public class AsistenciaServlet extends HttpServlet {
                 fecha = java.time.LocalDate.now().toString();
             }
 
-            System.out.println("Buscando asistencias para curso: " + cursoId + ", fecha: " + fecha);
+            System.out.println("Buscando asistencias para curso: " + cursoId + ", fecha: " + fecha + ", turno: " + turnoId);
 
             AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
             List<Asistencia> asistencias = asistenciaDAO.obtenerAsistenciasPorCursoTurnoFecha(cursoId, turnoId, fecha);
 
             CursoDAO cursoDAO = new CursoDAO();
             Curso curso = cursoDAO.obtenerPorId(cursoId);
+
+            System.out.println("Asistencias encontradas: " + (asistencias != null ? asistencias.size() : 0));
 
             request.setAttribute("asistencias", asistencias);
             request.setAttribute("cursoId", cursoId);
@@ -236,6 +243,67 @@ public class AsistenciaServlet extends HttpServlet {
         } catch (Exception e) {
             session.setAttribute("error", "Error al cargar asistencias: " + e.getMessage());
             response.sendRedirect("AsistenciaServlet?accion=ver");
+        }
+    }
+
+    /**
+     * NUEVO MÉTODO: RETORNAR ASISTENCIAS EN FORMATO JSON
+     */
+    private void verAsistenciasCursoJson(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        try {
+            int cursoId = Integer.parseInt(request.getParameter("curso_id"));
+            String fecha = request.getParameter("fecha");
+            int turnoId = request.getParameter("turno_id") != null
+                    ? Integer.parseInt(request.getParameter("turno_id")) : 1;
+
+            if (fecha == null) {
+                fecha = java.time.LocalDate.now().toString();
+            }
+
+            System.out.println("Obteniendo asistencias JSON para curso: " + cursoId + ", fecha: " + fecha);
+
+            AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
+            List<Asistencia> asistencias = asistenciaDAO.obtenerAsistenciasPorCursoTurnoFecha(cursoId, turnoId, fecha);
+
+            // Configurar respuesta como JSON
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            
+            PrintWriter out = response.getWriter();
+            StringBuilder json = new StringBuilder();
+            json.append("[");
+            
+            if (asistencias != null && !asistencias.isEmpty()) {
+                for (int i = 0; i < asistencias.size(); i++) {
+                    Asistencia a = asistencias.get(i);
+                    json.append("{");
+                    json.append("\"id\":").append(a.getId()).append(",");
+                    json.append("\"alumnoId\":").append(a.getAlumnoId()).append(",");
+                    json.append("\"alumnoNombre\":\"").append(a.getAlumnoNombre() != null ? a.getAlumnoNombre() : "").append("\",");
+                    json.append("\"alumnoApellidos\":\"").append(a.getAlumnoApellidos() != null ? a.getAlumnoApellidos() : "").append("\",");
+                    json.append("\"estado\":\"").append(a.getEstadoString()).append("\",");
+                    json.append("\"horaClase\":\"").append(a.getHoraClaseFormateada()).append("\",");
+                    json.append("\"observaciones\":\"").append(a.getObservaciones() != null ? a.getObservaciones() : "").append("\",");
+                    json.append("\"fechaRegistro\":\"").append(a.getFechaRegistroFormateada()).append("\"");
+                    json.append("}");
+                    
+                    if (i < asistencias.size() - 1) {
+                        json.append(",");
+                    }
+                }
+            }
+            
+            json.append("]");
+            out.print(json.toString());
+            out.flush();
+            
+            System.out.println("JSON enviado con " + (asistencias != null ? asistencias.size() : 0) + " asistencias");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error al obtener asistencias: " + e.getMessage());
         }
     }
 
@@ -391,6 +459,23 @@ public class AsistenciaServlet extends HttpServlet {
                 }
             }
 
+            // OBTENER ASISTENCIAS EXISTENTES PARA ESTA FECHA, CURSO Y TURNO (si hay parámetros)
+            List<Asistencia> asistenciasExistentes = null;
+            if (cursoSeleccionado != null && fechaParam != null && !fechaParam.isEmpty() && 
+                turnoIdParam != null && !turnoIdParam.isEmpty()) {
+                try {
+                    AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
+                    asistenciasExistentes = asistenciaDAO.obtenerAsistenciasPorCursoTurnoFecha(
+                        cursoSeleccionado.getId(), 
+                        Integer.parseInt(turnoIdParam), 
+                        fechaParam
+                    );
+                    System.out.println("Asistencias existentes encontradas: " + (asistenciasExistentes != null ? asistenciasExistentes.size() : 0));
+                } catch (Exception e) {
+                    System.out.println("Error al obtener asistencias existentes: " + e.getMessage());
+                }
+            }
+
             request.setAttribute("cursos", cursos);
             request.setAttribute("alumnos", alumnos);
             request.setAttribute("cursoIdParam", cursoIdParam);
@@ -398,6 +483,7 @@ public class AsistenciaServlet extends HttpServlet {
             request.setAttribute("turnoIdParam", turnoIdParam);
             request.setAttribute("horaClaseParam", horaClaseParam);
             request.setAttribute("cursoSeleccionado", cursoSeleccionado);
+            request.setAttribute("asistenciasExistentes", asistenciasExistentes);
 
             request.getRequestDispatcher("registrarAsistencia.jsp").forward(request, response);
 
@@ -570,10 +656,13 @@ public class AsistenciaServlet extends HttpServlet {
 
             if (resultado) {
                 session.setAttribute("mensaje", "Asistencias grupales registradas correctamente");
+                System.out.println("✅ Asistencias guardadas correctamente para curso: " + cursoId + ", fecha: " + fechaStr);
             } else {
                 session.setAttribute("error", "Error al registrar las asistencias grupales");
+                System.out.println("❌ Error al guardar asistencias para curso: " + cursoId + ", fecha: " + fechaStr);
             }
 
+            // Redirigir a la vista de asistencias del curso
             response.sendRedirect("AsistenciaServlet?accion=verCurso&curso_id=" + cursoId + "&fecha=" + fechaStr + "&turno_id=" + turnoId);
 
         } catch (java.time.format.DateTimeParseException e) {

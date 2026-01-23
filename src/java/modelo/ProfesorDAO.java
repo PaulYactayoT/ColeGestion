@@ -1,371 +1,696 @@
 package modelo;
 
 import conexion.Conexion;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProfesorDAO {
 
     /**
-     * Obtener profesor por username - METODO PRINCIPAL PARA LOGIN
+     * LISTAR TODOS LOS PROFESORES ACTIVOS
+     */
+    public List<Profesor> listar() {
+        
+        List<Profesor> lista = new ArrayList<>();
+        String sql = "SELECT " +
+                    "    prof.id, " +
+                    "    prof.persona_id, " +
+                    "    p.nombres, " +
+                    "    p.apellidos, " +
+                    "    p.correo, " +
+                    "    p.telefono, " +
+                    "    p.dni, " +
+                    "    p.fecha_nacimiento, " +
+                    "    p.direccion, " +
+                    "    prof.especialidad, " +
+                    "    prof.codigo_profesor, " +
+                    "    prof.fecha_contratacion, " +
+                    "    prof.estado, " +
+                    "    u.username " +
+                    "FROM profesor prof " +
+                    "JOIN persona p ON prof.persona_id = p.id " +
+                    "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
+                    "WHERE prof.eliminado = 0 AND prof.activo = 1 " +
+                    "ORDER BY p.apellidos, p.nombres";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            // Agrega esto temporalmente en tu ProfesorDAO.listar()
+System.out.println("Conectando a BD...");
+
+System.out.println("Conexión exitosa: " + (con != null));
+            while (rs.next()) {
+                Profesor p = mapearResultSet(rs);
+                lista.add(p);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("❌ ERROR en listar profesores: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return lista;
+        
+    }
+
+    /**
+     * MÉTODO AUXILIAR PARA MAPEAR RESULT SET
+     */
+    private Profesor mapearResultSet(ResultSet rs) throws SQLException {
+        Profesor p = new Profesor();
+        
+        p.setId(rs.getInt("id"));
+        p.setPersonaId(rs.getInt("persona_id"));
+        p.setNombres(rs.getString("nombres"));
+        p.setApellidos(rs.getString("apellidos"));
+        p.setCorreo(rs.getString("correo"));
+        p.setTelefono(rs.getString("telefono"));
+        p.setDni(rs.getString("dni"));
+        p.setDireccion(rs.getString("direccion"));
+        
+        java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
+        if (fechaNac != null) {
+            p.setFechaNacimiento(fechaNac);
+        }
+        
+        p.setEspecialidad(rs.getString("especialidad"));
+        p.setCodigoProfesor(rs.getString("codigo_profesor"));
+        
+        java.sql.Date fechaCont = rs.getDate("fecha_contratacion");
+        if (fechaCont != null) {
+            p.setFechaContratacion(fechaCont);
+        }
+        
+        p.setEstado(rs.getString("estado"));
+        p.setUsername(rs.getString("username"));
+        
+        return p;
+    }
+
+    /**
+     * OBTENER PROFESOR POR ID
+     */
+    public Profesor obtenerPorId(int id) {
+        String sql = "SELECT " +
+                    "    prof.id, " +
+                    "    prof.persona_id, " +
+                    "    p.nombres, " +
+                    "    p.apellidos, " +
+                    "    p.correo, " +
+                    "    p.telefono, " +
+                    "    p.dni, " +
+                    "    p.fecha_nacimiento, " +
+                    "    p.direccion, " +
+                    "    prof.especialidad, " +
+                    "    prof.codigo_profesor, " +
+                    "    prof.fecha_contratacion, " +
+                    "    prof.estado, " +
+                    "    u.username " +
+                    "FROM profesor prof " +
+                    "JOIN persona p ON prof.persona_id = p.id " +
+                    "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
+                    "WHERE prof.id = ? AND prof.eliminado = 0";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return mapearResultSet(rs);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("❌ ERROR en obtenerPorId: " + e.getMessage());
+        }
+        
+        return null;
+    }
+
+    /**
+     * CREAR NUEVO PROFESOR
+     */
+    public boolean crear(Profesor profesor) {
+        Connection conn = null;
+        PreparedStatement psPersona = null;
+        PreparedStatement psProfesor = null;
+        PreparedStatement psUsuario = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = Conexion.getConnection();
+            conn.setAutoCommit(false);
+            
+            // 1. Insertar en persona
+            String sqlPersona = "INSERT INTO persona (nombres, apellidos, correo, telefono, dni, " +
+                               "fecha_nacimiento, direccion, tipo, activo) " +
+                               "VALUES (?, ?, ?, ?, ?, ?, ?, 'PROFESOR', 1)";
+            
+            psPersona = conn.prepareStatement(sqlPersona, Statement.RETURN_GENERATED_KEYS);
+            psPersona.setString(1, profesor.getNombres());
+            psPersona.setString(2, profesor.getApellidos());
+            psPersona.setString(3, profesor.getCorreo());
+            psPersona.setString(4, profesor.getTelefono());
+            psPersona.setString(5, profesor.getDni());
+            
+            if (profesor.getFechaNacimiento() != null) {
+                psPersona.setDate(6, new java.sql.Date(profesor.getFechaNacimiento().getTime()));
+            } else {
+                psPersona.setNull(6, Types.DATE);
+            }
+            
+            psPersona.setString(7, profesor.getDireccion());
+            
+            if (psPersona.executeUpdate() == 0) {
+                throw new SQLException("No se pudo insertar en persona");
+            }
+            
+            int personaId;
+            rs = psPersona.getGeneratedKeys();
+            if (rs.next()) {
+                personaId = rs.getInt(1);
+                profesor.setPersonaId(personaId);
+            } else {
+                throw new SQLException("No se pudo obtener el ID de persona");
+            }
+            rs.close();
+            
+            // 2. Insertar en profesor
+            String sqlProfesor = "INSERT INTO profesor (persona_id, especialidad, codigo_profesor, " +
+                                "fecha_contratacion, estado, activo) " +
+                                "VALUES (?, ?, ?, ?, ?, 1)";
+            
+            psProfesor = conn.prepareStatement(sqlProfesor, Statement.RETURN_GENERATED_KEYS);
+            psProfesor.setInt(1, personaId);
+            psProfesor.setString(2, profesor.getEspecialidad());
+            
+            String codigoProfesor = profesor.getCodigoProfesor();
+            if (codigoProfesor == null || codigoProfesor.isEmpty()) {
+                codigoProfesor = generarCodigoProfesor();
+                profesor.setCodigoProfesor(codigoProfesor);
+            }
+            psProfesor.setString(3, codigoProfesor);
+            
+            if (profesor.getFechaContratacion() != null) {
+                psProfesor.setDate(4, new java.sql.Date(profesor.getFechaContratacion().getTime()));
+            } else {
+                psProfesor.setDate(4, new java.sql.Date(System.currentTimeMillis()));
+            }
+            
+            String estado = profesor.getEstado();
+            if (estado == null || estado.isEmpty()) {
+                estado = "ACTIVO";
+                profesor.setEstado(estado);
+            }
+            psProfesor.setString(5, estado);
+            
+            if (psProfesor.executeUpdate() == 0) {
+                throw new SQLException("No se pudo insertar en profesor");
+            }
+            
+            rs = psProfesor.getGeneratedKeys();
+            if (rs.next()) {
+                profesor.setId(rs.getInt(1));
+            }
+            rs.close();
+            
+            // 3. Insertar en usuario
+            String sqlUsuario = "INSERT INTO usuario (persona_id, username, password, rol, activo) " +
+                               "VALUES (?, ?, ?, 'docente', 1)";
+            
+            psUsuario = conn.prepareStatement(sqlUsuario);
+            psUsuario.setInt(1, personaId);
+            
+            String username = profesor.getUsername();
+            if (username == null || username.isEmpty()) {
+                if (profesor.getCorreo() != null && !profesor.getCorreo().isEmpty()) {
+                    username = profesor.getCorreo().split("@")[0];
+                } else {
+                    username = (profesor.getNombres().charAt(0) + profesor.getApellidos().split(" ")[0]).toLowerCase();
+                    username = username.replaceAll("[^a-z0-9]", "");
+                }
+                profesor.setUsername(username);
+            }
+            psUsuario.setString(2, username);
+            
+            String password;
+            if (profesor.getPassword() != null && !profesor.getPassword().isEmpty()) {
+                password = profesor.getPassword();
+            } else {
+                password = profesor.getDni() != null ? profesor.getDni() : "123456";
+            }
+            psUsuario.setString(3, encriptarSHA256(password));
+            
+            if (psUsuario.executeUpdate() == 0) {
+                throw new SQLException("No se pudo insertar en usuario");
+            }
+            
+            conn.commit();
+            System.out.println("✅ Profesor creado: " + profesor.getNombreCompleto());
+            return true;
+            
+        } catch (SQLException e) {
+            System.err.println("❌ ERROR SQL al crear profesor: " + e.getMessage());
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            System.err.println("❌ ERROR general: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (psPersona != null) psPersona.close();
+                if (psProfesor != null) psProfesor.close();
+                if (psUsuario != null) psUsuario.close();
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                System.err.println("❌ Error cerrando recursos: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * GENERAR CÓDIGO DE PROFESOR ÚNICO
+     */
+    private String generarCodigoProfesor() {
+        String codigo;
+        int intentos = 0;
+        
+        do {
+            intentos++;
+            int random = (int) (Math.random() * 10000);
+            codigo = "PROF-" + String.format("%04d", random);
+            
+            if (intentos > 10) {
+                codigo = "PROF-" + (System.currentTimeMillis() % 10000);
+                break;
+            }
+        } while (existeCodigoProfesor(codigo));
+        
+        return codigo;
+    }
+
+    /**
+     * VERIFICAR SI EL CÓDIGO DE PROFESOR YA EXISTE
+     */
+    private boolean existeCodigoProfesor(String codigo) {
+        String sql = "SELECT COUNT(*) as total FROM profesor WHERE codigo_profesor = ?";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, codigo);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt("total") > 0;
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error verificando código: " + e.getMessage());
+        }
+        
+        return false;
+    }
+
+    /**
+     * ENCRIPTAR SHA-256
+     */
+    private String encriptarSHA256(String password) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes("UTF-8"));
+            StringBuilder hex = new StringBuilder();
+            
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            
+            return hex.toString();
+        } catch (Exception e) {
+            System.err.println("❌ Error encriptando: " + e.getMessage());
+            return password;
+        }
+    }
+
+    /**
+     * OBTENER PROFESOR POR USERNAME (Para login) - MÉTODO CORREGIDO
      */
     public Profesor obtenerPorUsername(String username) {
         Profesor profesor = null;
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        
-        try {
-            conn = Conexion.getConnection();
+        String sql = "SELECT " +
+                    "    u.username, " +
+                    "    u.rol, " +
+                    "    p.id as persona_id, " +
+                    "    p.nombres, " +
+                    "    p.apellidos, " +
+                    "    p.correo, " +
+                    "    p.telefono, " +
+                    "    p.dni, " +
+                    "    p.fecha_nacimiento, " +
+                    "    p.direccion, " +
+                    "    pr.id as profesor_id, " +
+                    "    pr.especialidad, " +
+                    "    pr.codigo_profesor, " +
+                    "    pr.fecha_contratacion, " +
+                    "    pr.estado " +
+                    "FROM usuario u " +
+                    "INNER JOIN persona p ON u.persona_id = p.id " +
+                    "INNER JOIN profesor pr ON p.id = pr.persona_id " +
+                    "WHERE u.username = ? " +
+                    "AND u.rol = 'docente' " +
+                    "AND u.activo = 1 " +
+                    "AND u.eliminado = 0 " +
+                    "AND pr.activo = 1 " +
+                    "AND pr.eliminado = 0";
+
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             
-            // Consulta directa - mas confiable que el stored procedure
-            String sql = "SELECT " +
-                        "    prof.id, " +
-                        "    p.nombres, " +
-                        "    p.apellidos, " +
-                        "    p.correo, " +
-                        "    prof.especialidad, " +
-                        "    prof.codigo_profesor, " +
-                        "    prof.fecha_contratacion, " +
-                        "    prof.estado " +
-                        "FROM usuario u " +
-                        "INNER JOIN persona p ON u.persona_id = p.id " +
-                        "INNER JOIN profesor prof ON p.id = prof.persona_id " +
-                        "WHERE u.username = ? " +
-                        "  AND u.rol = 'docente' " +
-                        "  AND u.activo = 1";
+            ps.setString(1, username);
+            System.out.println("🔍 Buscando profesor con username: " + username);
             
-            pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, username);
-            
-            System.out.println("═══════════════════════════════════════");
-            System.out.println("🔍 Buscando profesor: " + username);
-            
-            rs = pstmt.executeQuery();
+            ResultSet rs = ps.executeQuery();
             
             if (rs.next()) {
                 profesor = new Profesor();
                 
-                int id = rs.getInt("id");
-                String nombres = rs.getString("nombres");
-                String apellidos = rs.getString("apellidos");
-                String correo = rs.getString("correo");
-                String especialidad = rs.getString("especialidad");
-                String codigoProfesor = rs.getString("codigo_profesor");
-                String estado = rs.getString("estado");
+                // Datos de usuario
+                profesor.setUsername(rs.getString("username"));
+                profesor.setRol(rs.getString("rol"));
                 
-                profesor.setId(id);
-                profesor.setNombres(nombres);
-                profesor.setApellidos(apellidos);
-                profesor.setCorreo(correo);
-                profesor.setEspecialidad(especialidad);
-                profesor.setCodigoProfesor(codigoProfesor);
-                profesor.setEstado(estado);
+                // Datos de persona
+                profesor.setPersonaId(rs.getInt("persona_id"));
+                profesor.setNombres(rs.getString("nombres"));
+                profesor.setApellidos(rs.getString("apellidos"));
+                profesor.setCorreo(rs.getString("correo"));
+                profesor.setTelefono(rs.getString("telefono"));
+                profesor.setDni(rs.getString("dni"));
+                profesor.setFechaNacimiento(rs.getDate("fecha_nacimiento"));
+                profesor.setDireccion(rs.getString("direccion"));
                 
-                // Manejar fecha que puede ser NULL
-                try {
-                    Date fechaContratacion = rs.getDate("fecha_contratacion");
-                    if (fechaContratacion != null && !rs.wasNull()) {
-                        profesor.setFechaContratacion(fechaContratacion);
-                    }
-                } catch (SQLException e) {
-                    System.out.println("⚠️ Fecha contratacion NULL o invalida - continuando...");
-                }
+                // Datos de profesor
+                profesor.setId(rs.getInt("profesor_id"));
+                profesor.setEspecialidad(rs.getString("especialidad"));
+                profesor.setCodigoProfesor(rs.getString("codigo_profesor"));
+                profesor.setFechaContratacion(rs.getDate("fecha_contratacion"));
+                profesor.setEstado(rs.getString("estado"));
                 
-                System.out.println("✅ PROFESOR ENCONTRADO:");
-                System.out.println("   ID: " + id);
-                System.out.println("   Nombre: " + nombres + " " + apellidos);
-                System.out.println("   Email: " + correo);
-                System.out.println("   Codigo: " + codigoProfesor);
-                System.out.println("   Especialidad: " + especialidad);
-                System.out.println("   Estado: " + estado);
-                System.out.println("═══════════════════════════════════════");
-                
+                System.out.println("✅ Profesor encontrado: " + profesor.getNombreCompleto());
             } else {
-                System.out.println("❌ NO SE ENCONTRO PROFESOR");
-                System.out.println("═══════════════════════════════════════");
+                System.out.println("⚠️ Profesor no encontrado con username: " + username);
                 
-                // Diagnostico detallado
-                realizarDiagnostico(conn, username);
+                // DEBUG: Mostrar qué usuarios sí existen
+                String debugSql = "SELECT username, rol, persona_id FROM usuario WHERE username LIKE ?";
+                try (PreparedStatement debugPs = conn.prepareStatement(debugSql)) {
+                    debugPs.setString(1, "%" + username + "%");
+                    ResultSet debugRs = debugPs.executeQuery();
+                    while (debugRs.next()) {
+                        System.out.println("  🔍 Usuario similar: " + debugRs.getString("username") + 
+                                         " (rol: " + debugRs.getString("rol") + 
+                                         ", persona_id: " + debugRs.getInt("persona_id") + ")");
+                    }
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("═══════════════════════════════════════");
-            System.err.println("❌ ERROR SQL en obtenerPorUsername");
-            System.err.println("   Username: " + username);
-            System.err.println("   SQLState: " + e.getSQLState());
-            System.err.println("   Error Code: " + e.getErrorCode());
-            System.err.println("   Mensaje: " + e.getMessage());
-            System.err.println("═══════════════════════════════════════");
+            System.err.println("❌ ERROR SQL en obtenerPorUsername: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            cerrarRecursos(rs, pstmt, conn);
         }
         
         return profesor;
     }
 
     /**
-     * Diagnostico cuando no se encuentra el profesor
+     * ACTUALIZAR PROFESOR
      */
-    private void realizarDiagnostico(Connection conn, String username) {
-        PreparedStatement pstmtDiag = null;
-        ResultSet rsDiag = null;
+    public boolean actualizar(Profesor profesor) {
+        Connection conn = null;
+        PreparedStatement psPersona = null;
+        PreparedStatement psProfesor = null;
+        PreparedStatement psUsuario = null;
         
         try {
-            String sqlDiag = "SELECT " +
-                            "    u.id as usuario_id, " +
-                            "    u.username, " +
-                            "    u.rol, " +
-                            "    u.activo, " +
-                            "    u.persona_id, " +
-                            "    p.id as persona_existe, " +
-                            "    p.nombres, " +
-                            "    p.tipo, " +
-                            "    prof.id as profesor_id " +
-                            "FROM usuario u " +
-                            "LEFT JOIN persona p ON u.persona_id = p.id " +
-                            "LEFT JOIN profesor prof ON p.id = prof.persona_id " +
-                            "WHERE u.username = ?";
+            conn = Conexion.getConnection();
+            conn.setAutoCommit(false);
             
-            pstmtDiag = conn.prepareStatement(sqlDiag);
-            pstmtDiag.setString(1, username);
-            rsDiag = pstmtDiag.executeQuery();
-            
-            if (rsDiag.next()) {
-                System.out.println("📊 DIAGNOSTICO DETALLADO:");
-                System.out.println("   Usuario ID: " + rsDiag.getInt("usuario_id"));
-                System.out.println("   Username: " + rsDiag.getString("username"));
-                System.out.println("   Rol: " + rsDiag.getString("rol"));
-                System.out.println("   Activo: " + rsDiag.getBoolean("activo"));
-                System.out.println("   Persona ID: " + rsDiag.getInt("persona_id"));
-                
-                Object personaExiste = rsDiag.getObject("persona_existe");
-                Object profesorId = rsDiag.getObject("profesor_id");
-                
-                System.out.println("   Persona existe: " + (personaExiste != null ? "SI" : "NO"));
-                if (personaExiste != null) {
-                    System.out.println("   Nombres: " + rsDiag.getString("nombres"));
-                    System.out.println("   Tipo: " + rsDiag.getString("tipo"));
-                }
-                System.out.println("   Profesor existe: " + (profesorId != null ? "SI (ID: " + profesorId + ")" : "NO"));
-                
-                if (profesorId == null) {
-                    System.out.println("");
-                    System.out.println("PROBLEMA DETECTADO:");
-                    System.out.println("   El usuario existe pero NO tiene registro en tabla 'profesor'");
-                }
-            } else {
-                System.out.println("Usuario '" + username + "' NO EXISTE en la base de datos");
+            int personaId = obtenerPersonaIdPorProfesorId(profesor.getId());
+            if (personaId == 0) {
+                throw new SQLException("No se encontró la persona asociada al profesor");
             }
             
+            // 1. Actualizar tabla persona
+            String sqlPersona = "UPDATE persona SET nombres = ?, apellidos = ?, correo = ?, " +
+                               "telefono = ?, dni = ?, fecha_nacimiento = ?, direccion = ? WHERE id = ?";
+            
+            psPersona = conn.prepareStatement(sqlPersona);
+            psPersona.setString(1, profesor.getNombres());
+            psPersona.setString(2, profesor.getApellidos());
+            psPersona.setString(3, profesor.getCorreo());
+            psPersona.setString(4, profesor.getTelefono());
+            psPersona.setString(5, profesor.getDni());
+            
+            if (profesor.getFechaNacimiento() != null) {
+                psPersona.setDate(6, new java.sql.Date(profesor.getFechaNacimiento().getTime()));
+            } else {
+                psPersona.setNull(6, Types.DATE);
+            }
+            
+            psPersona.setString(7, profesor.getDireccion());
+            psPersona.setInt(8, personaId);
+            psPersona.executeUpdate();
+            
+            // 2. Actualizar tabla profesor
+            String sqlProfesor = "UPDATE profesor SET especialidad = ?, codigo_profesor = ?, " +
+                                "fecha_contratacion = ?, estado = ? WHERE id = ?";
+            
+            psProfesor = conn.prepareStatement(sqlProfesor);
+            psProfesor.setString(1, profesor.getEspecialidad());
+            psProfesor.setString(2, profesor.getCodigoProfesor());
+            
+            if (profesor.getFechaContratacion() != null) {
+                psProfesor.setDate(3, new java.sql.Date(profesor.getFechaContratacion().getTime()));
+            } else {
+                psProfesor.setNull(3, Types.DATE);
+            }
+            
+            psProfesor.setString(4, profesor.getEstado());
+            psProfesor.setInt(5, profesor.getId());
+            psProfesor.executeUpdate();
+            
+            // 3. Actualizar tabla usuario (solo si se proporciona username o password)
+            if ((profesor.getUsername() != null && !profesor.getUsername().isEmpty()) ||
+                (profesor.getPassword() != null && !profesor.getPassword().isEmpty())) {
+                
+                StringBuilder sqlUsuario = new StringBuilder("UPDATE usuario SET ");
+                List<Object> params = new ArrayList<>();
+                
+                if (profesor.getUsername() != null && !profesor.getUsername().isEmpty()) {
+                    sqlUsuario.append("username = ?, ");
+                    params.add(profesor.getUsername());
+                }
+                
+                if (profesor.getPassword() != null && !profesor.getPassword().isEmpty()) {
+                    sqlUsuario.append("password = ?, ");
+                    params.add(encriptarSHA256(profesor.getPassword()));
+                }
+                
+                sqlUsuario.setLength(sqlUsuario.length() - 2);
+                sqlUsuario.append(" WHERE persona_id = ? AND rol = 'docente'");
+                params.add(personaId);
+                
+                psUsuario = conn.prepareStatement(sqlUsuario.toString());
+                for (int i = 0; i < params.size(); i++) {
+                    psUsuario.setObject(i + 1, params.get(i));
+                }
+                psUsuario.executeUpdate();
+            }
+            
+            conn.commit();
+            System.out.println("✅ Profesor actualizado: " + profesor.getNombreCompleto());
+            return true;
+            
         } catch (SQLException e) {
-            System.err.println("Error en diagnostico: " + e.getMessage());
+            System.err.println("❌ ERROR SQL al actualizar profesor: " + e.getMessage());
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
+                }
+            }
+            return false;
         } finally {
             try {
-                if (rsDiag != null) rsDiag.close();
-                if (pstmtDiag != null) pstmtDiag.close();
+                if (psPersona != null) psPersona.close();
+                if (psProfesor != null) psProfesor.close();
+                if (psUsuario != null) psUsuario.close();
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
             } catch (SQLException e) {
-                System.err.println("Error cerrando recursos de diagnostico: " + e.getMessage());
+                System.err.println("❌ Error cerrando recursos: " + e.getMessage());
             }
         }
     }
 
     /**
-     * Cerrar recursos de base de datos
+     * OBTENER PERSONA_ID POR PROFESOR_ID
      */
-    private void cerrarRecursos(ResultSet rs, PreparedStatement pstmt, Connection conn) {
-        try {
-            if (rs != null) rs.close();
-            if (pstmt != null) pstmt.close();
-            if (conn != null) conn.close();
-        } catch (SQLException e) {
-            System.err.println("Error cerrando recursos: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Obtener profesor por ID
-     */
-    public Profesor obtenerPorId(int id) {
-        Profesor profesor = null;
-        Connection conn = null;
-        CallableStatement cstmt = null;
-        ResultSet rs = null;
+    private int obtenerPersonaIdPorProfesorId(int profesorId) {
+        String sql = "SELECT persona_id FROM profesor WHERE id = ?";
         
-        try {
-            conn = Conexion.getConnection();
-            cstmt = conn.prepareCall("{CALL obtener_profesor_por_id(?)}");
-            cstmt.setInt(1, id);
-            rs = cstmt.executeQuery();
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, profesorId);
+            ResultSet rs = ps.executeQuery();
             
             if (rs.next()) {
-                profesor = new Profesor();
-                profesor.setId(rs.getInt("id"));
-                profesor.setNombres(rs.getString("nombres"));
-                profesor.setApellidos(rs.getString("apellidos"));
-                profesor.setCorreo(rs.getString("correo"));
-                profesor.setEspecialidad(rs.getString("especialidad"));
-                profesor.setCodigoProfesor(rs.getString("codigo_profesor"));
-                
-                Date fechaContratacion = rs.getDate("fecha_contratacion");
-                if (fechaContratacion != null) {
-                    profesor.setFechaContratacion(fechaContratacion);
-                }
-                
-                profesor.setEstado(rs.getString("estado"));
+                return rs.getInt("persona_id");
             }
             
-        } catch (SQLException e) {
-            System.err.println("Error en obtenerPorId: " + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            cerrarRecursos(rs, cstmt, conn);
+        } catch (Exception e) {
+            System.err.println("❌ Error al obtener persona_id: " + e.getMessage());
         }
         
-        return profesor;
+        return 0;
     }
 
-    /**
-     * Listar todos los profesores
-     */
-    public List<Profesor> listar() {
-        List<Profesor> profesores = new ArrayList<>();
+    public boolean eliminar(int id) {
         Connection conn = null;
-        CallableStatement cstmt = null;
-        ResultSet rs = null;
+        PreparedStatement psProfesor = null;
+        PreparedStatement psPersona = null;
+        PreparedStatement psUsuario = null;
         
         try {
             conn = Conexion.getConnection();
-            cstmt = conn.prepareCall("{CALL obtener_profesores()}");
-            rs = cstmt.executeQuery();
+            conn.setAutoCommit(false);
             
-            while (rs.next()) {
-                Profesor profesor = new Profesor();
-                profesor.setId(rs.getInt("id"));
-                profesor.setNombres(rs.getString("nombres"));
-                profesor.setApellidos(rs.getString("apellidos"));
-                profesor.setCorreo(rs.getString("correo"));
-                profesor.setEspecialidad(rs.getString("especialidad"));
-                profesor.setCodigoProfesor(rs.getString("codigo_profesor"));
-                
-                Date fechaContratacion = rs.getDate("fecha_contratacion");
-                if (fechaContratacion != null) {
-                    profesor.setFechaContratacion(fechaContratacion);
+            int personaId = obtenerPersonaIdPorProfesorId(id);
+            if (personaId == 0) {
+                throw new SQLException("No se encontró la persona asociada al profesor");
+            }
+            
+            psProfesor = conn.prepareStatement("UPDATE profesor SET activo = 0, eliminado = 1 WHERE id = ?");
+            psProfesor.setInt(1, id);
+            psProfesor.executeUpdate();
+            
+            psPersona = conn.prepareStatement("UPDATE persona SET activo = 0, eliminado = 1 WHERE id = ?");
+            psPersona.setInt(1, personaId);
+            psPersona.executeUpdate();
+            
+            psUsuario = conn.prepareStatement("UPDATE usuario SET activo = 0, eliminado = 1 WHERE persona_id = ? AND rol = 'docente'");
+            psUsuario.setInt(1, personaId);
+            psUsuario.executeUpdate();
+            
+            conn.commit();
+            System.out.println("✅ Profesor eliminado con ID: " + id);
+            return true;
+            
+        } catch (SQLException e) {
+            System.err.println("❌ ERROR SQL al eliminar profesor: " + e.getMessage());
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
                 }
-                
-                profesor.setEstado(rs.getString("estado"));
-                
+            }
+            return false;
+        } finally {
+            try {
+                if (psProfesor != null) psProfesor.close();
+                if (psPersona != null) psPersona.close();
+                if (psUsuario != null) psUsuario.close();
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                System.err.println("❌ Error cerrando recursos: " + e.getMessage());
+            }
+        }
+    }
+
+    public List<Profesor> buscar(String criterio) {
+        List<Profesor> profesores = new ArrayList<>();
+        String sql = "SELECT " +
+                    "    prof.id, " +
+                    "    prof.persona_id, " +
+                    "    p.nombres, " +
+                    "    p.apellidos, " +
+                    "    p.correo, " +
+                    "    p.telefono, " +
+                    "    p.dni, " +
+                    "    p.fecha_nacimiento, " +
+                    "    p.direccion, " +
+                    "    prof.especialidad, " +
+                    "    prof.codigo_profesor, " +
+                    "    prof.fecha_contratacion, " +
+                    "    prof.estado, " +
+                    "    u.username " +
+                    "FROM profesor prof " +
+                    "JOIN persona p ON prof.persona_id = p.id " +
+                    "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
+                    "WHERE (p.nombres LIKE ? OR p.apellidos LIKE ? OR " +
+                    "CONCAT(p.nombres, ' ', p.apellidos) LIKE ? OR " +
+                    "prof.especialidad LIKE ? OR prof.codigo_profesor LIKE ?) " +
+                    "AND prof.eliminado = 0 AND prof.activo = 1 " +
+                    "ORDER BY p.apellidos, p.nombres";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
+            
+            String patron = "%" + criterio + "%";
+            pstmt.setString(1, patron);
+            pstmt.setString(2, patron);
+            pstmt.setString(3, patron);
+            pstmt.setString(4, patron);
+            pstmt.setString(5, patron);
+            
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Profesor profesor = mapearResultSet(rs);
                 profesores.add(profesor);
             }
             
         } catch (SQLException e) {
-            System.err.println("Error en listar: " + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            cerrarRecursos(rs, cstmt, conn);
+            System.err.println("❌ Error en buscar: " + e.getMessage());
         }
         
         return profesores;
     }
 
-    /**
-     * Crear nuevo profesor
-     */
-    public boolean crear(Profesor profesor) {
-        Connection conn = null;
-        CallableStatement cstmt = null;
+    public int contar() {
+        int total = 0;
+        String sql = "SELECT COUNT(*) as total FROM profesor WHERE activo = 1 AND eliminado = 0";
         
-        try {
-            conn = Conexion.getConnection();
-            cstmt = conn.prepareCall("{CALL crear_profesor(?, ?, ?, ?)}");
-            cstmt.setString(1, profesor.getNombres());
-            cstmt.setString(2, profesor.getApellidos());
-            cstmt.setString(3, profesor.getCorreo());
-            cstmt.setString(4, profesor.getEspecialidad());
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
             
-            cstmt.execute();
-            return true;
+            if (rs.next()) {
+                total = rs.getInt("total");
+            }
             
         } catch (SQLException e) {
-            System.err.println("Error en crear: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } finally {
-            try {
-                if (cstmt != null) cstmt.close();
-                if (conn != null) conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            System.err.println("❌ Error en contar: " + e.getMessage());
         }
-    }
-
-    /**
-     * Actualizar profesor
-     */
-    public boolean actualizar(Profesor profesor) {
-        Connection conn = null;
-        CallableStatement cstmt = null;
         
-        try {
-            conn = Conexion.getConnection();
-            cstmt = conn.prepareCall("{CALL actualizar_profesor(?, ?, ?, ?, ?)}");
-            cstmt.setInt(1, profesor.getId());
-            cstmt.setString(2, profesor.getNombres());
-            cstmt.setString(3, profesor.getApellidos());
-            cstmt.setString(4, profesor.getCorreo());
-            cstmt.setString(5, profesor.getEspecialidad());
-            
-            cstmt.execute();
-            return true;
-            
-        } catch (SQLException e) {
-            System.err.println("Error en actualizar: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } finally {
-            try {
-                if (cstmt != null) cstmt.close();
-                if (conn != null) conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Eliminar profesor
-     */
-    public boolean eliminar(int id) {
-        Connection conn = null;
-        CallableStatement cstmt = null;
-        
-        try {
-            conn = Conexion.getConnection();
-            cstmt = conn.prepareCall("{CALL eliminar_profesor(?)}");
-            cstmt.setInt(1, id);
-            
-            cstmt.execute();
-            return true;
-            
-        } catch (SQLException e) {
-            System.err.println("Error en eliminar: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } finally {
-            try {
-                if (cstmt != null) cstmt.close();
-                if (conn != null) conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
+        return total;
     }
 }

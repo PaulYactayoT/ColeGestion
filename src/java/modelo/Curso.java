@@ -9,6 +9,7 @@ public class Curso {
     private int creditos;
     private int horasSemanales;
     private String area;
+    private String descripcion; // NUEVO: Campo descripción
     private String ciclo;
     private Date fechaInicio;
     private Date fechaFin;
@@ -30,6 +31,7 @@ public class Curso {
         this.totalHorarios = 0;
         this.cantidadAlumnos = 0;
         this.cantidadTareas = 0;
+        this.descripcion = ""; // Inicializar como vacío
     }
     
     // Getters y Setters
@@ -47,6 +49,10 @@ public class Curso {
     
     public String getArea() { return area; }
     public void setArea(String area) { this.area = area; }
+    
+    // NUEVO: Getter y Setter para descripción
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
     
     public String getCiclo() { return ciclo; }
     public void setCiclo(String ciclo) { this.ciclo = ciclo; }

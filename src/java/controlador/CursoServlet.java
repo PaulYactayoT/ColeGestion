@@ -123,7 +123,9 @@ public class CursoServlet extends HttpServlet {
         if (accion.equals("editar")) {
             try {
                 int idEditar = Integer.parseInt(request.getParameter("id"));
-                Curso c = dao.obtenerPorId(idEditar);
+                
+                // Usar el nuevo método que trae todos los campos incluida la descripción
+                Curso c = dao.obtenerCursoCompletoPorId(idEditar);
                 
                 if (c == null) {
                     System.out.println("ERROR: Curso no encontrado con ID: " + idEditar);
@@ -275,6 +277,12 @@ public class CursoServlet extends HttpServlet {
         String area = request.getParameter("area");
         if (area != null && !area.isEmpty()) {
             c.setArea(area);
+        }
+
+        // NUEVO: Capturar descripción
+        String descripcion = request.getParameter("descripcion");
+        if (descripcion != null && !descripcion.isEmpty()) {
+            c.setDescripcion(descripcion);
         }
 
         // Validar nombre del curso

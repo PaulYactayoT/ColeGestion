@@ -5,23 +5,19 @@
     Profesor docente = (Profesor) session.getAttribute("docente");
     List<Curso> cursos = (List<Curso>) request.getAttribute("misCursos");
 
-    // Verificar si el docente está en sesión
     if (docente == null) {
         response.sendRedirect("index.jsp");
         return;
     }
 
-    // Si no hay cursos cargados, redirigir al servlet para cargarlos
     if (cursos == null) {
         response.sendRedirect("DocenteDashboardServlet");
         return;
     }
 
-    // Obtener estadísticas de asistencias para cada curso
     AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
     Map<Integer, Map<String, Object>> estadisticasCursos = new HashMap<>();
 
-    // Por ahora datos de ejemplo - en producción conectar con BD
     if (cursos != null && !cursos.isEmpty()) {
         for (Curso curso : cursos) {
             Map<String, Object> stats = new HashMap<>();
@@ -29,12 +25,10 @@
             stats.put("presentesHoy", 22);
             stats.put("ausentesHoy", 3);
             stats.put("porcentajeAsistencia", 88.0);
-
             estadisticasCursos.put(curso.getId(), stats);
         }
     }
 
-    // Manejar mensajes de éxito o error
     String mensaje = (String) session.getAttribute("mensaje");
     String error = (String) session.getAttribute("error");
 
@@ -114,7 +108,6 @@
                 border-radius: 10px;
             }
             
-            /* Estilos armonizados para botones */
             .btn-dashboard {
                 padding: 0.6rem 1rem;
                 border: none;
@@ -195,6 +188,17 @@
             .btn-light-dashboard:hover {
                 background: linear-gradient(135deg, #e9ecef, #f8f9fa);
                 color: #212529;
+            }
+            
+            /* Nuevo estilo para botón de Material de Apoyo */
+            .btn-purple-dashboard {
+                background: linear-gradient(135deg, #6f42c1, #563d7c);
+                color: white;
+            }
+            
+            .btn-purple-dashboard:hover {
+                background: linear-gradient(135deg, #563d7c, #6f42c1);
+                color: white;
             }
             
             .stats-card {
@@ -288,6 +292,11 @@
                         <div class="col-md-4">
                             <a href="JustificacionServlet?accion=pending" class="btn btn-warning-dashboard">
                                 <i class="bi bi-clock-history"></i> Justificaciones Pendientes
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="MaterialServlet?accion=seleccionarCurso" class="btn btn-purple-dashboard">
+                                <i class="bi bi-folder-fill"></i> Material de Apoyo
                             </a>
                         </div>
                     </div>

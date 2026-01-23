@@ -94,7 +94,7 @@ public class CursoDAO {
      * @param gradoId Identificador del grado
      * @return Lista de cursos del grado especificado
      */
-    public List<Curso> listarPorGrado(int gradoId) {
+    /*public List<Curso> listarPorGrado(int gradoId) {
         List<Curso> lista = new ArrayList<>();
         
         // Primero obtener el nombre del grado
@@ -125,7 +125,59 @@ public class CursoDAO {
 
         return lista;
     }
-
+*/
+    /**
+ * LISTAR CURSOS POR GRADO (para padres/alumnos)
+ */
+public List<Curso> listarPorGrado(int gradoId) {
+    List<Curso> lista = new ArrayList<>();
+    
+    String sql = "SELECT c.*, " +
+                 "g.nombre as grado_nombre, " +
+                 "CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre " +
+                 "FROM curso c " +
+                 "LEFT JOIN grado g ON c.grado_id = g.id " +
+                 "LEFT JOIN profesor prof ON c.profesor_id = prof.id " +
+                 "LEFT JOIN persona p ON prof.persona_id = p.id " +
+                 "WHERE c.grado_id = ? " +
+                 "AND c.activo = 1 " +
+                 "AND c.eliminado = 0 " +
+                 "ORDER BY c.nombre";
+    
+    try (Connection con = Conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        
+        ps.setInt(1, gradoId);
+        ResultSet rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            Curso c = new Curso();
+            c.setId(rs.getInt("id"));
+            c.setNombre(rs.getString("nombre"));
+            c.setGradoId(rs.getInt("grado_id"));
+            c.setGradoNombre(rs.getString("grado_nombre"));
+            c.setProfesorId(rs.getInt("profesor_id"));
+            c.setProfesorNombre(rs.getString("profesor_nombre"));
+            c.setCreditos(rs.getInt("creditos"));
+            c.setHorasSemanales(rs.getInt("horas_semanales"));
+            c.setArea(rs.getString("area"));
+            c.setDescripcion(rs.getString("descripcion"));
+            c.setCiclo(rs.getString("ciclo"));
+            c.setFechaInicio(rs.getDate("fecha_inicio"));
+            c.setFechaFin(rs.getDate("fecha_fin"));
+            
+            lista.add(c);
+        }
+        
+        System.out.println("✅ Cursos encontrados para grado " + gradoId + ": " + lista.size());
+        
+    } catch (SQLException e) {
+        System.err.println("❌ ERROR en listarPorGrado: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return lista;
+}
     /**
      * MAPEAR CURSO DESDE LA VISTA
      */
@@ -158,6 +210,54 @@ public class CursoDAO {
         c.setProfesorId(profesorId);
         
         return c;
+    }
+
+    /**
+     * OBTENER CURSO COMPLETO POR ID (desde tabla curso, no vista)
+     * Incluye el campo descripción que no está en la vista
+     * 
+     * @param id Identificador único del curso
+     * @return Objeto Curso completo o null si no existe
+     */
+    public Curso obtenerCursoCompletoPorId(int id) {
+        String sql = "SELECT * FROM curso WHERE id = ? AND activo = 1 AND eliminado = 0";
+
+        try (Connection con = Conexion.getConnection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                Curso c = new Curso();
+                c.setId(rs.getInt("id"));
+                c.setNombre(rs.getString("nombre"));
+                c.setGradoId(rs.getInt("grado_id"));
+                c.setProfesorId(rs.getInt("profesor_id"));
+                c.setCreditos(rs.getInt("creditos"));
+                c.setHorasSemanales(rs.getInt("horas_semanales"));
+                c.setArea(rs.getString("area"));
+                c.setDescripcion(rs.getString("descripcion")); // NUEVO: descripción
+                c.setCiclo(rs.getString("ciclo"));
+                c.setFechaInicio(rs.getDate("fecha_inicio"));
+                c.setFechaFin(rs.getDate("fecha_fin"));
+                
+                // Obtener nombres adicionales para mostrar en formulario
+                String gradoNombre = obtenerNombreGradoPorId(c.getGradoId());
+                String profesorNombre = obtenerNombreProfesorPorId(c.getProfesorId());
+                
+                c.setGradoNombre(gradoNombre);
+                c.setProfesorNombre(profesorNombre);
+                
+                return c;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al obtener curso completo por ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     /**
@@ -352,8 +452,8 @@ public class CursoDAO {
             conn = Conexion.getConnection();
             
             String sql = "INSERT INTO curso (nombre, grado_id, profesor_id, creditos, " +
-                        "horas_semanales, area, ciclo, fecha_inicio, fecha_fin, activo, eliminado) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)";
+                        "horas_semanales, area, descripcion, ciclo, fecha_inicio, fecha_fin, activo, eliminado) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)";
             
             ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
@@ -363,9 +463,10 @@ public class CursoDAO {
             ps.setInt(4, c.getCreditos());
             ps.setInt(5, c.getHorasSemanales());
             ps.setString(6, c.getArea());
-            ps.setString(7, c.getCiclo());
-            ps.setDate(8, c.getFechaInicio());
-            ps.setDate(9, c.getFechaFin());
+            ps.setString(7, c.getDescripcion()); // NUEVO: descripción
+            ps.setString(8, c.getCiclo());
+            ps.setDate(9, c.getFechaInicio());
+            ps.setDate(10, c.getFechaFin());
 
             int filasAfectadas = ps.executeUpdate();
             
@@ -402,7 +503,7 @@ public class CursoDAO {
             conn = Conexion.getConnection();
             
             String sql = "UPDATE curso SET nombre = ?, grado_id = ?, profesor_id = ?, " +
-                        "creditos = ?, horas_semanales = ?, area = ?, ciclo = ?, " +
+                        "creditos = ?, horas_semanales = ?, area = ?, descripcion = ?, ciclo = ?, " +
                         "fecha_inicio = ?, fecha_fin = ? WHERE id = ?";
             
             ps = conn.prepareStatement(sql);
@@ -413,10 +514,11 @@ public class CursoDAO {
             ps.setInt(4, c.getCreditos());
             ps.setInt(5, c.getHorasSemanales());
             ps.setString(6, c.getArea());
-            ps.setString(7, c.getCiclo());
-            ps.setDate(8, c.getFechaInicio());
-            ps.setDate(9, c.getFechaFin());
-            ps.setInt(10, c.getId());
+            ps.setString(7, c.getDescripcion()); // NUEVO: descripción
+            ps.setString(8, c.getCiclo());
+            ps.setDate(9, c.getFechaInicio());
+            ps.setDate(10, c.getFechaFin());
+            ps.setInt(11, c.getId());
 
             int filasAfectadas = ps.executeUpdate();
             
@@ -816,40 +918,114 @@ public class CursoDAO {
             System.err.println("Error cerrando recursos: " + e.getMessage());
         }
     }
+
     /**
- * VERIFICAR SI UN CURSO TIENE TAREAS ASOCIADAS
- * 
- * @param cursoId Identificador del curso
- * @return true si el curso tiene tareas activas
- */
-public boolean tieneTareas(int cursoId) {
-    return contarTareasPorCurso(cursoId) > 0;
-}
-
-/**
- * VERIFICAR SI UN CURSO TIENE HORARIOS ASOCIADOS
- * 
- * @param cursoId Identificador del curso
- * @return true si el curso tiene horarios activos
- */
-public boolean tieneHorarios(int cursoId) {
-    String sql = "SELECT COUNT(*) as total FROM horario_clase WHERE curso_id = ? AND activo = 1 AND eliminado = 0";
-
-    try (Connection con = Conexion.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-
-        ps.setInt(1, cursoId);
-        ResultSet rs = ps.executeQuery();
-
-        if (rs.next()) {
-            return rs.getInt("total") > 0;
-        }
-
-    } catch (SQLException e) {
-        System.err.println("Error al verificar horarios del curso: " + e.getMessage());
-        e.printStackTrace();
+     * VERIFICAR SI UN CURSO TIENE TAREAS ASOCIADAS
+     * 
+     * @param cursoId Identificador del curso
+     * @return true si el curso tiene tareas activas
+     */
+    public boolean tieneTareas(int cursoId) {
+        return contarTareasPorCurso(cursoId) > 0;
     }
 
-    return false;
+    /**
+     * VERIFICAR SI UN CURSO TIENE HORARIOS ASOCIADOS
+     * 
+     * @param cursoId Identificador del curso
+     * @return true si el curso tiene horarios activos
+     */
+    public boolean tieneHorarios(int cursoId) {
+        String sql = "SELECT COUNT(*) as total FROM horario_clase WHERE curso_id = ? AND activo = 1 AND eliminado = 0";
+
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, cursoId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("total") > 0;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al verificar horarios del curso: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+    // AGREGAR ESTE MÉTODO A TU CursoDAO.java EXISTENTE
+
+/**
+ * LISTAR CURSOS DE UN ALUMNO ESPECÍFICO
+ * Obtiene todos los cursos del grado en el que está inscrito el alumno
+ */
+public List<Curso> listarPorAlumno(int alumnoId) {
+    List<Curso> cursos = new ArrayList<>();
+    
+    // Primero obtenemos el grado_id del alumno
+    String sqlGrado = "SELECT grado_id FROM alumno WHERE id = ? AND activo = 1 AND eliminado = 0";
+    
+    String sqlCursos = "SELECT " +
+                      "    c.id, " +
+                      "    c.nombre, " +
+                      "    c.descripcion, " +
+                      "    c.grado_id, " +
+                      "    g.nombre as grado_nombre, " +
+                      "    c.profesor_id, " +
+                      "    CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre " +
+                      "FROM curso c " +
+                      "INNER JOIN grado g ON c.grado_id = g.id " +
+                      "LEFT JOIN profesor pr ON c.profesor_id = pr.id " +
+                      "LEFT JOIN persona p ON pr.persona_id = p.id " +
+                      "WHERE c.grado_id = ? " +
+                      "AND c.activo = 1 " +
+                      "AND c.eliminado = 0 " +
+                      "ORDER BY c.nombre";
+    
+    try (Connection con = Conexion.getConnection()) {
+        
+        // Obtener grado_id del alumno
+        int gradoId = 0;
+        try (PreparedStatement psGrado = con.prepareStatement(sqlGrado)) {
+            psGrado.setInt(1, alumnoId);
+            ResultSet rsGrado = psGrado.executeQuery();
+            
+            if (rsGrado.next()) {
+                gradoId = rsGrado.getInt("grado_id");
+            } else {
+                System.out.println("⚠️ No se encontró el alumno con ID: " + alumnoId);
+                return cursos; // Lista vacía
+            }
+        }
+        
+        // Obtener cursos del grado
+        try (PreparedStatement psCursos = con.prepareStatement(sqlCursos)) {
+            psCursos.setInt(1, gradoId);
+            ResultSet rs = psCursos.executeQuery();
+            
+            while (rs.next()) {
+                Curso curso = new Curso();
+                curso.setId(rs.getInt("id"));
+                curso.setNombre(rs.getString("nombre"));
+                curso.setDescripcion(rs.getString("descripcion"));
+                curso.setGradoId(rs.getInt("grado_id"));
+                curso.setGradoNombre(rs.getString("grado_nombre"));
+                curso.setProfesorId(rs.getInt("profesor_id"));
+                curso.setProfesorNombre(rs.getString("profesor_nombre"));
+                
+                cursos.add(curso);
+            }
+            
+            System.out.println("✅ Cursos encontrados para alumno " + alumnoId + ": " + cursos.size());
+        }
+        
+    } catch (SQLException e) {
+        System.err.println("❌ ERROR en listarPorAlumno: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return cursos;
 }
 }
