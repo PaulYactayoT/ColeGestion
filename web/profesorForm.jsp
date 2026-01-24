@@ -1,11 +1,7 @@
-<%-- 
-    Document   : profesorForm
-    Created on : 1 may. 2025, 8:57:32 p. m.
-    Author     : Juan Pablo Amaya
---%>
-
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="modelo.Profesor" %>
+<%@ page import="modelo.ProfesorDAO.Turno" %>
+<%@ page import="java.util.List" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
@@ -21,10 +17,10 @@
         return;
     }
 
-    Profesor p = (Profesor) request.getAttribute("profesor");
+   Profesor p = (Profesor) request.getAttribute("profesor");
+    List<Turno> turnos = (List<Turno>) request.getAttribute("turnos");
     boolean editar = (p != null);
     
-    // Formatear fechas para input date (yyyy-MM-dd)
     String fechaNacimientoStr = "";
     String fechaContratacionStr = "";
     
@@ -46,140 +42,448 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= editar ? "Editar Profesor" : "Registrar Profesor"%></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/estilos.css?v=1.5">
     <style>
-        .form-container {
-            max-width: 800px;
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            --dark-color: #1f2937;
+            --light-bg: #f9fafb;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        .form-wrapper {
+            max-width: 900px;
             margin: 0 auto;
+            padding: 1.5rem 15px;
         }
+
+        .form-header {
+            background: #1f2937;
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-bottom: 3px solid var(--primary-color);
+            margin-top: 1rem;
+        }
+
+        .form-header h2 {
+            color: #ffffff;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .form-header .icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+        }
+
+        .section-divider {
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-color), transparent);
+            margin: 2rem 0 1.5rem 0;
+        }
+
         .section-title {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            color: var(--primary-color);
             font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
+
+        .section-title i {
+            font-size: 1.4rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
         .required-field::after {
             content: " *";
-            color: #e74c3c;
+            color: var(--danger-color);
+            font-weight: bold;
         }
-        .form-card {
+
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
+        }
+
+        .form-control.is-invalid {
+            border-color: var(--danger-color);
+            padding-right: calc(1.5em + 0.75rem);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        .form-control.is-valid {
+            border-color: var(--success-color);
+            padding-right: calc(1.5em + 0.75rem);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2310b981' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        .invalid-feedback {
+            display: block;
+            color: var(--danger-color);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            font-weight: 500;
+        }
+
+        .valid-feedback {
+            display: block;
+            color: var(--success-color);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            font-weight: 500;
+        }
+
+        .alert-modern {
             border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-radius: 10px;
-            overflow: hidden;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-        .btn-submit {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            border: none;
-            padding: 12px 30px;
+
+        .alert-modern i {
+            font-size: 1.5rem;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #991b1b;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .btn-modern {
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
             font-weight: 600;
-            transition: all 0.3s;
+            font-size: 0.95rem;
+            border: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
         }
-        .btn-submit:hover {
+
+        .btn-primary-modern {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary-modern:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
+            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.3);
+            color: white;
         }
-        .btn-cancel {
-            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-            border: none;
-            padding: 12px 30px;
-            font-weight: 600;
+
+        .btn-success-modern {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-success-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(16, 185, 129, 0.3);
+            color: white;
+        }
+
+        .btn-secondary-modern {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary-modern:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-danger-modern {
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            color: white;
+        }
+
+        .btn-danger-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(239, 68, 68, 0.3);
+            color: white;
+        }
+
+        .form-text {
+            color: #6b7280;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .input-group-icon {
+            position: relative;
+        }
+
+        .input-group-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            z-index: 10;
+        }
+
+        .input-group-icon .form-control {
+            padding-left: 2.75rem;
+        }
+
+        .tooltip-info {
+            cursor: help;
+            color: var(--info-color);
+            margin-left: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-card {
+                padding: 1.5rem;
+            }
+            
+            .form-header {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Animaciones */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-wrapper {
+            animation: slideIn 0.5s ease;
         }
     </style>
 </head>
-<body class="dashboard-page">
+<body>
     <jsp:include page="header.jsp" />
 
-    <div class="container mt-5 mb-5">
-        <div class="form-container">
-            <h2 class="mb-4 text-center fw-bold text-primary">
-                <%= editar ? "📝 Editar Profesor" : "➕ Registrar Profesor"%>
+    <div class="form-wrapper">
+        <!-- Header del Formulario -->
+        <div class="form-header">
+            <h2>
+                <div class="icon">
+                    <i class="fas <%= editar ? "fa-user-edit" : "fa-user-plus" %>"></i>
+                </div>
+                <%= editar ? "Editar Profesor" : "Registrar Nuevo Profesor"%>
             </h2>
+        </div>
+        
+        <!-- Mensajes de Error/Éxito -->
+        <% 
+            String error = (String) session.getAttribute("error");
+            String mensaje = (String) session.getAttribute("mensaje");
             
-            <!-- Mensajes de éxito/error -->
-            <% if (request.getAttribute("error") != null) { %>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <%= request.getAttribute("error") %>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            if (error != null) { 
+                session.removeAttribute("error");
+        %>
+            <div class="alert-modern alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle"></i>
+                <div class="flex-grow-1">
+                    <strong>Error:</strong> <%= error %>
                 </div>
-            <% } %>
-            
-            <% if (request.getAttribute("mensaje") != null) { %>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <%= request.getAttribute("mensaje") %>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <% if (mensaje != null) { 
+            session.removeAttribute("mensaje");
+        %>
+            <div class="alert-modern alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i>
+                <div class="flex-grow-1">
+                    <strong>Éxito:</strong> <%= mensaje %>
                 </div>
-            <% } %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
 
-            <form action="ProfesorServlet" method="post" class="p-4 form-card bg-white">
+        <!-- Formulario -->
+        <div class="form-card">
+            <form action="ProfesorServlet" method="post" id="profesorForm">
                 <input type="hidden" name="id" value="<%= editar ? p.getId() : "" %>">
                 
                 <!-- SECCIÓN: INFORMACIÓN PERSONAL -->
-                <h4 class="section-title">📋 Información Personal</h4>
+                <div class="section-title">
+                    <i class="fas fa-user"></i>
+                    Información Personal
+                </div>
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Nombres:</label>
-                        <input type="text" class="form-control" name="nombres" 
-                               value="<%= editar && p.getNombres() != null ? p.getNombres() : "" %>" 
-                               required maxlength="100" placeholder="Ingrese los nombres">
+                        <label class="form-label required-field">Nombres</label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-user"></i>
+                            <input type="text" class="form-control" name="nombres" id="nombres"
+                                   value="<%= editar && p.getNombres() != null ? p.getNombres() : "" %>" 
+                                   required maxlength="100" placeholder="Ingrese los nombres">
+                        </div>
+                        <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Apellidos:</label>
-                        <input type="text" class="form-control" name="apellidos" 
-                               value="<%= editar && p.getApellidos() != null ? p.getApellidos() : "" %>" 
-                               required maxlength="100" placeholder="Ingrese los apellidos">
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Correo Electrónico:</label>
-                        <input type="email" class="form-control" name="correo" 
-                               value="<%= editar && p.getCorreo() != null ? p.getCorreo() : "" %>" 
-                               required maxlength="100" placeholder="ejemplo@email.com">
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">DNI:</label>
-                        <input type="text" class="form-control" name="dni" 
-                               value="<%= editar && p.getDni() != null ? p.getDni() : "" %>" 
-                               maxlength="8" pattern="[0-9]{8}" 
-                               placeholder="8 dígitos (ej: 12345678)">
-                        <small class="form-text text-muted">Opcional, 8 dígitos numéricos</small>
+                        <label class="form-label required-field">Apellidos</label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-user"></i>
+                            <input type="text" class="form-control" name="apellidos" id="apellidos"
+                                   value="<%= editar && p.getApellidos() != null ? p.getApellidos() : "" %>" 
+                                   required maxlength="100" placeholder="Ingrese los apellidos">
+                        </div>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Fecha de Nacimiento:</label>
-                        <input type="date" class="form-control" name="fecha_nacimiento" 
-                               value="<%= fechaNacimientoStr %>">
+                        <label class="form-label required-field">Correo Electrónico</label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" class="form-control" name="correo" id="correo"
+                                   value="<%= editar && p.getCorreo() != null ? p.getCorreo() : "" %>" 
+                                   required maxlength="100" placeholder="ejemplo@email.com">
+                        </div>
+                        <div class="invalid-feedback"></div>
+                        <div class="valid-feedback"></div>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Teléfono:</label>
-                        <input type="tel" class="form-control" name="telefono" 
-                               value="<%= editar && p.getTelefono() != null ? p.getTelefono() : "" %>" 
-                               maxlength="20" placeholder="987654321">
+                        <label class="form-label">
+                            DNI
+                            <i class="fas fa-info-circle tooltip-info" title="Opcional - 8 dígitos numéricos"></i>
+                        </label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-id-card"></i>
+                            <input type="text" class="form-control" name="dni" id="dni"
+                                   value="<%= editar && p.getDni() != null ? p.getDni() : "" %>" 
+                                   maxlength="8" placeholder="12345678">
+                        </div>
+                        <small class="form-text">Opcional, 8 dígitos numéricos</small>
+                        <div class="invalid-feedback"></div>
+                        <div class="valid-feedback"></div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Fecha de Nacimiento</label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-calendar"></i>
+                            <input type="date" class="form-control" name="fecha_nacimiento" id="fecha_nacimiento"
+                                   value="<%= fechaNacimientoStr %>">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-phone"></i>
+                            <input type="tel" class="form-control" name="telefono" id="telefono"
+                                   value="<%= editar && p.getTelefono() != null ? p.getTelefono() : "" %>" 
+                                   maxlength="20" placeholder="987654321">
+                        </div>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Dirección:</label>
-                    <textarea class="form-control" name="direccion" rows="3" maxlength="255" 
-                              placeholder="Av. Principal 123, Distrito, Ciudad"><%= editar && p.getDireccion() != null ? p.getDireccion() : "" %></textarea>
+                    <label class="form-label">Dirección</label>
+                    <div class="input-group-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <textarea class="form-control" name="direccion" id="direccion" rows="2" maxlength="255" 
+                                  placeholder="Av. Principal 123, Distrito, Ciudad"><%= editar && p.getDireccion() != null ? p.getDireccion() : "" %></textarea>
+                    </div>
                 </div>
 
+                <hr class="section-divider">
+
                 <!-- SECCIÓN: INFORMACIÓN PROFESIONAL -->
-                <h4 class="section-title mt-4">👨‍🏫 Información Profesional</h4>
+                <div class="section-title">
+                    <i class="fas fa-briefcase"></i>
+                    Información Profesional
+                </div>
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Especialidad:</label>
-                        <select class="form-select" name="especialidad" required>
+                        <label class="form-label required-field">Especialidad</label>
+                        <select class="form-select" name="especialidad" id="especialidad" required>
                             <option value="">Seleccione una especialidad</option>
                             <option value="Biología" <%= (editar && "Biología".equals(p.getEspecialidad())) ? "selected" : "" %>>Biología</option>
                             <option value="Historia" <%= (editar && "Historia".equals(p.getEspecialidad())) ? "selected" : "" %>>Historia</option>
@@ -190,26 +494,57 @@
                             <option value="Arte y Cultura" <%= (editar && "Arte y Cultura".equals(p.getEspecialidad())) ? "selected" : "" %>>Arte y Cultura</option>
                             <option value="Química" <%= (editar && "Química".equals(p.getEspecialidad())) ? "selected" : "" %>>Química</option>
                         </select>
+                        <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Código de Profesor:</label>
-                        <input type="text" class="form-control" name="codigo_profesor" 
-                               value="<%= editar && p.getCodigoProfesor() != null ? p.getCodigoProfesor() : "" %>" 
-                               maxlength="20" placeholder="Ej: PROF-001">
-                        <small class="form-text text-muted">Opcional, se generará automáticamente</small>
+                        <label class="form-label required-field">Turno</label>
+                        <select class="form-select" name="turno_id" id="turno_id" required>
+                            <option value="">Seleccione un turno</option>
+                            <% 
+                                if (turnos != null) {
+                                    for (Turno turno : turnos) {
+                                        boolean selected = editar && p.getTurnoId() == turno.getId();
+                            %>
+                                <option value="<%= turno.getId() %>" <%= selected ? "selected" : "" %>>
+                                    <%= turno.getNombre() %> 
+                                    (<%= new SimpleDateFormat("HH:mm").format(turno.getHoraInicio()) %> - 
+                                     <%= new SimpleDateFormat("HH:mm").format(turno.getHoraFin()) %>)
+                                </option>
+                            <% 
+                                    }
+                                }
+                            %>
+                        </select>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Fecha de Contratación:</label>
-                        <input type="date" class="form-control" name="fecha_contratacion" 
-                               value="<%= fechaContratacionStr %>">
+                        <label class="form-label">Código de Profesor</label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-barcode"></i>
+                            <input type="text" class="form-control" name="codigo_profesor"
+                                   value="<%= editar && p.getCodigoProfesor() != null ? p.getCodigoProfesor() : "" %>" 
+                                   maxlength="20" placeholder="PROF-001">
+                        </div>
+                        <small class="form-text">Opcional, se generará automáticamente</small>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Estado:</label>
+                        <label class="form-label">Fecha de Contratación</label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-calendar-check"></i>
+                            <input type="date" class="form-control" name="fecha_contratacion" id="fecha_contratacion"
+                                   value="<%= fechaContratacionStr %>">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Estado</label>
                         <select name="estado" class="form-select">
                             <option value="ACTIVO" <%= (editar && "ACTIVO".equals(p.getEstado())) ? "selected" : "" %>>ACTIVO</option>
                             <option value="INACTIVO" <%= (editar && "INACTIVO".equals(p.getEstado())) ? "selected" : "" %>>INACTIVO</option>
@@ -219,81 +554,96 @@
                     </div>
                 </div>
 
+                <hr class="section-divider">
+
                 <!-- SECCIÓN: USUARIO DEL SISTEMA -->
-                <h4 class="section-title mt-4">🔐 Acceso al Sistema</h4>
+                <div class="section-title">
+                    <i class="fas fa-key"></i>
+                    Acceso al Sistema
+                </div>
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Nombre de Usuario:</label>
-                        <input type="text" class="form-control" name="username" 
-                               value="<%= editar && p.getUsername() != null ? p.getUsername() : "" %>" 
-                               maxlength="50" placeholder="Nombre de usuario para login">
-                        <small class="form-text text-muted">Opcional, se generará automáticamente</small>
+                        <label class="form-label">Nombre de Usuario</label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-user-circle"></i>
+                            <input type="text" class="form-control" name="username" id="username"
+                                   value="<%= editar && p.getUsername() != null ? p.getUsername() : "" %>" 
+                                   maxlength="50" placeholder="usuario">
+                        </div>
+                        <small class="form-text">Opcional, se generará automáticamente</small>
+                        <div class="invalid-feedback"></div>
+                        <div class="valid-feedback"></div>
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Contraseña:</label>
-                        <input type="password" class="form-control" name="password" 
-                               placeholder="<%= editar ? "Dejar en blanco para no cambiar" : "Ingrese contraseña" %>"
-                               <%= editar ? "" : "required" %>>
-                        <small class="form-text text-muted">
-                            <%= editar ? "Solo llene si desea cambiar la contraseña" : "La contraseña se hasheará con SHA-256" %>
+                        <label class="form-label <%= !editar ? "required-field" : "" %>">Contraseña</label>
+                        <div class="input-group-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" class="form-control" name="password" id="password"
+                                   placeholder="<%= editar ? "Dejar en blanco para no cambiar" : "Ingrese contraseña" %>"
+                                   <%= editar ? "" : "required" %>>
+                        </div>
+                        <small class="form-text">
+                            <%= editar ? "Solo llene si desea cambiar la contraseña" : "La contraseña se encriptará automáticamente" %>
                         </small>
                     </div>
                 </div>
 
                 <!-- BOTONES -->
-                <div class="d-flex justify-content-between mt-4">
-                    <div>
-                        <button type="submit" class="btn btn-submit text-white me-2">
-                            <%= editar ? "💾 Actualizar Profesor" : "✅ Registrar Profesor" %>
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid #e5e7eb;">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-modern <%= editar ? "btn-primary-modern" : "btn-success-modern" %>">
+                            <i class="fas <%= editar ? "fa-save" : "fa-check" %>"></i>
+                            <%= editar ? "Actualizar Profesor" : "Registrar Profesor" %>
                         </button>
-                        <a href="ProfesorServlet" class="btn btn-cancel text-white">❌ Cancelar</a>
+                        <a href="ProfesorServlet" class="btn-modern btn-secondary-modern">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </a>
                     </div>
                     
                     <% if (editar) { %>
-                    <div>
-                        <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId() %>" 
-                           class="btn btn-outline-danger"
-                           onclick="return confirm('¿Está seguro de eliminar este profesor?')">
-                            🗑️ Eliminar Profesor
-                        </a>
-                    </div>
+                    <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId() %>" 
+                       class="btn-modern btn-danger-modern"
+                       onclick="return confirm('¿Está seguro de eliminar este profesor?')">
+                        <i class="fas fa-trash"></i>
+                        Eliminar
+                    </a>
                     <% } %>
                 </div>
             </form>
         </div>
     </div>
 
-    <footer class="bg-dark text-white py-2">
+    <footer class="bg-dark text-white py-4 mt-5">
         <div class="container text-center text-md-start">
             <div class="row">
-
-                <div class="col-md-4 mb-0">
+                <div class="col-md-4 mb-3">
                     <div class="logo-container text-center">
-                        <img src="assets/img/logosa.png" alt="Logo" class="img-fluid mb-1" width="80" height="auto">
-                        <p class="fs-6">"Líderes en educación de calidad al más alto nivel"</p>
+                        <img src="assets/img/logosa.png" alt="Logo" class="img-fluid mb-2" width="80" height="auto">
+                        <p class="fs-6 mb-0">"Líderes en educación de calidad al más alto nivel"</p>
                     </div>
                 </div>
 
-                <div class="col-md-4 mb-0">
-                    <h5 class="fs-8">Contacto:</h5>
-                    <p class="fs-6">Dirección: Av. El Sol 461, San Juan de Lurigancho 15434</p>
-                    <p class="fs-6">Teléfono: 987654321</p>
-                    <p class="fs-6">Correo: colegiosanantonio@gmail.com</p>
+                <div class="col-md-4 mb-3">
+                    <h5 class="fs-6 fw-bold">Contacto:</h5>
+                    <p class="fs-6 mb-1">Dirección: Av. El Sol 461, San Juan de Lurigancho 15434</p>
+                    <p class="fs-6 mb-1">Teléfono: 987654321</p>
+                    <p class="fs-6 mb-1">Correo: colegiosanantonio@gmail.com</p>
                 </div>
 
-                <div class="col-md-4 mb-0">
-                    <h5 class="fs-8">Síguenos:</h5>
-                    <a href="https://www.facebook.com/" class="text-white d-block fs-6">Facebook</a>
-                    <a href="https://www.instagram.com/" class="text-white d-block fs-6">Instagram</a>
-                    <a href="https://twitter.com/" class="text-white d-block fs-6">Twitter</a>
-                    <a href="https://www.youtube.com/" class="text-white d-block fs-6">YouTube</a>
+                <div class="col-md-4 mb-3">
+                    <h5 class="fs-6 fw-bold">Síguenos:</h5>
+                    <a href="https://www.facebook.com/" class="text-white d-block fs-6 mb-1">Facebook</a>
+                    <a href="https://www.instagram.com/" class="text-white d-block fs-6 mb-1">Instagram</a>
+                    <a href="https://twitter.com/" class="text-white d-block fs-6 mb-1">Twitter</a>
+                    <a href="https://www.youtube.com/" class="text-white d-block fs-6 mb-1">YouTube</a>
                 </div>
             </div>
 
-            <div class="text-center mt-0">
-                <p class="fs-6">&copy; 2025 Colegio SA - Todos los derechos reservados</p>
+            <div class="text-center mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                <p class="fs-6 mb-0">&copy; 2025 Colegio SA - Todos los derechos reservados</p>
             </div>
         </div>
     </footer>
@@ -301,64 +651,170 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Establecer fechas por defecto si no estamos editando
         document.addEventListener('DOMContentLoaded', function() {
-            const fechaNacInput = document.querySelector('input[name="fecha_nacimiento"]');
-            const fechaContInput = document.querySelector('input[name="fecha_contratacion"]');
+            const form = document.getElementById('profesorForm');
+            const dniInput = document.getElementById('dni');
+            const correoInput = document.getElementById('correo');
+            const usernameInput = document.getElementById('username');
+            const fechaNacInput = document.getElementById('fecha_nacimiento');
+            const fechaContInput = document.getElementById('fecha_contratacion');
             
-            // Fecha de nacimiento por defecto (hace 30 años)
-            if (!<%= editar %> && (!fechaNacInput.value || fechaNacInput.value === '')) {
-                const hoy = new Date();
-                const hace30Anios = new Date(hoy.getFullYear() - 30, hoy.getMonth(), hoy.getDate());
-                fechaNacInput.valueAsDate = hace30Anios;
+            // Establecer fechas por defecto si no estamos editando
+            if (!<%= editar %>) {
+                if (!fechaNacInput.value) {
+                    const hace30Anios = new Date();
+                    hace30Anios.setFullYear(hace30Anios.getFullYear() - 30);
+                    fechaNacInput.valueAsDate = hace30Anios;
+                }
+                
+                if (!fechaContInput.value) {
+                    fechaContInput.valueAsDate = new Date();
+                }
             }
             
-            // Fecha de contratación por defecto (hoy)
-            if (!<%= editar %> && (!fechaContInput.value || fechaContInput.value === '')) {
-                const hoy = new Date();
-                fechaContInput.valueAsDate = hoy;
-            }
-            
-            // Validación del DNI (solo números, 8 dígitos)
-            const dniInput = document.querySelector('input[name="dni"]');
+            // Validación del DNI con feedback visual
             if (dniInput) {
                 dniInput.addEventListener('input', function() {
+                    // Solo números
                     this.value = this.value.replace(/[^0-9]/g, '');
                     if (this.value.length > 8) {
                         this.value = this.value.slice(0, 8);
                     }
                 });
-            }
-            
-            // Validación del teléfono (solo números)
-            const telefonoInput = document.querySelector('input[name="telefono"]');
-            if (telefonoInput) {
-                telefonoInput.addEventListener('input', function() {
-                    this.value = this.value.replace(/[^0-9]/g, '');
-                });
-            }
-            
-            // Confirmación antes de enviar el formulario
-            const form = document.querySelector('form');
-            form.addEventListener('submit', function(event) {
-                const nombres = document.querySelector('input[name="nombres"]').value.trim();
-                const apellidos = document.querySelector('input[name="apellidos"]').value.trim();
-                const correo = document.querySelector('input[name="correo"]').value.trim();
-                const especialidad = document.querySelector('select[name="especialidad"]').value.trim();
                 
-                let errores = [];
+                dniInput.addEventListener('blur', function() {
+                    const dni = this.value.trim();
+                    const feedback = this.parentElement.nextElementSibling.nextElementSibling;
+                    const validFeedback = feedback.nextElementSibling;
+                    
+                    if (dni.length === 0) {
+                        // DNI opcional - limpiar validación
+                        this.classList.remove('is-invalid', 'is-valid');
+                        feedback.textContent = '';
+                        if (validFeedback) validFeedback.textContent = '';
+                        return;
+                    }
+                    
+                    if (dni.length !== 8) {
+                        this.classList.add('is-invalid');
+                        this.classList.remove('is-valid');
+                        
+       // Validación del correo electrónico
+        if (correoInput) {
+            correoInput.addEventListener('blur', function() {
+                const correo = this.value.trim();
+                const feedback = this.parentElement.nextElementSibling;
+                const validFeedback = feedback.nextElementSibling;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 
-                if (nombres === '') errores.push('Nombres es obligatorio');
-                if (apellidos === '') errores.push('Apellidos es obligatorio');
-                if (correo === '' || !correo.includes('@')) errores.push('Correo electrónico válido es obligatorio');
-                if (especialidad === '') errores.push('Especialidad es obligatoria');
+                if (correo.length === 0) {
+                    this.classList.add('is-invalid');
+                    feedback.textContent = '⚠️ El correo electrónico es obligatorio';
+                    return;
+                }
                 
-                if (errores.length > 0) {
-                    event.preventDefault();
-                    alert('Por favor corrija los siguientes errores:\n\n• ' + errores.join('\n• '));
+                if (!emailRegex.test(correo)) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    feedback.textContent = '⚠️ Ingrese un correo electrónico válido';
+                } else {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    feedback.textContent = '';
+                    if (validFeedback) validFeedback.textContent = '✓ Correo válido';
                 }
             });
+        }
+        
+        // Validación del username
+        if (usernameInput) {
+            usernameInput.addEventListener('blur', function() {
+                const username = this.value.trim();
+                const feedback = this.parentElement.nextElementSibling.nextElementSibling;
+                const validFeedback = feedback.nextElementSibling;
+                
+                if (username.length === 0) {
+                    this.classList.remove('is-invalid', 'is-valid');
+                    feedback.textContent = '';
+                    if (validFeedback) validFeedback.textContent = '';
+                    return;
+                }
+                
+                if (username.length < 4) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    feedback.textContent = '⚠️ El username debe tener al menos 4 caracteres';
+                } else {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    feedback.textContent = '';
+                    if (validFeedback) validFeedback.textContent = '✓ Username válido';
+                }
+            });
+        }
+        
+        // Validación del teléfono (solo números)
+        const telefonoInput = document.getElementById('telefono');
+        if (telefonoInput) {
+            telefonoInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
+        
+        // Validación antes de enviar el formulario
+        form.addEventListener('submit', function(event) {
+            let errores = [];
+            
+            // Obtener valores
+            const nombres = document.getElementById('nombres').value.trim();
+            const apellidos = document.getElementById('apellidos').value.trim();
+            const correo = correoInput.value.trim();
+            const especialidad = document.getElementById('especialidad').value;
+            const turnoId = document.getElementById('turno_id').value;
+            const dni = dniInput.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            // Validar campos obligatorios
+            if (!nombres) errores.push('Nombres es obligatorio');
+            if (!apellidos) errores.push('Apellidos es obligatorio');
+            
+            if (!correo) {
+                errores.push('Correo electrónico es obligatorio');
+            } else if (!emailRegex.test(correo)) {
+                errores.push('Correo electrónico no es válido');
+            }
+            
+            if (!especialidad) errores.push('Especialidad es obligatoria');
+            if (!turnoId) errores.push('Turno es obligatorio');
+            
+            // Validar DNI si se proporciona
+            if (dni.length > 0) {
+                if (dni.length !== 8) {
+                    errores.push('El DNI debe tener exactamente 8 dígitos');
+                } else if (!/^\d+$/.test(dni)) {
+                    errores.push('El DNI solo debe contener números');
+                }
+            }
+            
+            if (errores.length > 0) {
+                event.preventDefault();
+                
+                // Mostrar errores con SweetAlert si está disponible, sino con alert
+                const mensajeError = 'Por favor corrija los siguientes errores:\n\n• ' + errores.join('\n• ');
+                
+                alert(mensajeError);
+                
+                // Hacer scroll al primer error
+                const primerCampoInvalido = form.querySelector('.is-invalid');
+                if (primerCampoInvalido) {
+                    primerCampoInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    primerCampoInvalido.focus();
+                }
+                
+                return false;
+            }
+            
+            return true;
         });
-    </script>
-</body>
-</html>
+    });
+</script>                 

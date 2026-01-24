@@ -32,7 +32,7 @@ public class CursoServlet extends HttpServlet {
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
-
+        
         // Para docentes que quieren ver cursos, validar ownership
         if ("docente".equals(rol) && ("editar".equals(accion) || "eliminar".equals(accion))) {
             Profesor docente = (Profesor) session.getAttribute("docente");
@@ -113,10 +113,11 @@ public class CursoServlet extends HttpServlet {
                 return;
             }
             
-            request.setAttribute("grados", new GradoDAO().listar());
-            request.setAttribute("profesores", new ProfesorDAO().listar());
-            request.getRequestDispatcher("cursoForm.jsp").forward(request, response);
-            return;
+                    response.sendRedirect("RegistroCursoServlet?accion=cargarFormulario");
+      
+                    request.setAttribute("grados", new GradoDAO().listar());
+                    request.setAttribute("profesores", new ProfesorDAO().listar());
+                        return;
         }
 
         // Editar curso existente
@@ -146,7 +147,7 @@ public class CursoServlet extends HttpServlet {
                 request.setAttribute("curso", c);
                 request.setAttribute("grados", new GradoDAO().listar());
                 request.setAttribute("profesores", new ProfesorDAO().listar());
-                request.getRequestDispatcher("cursoForm.jsp").forward(request, response);
+                request.getRequestDispatcher("registroCurso.jsp").forward(request, response);
                 
             } catch (NumberFormatException e) {
                 System.out.println("ERROR: ID de curso inválido para editar");

@@ -42,6 +42,7 @@
                     <th>Apellidos</th>
                     <th>Correo</th>
                     <th>Especialidad</th>
+                    <th>Turno</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -55,6 +56,7 @@
                     <td><%= p.getApellidos()%></td>
                     <td><%= p.getCorreo()%></td>
                     <td><%= p.getEspecialidad()%></td>
+                    <td><%= p.getTurnoNombre()!= null ? p.getTurnoNombre() : "Sin turno"%></td>
                     <td>
                         <a href="ProfesorServlet?accion=editar&id=<%= p.getId()%>" class="btn btn-primary btn-sm">Editar</a>
                         <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId()%>" class="btn btn-danger btn-sm"
@@ -66,7 +68,7 @@
                 } else {
                 %>
                 <tr>
-                    <td colspan="5" class="text-center">No hay profesores registrados.</td>
+                    <td colspan="6" class="text-center">No hay profesores registrados.</td>
                 </tr>
                 <%
                     }

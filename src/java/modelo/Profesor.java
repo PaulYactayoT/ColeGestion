@@ -19,7 +19,8 @@ public class Profesor {
     private String username;
     private String rol;
     private String password; // Nuevo campo para contraseña
-
+    private int turnoId;
+    private String turnoNombre; 
     // Constructor
     public Profesor() {
     }
@@ -153,9 +154,27 @@ public class Profesor {
     public void setPassword(String password) {
         this.password = password;
     }
+    
+        public int getTurnoId() {
+        return turnoId;
+    }
+
+    public void setTurnoId(int turnoId) {
+        this.turnoId = turnoId;
+    }
+    
+      public String getTurnoNombre() {
+        return turnoNombre;
+    }
+
+    public void setTurnoNombre(String turnoNombre) {
+        this.turnoNombre = turnoNombre;
+    }
 
     // Método auxiliar
     public String getNombreCompleto() {
         return nombres + " " + apellidos;
     }
+    
+  
 }

@@ -14,8 +14,9 @@ public class ProfesorDAO {
         
         List<Profesor> lista = new ArrayList<>();
         String sql = "SELECT " +
-                    "    prof.id, " +
+                     "    prof.id, " +
                     "    prof.persona_id, " +
+                    "    prof.turno_id, " +
                     "    p.nombres, " +
                     "    p.apellidos, " +
                     "    p.correo, " +
@@ -27,10 +28,12 @@ public class ProfesorDAO {
                     "    prof.codigo_profesor, " +
                     "    prof.fecha_contratacion, " +
                     "    prof.estado, " +
-                    "    u.username " +
+                    "    u.username, " +
+                    "    t.nombre as turno_nombre " +
                     "FROM profesor prof " +
                     "JOIN persona p ON prof.persona_id = p.id " +
                     "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
+                    "LEFT JOIN turno t ON prof.turno_id = t.id " +
                     "WHERE prof.eliminado = 0 AND prof.activo = 1 " +
                     "ORDER BY p.apellidos, p.nombres";
         
@@ -70,6 +73,8 @@ System.out.println("Conexión exitosa: " + (con != null));
         p.setDni(rs.getString("dni"));
         p.setDireccion(rs.getString("direccion"));
         
+        
+        
         java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
         if (fechaNac != null) {
             p.setFechaNacimiento(fechaNac);
@@ -86,6 +91,9 @@ System.out.println("Conexión exitosa: " + (con != null));
         p.setEstado(rs.getString("estado"));
         p.setUsername(rs.getString("username"));
         
+        p.setTurnoId(rs.getInt("turno_id"));
+        p.setTurnoNombre(rs.getString("turno_nombre"));
+
         return p;
     }
 
@@ -94,8 +102,9 @@ System.out.println("Conexión exitosa: " + (con != null));
      */
     public Profesor obtenerPorId(int id) {
         String sql = "SELECT " +
-                    "    prof.id, " +
+                   "    prof.id, " +
                     "    prof.persona_id, " +
+                    "    prof.turno_id, " +
                     "    p.nombres, " +
                     "    p.apellidos, " +
                     "    p.correo, " +
@@ -107,10 +116,12 @@ System.out.println("Conexión exitosa: " + (con != null));
                     "    prof.codigo_profesor, " +
                     "    prof.fecha_contratacion, " +
                     "    prof.estado, " +
-                    "    u.username " +
+                    "    u.username, " +
+                    "    t.nombre as turno_nombre " +
                     "FROM profesor prof " +
                     "JOIN persona p ON prof.persona_id = p.id " +
                     "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
+                    "LEFT JOIN turno t ON prof.turno_id = t.id " +
                     "WHERE prof.id = ? AND prof.eliminado = 0";
         
         try (Connection con = Conexion.getConnection();
@@ -133,153 +144,191 @@ System.out.println("Conexión exitosa: " + (con != null));
     /**
      * CREAR NUEVO PROFESOR
      */
-    public boolean crear(Profesor profesor) {
-        Connection conn = null;
-        PreparedStatement psPersona = null;
-        PreparedStatement psProfesor = null;
-        PreparedStatement psUsuario = null;
-        ResultSet rs = null;
+   /**
+ * CREAR NUEVO PROFESOR
+ */
+public boolean crear(Profesor profesor) {
+    Connection conn = null;
+    PreparedStatement psPersona = null;
+    PreparedStatement psProfesor = null;
+    PreparedStatement psUsuario = null;
+    ResultSet rs = null;
+    
+    try {
+        conn = Conexion.getConnection();
+        conn.setAutoCommit(false);
         
-        try {
-            conn = Conexion.getConnection();
-            conn.setAutoCommit(false);
-            
-            // 1. Insertar en persona
-            String sqlPersona = "INSERT INTO persona (nombres, apellidos, correo, telefono, dni, " +
-                               "fecha_nacimiento, direccion, tipo, activo) " +
-                               "VALUES (?, ?, ?, ?, ?, ?, ?, 'PROFESOR', 1)";
-            
-            psPersona = conn.prepareStatement(sqlPersona, Statement.RETURN_GENERATED_KEYS);
-            psPersona.setString(1, profesor.getNombres());
-            psPersona.setString(2, profesor.getApellidos());
-            psPersona.setString(3, profesor.getCorreo());
-            psPersona.setString(4, profesor.getTelefono());
-            psPersona.setString(5, profesor.getDni());
-            
-            if (profesor.getFechaNacimiento() != null) {
-                psPersona.setDate(6, new java.sql.Date(profesor.getFechaNacimiento().getTime()));
+        System.out.println("Iniciando creación de profesor: " + profesor.getNombres() + " " + profesor.getApellidos());
+        
+        // ========== 1. INSERTAR EN PERSONA ==========
+        String sqlPersona = "INSERT INTO persona (nombres, apellidos, correo, telefono, dni, " +
+                           "fecha_nacimiento, direccion, tipo, activo) " +
+                           "VALUES (?, ?, ?, ?, ?, ?, ?, 'PROFESOR', 1)";
+        
+        psPersona = conn.prepareStatement(sqlPersona, Statement.RETURN_GENERATED_KEYS);
+        psPersona.setString(1, profesor.getNombres());
+        psPersona.setString(2, profesor.getApellidos());
+        psPersona.setString(3, profesor.getCorreo());
+        psPersona.setString(4, profesor.getTelefono());
+        psPersona.setString(5, profesor.getDni());
+        
+        if (profesor.getFechaNacimiento() != null) {
+            psPersona.setDate(6, new java.sql.Date(profesor.getFechaNacimiento().getTime()));
+        } else {
+            psPersona.setNull(6, Types.DATE);
+        }
+        
+        psPersona.setString(7, profesor.getDireccion());
+        
+        int filasPersona = psPersona.executeUpdate();
+        System.out.println("Filas insertadas en persona: " + filasPersona);
+        
+        if (filasPersona == 0) {
+            throw new SQLException("No se pudo insertar en persona");
+        }
+        
+        int personaId;
+        rs = psPersona.getGeneratedKeys();
+        if (rs.next()) {
+            personaId = rs.getInt(1);
+            profesor.setPersonaId(personaId);
+            System.out.println("Persona ID generado: " + personaId);
+        } else {
+            throw new SQLException("No se pudo obtener el ID de persona");
+        }
+        rs.close();
+        
+        // ========== 2. INSERTAR EN PROFESOR ==========
+        String sqlProfesor = "INSERT INTO profesor (persona_id, especialidad, turno_id, codigo_profesor, " +
+                            "fecha_contratacion, estado, activo) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, 1)";
+        
+        psProfesor = conn.prepareStatement(sqlProfesor, Statement.RETURN_GENERATED_KEYS);
+        psProfesor.setInt(1, personaId);
+        psProfesor.setString(2, profesor.getEspecialidad());
+        
+        // ✅ TURNO - Validación mejorada
+        if (profesor.getTurnoId() > 0) {
+            psProfesor.setInt(3, profesor.getTurnoId());
+            System.out.println("Asignando turno ID: " + profesor.getTurnoId());
+        } else {
+            psProfesor.setNull(3, Types.INTEGER);
+            System.out.println("Sin turno asignado");
+        }
+        
+        // ✅ CÓDIGO DE PROFESOR
+        String codigoProfesor = profesor.getCodigoProfesor();
+        if (codigoProfesor == null || codigoProfesor.trim().isEmpty()) {
+            codigoProfesor = generarCodigoProfesor();
+            profesor.setCodigoProfesor(codigoProfesor);
+        }
+        psProfesor.setString(4, codigoProfesor);
+        System.out.println("Código profesor: " + codigoProfesor);
+
+        // ✅ FECHA DE CONTRATACIÓN
+        if (profesor.getFechaContratacion() != null) {
+            psProfesor.setDate(5, new java.sql.Date(profesor.getFechaContratacion().getTime()));
+        } else {
+            psProfesor.setDate(5, new java.sql.Date(System.currentTimeMillis()));
+        }
+
+        // ✅ ESTADO
+        String estado = profesor.getEstado();
+        if (estado == null || estado.trim().isEmpty()) {
+            estado = "ACTIVO";
+            profesor.setEstado(estado);
+        }
+        psProfesor.setString(6, estado);
+        
+        int filasProfesor = psProfesor.executeUpdate();
+        System.out.println("Filas insertadas en profesor: " + filasProfesor);
+        
+        if (filasProfesor == 0) {
+            throw new SQLException("No se pudo insertar en profesor");
+        }
+        
+        rs = psProfesor.getGeneratedKeys();
+        if (rs.next()) {
+            profesor.setId(rs.getInt(1));
+            System.out.println("Profesor ID generado: " + profesor.getId());
+        }
+        rs.close();
+        
+        // ========== 3. INSERTAR EN USUARIO ==========
+        String sqlUsuario = "INSERT INTO usuario (persona_id, username, password, rol, activo) " +
+                           "VALUES (?, ?, ?, 'docente', 1)";
+        
+        psUsuario = conn.prepareStatement(sqlUsuario);
+        psUsuario.setInt(1, personaId);
+        
+        // ✅ USERNAME
+        String username = profesor.getUsername();
+        if (username == null || username.trim().isEmpty()) {
+            if (profesor.getCorreo() != null && !profesor.getCorreo().isEmpty()) {
+                username = profesor.getCorreo().split("@")[0];
             } else {
-                psPersona.setNull(6, Types.DATE);
+                username = (profesor.getNombres().charAt(0) + profesor.getApellidos().split(" ")[0]).toLowerCase();
+                username = username.replaceAll("[^a-z0-9]", "");
             }
-            
-            psPersona.setString(7, profesor.getDireccion());
-            
-            if (psPersona.executeUpdate() == 0) {
-                throw new SQLException("No se pudo insertar en persona");
-            }
-            
-            int personaId;
-            rs = psPersona.getGeneratedKeys();
-            if (rs.next()) {
-                personaId = rs.getInt(1);
-                profesor.setPersonaId(personaId);
-            } else {
-                throw new SQLException("No se pudo obtener el ID de persona");
-            }
-            rs.close();
-            
-            // 2. Insertar en profesor
-            String sqlProfesor = "INSERT INTO profesor (persona_id, especialidad, codigo_profesor, " +
-                                "fecha_contratacion, estado, activo) " +
-                                "VALUES (?, ?, ?, ?, ?, 1)";
-            
-            psProfesor = conn.prepareStatement(sqlProfesor, Statement.RETURN_GENERATED_KEYS);
-            psProfesor.setInt(1, personaId);
-            psProfesor.setString(2, profesor.getEspecialidad());
-            
-            String codigoProfesor = profesor.getCodigoProfesor();
-            if (codigoProfesor == null || codigoProfesor.isEmpty()) {
-                codigoProfesor = generarCodigoProfesor();
-                profesor.setCodigoProfesor(codigoProfesor);
-            }
-            psProfesor.setString(3, codigoProfesor);
-            
-            if (profesor.getFechaContratacion() != null) {
-                psProfesor.setDate(4, new java.sql.Date(profesor.getFechaContratacion().getTime()));
-            } else {
-                psProfesor.setDate(4, new java.sql.Date(System.currentTimeMillis()));
-            }
-            
-            String estado = profesor.getEstado();
-            if (estado == null || estado.isEmpty()) {
-                estado = "ACTIVO";
-                profesor.setEstado(estado);
-            }
-            psProfesor.setString(5, estado);
-            
-            if (psProfesor.executeUpdate() == 0) {
-                throw new SQLException("No se pudo insertar en profesor");
-            }
-            
-            rs = psProfesor.getGeneratedKeys();
-            if (rs.next()) {
-                profesor.setId(rs.getInt(1));
-            }
-            rs.close();
-            
-            // 3. Insertar en usuario
-            String sqlUsuario = "INSERT INTO usuario (persona_id, username, password, rol, activo) " +
-                               "VALUES (?, ?, ?, 'docente', 1)";
-            
-            psUsuario = conn.prepareStatement(sqlUsuario);
-            psUsuario.setInt(1, personaId);
-            
-            String username = profesor.getUsername();
-            if (username == null || username.isEmpty()) {
-                if (profesor.getCorreo() != null && !profesor.getCorreo().isEmpty()) {
-                    username = profesor.getCorreo().split("@")[0];
-                } else {
-                    username = (profesor.getNombres().charAt(0) + profesor.getApellidos().split(" ")[0]).toLowerCase();
-                    username = username.replaceAll("[^a-z0-9]", "");
-                }
-                profesor.setUsername(username);
-            }
-            psUsuario.setString(2, username);
-            
-            String password;
-            if (profesor.getPassword() != null && !profesor.getPassword().isEmpty()) {
-                password = profesor.getPassword();
-            } else {
-                password = profesor.getDni() != null ? profesor.getDni() : "123456";
-            }
-            psUsuario.setString(3, encriptarSHA256(password));
-            
-            if (psUsuario.executeUpdate() == 0) {
-                throw new SQLException("No se pudo insertar en usuario");
-            }
-            
-            conn.commit();
-            System.out.println("✅ Profesor creado: " + profesor.getNombreCompleto());
-            return true;
-            
-        } catch (SQLException e) {
-            System.err.println("❌ ERROR SQL al crear profesor: " + e.getMessage());
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            System.err.println("❌ ERROR general: " + e.getMessage());
-            return false;
-        } finally {
+            profesor.setUsername(username);
+        }
+        psUsuario.setString(2, username);
+        System.out.println("Username: " + username);
+        
+        // ✅ PASSWORD
+        String password;
+        if (profesor.getPassword() != null && !profesor.getPassword().trim().isEmpty()) {
+            password = profesor.getPassword();
+        } else {
+            password = profesor.getDni() != null && !profesor.getDni().trim().isEmpty() ? profesor.getDni() : "123456";
+        }
+        psUsuario.setString(3, encriptarSHA256(password));
+        System.out.println("Contraseña encriptada");
+        
+        int filasUsuario = psUsuario.executeUpdate();
+        System.out.println("Filas insertadas en usuario: " + filasUsuario);
+        
+        if (filasUsuario == 0) {
+            throw new SQLException("No se pudo insertar en usuario");
+        }
+        
+        conn.commit();
+        System.out.println("Profesor creado exitosamente: " + profesor.getNombreCompleto());
+        return true;
+        
+    } catch (SQLException e) {
+        System.err.println("ERROR SQL al crear profesor: " + e.getMessage());
+        e.printStackTrace();
+        if (conn != null) {
             try {
-                if (rs != null) rs.close();
-                if (psPersona != null) psPersona.close();
-                if (psProfesor != null) psProfesor.close();
-                if (psUsuario != null) psUsuario.close();
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                System.err.println("❌ Error cerrando recursos: " + e.getMessage());
+                conn.rollback();
+                System.err.println("Transacción revertida");
+            } catch (SQLException ex) {
+                System.err.println("Error al revertir transacción: " + ex.getMessage());
             }
         }
+        return false;
+    } catch (Exception e) {
+        System.err.println("ERROR general: " + e.getMessage());
+        e.printStackTrace();
+        return false;
+    } finally {
+        try {
+            if (rs != null) rs.close();
+            if (psPersona != null) psPersona.close();
+            if (psProfesor != null) psProfesor.close();
+            if (psUsuario != null) psUsuario.close();
+            if (conn != null) {
+                conn.setAutoCommit(true);
+                conn.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Error cerrando recursos: " + e.getMessage());
+        }
     }
+}
+
+
 
     /**
      * GENERAR CÓDIGO DE PROFESOR ÚNICO
@@ -356,6 +405,8 @@ System.out.println("Conexión exitosa: " + (con != null));
                     "    p.id as persona_id, " +
                     "    p.nombres, " +
                     "    p.apellidos, " +
+                    "    prof.turno_id, " +
+                    "    prof.persona_id, " +
                     "    p.correo, " +
                     "    p.telefono, " +
                     "    p.dni, " +
@@ -473,21 +524,30 @@ System.out.println("Conexión exitosa: " + (con != null));
             psPersona.executeUpdate();
             
             // 2. Actualizar tabla profesor
-            String sqlProfesor = "UPDATE profesor SET especialidad = ?, codigo_profesor = ?, " +
-                                "fecha_contratacion = ?, estado = ? WHERE id = ?";
             
+            String sqlProfesor = "UPDATE profesor SET especialidad = ?, turno_id = ?, codigo_profesor = ?, " +
+                    "fecha_contratacion = ?, estado = ? WHERE id = ?";
+
             psProfesor = conn.prepareStatement(sqlProfesor);
             psProfesor.setString(1, profesor.getEspecialidad());
-            psProfesor.setString(2, profesor.getCodigoProfesor());
-            
-            if (profesor.getFechaContratacion() != null) {
-                psProfesor.setDate(3, new java.sql.Date(profesor.getFechaContratacion().getTime()));
+
+            // Turno
+            if (profesor.getTurnoId() > 0) {
+                psProfesor.setInt(2, profesor.getTurnoId());
             } else {
-                psProfesor.setNull(3, Types.DATE);
+                psProfesor.setNull(2, Types.INTEGER);
             }
-            
-            psProfesor.setString(4, profesor.getEstado());
-            psProfesor.setInt(5, profesor.getId());
+
+            psProfesor.setString(3, profesor.getCodigoProfesor());
+
+            if (profesor.getFechaContratacion() != null) {
+                psProfesor.setDate(4, new java.sql.Date(profesor.getFechaContratacion().getTime()));
+            } else {
+                psProfesor.setNull(4, Types.DATE);
+            }
+
+            psProfesor.setString(5, profesor.getEstado());
+            psProfesor.setInt(6, profesor.getId());
             psProfesor.executeUpdate();
             
             // 3. Actualizar tabla usuario (solo si se proporciona username o password)
@@ -629,8 +689,9 @@ System.out.println("Conexión exitosa: " + (con != null));
     public List<Profesor> buscar(String criterio) {
         List<Profesor> profesores = new ArrayList<>();
         String sql = "SELECT " +
-                    "    prof.id, " +
+                   "    prof.id, " +
                     "    prof.persona_id, " +
+                    "    prof.turno_id, " +
                     "    p.nombres, " +
                     "    p.apellidos, " +
                     "    p.correo, " +
@@ -642,16 +703,17 @@ System.out.println("Conexión exitosa: " + (con != null));
                     "    prof.codigo_profesor, " +
                     "    prof.fecha_contratacion, " +
                     "    prof.estado, " +
-                    "    u.username " +
+                    "    u.username, " +
+                    "    t.nombre as turno_nombre " +
                     "FROM profesor prof " +
                     "JOIN persona p ON prof.persona_id = p.id " +
                     "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
+                    "LEFT JOIN turno t ON prof.turno_id = t.id " +
                     "WHERE (p.nombres LIKE ? OR p.apellidos LIKE ? OR " +
                     "CONCAT(p.nombres, ' ', p.apellidos) LIKE ? OR " +
                     "prof.especialidad LIKE ? OR prof.codigo_profesor LIKE ?) " +
                     "AND prof.eliminado = 0 AND prof.activo = 1 " +
                     "ORDER BY p.apellidos, p.nombres";
-        
         try (Connection con = Conexion.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {
             
@@ -693,4 +755,53 @@ System.out.println("Conexión exitosa: " + (con != null));
         
         return total;
     }
+    /**
+ * OBTENER TODOS LOS TURNOS DISPONIBLES
+ */
+public List<Turno> listarTurnos() {
+    List<Turno> turnos = new ArrayList<>();
+    String sql = "SELECT id, nombre, hora_inicio, hora_fin FROM turno WHERE activo = 1 AND eliminado = 0 ORDER BY nombre";
+    
+    try (Connection con = Conexion.getConnection();
+         PreparedStatement pstmt = con.prepareStatement(sql);
+         ResultSet rs = pstmt.executeQuery()) {
+        
+        while (rs.next()) {
+            Turno turno = new Turno();
+            turno.setId(rs.getInt("id"));
+            turno.setNombre(rs.getString("nombre"));
+            turno.setHoraInicio(rs.getTime("hora_inicio"));
+            turno.setHoraFin(rs.getTime("hora_fin"));
+            turnos.add(turno);
+        }
+        
+    } catch (SQLException e) {
+        System.err.println("❌ Error al listar turnos: " + e.getMessage());
+    }
+    
+    return turnos;
+}
+
+/**
+ * CLASE INTERNA TURNO
+ */
+public static class Turno {
+    private int id;
+    private String nombre;
+    private java.sql.Time horaInicio;
+    private java.sql.Time horaFin;
+    
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    
+    public java.sql.Time getHoraInicio() { return horaInicio; }
+    public void setHoraInicio(java.sql.Time horaInicio) { this.horaInicio = horaInicio; }
+    
+    public java.sql.Time getHoraFin() { return horaFin; }
+    public void setHoraFin(java.sql.Time horaFin) { this.horaFin = horaFin; }
+}
+    
 }

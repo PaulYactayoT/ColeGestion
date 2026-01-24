@@ -60,7 +60,9 @@
         </form>
 
         <div class="text-end mb-3">
-            <a href="CursoServlet?accion=nuevo" class="btn btn-success">Registrar Curso</a>
+            <a href="RegistroCursoServlet?accion=cargarFormulario" class="btn btn-success">
+            <i class="fas fa-plus"></i> Registrar Curso
+            </a>
         </div>
 
         <table class="table table-bordered table-striped table-hover">
