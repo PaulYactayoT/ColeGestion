@@ -18,7 +18,6 @@ public class ProfesorServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
- // AÑADIR ESTO AL INICIO DEL MÉTODO doPost
     request.setCharacterEncoding("UTF-8");
     response.setCharacterEncoding("UTF-8");
     response.setContentType("text/html; charset=UTF-8");
@@ -26,9 +25,9 @@ public class ProfesorServlet extends HttpServlet {
     
         HttpSession session = request.getSession();
         String rol = (String) session.getAttribute("rol");
-
-        // VALIDACIÓN: Solo admin puede acceder a ProfesorServlet
-        if (!"admin".equals(rol)) {
+            
+            //SOLO ADMINISTRADOR PUEDE INGRESAR A ESTE PANEL. SI OTRO ROL INGRESA PRACTICAMENTE LE SALDRA LA VISTA DE ACCESO RESTRINGIDO
+            if (!"admin".equals(rol)) {
             System.out.println("ACCESO DENEGADO: Rol " + rol + " intentó acceder a ProfesorServlet");
             response.sendRedirect("acceso_denegado.jsp");
             return;
@@ -119,9 +118,9 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
         String password = request.getParameter("password");
         if (password != null && !password.trim().isEmpty()) {
             p.setPassword(password);
-            System.out.println("✅ Password capturado del formulario");
+            System.out.println("Password capturado del formulario");
         } else {
-            System.out.println("⚠️ Password vacío o nulo");
+            System.out.println("Password vacío o nulo");
         }
         
         // ========== TURNO ==========
@@ -130,12 +129,12 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
             try {
                 int turnoId = Integer.parseInt(turnoIdStr);
                 p.setTurnoId(turnoId);
-                System.out.println("✅ Turno ID capturado: " + turnoId);
+                System.out.println("Turno ID capturado: " + turnoId);
             } catch (NumberFormatException e) {
-                System.out.println("❌ Error al parsear turno_id: " + turnoIdStr);
+                System.out.println("Error al parsear turno_id: " + turnoIdStr);
             }
         } else {
-            System.out.println("⚠️ Turno no seleccionado");
+            System.out.println("Turno no seleccionado");
         }
         
         // ========== FECHA DE NACIMIENTO ==========
@@ -144,9 +143,9 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
             try {
                 LocalDate fechaNac = LocalDate.parse(fechaNacStr);
                 p.setFechaNacimiento(java.sql.Date.valueOf(fechaNac));
-                System.out.println("✅ Fecha nacimiento: " + fechaNacStr);
+                System.out.println("Fecha nacimiento: " + fechaNacStr);
             } catch (Exception e) {
-                System.out.println("❌ Error al parsear fecha de nacimiento: " + fechaNacStr);
+                System.out.println("Error al parsear fecha de nacimiento: " + fechaNacStr);
             }
         }
         
@@ -156,9 +155,9 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
             try {
                 LocalDate fechaCont = LocalDate.parse(fechaContStr);
                 p.setFechaContratacion(java.sql.Date.valueOf(fechaCont));
-                System.out.println("✅ Fecha contratación: " + fechaContStr);
+                System.out.println("Fecha contratación: " + fechaContStr);
             } catch (Exception e) {
-                System.out.println("❌ Error al parsear fecha de contratación: " + fechaContStr);
+                System.out.println("Error al parsear fecha de contratación: " + fechaContStr);
             }
         }
         
@@ -214,23 +213,23 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
             resultado = dao.crear(p);
             
             if (resultado) {
-                System.out.println("✅✅✅ PROFESOR CREADO EXITOSAMENTE");
+                System.out.println("PROFESOR CREADO EXITOSAMENTE");
                 session.setAttribute("mensaje", "Profesor creado correctamente");
             } else {
-                System.out.println("❌❌❌ ERROR AL CREAR PROFESOR");
+                System.out.println("ERROR AL CREAR PROFESOR");
                 session.setAttribute("error", "Error al crear el profesor. Verifique que el correo o DNI no existan.");
             }
         } else {
             // ========== ACTUALIZAR PROFESOR ==========
             p.setId(id);
-            System.out.println("🔄 Actualizando profesor ID " + id);
+            System.out.println("Actualizando profesor ID " + id);
             resultado = dao.actualizar(p);
             
             if (resultado) {
-                System.out.println("✅ Profesor actualizado");
+                System.out.println("Profesor actualizado");
                 session.setAttribute("mensaje", "Profesor actualizado correctamente");
             } else {
-                System.out.println("❌ Error al actualizar");
+                System.out.println("Error al actualizar");
                 session.setAttribute("error", "Error al actualizar el profesor");
             }
         }
@@ -239,7 +238,7 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
         response.sendRedirect("ProfesorServlet");
 
     } catch (Exception e) {
-        System.out.println("❌❌❌ EXCEPCIÓN EN doPost:");
+        System.out.println("EXCEPCIÓN EN doPost:");
         e.printStackTrace();
         session.setAttribute("error", "Error al procesar la solicitud: " + e.getMessage());
         response.sendRedirect("ProfesorServlet");

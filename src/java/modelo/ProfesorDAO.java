@@ -50,7 +50,7 @@ System.out.println("Conexión exitosa: " + (con != null));
             }
             
         } catch (SQLException e) {
-            System.err.println("❌ ERROR en listar profesores: " + e.getMessage());
+            System.err.println("ERROR en listar profesores: " + e.getMessage());
             e.printStackTrace();
         }
         
@@ -216,7 +216,7 @@ public boolean crear(Profesor profesor) {
             System.out.println("Sin turno asignado");
         }
         
-        // ✅ CÓDIGO DE PROFESOR
+        // GENERA CODIGO DE PROFESOR
         String codigoProfesor = profesor.getCodigoProfesor();
         if (codigoProfesor == null || codigoProfesor.trim().isEmpty()) {
             codigoProfesor = generarCodigoProfesor();
@@ -368,7 +368,7 @@ public boolean crear(Profesor profesor) {
             }
             
         } catch (SQLException e) {
-            System.err.println("❌ Error verificando código: " + e.getMessage());
+            System.err.println("Error verificando código: " + e.getMessage());
         }
         
         return false;
@@ -389,7 +389,7 @@ public boolean crear(Profesor profesor) {
             
             return hex.toString();
         } catch (Exception e) {
-            System.err.println("❌ Error encriptando: " + e.getMessage());
+            System.err.println("Error encriptando: " + e.getMessage());
             return password;
         }
     }
@@ -431,7 +431,7 @@ public boolean crear(Profesor profesor) {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, username);
-            System.out.println("🔍 Buscando profesor con username: " + username);
+            System.out.println("Buscando profesor con username: " + username);
             
             ResultSet rs = ps.executeQuery();
             
@@ -459,9 +459,9 @@ public boolean crear(Profesor profesor) {
                 profesor.setFechaContratacion(rs.getDate("fecha_contratacion"));
                 profesor.setEstado(rs.getString("estado"));
                 
-                System.out.println("✅ Profesor encontrado: " + profesor.getNombreCompleto());
+                System.out.println("Profesor encontrado: " + profesor.getNombreCompleto());
             } else {
-                System.out.println("⚠️ Profesor no encontrado con username: " + username);
+                System.out.println(" Profesor no encontrado con username: " + username);
                 
                 // DEBUG: Mostrar qué usuarios sí existen
                 String debugSql = "SELECT username, rol, persona_id FROM usuario WHERE username LIKE ?";
@@ -477,7 +477,7 @@ public boolean crear(Profesor profesor) {
             }
             
         } catch (SQLException e) {
-            System.err.println("❌ ERROR SQL en obtenerPorUsername: " + e.getMessage());
+            System.err.println("ERROR SQL en obtenerPorUsername: " + e.getMessage());
             e.printStackTrace();
         }
         
@@ -579,16 +579,16 @@ public boolean crear(Profesor profesor) {
             }
             
             conn.commit();
-            System.out.println("✅ Profesor actualizado: " + profesor.getNombreCompleto());
+            System.out.println("Profesor actualizado: " + profesor.getNombreCompleto());
             return true;
             
         } catch (SQLException e) {
-            System.err.println("❌ ERROR SQL al actualizar profesor: " + e.getMessage());
+            System.err.println("ERROR SQL al actualizar profesor: " + e.getMessage());
             if (conn != null) {
                 try {
                     conn.rollback();
                 } catch (SQLException ex) {
-                    System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
+                    System.err.println("Error al revertir transacción: " + ex.getMessage());
                 }
             }
             return false;
@@ -602,7 +602,7 @@ public boolean crear(Profesor profesor) {
                     conn.close();
                 }
             } catch (SQLException e) {
-                System.err.println("❌ Error cerrando recursos: " + e.getMessage());
+                System.err.println("Error cerrando recursos: " + e.getMessage());
             }
         }
     }
@@ -624,7 +624,7 @@ public boolean crear(Profesor profesor) {
             }
             
         } catch (Exception e) {
-            System.err.println("❌ Error al obtener persona_id: " + e.getMessage());
+            System.err.println("Error al obtener persona_id: " + e.getMessage());
         }
         
         return 0;
@@ -658,16 +658,16 @@ public boolean crear(Profesor profesor) {
             psUsuario.executeUpdate();
             
             conn.commit();
-            System.out.println("✅ Profesor eliminado con ID: " + id);
+            System.out.println("Profesor eliminado con ID: " + id);
             return true;
             
         } catch (SQLException e) {
-            System.err.println("❌ ERROR SQL al eliminar profesor: " + e.getMessage());
+            System.err.println("ERROR SQL al eliminar profesor: " + e.getMessage());
             if (conn != null) {
                 try {
                     conn.rollback();
                 } catch (SQLException ex) {
-                    System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
+                    System.err.println("Error al revertir transacción: " + ex.getMessage());
                 }
             }
             return false;
@@ -681,7 +681,7 @@ public boolean crear(Profesor profesor) {
                     conn.close();
                 }
             } catch (SQLException e) {
-                System.err.println("❌ Error cerrando recursos: " + e.getMessage());
+                System.err.println("Error cerrando recursos: " + e.getMessage());
             }
         }
     }
@@ -731,7 +731,7 @@ public boolean crear(Profesor profesor) {
             }
             
         } catch (SQLException e) {
-            System.err.println("❌ Error en buscar: " + e.getMessage());
+            System.err.println("Error en buscar: " + e.getMessage());
         }
         
         return profesores;
@@ -750,7 +750,7 @@ public boolean crear(Profesor profesor) {
             }
             
         } catch (SQLException e) {
-            System.err.println("❌ Error en contar: " + e.getMessage());
+            System.err.println("Error en contar: " + e.getMessage());
         }
         
         return total;
@@ -776,7 +776,7 @@ public List<Turno> listarTurnos() {
         }
         
     } catch (SQLException e) {
-        System.err.println("❌ Error al listar turnos: " + e.getMessage());
+        System.err.println("Error al listar turnos: " + e.getMessage());
     }
     
     return turnos;
