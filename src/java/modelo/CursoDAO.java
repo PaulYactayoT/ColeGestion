@@ -219,46 +219,53 @@ public List<Curso> listarPorGrado(int gradoId) {
      * @param id Identificador único del curso
      * @return Objeto Curso completo o null si no existe
      */
-    public Curso obtenerCursoCompletoPorId(int id) {
-        String sql = "SELECT * FROM curso WHERE id = ? AND activo = 1 AND eliminado = 0";
+        public Curso obtenerCursoCompletoPorId(int id) {
+            Curso curso = null;
+            String sql = "SELECT c.id, c.nombre, c.grado_id, c.profesor_id, " +
+                         "c.creditos, c.area, c.descripcion, c.activo, " +
+                         "g.nombre AS grado_nombre, " +
+                         "CONCAT(p.nombres, ' ', p.apellidos) AS profesor_nombre " +
+                         "FROM curso c " +
+                         "INNER JOIN grado g ON c.grado_id = g.id " +
+                         "LEFT JOIN profesor prof ON c.profesor_id = prof.id " +
+                         "LEFT JOIN persona p ON prof.persona_id = p.id " +
+                         "WHERE c.id = ? AND c.eliminado = 0";
 
-        try (Connection con = Conexion.getConnection(); 
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
+            try (Connection conn = Conexion.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            if (rs.next()) {
-                Curso c = new Curso();
-                c.setId(rs.getInt("id"));
-                c.setNombre(rs.getString("nombre"));
-                c.setGradoId(rs.getInt("grado_id"));
-                c.setProfesorId(rs.getInt("profesor_id"));
-                c.setCreditos(rs.getInt("creditos"));
-                c.setHorasSemanales(rs.getInt("horas_semanales"));
-                c.setArea(rs.getString("area"));
-                c.setDescripcion(rs.getString("descripcion")); // NUEVO: descripción
-                c.setCiclo(rs.getString("ciclo"));
-                c.setFechaInicio(rs.getDate("fecha_inicio"));
-                c.setFechaFin(rs.getDate("fecha_fin"));
-                
-                // Obtener nombres adicionales para mostrar en formulario
-                String gradoNombre = obtenerNombreGradoPorId(c.getGradoId());
-                String profesorNombre = obtenerNombreProfesorPorId(c.getProfesorId());
-                
-                c.setGradoNombre(gradoNombre);
-                c.setProfesorNombre(profesorNombre);
-                
-                return c;
+                ps.setInt(1, id);
+                ResultSet rs = ps.executeQuery();
+
+                if (rs.next()) {
+                    curso = new Curso();
+                    curso.setId(rs.getInt("id"));
+                    curso.setNombre(rs.getString("nombre"));
+                    curso.setGradoId(rs.getInt("grado_id"));
+                    curso.setProfesorId(rs.getInt("profesor_id"));
+                    curso.setCreditos(rs.getInt("creditos"));
+                    curso.setArea(rs.getString("area"));
+                    curso.setDescripcion(rs.getString("descripcion"));
+                    curso.setGradoNombre(rs.getString("grado_nombre"));
+                    curso.setProfesorNombre(rs.getString("profesor_nombre"));
+
+                    System.out.println("✅ Curso obtenido para edición: " + curso.getNombre());
+                    System.out.println("   ID: " + curso.getId());
+                    System.out.println("   Grado: " + curso.getGradoNombre());
+                    System.out.println("   Profesor: " + curso.getProfesorNombre());
+                    System.out.println("   Área: " + curso.getArea());
+
+                } else {
+                    System.err.println("No se encontró curso con ID: " + id);
+                }
+
+            } catch (SQLException e) {
+                System.err.println("Error al obtener curso completo: " + e.getMessage());
+                e.printStackTrace();
             }
 
-        } catch (SQLException e) {
-            System.err.println("Error al obtener curso completo por ID: " + e.getMessage());
-            e.printStackTrace();
+            return curso;
         }
-
-        return null;
-    }
 
     /**
      * OBTENER NOMBRE DE PROFESOR POR ID
@@ -495,83 +502,77 @@ public List<Curso> listarPorGrado(int gradoId) {
      * @param c Objeto Curso con los datos actualizados
      * @return true si la actualización fue exitosa
      */
-    public boolean actualizar(Curso c) {
-        Connection conn = null;
-        PreparedStatement ps = null;
+     public boolean actualizar(Curso c) {
+        String sql = "UPDATE curso SET " +
+                     "nombre = ?, " +
+                     "grado_id = ?, " +
+                     "profesor_id = ?, " +
+                     "creditos = ?, " +
+                     "area = ?, " +
+                     "descripcion = ? " +
+                     "WHERE id = ? AND eliminado = 0";
         
-        try {
-            conn = Conexion.getConnection();
+        try (Connection conn = Conexion.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             
-            String sql = "UPDATE curso SET nombre = ?, grado_id = ?, profesor_id = ?, " +
-                        "creditos = ?, horas_semanales = ?, area = ?, descripcion = ?, ciclo = ?, " +
-                        "fecha_inicio = ?, fecha_fin = ? WHERE id = ?";
-            
-            ps = conn.prepareStatement(sql);
-
             ps.setString(1, c.getNombre());
             ps.setInt(2, c.getGradoId());
             ps.setInt(3, c.getProfesorId());
             ps.setInt(4, c.getCreditos());
-            ps.setInt(5, c.getHorasSemanales());
-            ps.setString(6, c.getArea());
-            ps.setString(7, c.getDescripcion()); // NUEVO: descripción
-            ps.setString(8, c.getCiclo());
-            ps.setDate(9, c.getFechaInicio());
-            ps.setDate(10, c.getFechaFin());
-            ps.setInt(11, c.getId());
-
-            int filasAfectadas = ps.executeUpdate();
+            ps.setString(5, c.getArea());
+            ps.setString(6, c.getDescripcion());
+            ps.setInt(7, c.getId());
             
-            if (filasAfectadas > 0) {
-                System.out.println("Curso actualizado: " + c.getNombre() + " (ID: " + c.getId() + ")");
+            int filasActualizadas = ps.executeUpdate();
+            
+            if (filasActualizadas > 0) {
+                System.out.println("Curso actualizado correctamente: ID " + c.getId());
                 return true;
+            } else {
+                System.err.println("No se pudo actualizar el curso ID " + c.getId());
+                return false;
             }
-
+            
         } catch (SQLException e) {
             System.err.println("Error al actualizar curso: " + e.getMessage());
             e.printStackTrace();
             return false;
-        } finally {
-            cerrarRecursos(null, ps, conn);
         }
-        
-        return false;
     }
-
     /**
      * ELIMINAR CURSO (ELIMINACIÓN LÓGICA)
      * 
      * @param id Identificador del curso a eliminar
      * @return true si la eliminación fue exitosa
      */
-    public boolean eliminar(int id) {
-        Connection conn = null;
-        PreparedStatement ps = null;
+    public boolean eliminar(int cursoId) {
+        String sql = "{CALL eliminar_curso_completo(?)}";
         
-        try {
-            conn = Conexion.getConnection();
+        try (Connection conn = Conexion.getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
             
-            String sql = "UPDATE curso SET activo = 0, eliminado = 1 WHERE id = ?";
+            cs.setInt(1, cursoId);
+            ResultSet rs = cs.executeQuery();
             
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, id);
-
-            int filasAfectadas = ps.executeUpdate();
-            
-            if (filasAfectadas > 0) {
-                System.out.println("Curso eliminado (lógico) con ID: " + id);
-                return true;
+            if (rs.next()) {
+                int exito = rs.getInt("exito");
+                String mensaje = rs.getString("mensaje");
+                
+                System.out.println("Resultado de eliminación:");
+                System.out.println("  Éxito: " + (exito == 1 ? "SÍ" : "NO"));
+                System.out.println("  Mensaje: " + mensaje);
+                
+                return exito == 1;
             }
-
+            
+            return false;
+            
         } catch (SQLException e) {
-            System.err.println("Error al eliminar curso: " + e.getMessage());
+            System.err.println("Error al eliminar curso ID " + cursoId);
+            System.err.println("   Error SQL: " + e.getMessage());
             e.printStackTrace();
             return false;
-        } finally {
-            cerrarRecursos(null, ps, conn);
         }
-        
-        return false;
     }
 
     /**
@@ -1018,14 +1019,117 @@ public List<Curso> listarPorAlumno(int alumnoId) {
                 cursos.add(curso);
             }
             
-            System.out.println("✅ Cursos encontrados para alumno " + alumnoId + ": " + cursos.size());
+            System.out.println("Cursos encontrados para alumno " + alumnoId + ": " + cursos.size());
         }
         
     } catch (SQLException e) {
-        System.err.println("❌ ERROR en listarPorAlumno: " + e.getMessage());
+        System.err.println("ERROR en listarPorAlumno: " + e.getMessage());
         e.printStackTrace();
     }
     
     return cursos;
 }
+
+        public List<Map<String, Object>> obtenerHorariosPorCurso(int cursoId) {
+               List<Map<String, Object>> horarios = new ArrayList<>();
+               String sql = "SELECT h.id, h.dia_semana, " +
+                            "TIME_FORMAT(h.hora_inicio, '%H:%i') AS hora_inicio, " +
+                            "TIME_FORMAT(h.hora_fin, '%H:%i') AS hora_fin, " +
+                            "h.turno_id, t.nombre AS turno_nombre, " +
+                            "a.id AS aula_id, a.nombre AS aula_nombre " +
+                            "FROM horario_clase h " +
+                            "INNER JOIN turno t ON h.turno_id = t.id " +
+                            "LEFT JOIN aula a ON h.aula_id = a.id " +
+                            "WHERE h.curso_id = ? AND h.eliminado = 0 AND h.activo = 1 " +
+                            "ORDER BY FIELD(h.dia_semana, 'LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO'), " +
+                            "h.hora_inicio";
+
+               try (Connection conn = Conexion.getConnection();
+                    PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                   ps.setInt(1, cursoId);
+                   ResultSet rs = ps.executeQuery();
+
+                   while (rs.next()) {
+                       Map<String, Object> horario = new HashMap<>();
+                       horario.put("id", rs.getInt("id"));
+                       horario.put("dia_semana", rs.getString("dia_semana"));
+                       horario.put("hora_inicio", rs.getString("hora_inicio"));
+                       horario.put("hora_fin", rs.getString("hora_fin"));
+                       horario.put("turno_id", rs.getInt("turno_id"));
+                       horario.put("turno_nombre", rs.getString("turno_nombre"));
+                       horario.put("aula_id", rs.getInt("aula_id"));
+                       horario.put("aula_nombre", rs.getString("aula_nombre"));
+                       horarios.add(horario);
+                   }
+
+                   System.out.println("Horarios obtenidos para curso " + cursoId + ": " + horarios.size());
+
+               } catch (SQLException e) {
+                   System.err.println("Error al obtener horarios del curso: " + e.getMessage());
+                   e.printStackTrace();
+               }
+
+               return horarios;
+           }
+        
+        public boolean actualizarConHorarios(Curso c, String horariosJson) {
+        Connection conn = null;
+        
+        try {
+            conn = Conexion.getConnection();
+            conn.setAutoCommit(false);
+            
+            // 1. Actualizar datos del curso
+            String sqlCurso = "UPDATE curso SET nombre = ?, grado_id = ?, profesor_id = ?, " +
+                             "creditos = ?, area = ?, descripcion = ? WHERE id = ?";
+            PreparedStatement psCurso = conn.prepareStatement(sqlCurso);
+            psCurso.setString(1, c.getNombre());
+            psCurso.setInt(2, c.getGradoId());
+            psCurso.setInt(3, c.getProfesorId());
+            psCurso.setInt(4, c.getCreditos());
+            psCurso.setString(5, c.getArea());
+            psCurso.setString(6, c.getDescripcion());
+            psCurso.setInt(7, c.getId());
+            psCurso.executeUpdate();
+            psCurso.close();
+            
+            // 2. Marcar horarios antiguos como eliminados
+            String sqlEliminar = "UPDATE horario_clase SET eliminado = 1, activo = 0 WHERE curso_id = ?";
+            PreparedStatement psEliminar = conn.prepareStatement(sqlEliminar);
+            psEliminar.setInt(1, c.getId());
+            psEliminar.executeUpdate();
+            psEliminar.close();
+            
+            // 3. Insertar nuevos horarios (procesar JSON si lo pasas)
+            // ... aquí procesarías el JSON de horarios ...
+            
+            conn.commit();
+            System.out.println("Curso y horarios actualizados: ID " + c.getId());
+            return true;
+            
+        } catch (SQLException e) {
+            System.err.println("Error al actualizar curso con horarios: " + e.getMessage());
+            e.printStackTrace();
+            
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return false;
+            
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }

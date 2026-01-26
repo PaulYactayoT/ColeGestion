@@ -9,7 +9,7 @@ public class Curso {
     private int creditos;
     private int horasSemanales;
     private String area;
-    private String descripcion; // NUEVO: Campo descripción
+    private String descripcion; 
     private String ciclo;
     private Date fechaInicio;
     private Date fechaFin;
