@@ -15,30 +15,43 @@ public class RegistroCursoDAO {
     /**
      * Obtener lista de nombres de cursos disponibles
      */
-    public List<Map<String, Object>> obtenerCursosBase() {
-        List<Map<String, Object>> cursos = new ArrayList<>();
-        String sql = "{CALL obtener_cursos_base_disponibles()}";
-        
-        try (Connection con = Conexion.getConnection();
-             CallableStatement cs = con.prepareCall(sql);
-             ResultSet rs = cs.executeQuery()) {
-            
-            while (rs.next()) {
-                Map<String, Object> curso = new HashMap<>();
-                curso.put("nombre", rs.getString("nombre"));
-                curso.put("area", rs.getString("area"));
-                cursos.add(curso);
+    /**
+ * Obtener lista de nombres de cursos disponibles
+ */
+        public List<Map<String, Object>> obtenerCursosBase() {
+            List<Map<String, Object>> cursos = new ArrayList<>();
+
+            // Usar query directa en lugar de stored procedure para evitar problemas de codificación
+            String sql = "SELECT DISTINCT nombre, area " +
+                         "FROM curso " +
+                         "WHERE activo = 1 AND eliminado = 0 " +
+                         "ORDER BY nombre";
+
+            try (Connection con = Conexion.getConnection();
+                 PreparedStatement ps = con.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+                    Map<String, Object> curso = new HashMap<>();
+                    String nombre = rs.getString("nombre");
+                    String area = rs.getString("area");
+
+                    curso.put("nombre", nombre != null ? nombre : "");
+                    curso.put("area", area != null ? area : "");
+                    cursos.add(curso);
+
+                    System.out.println("✓ " + nombre + " - " + area);
+                }
+
+                System.out.println("Total cursos base obtenidos: " + cursos.size());
+
+            } catch (SQLException e) {
+                System.err.println("Error al obtener cursos base: " + e.getMessage());
+                e.printStackTrace();
             }
-            
-            System.out.println("Cursos base obtenidos: " + cursos.size());
-            
-        } catch (SQLException e) {
-            System.err.println("Error al obtener cursos base: " + e.getMessage());
-            e.printStackTrace();
+
+            return cursos;
         }
-        
-        return cursos;
-    }
 
     /**
     * Obtener profesores disponibles para un curso específico
@@ -238,4 +251,88 @@ public class RegistroCursoDAO {
         
         return resultado;
     }
+    
+    /**
+ * Obtiene profesores disponibles según el curso Y el turno
+ */
+            public List<Map<String, Object>> obtenerProfesoresPorCursoYTurno(String nombreCurso, int turnoId) {
+            List<Map<String, Object>> profesores = new ArrayList<>();
+
+            // Primero obtenemos el área del curso
+            String sqlArea = "SELECT area FROM curso WHERE nombre = ? AND activo = 1 AND eliminado = 0 LIMIT 1";
+            String areaCurso = null;
+
+            try (Connection conn = Conexion.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sqlArea)) {
+
+                pstmt.setString(1, nombreCurso);
+                ResultSet rs = pstmt.executeQuery();
+
+                if (rs.next()) {
+                    areaCurso = rs.getString("area");
+                    System.out.println("Área del curso '" + nombreCurso + "': " + areaCurso);
+                } else {
+                    System.out.println("No se encontró el curso: " + nombreCurso);
+                    return profesores;
+                }
+
+            } catch (SQLException e) {
+                System.err.println("Error al obtener área del curso: " + e.getMessage());
+                return profesores;
+            }
+
+            // Ahora buscamos profesores 
+            String sql = "SELECT DISTINCT " +
+                         "    prof.id, " +
+                         "    CONCAT(p.nombres, ' ', p.apellidos) as nombre_completo, " +
+                         "    prof.especialidad, " +
+                         "    prof.codigo_profesor, " +
+                         "    p.apellidos, " + 
+                         "    p.nombres " +      
+                         "FROM profesor prof " +
+                         "INNER JOIN persona p ON prof.persona_id = p.id " +
+                         "WHERE prof.activo = 1 " +
+                         "AND prof.eliminado = 0 " +
+                         "AND prof.estado = 'ACTIVO' " +
+                         "AND prof.turno_id = ? " +
+                         "AND ( " +
+                         "    LOWER(prof.especialidad) LIKE LOWER(CONCAT('%', ?, '%')) " +
+                         "    OR LOWER(?) LIKE LOWER(CONCAT('%', prof.especialidad, '%')) " +
+                         "    OR LOWER(prof.especialidad) IN ('general', 'multidisciplinario') " +
+                         ") " +
+                         "ORDER BY p.apellidos, p.nombres";  
+
+            try (Connection conn = Conexion.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+                pstmt.setInt(1, turnoId);
+                pstmt.setString(2, areaCurso);
+                pstmt.setString(3, areaCurso);
+
+                System.out.println("Buscando profesores con:");
+                System.out.println("   - Turno ID: " + turnoId);
+                System.out.println("   - Área/Especialidad: " + areaCurso);
+
+                ResultSet rs = pstmt.executeQuery();
+
+                while (rs.next()) {
+                    Map<String, Object> profesor = new HashMap<>();
+                    profesor.put("id", rs.getInt("id"));
+                    profesor.put("nombre_completo", rs.getString("nombre_completo"));
+                    profesor.put("especialidad", rs.getString("especialidad"));
+                    profesor.put("codigo_profesor", rs.getString("codigo_profesor"));
+                    profesores.add(profesor);
+
+                    System.out.println("   ✅ " + rs.getString("nombre_completo") + " - " + rs.getString("especialidad"));
+                }
+
+                System.out.println("Total profesores encontrados: " + profesores.size());
+
+            } catch (SQLException e) {
+                System.err.println("Error al obtener profesores: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            return profesores;
+        }
 }

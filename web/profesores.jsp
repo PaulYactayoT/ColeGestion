@@ -33,6 +33,30 @@
 
     <div class="container mt-5">
         <h2 class="mb-4">Listado de Profesores</h2>
+        
+            <% 
+                String error = (String) session.getAttribute("error");
+                String mensaje = (String) session.getAttribute("mensaje");
+
+                if (error != null) { 
+                    session.removeAttribute("error");
+            %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>Error:</strong> <%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <% if (mensaje != null) { 
+                session.removeAttribute("mensaje");
+            %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Éxito:</strong> <%= mensaje %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
         <a href="ProfesorServlet?accion=nuevo" class="btn btn-success mb-3">Registrar Profesor</a>
 
         <table class="table table-bordered table-striped">
@@ -41,8 +65,10 @@
                     <th>Nombres</th>
                     <th>Apellidos</th>
                     <th>Correo</th>
-                    <th>Especialidad</th>
+                    <th>Area</th>
+                    <th>Nivel</th>
                     <th>Turno</th>
+                    <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -56,11 +82,58 @@
                     <td><%= p.getApellidos()%></td>
                     <td><%= p.getCorreo()%></td>
                     <td><%= p.getEspecialidad()%></td>
-                    <td><%= p.getTurnoNombre()!= null ? p.getTurnoNombre() : "Sin turno"%></td>
                     <td>
-                        <a href="ProfesorServlet?accion=editar&id=<%= p.getId()%>" class="btn btn-primary btn-sm">Editar</a>
-                        <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId()%>" class="btn btn-danger btn-sm"
-                           onclick="return confirm('¿Eliminar este profesor?')">Eliminar</a>
+                        <% 
+                            String nivel = p.getNivel();
+                            String badge = "";
+                            if ("INICIAL".equals(nivel)) {
+                                badge = "badge bg-info";
+                            } else if ("PRIMARIA".equals(nivel)) {
+                                badge = "badge bg-success";
+                            } else if ("SECUNDARIA".equals(nivel)) {
+                                badge = "badge bg-warning";
+                            } else if ("TODOS".equals(nivel)) {
+                                badge = "badge bg-primary";
+                            } else {
+                                badge = "badge bg-secondary";
+                            }
+                        %>
+                        <span class="<%= badge %>"><%= nivel != null ? nivel : "Sin nivel" %></span>
+                    </td>
+                    <td><%= p.getTurnoNombre()!= null ? p.getTurnoNombre() : "Sin turno"%></td>
+                    
+                    <td>
+                    <% 
+                        String estado = p.getEstado();
+                        String badgeEstado = "";
+                        if ("ACTIVO".equals(estado)) {
+                            badgeEstado = "badge bg-success";
+                        } else if ("INACTIVO".equals(estado)) {
+                            badgeEstado = "badge bg-danger";
+                        } else if ("LICENCIA".equals(estado)) {
+                            badgeEstado = "badge bg-warning text-dark";
+                        } else if ("JUBILADO".equals(estado)) {
+                            badgeEstado = "badge bg-secondary";
+                        } else {
+                            badgeEstado = "badge bg-secondary";
+                        }
+                    %>
+                    <span class="<%= badgeEstado %>"><%= estado != null ? estado : "ACTIVO" %></span>
+                </td>
+                    <td>
+                        <a href="ProfesorServlet?accion=editar&id=<%= p.getId()%>" 
+                           class="btn btn-primary btn-sm" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="ProfesorServlet?accion=ver&id=<%= p.getId()%>" 
+                           class="btn btn-info btn-sm" title="Ver Detalles">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId()%>" 
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirm('¿Eliminar este profesor?')" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </a>
                     </td>
                 </tr>
                 <%
@@ -68,7 +141,7 @@
                 } else {
                 %>
                 <tr>
-                    <td colspan="6" class="text-center">No hay profesores registrados.</td>
+                    <td colspan="8" class="text-center">No hay profesores registrados.</td>
                 </tr>
                 <%
                     }

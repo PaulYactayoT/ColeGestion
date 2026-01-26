@@ -3,6 +3,7 @@ package controlador;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import javax.servlet.RequestDispatcher;
 import java.io.IOException;
 import java.util.*;
 import modelo.RegistroCursoDAO;
@@ -47,34 +48,90 @@ public class RegistroCursoServlet extends HttpServlet {
     /**
      * Cargar datos iniciales del formulario
      */
-    private void cargarFormulario(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        System.out.println("Cargando formulario de registro de curso...");
-        
-        request.setAttribute("cursos", dao.obtenerCursosBase());
-        request.setAttribute("grados", dao.obtenerGrados());
-        request.setAttribute("turnos", dao.obtenerTurnos());
-        
-        request.getRequestDispatcher("registroCurso.jsp").forward(request, response);
-    }
+   /**
+ * Cargar datos iniciales del formulario
+ */
+        /**
+ * Cargar datos iniciales del formulario
+ */
+        private void cargarFormulario(HttpServletRequest request, HttpServletResponse response)
+                throws ServletException, IOException {
 
+            try {
+                // Configurar codificación
+                request.setCharacterEncoding("UTF-8");
+                response.setCharacterEncoding("UTF-8");
+
+                System.out.println("=== INICIANDO CARGA DE FORMULARIO ===");
+
+                // Obtener datos
+                List<Map<String, Object>> cursos = dao.obtenerCursosBase();
+                List<Map<String, Object>> grados = dao.obtenerGrados();
+                List<Map<String, Object>> turnos = dao.obtenerTurnos();
+
+                // Verificar que los datos no sean null
+                if (cursos == null) cursos = new ArrayList<>();
+                if (grados == null) grados = new ArrayList<>();
+                if (turnos == null) turnos = new ArrayList<>();
+
+                System.out.println("Cursos obtenidos: " + cursos.size());
+                System.out.println("Grados obtenidos: " + grados.size());
+                System.out.println("Turnos obtenidos: " + turnos.size());
+
+                // Establecer atributos
+                request.setAttribute("cursos", cursos);
+                request.setAttribute("grados", grados);
+                request.setAttribute("turnos", turnos);
+
+                System.out.println("Atributos establecidos, redirigiendo a JSP...");
+
+                // Forward al JSPs
+                RequestDispatcher dispatcher = request.getRequestDispatcher("registroCurso.jsp");
+                dispatcher.forward(request, response);
+
+                System.out.println("Forward completado");
+
+            } catch (Exception e) {
+                System.err.println("ERROR CRÍTICO en cargarFormulario:");
+                e.printStackTrace();
+
+                // Enviar error HTTP
+                response.setContentType("text/html; charset=UTF-8");
+                response.getWriter().println("<html><body>");
+                response.getWriter().println("<h1>Error al cargar formulario</h1>");
+                response.getWriter().println("<p>" + e.getMessage() + "</p>");
+                response.getWriter().println("<pre>");
+                e.printStackTrace(response.getWriter());
+                response.getWriter().println("</pre>");
+                response.getWriter().println("</body></html>");
+            }
+        }
     /**
      * Obtener profesores según curso seleccionado (AJAX)
      */
-    private void obtenerProfesores(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        String curso = request.getParameter("curso");
-        System.out.println("Buscando profesores para: " + curso);
-        
-        List<Map<String, Object>> profesores = dao.obtenerProfesoresPorCurso(curso);
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(gson.toJson(profesores));
-    }
+            private void obtenerProfesores(HttpServletRequest request, HttpServletResponse response)
+                throws ServletException, IOException {
 
+            String curso = request.getParameter("curso");
+            String turnoIdStr = request.getParameter("turno");
+
+            System.out.println("Parámetros recibidos - Curso: " + curso + ", Turno: " + turnoIdStr);
+
+            List<Map<String, Object>> profesores;
+
+            if (turnoIdStr != null && !turnoIdStr.isEmpty()) {
+                int turnoId = Integer.parseInt(turnoIdStr);
+                profesores = dao.obtenerProfesoresPorCursoYTurno(curso, turnoId);
+            } else {
+                profesores = dao.obtenerProfesoresPorCurso(curso);
+            }
+
+            System.out.println("Enviando " + profesores.size() + " profesores");
+
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(gson.toJson(profesores));
+        }
     /**
      * Validar disponibilidad del profesor (AJAX)
      */

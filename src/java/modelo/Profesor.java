@@ -18,9 +18,10 @@ public class Profesor {
     private String estado;
     private String username;
     private String rol;
-    private String password; // Nuevo campo para contraseña
+    private String password; 
     private int turnoId;
     private String turnoNombre; 
+    private String nivel;
     // Constructor
     public Profesor() {
     }
@@ -176,5 +177,12 @@ public class Profesor {
         return nombres + " " + apellidos;
     }
     
+    public String getNivel() {
+    return nivel;
+    }
+
+    public void setNivel(String nivel) {
+        this.nivel = nivel;
+    }
   
 }

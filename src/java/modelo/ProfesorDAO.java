@@ -4,6 +4,8 @@ import conexion.Conexion;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;      
+import java.util.TreeSet; 
 
 public class ProfesorDAO {
 
@@ -25,6 +27,7 @@ public class ProfesorDAO {
                     "    p.fecha_nacimiento, " +
                     "    p.direccion, " +
                     "    prof.especialidad, " +
+                    "    prof.nivel, " +
                     "    prof.codigo_profesor, " +
                     "    prof.fecha_contratacion, " +
                     "    prof.estado, " +
@@ -41,9 +44,9 @@ public class ProfesorDAO {
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             // Agrega esto temporalmente en tu ProfesorDAO.listar()
-System.out.println("Conectando a BD...");
+            System.out.println("Conectando a BD...");
 
-System.out.println("Conexión exitosa: " + (con != null));
+            System.out.println("Conexión exitosa: " + (con != null));
             while (rs.next()) {
                 Profesor p = mapearResultSet(rs);
                 lista.add(p);
@@ -81,6 +84,7 @@ System.out.println("Conexión exitosa: " + (con != null));
         }
         
         p.setEspecialidad(rs.getString("especialidad"));
+        p.setNivel(rs.getString("nivel")); 
         p.setCodigoProfesor(rs.getString("codigo_profesor"));
         
         java.sql.Date fechaCont = rs.getDate("fecha_contratacion");
@@ -113,6 +117,7 @@ System.out.println("Conexión exitosa: " + (con != null));
                     "    p.fecha_nacimiento, " +
                     "    p.direccion, " +
                     "    prof.especialidad, " +
+                    "    prof.nivel, " + 
                     "    prof.codigo_profesor, " +
                     "    prof.fecha_contratacion, " +
                     "    prof.estado, " +
@@ -199,20 +204,27 @@ public boolean crear(Profesor profesor) {
         rs.close();
         
         // ========== 2. INSERTAR EN PROFESOR ==========
-        String sqlProfesor = "INSERT INTO profesor (persona_id, especialidad, turno_id, codigo_profesor, " +
-                            "fecha_contratacion, estado, activo) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, 1)";
+        String sqlProfesor = "INSERT INTO profesor (persona_id, especialidad, nivel, turno_id, codigo_profesor, " +
+                    "fecha_contratacion, estado, activo) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
         
         psProfesor = conn.prepareStatement(sqlProfesor, Statement.RETURN_GENERATED_KEYS);
         psProfesor.setInt(1, personaId);
         psProfesor.setString(2, profesor.getEspecialidad());
+
+        //NIVEL
+        if (profesor.getNivel() != null && !profesor.getNivel().isEmpty()) {
+            psProfesor.setString(3, profesor.getNivel());
+        } else {
+            psProfesor.setNull(3, Types.VARCHAR);
+        }
         
-        // ✅ TURNO - Validación mejorada
+        // TURNO
         if (profesor.getTurnoId() > 0) {
-            psProfesor.setInt(3, profesor.getTurnoId());
+            psProfesor.setInt(4, profesor.getTurnoId());
             System.out.println("Asignando turno ID: " + profesor.getTurnoId());
         } else {
-            psProfesor.setNull(3, Types.INTEGER);
+            psProfesor.setNull(4, Types.INTEGER);
             System.out.println("Sin turno asignado");
         }
         
@@ -222,23 +234,23 @@ public boolean crear(Profesor profesor) {
             codigoProfesor = generarCodigoProfesor();
             profesor.setCodigoProfesor(codigoProfesor);
         }
-        psProfesor.setString(4, codigoProfesor);
+        psProfesor.setString(5, codigoProfesor);
         System.out.println("Código profesor: " + codigoProfesor);
-
-        // ✅ FECHA DE CONTRATACIÓN
+        
+        // FECHA DE CONTRATACIÓN
         if (profesor.getFechaContratacion() != null) {
-            psProfesor.setDate(5, new java.sql.Date(profesor.getFechaContratacion().getTime()));
+            psProfesor.setDate(6, new java.sql.Date(profesor.getFechaContratacion().getTime()));
         } else {
-            psProfesor.setDate(5, new java.sql.Date(System.currentTimeMillis()));
+            psProfesor.setDate(6, new java.sql.Date(System.currentTimeMillis()));
         }
 
-        // ✅ ESTADO
+        // ESTADO
         String estado = profesor.getEstado();
         if (estado == null || estado.trim().isEmpty()) {
             estado = "ACTIVO";
             profesor.setEstado(estado);
         }
-        psProfesor.setString(6, estado);
+        psProfesor.setString(7, estado);
         
         int filasProfesor = psProfesor.executeUpdate();
         System.out.println("Filas insertadas en profesor: " + filasProfesor);
@@ -525,29 +537,36 @@ public boolean crear(Profesor profesor) {
             
             // 2. Actualizar tabla profesor
             
-            String sqlProfesor = "UPDATE profesor SET especialidad = ?, turno_id = ?, codigo_profesor = ?, " +
-                    "fecha_contratacion = ?, estado = ? WHERE id = ?";
-
+            String sqlProfesor = "UPDATE profesor SET especialidad = ?, nivel = ?, turno_id = ?, codigo_profesor = ?, " +
+                      "fecha_contratacion = ?, estado = ? WHERE id = ?";
+            
             psProfesor = conn.prepareStatement(sqlProfesor);
             psProfesor.setString(1, profesor.getEspecialidad());
-
-            // Turno
+                    
+            //NIVEL
+            if (profesor.getNivel() != null && !profesor.getNivel().isEmpty()) {
+                psProfesor.setString(2, profesor.getNivel());
+            } else {
+                psProfesor.setNull(2, Types.VARCHAR);
+            }
+            
+            // TURNO
             if (profesor.getTurnoId() > 0) {
-                psProfesor.setInt(2, profesor.getTurnoId());
+                psProfesor.setInt(3, profesor.getTurnoId());
             } else {
-                psProfesor.setNull(2, Types.INTEGER);
+                psProfesor.setNull(3, Types.INTEGER);
             }
 
-            psProfesor.setString(3, profesor.getCodigoProfesor());
-
+            psProfesor.setString(4, profesor.getCodigoProfesor());
+        
+            //FECHA DE CONTRATACION
             if (profesor.getFechaContratacion() != null) {
-                psProfesor.setDate(4, new java.sql.Date(profesor.getFechaContratacion().getTime()));
+                psProfesor.setDate(5, new java.sql.Date(profesor.getFechaContratacion().getTime()));
             } else {
-                psProfesor.setNull(4, Types.DATE);
+                psProfesor.setNull(5, Types.DATE);
             }
-
-            psProfesor.setString(5, profesor.getEstado());
-            psProfesor.setInt(6, profesor.getId());
+            psProfesor.setString(6, profesor.getEstado());
+            psProfesor.setInt(7, profesor.getId());
             psProfesor.executeUpdate();
             
             // 3. Actualizar tabla usuario (solo si se proporciona username o password)
@@ -700,6 +719,7 @@ public boolean crear(Profesor profesor) {
                     "    p.fecha_nacimiento, " +
                     "    p.direccion, " +
                     "    prof.especialidad, " +
+                    "    prof.nivel, " +
                     "    prof.codigo_profesor, " +
                     "    prof.fecha_contratacion, " +
                     "    prof.estado, " +
@@ -755,7 +775,37 @@ public boolean crear(Profesor profesor) {
         
         return total;
     }
-    /**
+    
+    
+/**
+ * Obtiene todas las áreas únicas disponibles en la base de datos
+ * desde la tabla curso (solo el campo 'area')
+ */
+        public List<String> obtenerEspecialidadesDisponibles() {
+            List<String> especialidades = new ArrayList<>();
+            String sql = "SELECT DISTINCT area FROM curso WHERE area IS NOT NULL AND area != '' AND activo = 1 AND eliminado = 0 ORDER BY area";
+
+            try (Connection conn = Conexion.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql);
+                 ResultSet rs = pstmt.executeQuery()) {
+
+                while (rs.next()) {
+                    String area = rs.getString("area");
+                    if (area != null && !area.trim().isEmpty()) {
+                        especialidades.add(area.trim());
+                    }
+                }
+
+                System.out.println("Áreas/Especialidades cargadas: " + especialidades.size());
+
+            } catch (SQLException e) {
+                System.err.println("Error al obtener especialidades disponibles: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            return especialidades;
+        }
+/**
  * OBTENER TODOS LOS TURNOS DISPONIBLES
  */
 public List<Turno> listarTurnos() {

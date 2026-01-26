@@ -30,11 +30,11 @@ public class Conexion {
             return conn;
             
         } catch (ClassNotFoundException e) {
-            System.err.println("❌ Error: Driver MySQL no encontrado");
+            System.err.println("Error: Driver MySQL no encontrado");
             e.printStackTrace();
             return null;
         } catch (SQLException e) {
-            System.err.println("❌ Error de conexión a la base de datos");
+            System.err.println("Error de conexión a la base de datos");
             System.err.println("   URL: " + URL);
             System.err.println("   Mensaje: " + e.getMessage());
             e.printStackTrace();
@@ -46,13 +46,13 @@ public class Conexion {
     public static void main(String[] args) {
         try (Connection conn = getConnection()) {
             if (conn != null) {
-                System.out.println("✅ Conexión exitosa a: " + conn.getCatalog());
-                System.out.println("✅ Codificación UTF-8 configurada correctamente");
+                System.out.println("Conexión exitosa a: " + conn.getCatalog());
+                System.out.println("Codificación UTF-8 configurada correctamente");
             } else {
-                System.err.println("❌ No se pudo establecer conexión");
+                System.err.println("No se pudo establecer conexión");
             }
         } catch (SQLException e) {
-            System.err.println("❌ Error al cerrar conexión: " + e.getMessage());
+            System.err.println("Error al cerrar conexión: " + e.getMessage());
         }
     }
 }

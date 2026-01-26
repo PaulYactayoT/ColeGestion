@@ -1,4 +1,3 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="modelo.Profesor" %>
 <%@ page import="modelo.ProfesorDAO.Turno" %>
 <%@ page import="java.util.List" %>
@@ -6,7 +5,6 @@
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.text.SimpleDateFormat" %>
-
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response.setHeader("Pragma", "no-cache");
@@ -19,9 +17,11 @@
 
    Profesor p = (Profesor) request.getAttribute("profesor");
     List<Turno> turnos = (List<Turno>) request.getAttribute("turnos");
+    List<String> especialidades = (List<String>) request.getAttribute("especialidades"); 
     boolean editar = (p != null);
     
     String fechaNacimientoStr = "";
+   
     String fechaContratacionStr = "";
     
     if (editar) {
@@ -347,45 +347,16 @@
                 <%= editar ? "Editar Profesor" : "Registrar Nuevo Profesor"%>
             </h2>
         </div>
-        
-        <!-- Mensajes de Error/√âxito -->
-        <% 
-            String error = (String) session.getAttribute("error");
-            String mensaje = (String) session.getAttribute("mensaje");
-            
-            if (error != null) { 
-                session.removeAttribute("error");
-        %>
-            <div class="alert-modern alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle"></i>
-                <div class="flex-grow-1">
-                    <strong>Error:</strong> <%= error %>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <% } %>
-        
-        <% if (mensaje != null) { 
-            session.removeAttribute("mensaje");
-        %>
-            <div class="alert-modern alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle"></i>
-                <div class="flex-grow-1">
-                    <strong>√âxito:</strong> <%= mensaje %>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <% } %>
 
         <!-- Formulario -->
         <div class="form-card">
             <form action="ProfesorServlet" method="post" id="profesorForm">
                 <input type="hidden" name="id" value="<%= editar ? p.getId() : "" %>">
                 
-                <!-- SECCI√ìN: INFORMACI√ìN PERSONAL -->
+                <!-- SECCI”N: INFORMACI”N PERSONAL -->
                 <div class="section-title">
                     <i class="fas fa-user"></i>
-                    Informaci√≥n Personal
+                    InformaciÛn Personal
                 </div>
                 
                 <div class="row">
@@ -414,7 +385,7 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Correo Electr√≥nico</label>
+                        <label class="form-label required-field">Correo ElectrÛnico</label>
                         <div class="input-group-icon">
                             <i class="fas fa-envelope"></i>
                             <input type="email" class="form-control" name="correo" id="correo"
@@ -428,7 +399,7 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label">
                             DNI
-                            <i class="fas fa-info-circle tooltip-info" title="Opcional - 8 d√≠gitos num√©ricos"></i>
+                            <i class="fas fa-info-circle tooltip-info" title="Opcional - 8 dÌgitos numÈricos"></i>
                         </label>
                         <div class="input-group-icon">
                             <i class="fas fa-id-card"></i>
@@ -436,7 +407,7 @@
                                    value="<%= editar && p.getDni() != null ? p.getDni() : "" %>" 
                                    maxlength="8" placeholder="12345678">
                         </div>
-                        <small class="form-text">Opcional, 8 d√≠gitos num√©ricos</small>
+                        <small class="form-text">Opcional, 8 dÌgitos numÈricos</small>
                         <div class="invalid-feedback"></div>
                         <div class="valid-feedback"></div>
                     </div>
@@ -453,7 +424,7 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Tel√©fono</label>
+                        <label class="form-label">TelÈfono</label>
                         <div class="input-group-icon">
                             <i class="fas fa-phone"></i>
                             <input type="tel" class="form-control" name="telefono" id="telefono"
@@ -464,7 +435,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Direcci√≥n</label>
+                    <label class="form-label">DirecciÛn</label>
                     <div class="input-group-icon">
                         <i class="fas fa-map-marker-alt"></i>
                         <textarea class="form-control" name="direccion" id="direccion" rows="2" maxlength="255" 
@@ -474,29 +445,64 @@
 
                 <hr class="section-divider">
 
-                <!-- SECCI√ìN: INFORMACI√ìN PROFESIONAL -->
+                <!-- SECCI”N: INFORMACI”N PROFESIONAL -->
                 <div class="section-title">
                     <i class="fas fa-briefcase"></i>
-                    Informaci√≥n Profesional
+                    InformaciÛn Profesional
                 </div>
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Especialidad</label>
-                        <select class="form-select" name="especialidad" id="especialidad" required>
-                            <option value="">Seleccione una especialidad</option>
-                            <option value="Biolog√≠a" <%= (editar && "Biolog√≠a".equals(p.getEspecialidad())) ? "selected" : "" %>>Biolog√≠a</option>
-                            <option value="Historia" <%= (editar && "Historia".equals(p.getEspecialidad())) ? "selected" : "" %>>Historia</option>
-                            <option value="Matem√°tica" <%= (editar && "Matem√°tica".equals(p.getEspecialidad())) ? "selected" : "" %>>Matem√°tica</option>
-                            <option value="Comunicaci√≥n" <%= (editar && "Comunicaci√≥n".equals(p.getEspecialidad())) ? "selected" : "" %>>Comunicaci√≥n</option>
-                            <option value="Geograf√≠a" <%= (editar && "Geograf√≠a".equals(p.getEspecialidad())) ? "selected" : "" %>>Geograf√≠a</option>
-                            <option value="Educaci√≥n F√≠sica" <%= (editar && "Educaci√≥n F√≠sica".equals(p.getEspecialidad())) ? "selected" : "" %>>Educaci√≥n F√≠sica</option>
-                            <option value="Arte y Cultura" <%= (editar && "Arte y Cultura".equals(p.getEspecialidad())) ? "selected" : "" %>>Arte y Cultura</option>
-                            <option value="Qu√≠mica" <%= (editar && "Qu√≠mica".equals(p.getEspecialidad())) ? "selected" : "" %>>Qu√≠mica</option>
-                        </select>
-                        <div class="invalid-feedback"></div>
-                    </div>
+                    <label class="form-label required-field">Area</label>
+                    <select class="form-select" name="especialidad" id="especialidad" required>
+                        <option value="">Seleccione la Area</option>
+                        <% 
+                            if (especialidades != null && !especialidades.isEmpty()) {
+                                for (String esp : especialidades) {
+                                    boolean selected = editar && esp.equals(p.getEspecialidad());
+                        %>
+                            <option value="<%= esp %>" <%= selected ? "selected" : "" %>>
+                                <%= esp %>
+                            </option>
+                        <% 
+                                }
+                            } else {
+                                // Fallback: mostrar opciones por defecto si no hay especialidades en BD
+                        %>
+                            <option value="BiologÌa">BiologÌa</option>
+                            <option value="Historia">Historia</option>
+                            <option value="Matem·tica">Matem·tica</option>
+                            <option value="ComunicaciÛn">ComunicaciÛn</option>
+                            <option value="GeografÌa">GeografÌa</option>
+                            <option value="EducaciÛn FÌsica">EducaciÛn FÌsica</option>
+                            <option value="Arte y Cultura">Arte y Cultura</option>
+                            <option value="QuÌmica">QuÌmica</option>
+                        <% 
+                            }
+                        %>
+                        <!-- OpciÛn para agregar nueva especialidad -->
+                        <option value="__NUEVA__" style="font-weight: bold; background-color: #e8f5e9;">? Agregar nueva especialidad</option>
+                    </select>
+                    <div class="invalid-feedback"></div>
 
+                    <!-- Campo oculto para nueva especialidad -->
+                    <div id="nuevaEspecialidadDiv" style="display: none; margin-top: 10px;">
+                        <input type="text" class="form-control" id="nuevaEspecialidad" 
+                               placeholder="Ingrese la nueva especialidad" maxlength="100">
+                        <small class="form-text">Se agregar· a la lista de especialidades</small>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required-field">Nivel que EnseÒa</label>
+                    <select class="form-select" name="nivel" id="nivel" required>
+                        <option value="">Seleccione un nivel</option>
+                        <option value="INICIAL" <%= (editar && "INICIAL".equals(p.getNivel())) ? "selected" : "" %>>Inicial</option>
+                        <option value="PRIMARIA" <%= (editar && "PRIMARIA".equals(p.getNivel())) ? "selected" : "" %>>Primaria</option>
+                        <option value="SECUNDARIA" <%= (editar && "SECUNDARIA".equals(p.getNivel())) ? "selected" : "" %>>Secundaria</option>
+                        <option value="TODOS" <%= (editar && "TODOS".equals(p.getNivel())) ? "selected" : "" %>>Todos los Niveles</option>
+                    </select>
+                    <div class="invalid-feedback"></div>
+                </div>             
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Turno</label>
                         <select class="form-select" name="turno_id" id="turno_id" required>
@@ -522,18 +528,18 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">C√≥digo de Profesor</label>
+                        <label class="form-label">CÛdigo de Profesor</label>
                         <div class="input-group-icon">
                             <i class="fas fa-barcode"></i>
                             <input type="text" class="form-control" name="codigo_profesor"
                                    value="<%= editar && p.getCodigoProfesor() != null ? p.getCodigoProfesor() : "" %>" 
                                    maxlength="20" placeholder="PROF-001">
                         </div>
-                        <small class="form-text">Opcional, se generar√° autom√°ticamente</small>
+                        <small class="form-text">Opcional, se generar· autom·ticamente</small>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Fecha de Contrataci√≥n</label>
+                        <label class="form-label">Fecha de ContrataciÛn</label>
                         <div class="input-group-icon">
                             <i class="fas fa-calendar-check"></i>
                             <input type="date" class="form-control" name="fecha_contratacion" id="fecha_contratacion"
@@ -556,40 +562,6 @@
 
                 <hr class="section-divider">
 
-                <!-- SECCI√ìN: USUARIO DEL SISTEMA -->
-                <div class="section-title">
-                    <i class="fas fa-key"></i>
-                    Acceso al Sistema
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Nombre de Usuario</label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-user-circle"></i>
-                            <input type="text" class="form-control" name="username" id="username"
-                                   value="<%= editar && p.getUsername() != null ? p.getUsername() : "" %>" 
-                                   maxlength="50" placeholder="usuario">
-                        </div>
-                        <small class="form-text">Opcional, se generar√° autom√°ticamente</small>
-                        <div class="invalid-feedback"></div>
-                        <div class="valid-feedback"></div>
-                    </div>
-                    
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label <%= !editar ? "required-field" : "" %>">Contrase√±a</label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" class="form-control" name="password" id="password"
-                                   placeholder="<%= editar ? "Dejar en blanco para no cambiar" : "Ingrese contrase√±a" %>"
-                                   <%= editar ? "" : "required" %>>
-                        </div>
-                        <small class="form-text">
-                            <%= editar ? "Solo llene si desea cambiar la contrase√±a" : "La contrase√±a se encriptar√° autom√°ticamente" %>
-                        </small>
-                    </div>
-                </div>
-
                 <!-- BOTONES -->
                 <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid #e5e7eb;">
                     <div class="d-flex gap-2">
@@ -606,7 +578,7 @@
                     <% if (editar) { %>
                     <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId() %>" 
                        class="btn-modern btn-danger-modern"
-                       onclick="return confirm('¬øEst√° seguro de eliminar este profesor?')">
+                       onclick="return confirm('øEst· seguro de eliminar este profesor?')">
                         <i class="fas fa-trash"></i>
                         Eliminar
                     </a>
@@ -622,19 +594,19 @@
                 <div class="col-md-4 mb-3">
                     <div class="logo-container text-center">
                         <img src="assets/img/logosa.png" alt="Logo" class="img-fluid mb-2" width="80" height="auto">
-                        <p class="fs-6 mb-0">"L√≠deres en educaci√≥n de calidad al m√°s alto nivel"</p>
+                        <p class="fs-6 mb-0">"LÌderes en educaciÛn de calidad al m·s alto nivel"</p>
                     </div>
                 </div>
 
                 <div class="col-md-4 mb-3">
                     <h5 class="fs-6 fw-bold">Contacto:</h5>
-                    <p class="fs-6 mb-1">Direcci√≥n: Av. El Sol 461, San Juan de Lurigancho 15434</p>
-                    <p class="fs-6 mb-1">Tel√©fono: 987654321</p>
+                    <p class="fs-6 mb-1">DirecciÛn: Av. El Sol 461, San Juan de Lurigancho 15434</p>
+                    <p class="fs-6 mb-1">TelÈfono: 987654321</p>
                     <p class="fs-6 mb-1">Correo: colegiosanantonio@gmail.com</p>
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <h5 class="fs-6 fw-bold">S√≠guenos:</h5>
+                    <h5 class="fs-6 fw-bold">SÌguenos:</h5>
                     <a href="https://www.facebook.com/" class="text-white d-block fs-6 mb-1">Facebook</a>
                     <a href="https://www.instagram.com/" class="text-white d-block fs-6 mb-1">Instagram</a>
                     <a href="https://twitter.com/" class="text-white d-block fs-6 mb-1">Twitter</a>
@@ -648,7 +620,7 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -672,10 +644,10 @@
                 }
             }
             
-            // Validaci√≥n del DNI con feedback visual
+            // ValidaciÛn del DNI con feedback visual
             if (dniInput) {
                 dniInput.addEventListener('input', function() {
-                    // Solo n√∫meros
+                    // Solo n˙meros
                     this.value = this.value.replace(/[^0-9]/g, '');
                     if (this.value.length > 8) {
                         this.value = this.value.slice(0, 8);
@@ -688,7 +660,7 @@
                     const validFeedback = feedback.nextElementSibling;
                     
                     if (dni.length === 0) {
-                        // DNI opcional - limpiar validaci√≥n
+                        // DNI opcional - limpiar validaciÛn
                         this.classList.remove('is-invalid', 'is-valid');
                         feedback.textContent = '';
                         if (validFeedback) validFeedback.textContent = '';
@@ -698,123 +670,169 @@
                     if (dni.length !== 8) {
                         this.classList.add('is-invalid');
                         this.classList.remove('is-valid');
-                        
-       // Validaci√≥n del correo electr√≥nico
-        if (correoInput) {
-            correoInput.addEventListener('blur', function() {
-                const correo = this.value.trim();
-                const feedback = this.parentElement.nextElementSibling;
-                const validFeedback = feedback.nextElementSibling;
+                        feedback.textContent = '?? El DNI debe tener exactamente 8 dÌgitos';
+                    } else {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                        feedback.textContent = '';
+                        if (validFeedback) validFeedback.textContent = '? DNI v·lido';
+                    }
+                });
+            }
+            
+            // ValidaciÛn del correo electrÛnico
+            if (correoInput) {
+                correoInput.addEventListener('blur', function() {
+                    const correo = this.value.trim();
+                    const feedback = this.parentElement.nextElementSibling;
+                    const validFeedback = feedback.nextElementSibling;
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    
+                    if (correo.length === 0) {
+                        this.classList.add('is-invalid');
+                        feedback.textContent = '?? El correo electrÛnico es obligatorio';
+                        return;
+                    }
+                    
+                    if (!emailRegex.test(correo)) {
+                        this.classList.add('is-invalid');
+                        this.classList.remove('is-valid');
+                        feedback.textContent = '?? Ingrese un correo electrÛnico v·lido';
+                    } else {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                        feedback.textContent = '';
+                        if (validFeedback) validFeedback.textContent = '? Correo v·lido';
+                    }
+                });
+            }
+            
+            // ValidaciÛn del username
+            if (usernameInput) {
+                usernameInput.addEventListener('blur', function() {
+                    const username = this.value.trim();
+                    const feedback = this.parentElement.nextElementSibling.nextElementSibling;
+                    const validFeedback = feedback.nextElementSibling;
+                    
+                    if (username.length === 0) {
+                        this.classList.remove('is-invalid', 'is-valid');
+                        feedback.textContent = '';
+                        if (validFeedback) validFeedback.textContent = '';
+                        return;
+                    }
+                    
+                    if (username.length < 4) {
+                        this.classList.add('is-invalid');
+                        this.classList.remove('is-valid');
+                        feedback.textContent = '?? El username debe tener al menos 4 caracteres';
+                    } else {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                        feedback.textContent = '';
+                        if (validFeedback) validFeedback.textContent = '? Username v·lido';
+                    }
+                });
+            }
+            
+            // ValidaciÛn del telÈfono (solo n˙meros)
+            const telefonoInput = document.getElementById('telefono');
+            if (telefonoInput) {
+                telefonoInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                });
+            }
+            
+            // ========== MANEJAR NUEVA ESPECIALIDAD ==========
+            const especialidadSelect = document.getElementById('especialidad');
+            const nuevaEspecialidadDiv = document.getElementById('nuevaEspecialidadDiv');
+            const nuevaEspecialidadInput = document.getElementById('nuevaEspecialidad');
+            
+            especialidadSelect.addEventListener('change', function() {
+                if (this.value === '__NUEVA__') {
+                    nuevaEspecialidadDiv.style.display = 'block';
+                    nuevaEspecialidadInput.required = true;
+                    nuevaEspecialidadInput.focus();
+                } else {
+                    nuevaEspecialidadDiv.style.display = 'none';
+                    nuevaEspecialidadInput.required = false;
+                    nuevaEspecialidadInput.value = '';
+                }
+            });
+            
+            // ValidaciÛn antes de enviar el formulario
+            form.addEventListener('submit', function(event) {
+                let errores = [];
+                
+                // Obtener valores
+                const nombres = document.getElementById('nombres').value.trim();
+                const apellidos = document.getElementById('apellidos').value.trim();
+                const correo = correoInput.value.trim();
+                const especialidad = especialidadSelect.value;
+                const turnoId = document.getElementById('turno_id').value;
+                const dni = dniInput.value.trim();
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 
-                if (correo.length === 0) {
-                    this.classList.add('is-invalid');
-                    feedback.textContent = '‚ö†Ô∏è El correo electr√≥nico es obligatorio';
-                    return;
+                // ========== MANEJAR NUEVA ESPECIALIDAD ==========
+                if (especialidad === '__NUEVA__') {
+                    const nuevaEsp = nuevaEspecialidadInput.value.trim();
+                    if (nuevaEsp === '') {
+                        event.preventDefault();
+                        alert('Por favor ingrese el nombre de la nueva especialidad');
+                        nuevaEspecialidadInput.focus();
+                        return false;
+                    }
+                    // Crear una opciÛn temporal con el nuevo valor y seleccionarla
+                    const option = document.createElement('option');
+                    option.value = nuevaEsp;
+                    option.selected = true;
+                    especialidadSelect.appendChild(option);
                 }
                 
-                if (!emailRegex.test(correo)) {
-                    this.classList.add('is-invalid');
-                    this.classList.remove('is-valid');
-                    feedback.textContent = '‚ö†Ô∏è Ingrese un correo electr√≥nico v√°lido';
-                } else {
-                    this.classList.remove('is-invalid');
-                    this.classList.add('is-valid');
-                    feedback.textContent = '';
-                    if (validFeedback) validFeedback.textContent = '‚úì Correo v√°lido';
+                // Validar campos obligatorios
+                if (!nombres) errores.push('Nombres es obligatorio');
+                if (!apellidos) errores.push('Apellidos es obligatorio');
+                
+                if (!correo) {
+                    errores.push('Correo electrÛnico es obligatorio');
+                } else if (!emailRegex.test(correo)) {
+                    errores.push('Correo electrÛnico no es v·lido');
                 }
+                
+                if (!especialidad || especialidad === '') {
+                    errores.push('Especialidad es obligatoria');
+                }
+                
+                if (!turnoId) errores.push('Turno es obligatorio');
+                
+                // Validar DNI si se proporciona
+                if (dni.length > 0) {
+                    if (dni.length !== 8) {
+                        errores.push('El DNI debe tener exactamente 8 dÌgitos');
+                    } else if (!/^\d+$/.test(dni)) {
+                        errores.push('El DNI solo debe contener n˙meros');
+                    }
+                }
+                
+                if (errores.length > 0) {
+                    event.preventDefault();
+                    
+                    // Mostrar errores
+                    const mensajeError = 'Por favor corrija los siguientes errores:\n\n? ' + errores.join('\n? ');
+                    alert(mensajeError);
+                    
+                    // Hacer scroll al primer error
+                    const primerCampoInvalido = form.querySelector('.is-invalid');
+                    if (primerCampoInvalido) {
+                        primerCampoInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        primerCampoInvalido.focus();
+                    }
+                    
+                    return false;
+                }
+                
+                return true;
             });
-        }
-        
-        // Validaci√≥n del username
-        if (usernameInput) {
-            usernameInput.addEventListener('blur', function() {
-                const username = this.value.trim();
-                const feedback = this.parentElement.nextElementSibling.nextElementSibling;
-                const validFeedback = feedback.nextElementSibling;
-                
-                if (username.length === 0) {
-                    this.classList.remove('is-invalid', 'is-valid');
-                    feedback.textContent = '';
-                    if (validFeedback) validFeedback.textContent = '';
-                    return;
-                }
-                
-                if (username.length < 4) {
-                    this.classList.add('is-invalid');
-                    this.classList.remove('is-valid');
-                    feedback.textContent = '‚ö†Ô∏è El username debe tener al menos 4 caracteres';
-                } else {
-                    this.classList.remove('is-invalid');
-                    this.classList.add('is-valid');
-                    feedback.textContent = '';
-                    if (validFeedback) validFeedback.textContent = '‚úì Username v√°lido';
-                }
-            });
-        }
-        
-        // Validaci√≥n del tel√©fono (solo n√∫meros)
-        const telefonoInput = document.getElementById('telefono');
-        if (telefonoInput) {
-            telefonoInput.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9]/g, '');
-            });
-        }
-        
-        // Validaci√≥n antes de enviar el formulario
-        form.addEventListener('submit', function(event) {
-            let errores = [];
-            
-            // Obtener valores
-            const nombres = document.getElementById('nombres').value.trim();
-            const apellidos = document.getElementById('apellidos').value.trim();
-            const correo = correoInput.value.trim();
-            const especialidad = document.getElementById('especialidad').value;
-            const turnoId = document.getElementById('turno_id').value;
-            const dni = dniInput.value.trim();
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
-            // Validar campos obligatorios
-            if (!nombres) errores.push('Nombres es obligatorio');
-            if (!apellidos) errores.push('Apellidos es obligatorio');
-            
-            if (!correo) {
-                errores.push('Correo electr√≥nico es obligatorio');
-            } else if (!emailRegex.test(correo)) {
-                errores.push('Correo electr√≥nico no es v√°lido');
-            }
-            
-            if (!especialidad) errores.push('Especialidad es obligatoria');
-            if (!turnoId) errores.push('Turno es obligatorio');
-            
-            // Validar DNI si se proporciona
-            if (dni.length > 0) {
-                if (dni.length !== 8) {
-                    errores.push('El DNI debe tener exactamente 8 d√≠gitos');
-                } else if (!/^\d+$/.test(dni)) {
-                    errores.push('El DNI solo debe contener n√∫meros');
-                }
-            }
-            
-            if (errores.length > 0) {
-                event.preventDefault();
-                
-                // Mostrar errores con SweetAlert si est√° disponible, sino con alert
-                const mensajeError = 'Por favor corrija los siguientes errores:\n\n‚Ä¢ ' + errores.join('\n‚Ä¢ ');
-                
-                alert(mensajeError);
-                
-                // Hacer scroll al primer error
-                const primerCampoInvalido = form.querySelector('.is-invalid');
-                if (primerCampoInvalido) {
-                    primerCampoInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    primerCampoInvalido.focus();
-                }
-                
-                return false;
-            }
-            
-            return true;
         });
-    });
-</script>                 
+    </script>
+</body>
+</html>   

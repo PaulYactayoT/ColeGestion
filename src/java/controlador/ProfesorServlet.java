@@ -16,69 +16,82 @@ public class ProfesorServlet extends HttpServlet {
     ProfesorDAO dao = new ProfesorDAO();
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-    request.setCharacterEncoding("UTF-8");
-    response.setCharacterEncoding("UTF-8");
-    response.setContentType("text/html; charset=UTF-8");
+        protected void doGet(HttpServletRequest request, HttpServletResponse response)
+                    throws ServletException, IOException {
+            request.setCharacterEncoding("UTF-8");
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType("text/html; charset=UTF-8");
 
-    
-        HttpSession session = request.getSession();
-        String rol = (String) session.getAttribute("rol");
-            
-            //SOLO ADMINISTRADOR PUEDE INGRESAR A ESTE PANEL. SI OTRO ROL INGRESA PRACTICAMENTE LE SALDRA LA VISTA DE ACCESO RESTRINGIDO
+            HttpSession session = request.getSession();
+            String rol = (String) session.getAttribute("rol");
+
+            //SOLO ADMINISTRADOR PUEDE INGRESAR A ESTE PANEL
             if (!"admin".equals(rol)) {
-            System.out.println("ACCESO DENEGADO: Rol " + rol + " intentó acceder a ProfesorServlet");
-            response.sendRedirect("acceso_denegado.jsp");
-            return;
+                System.out.println("ACCESO DENEGADO: Rol " + rol + " intentó acceder a ProfesorServlet");
+                response.sendRedirect("acceso_denegado.jsp");
+                return;
+            }
+
+            String accion = request.getParameter("accion");
+
+            // Acción por defecto: listar todos los profesores
+            if (accion == null || accion.equals("listar")) {
+                request.setAttribute("lista", dao.listar());
+                request.getRequestDispatcher("profesores.jsp").forward(request, response);
+                return;
+            }
+
+            // Mostrar formulario para nuevo profesor
+            if ("nuevo".equals(accion)) {
+                request.setAttribute("turnos", dao.listarTurnos());
+                request.setAttribute("especialidades", dao.obtenerEspecialidadesDisponibles()); // ✅ AGREGAR ESTA LÍNEA
+                request.getRequestDispatcher("profesorForm.jsp").forward(request, response);
+                return;
+            }
+
+            // Ejecutar acción específica según parámetro
+            switch (accion) {
+                case "editar":
+                    int idEditar = Integer.parseInt(request.getParameter("id"));
+                    Profesor p = dao.obtenerPorId(idEditar);
+                    if (p != null) {
+                        request.setAttribute("profesor", p);
+                        request.setAttribute("turnos", dao.listarTurnos());
+                        request.setAttribute("especialidades", dao.obtenerEspecialidadesDisponibles()); // ✅ AGREGAR ESTA LÍNEA
+                        request.getRequestDispatcher("profesorForm.jsp").forward(request, response);
+                    } else {
+                        session.setAttribute("error", "Profesor no encontrado");
+                        response.sendRedirect("ProfesorServlet?accion=listar");
+                    }
+                    break;
+
+                case "eliminar":
+                    int idEliminar = Integer.parseInt(request.getParameter("id"));
+                    boolean eliminado = dao.eliminar(idEliminar);
+                    if (eliminado) {
+                        session.setAttribute("mensaje", "Profesor eliminado correctamente");
+                    } else {
+                        session.setAttribute("error", "Error al eliminar el profesor");
+                    }
+                    response.sendRedirect("ProfesorServlet?accion=listar");
+                    break;
+                    
+                 case "ver":
+                    int idVer = Integer.parseInt(request.getParameter("id"));
+                    Profesor pVer = dao.obtenerPorId(idVer);
+                    if (pVer != null) {
+                        request.setAttribute("profesor", pVer);
+                        request.getRequestDispatcher("profesorDetalle.jsp").forward(request, response);
+                    } else {
+                        session.setAttribute("error", "Profesor no encontrado");
+                        response.sendRedirect("ProfesorServlet?accion=listar");
+                    }
+                    break;
+
+                default:
+                    response.sendRedirect("ProfesorServlet?accion=listar");
+            }
         }
-
-        String accion = request.getParameter("accion");
-
-        // Acción por defecto: listar todos los profesores
-        if (accion == null || accion.equals("listar")) {
-            request.setAttribute("lista", dao.listar());
-            request.getRequestDispatcher("profesores.jsp").forward(request, response);
-            return;
-        }
-
-        // Mostrar formulario para nuevo profesor
-        if ("nuevo".equals(accion)) {
-            request.setAttribute("turnos", dao.listarTurnos());
-            request.getRequestDispatcher("profesorForm.jsp").forward(request, response);
-            return;
-        }
-
-        // Ejecutar acción específica según parámetro
-        switch (accion) {
-            case "editar":
-                int idEditar = Integer.parseInt(request.getParameter("id"));
-                Profesor p = dao.obtenerPorId(idEditar);
-                if (p != null) {
-                    request.setAttribute("profesor", p);
-                    request.setAttribute("turnos", dao.listarTurnos());
-                    request.getRequestDispatcher("profesorForm.jsp").forward(request, response);
-                } else {
-                    session.setAttribute("error", "Profesor no encontrado");
-                    response.sendRedirect("ProfesorServlet");
-                }
-                break;
-
-            case "eliminar":
-                int idEliminar = Integer.parseInt(request.getParameter("id"));
-                boolean eliminado = dao.eliminar(idEliminar);
-                if (eliminado) {
-                    session.setAttribute("mensaje", "Profesor eliminado correctamente");
-                } else {
-                    session.setAttribute("error", "Error al eliminar el profesor");
-                }
-                response.sendRedirect("ProfesorServlet");
-                break;
-
-            default:
-                response.sendRedirect("ProfesorServlet");
-        }
-    }
 
     @Override
 protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -111,10 +124,11 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
         p.setTelefono(request.getParameter("telefono"));
         p.setDireccion(request.getParameter("direccion"));
         p.setEspecialidad(request.getParameter("especialidad"));
+        p.setNivel(request.getParameter("nivel")); 
         p.setCodigoProfesor(request.getParameter("codigo_profesor"));
         p.setUsername(request.getParameter("username"));
         
-        // ✅ CAPTURAR PASSWORD (CRÍTICO)
+        // CAPTURAR PASSWORD (CRÍTICO)
         String password = request.getParameter("password");
         if (password != null && !password.trim().isEmpty()) {
             p.setPassword(password);
@@ -200,7 +214,7 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
         if (id == 0) {
             // ========== CREAR NUEVO PROFESOR ==========
             System.out.println("========================================");
-            System.out.println("🔹 CREANDO NUEVO PROFESOR");
+            System.out.println(" CREANDO NUEVO PROFESOR");
             System.out.println("Nombres: " + p.getNombres());
             System.out.println("Apellidos: " + p.getApellidos());
             System.out.println("Correo: " + p.getCorreo());
@@ -235,13 +249,13 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
         }
 
         // Redirigir a la lista
-        response.sendRedirect("ProfesorServlet");
+        response.sendRedirect("ProfesorServlet?accion=listar");
 
     } catch (Exception e) {
         System.out.println("EXCEPCIÓN EN doPost:");
         e.printStackTrace();
         session.setAttribute("error", "Error al procesar la solicitud: " + e.getMessage());
-        response.sendRedirect("ProfesorServlet");
+        response.sendRedirect("ProfesorServlet?accion=listar");
     }
 }
 

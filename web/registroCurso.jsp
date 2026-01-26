@@ -17,9 +17,28 @@
         return;
     }
 
+    // ========== VALIDACIÓN DEFENSIVA ==========
     List<Map<String, Object>> cursos = (List<Map<String, Object>>) request.getAttribute("cursos");
     List<Map<String, Object>> grados = (List<Map<String, Object>>) request.getAttribute("grados");
     List<Map<String, Object>> turnos = (List<Map<String, Object>>) request.getAttribute("turnos");
+    
+    // Inicializar listas vacías si son null
+    if (cursos == null) {
+        cursos = new ArrayList<>();
+        System.out.println("WARNING: Lista de cursos es NULL");
+    }
+    if (grados == null) {
+        grados = new ArrayList<>();
+        System.out.println("WARNING: Lista de grados es NULL");
+    }
+    if (turnos == null) {
+        turnos = new ArrayList<>();
+        System.out.println("WARNING: Lista de turnos es NULL");
+    }
+    
+    System.out.println("JSP - Cursos disponibles: " + cursos.size());
+    System.out.println("JSP - Grados disponibles: " + grados.size());
+    System.out.println("JSP - Turnos disponibles: " + turnos.size());
     
     String mensaje = (String) session.getAttribute("mensaje");
     String error = (String) session.getAttribute("error");
@@ -169,13 +188,29 @@
                         </label>
                         <select name="curso" id="selectCurso" class="form-select" required>
                             <option value="">-- Seleccione un curso --</option>
-                            <% if (cursos != null) {
-                                for (Map<String, Object> curso : cursos) { %>
-                                    <option value="<%= curso.get("nombre") %>" data-area="<%= curso.get("area") %>">
-                                        <%= curso.get("nombre") %> - <%= curso.get("area") %>
-                                    </option>
-                            <% }} %>
+                            <% 
+                            if (cursos != null && !cursos.isEmpty()) {
+                                for (Map<String, Object> curso : cursos) { 
+                                    String nombreCurso = (String) curso.get("nombre");
+                                    String areaCurso = (String) curso.get("area");
+
+                                    // Escapar caracteres especiales para evitar problemas en HTML
+                                    if (nombreCurso != null && areaCurso != null) {
+                            %>
+                                        <option value="<%= nombreCurso %>" data-area="<%= areaCurso %>">
+                                            <%= nombreCurso %> - <%= areaCurso %>
+                                        </option>
+                            <% 
+                                    }
+                                }
+                            } else {
+                            %>
+                                <option value="" disabled>No hay cursos disponibles</option>
+                            <% } %>
                         </select>
+                        <% if (cursos == null || cursos.isEmpty()) { %>
+                            <small class="text-danger">⚠️ No se pudieron cargar los cursos</small>
+                        <% } %>
                     </div>
 
                     <!-- Área (oculto) -->
@@ -197,15 +232,15 @@
                         </select>
                     </div>
 
-                    <!-- Profesor -->
+                   <!-- Profesor -->
                     <div class="col-md-6 mb-3">
                         <label class="form-label">
                             <i class="fas fa-chalkboard-teacher"></i> Profesor <span class="text-danger">*</span>
                         </label>
                         <select name="profesor" id="selectProfesor" class="form-select" required disabled>
-                            <option value="">Seleccione primero un curso</option>
+                            <option value="">Seleccione primero un turno y curso</option> 
                         </select>
-                        <small class="text-muted">Los profesores se filtran según el curso seleccionado</small>
+                        <small class="text-muted">Los profesores se filtran según el turno y curso seleccionados</small>  
                     </div>
 
                     <!-- Turno -->
@@ -338,7 +373,7 @@
 
   
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+        <script>
         // Variables globales
         let horariosAgregados = [];
         let contadorHorarios = 0;
@@ -349,75 +384,114 @@
         });
 
         function inicializarEventos() {
-        document.getElementById('selectCurso').addEventListener('change', function() {
-            const cursoNombre = this.value;
-            const area = this.options[this.selectedIndex].getAttribute('data-area');
+            // ========== Cargar profesores cuando cambien CURSO o TURNO ==========
+            const selectCurso = document.getElementById('selectCurso');
+            const selectTurno = document.getElementById('selectTurno');
+            const selectProfesor = document.getElementById('selectProfesor');
 
-            if (cursoNombre) {
-                document.getElementById('inputArea').value = area || '';
-                cargarProfesores(cursoNombre);
-            } else {
-                document.getElementById('selectProfesor').innerHTML = '<option value="">Seleccione primero un curso</option>';
-                document.getElementById('selectProfesor').disabled = true;
+            // Función auxiliar para cargar profesores
+            function actualizarProfesores() {
+                const cursoNombre = selectCurso.value;
+                const turnoId = selectTurno.value;
+
+                if (cursoNombre && turnoId) {
+                    cargarProfesoresPorTurno(turnoId, cursoNombre);
+                } else if (!turnoId && cursoNombre) {
+                    selectProfesor.innerHTML = '<option value="">Primero seleccione un turno</option>';
+                    selectProfesor.disabled = true;
+                } else if (!cursoNombre && turnoId) {
+                    selectProfesor.innerHTML = '<option value="">Primero seleccione un curso</option>';
+                    selectProfesor.disabled = true;
+                } else {
+                    selectProfesor.innerHTML = '<option value="">Seleccione curso y turno primero</option>';
+                    selectProfesor.disabled = true;
+                }
             }
-        });
 
-        document.querySelectorAll('#diasSemana input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', verificarHabilitarAgregar);
-        });
+            // Evento al cambiar TURNO
+            selectTurno.addEventListener('change', actualizarProfesores);
 
-        document.getElementById('selectTurno').addEventListener('change', verificarHabilitarAgregar);
-        document.getElementById('selectProfesor').addEventListener('change', verificarHabilitarAgregar);
-        document.getElementById('btnAgregarHorario').addEventListener('click', agregarHorario);
+            // Evento al cambiar CURSO
+            selectCurso.addEventListener('change', function() {
+                const cursoNombre = this.value;
+                const area = this.options[this.selectedIndex].getAttribute('data-area');
 
-        // ESTE EVENT LISTENER PARA VALIDAR EN TIEMPO REAL
-        document.getElementById('formRegistroCurso').addEventListener('input', function() {
-            const curso = document.getElementById('selectCurso').value;
-            const grado = document.getElementById('selectGrado').value;
-            const profesor = document.getElementById('selectProfesor').value;
-            const turno = document.getElementById('selectTurno').value;
-            const creditos = document.getElementById('inputCreditos').value;
+                if (cursoNombre && area) {
+                    document.getElementById('inputArea').value = area;
+                } else {
+                    document.getElementById('inputArea').value = '';
+                }
 
-            const camposBasicos = curso && grado && profesor && turno && creditos;
-            const tieneHorarios = horariosAgregados.length > 0;
+                actualizarProfesores();
+            });
 
-            document.getElementById('btnSubmit').disabled = !(camposBasicos && tieneHorarios);
-        });
+            // Resto de eventos
+            document.querySelectorAll('#diasSemana input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', verificarHabilitarAgregar);
+            });
 
-        document.getElementById('formRegistroCurso').addEventListener('submit', function(e) {
-            if (horariosAgregados.length === 0) {
-                e.preventDefault();
-                mostrarMensaje('Debe agregar al menos un horario', 'danger');
-                return false;
-            }
-        });
-    }
+            selectProfesor.addEventListener('change', verificarHabilitarAgregar);
+            document.getElementById('btnAgregarHorario').addEventListener('click', agregarHorario);
 
-        function cargarProfesores(cursoNombre) {
-            console.log('Cargando profesores para:', cursoNombre);
-            
-            fetch('RegistroCursoServlet?accion=obtenerProfesores&curso=' + encodeURIComponent(cursoNombre))
-                .then(response => response.json())
+            // Validación en tiempo real del formulario
+            document.getElementById('formRegistroCurso').addEventListener('input', function() {
+                const curso = selectCurso.value;
+                const grado = document.getElementById('selectGrado').value;
+                const profesor = selectProfesor.value;
+                const turno = selectTurno.value;
+                const creditos = document.getElementById('inputCreditos').value;
+
+                const camposBasicos = curso && grado && profesor && turno && creditos;
+                const tieneHorarios = horariosAgregados.length > 0;
+
+                document.getElementById('btnSubmit').disabled = !(camposBasicos && tieneHorarios);
+            });
+
+            // Validación al enviar
+            document.getElementById('formRegistroCurso').addEventListener('submit', function(e) {
+                if (horariosAgregados.length === 0) {
+                    e.preventDefault();
+                    mostrarMensaje('Debe agregar al menos un horario', 'danger');
+                    return false;
+                }
+            });
+        }
+
+        function cargarProfesoresPorTurno(turnoId, cursoNombre) {
+            console.log('Cargando profesores para turno:', turnoId, 'curso:', cursoNombre);
+
+            const selectProfesor = document.getElementById('selectProfesor');
+            selectProfesor.innerHTML = '<option value="">Cargando profesores...</option>';
+            selectProfesor.disabled = true;
+
+            const url = 'RegistroCursoServlet?accion=obtenerProfesores&turno=' + turnoId + '&curso=' + encodeURIComponent(cursoNombre);
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP error! status: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    const select = document.getElementById('selectProfesor');
-                    select.innerHTML = '<option value="">-- Seleccione un profesor --</option>';
-                    
-                    if (data.length > 0) {
+                    selectProfesor.innerHTML = '<option value="">-- Seleccione un profesor --</option>';
+
+                    if (data && data.length > 0) {
                         data.forEach(profesor => {
                             const option = document.createElement('option');
                             option.value = profesor.id;
                             option.textContent = profesor.nombre_completo + ' - ' + profesor.especialidad;
-                            select.appendChild(option);
+                            selectProfesor.appendChild(option);
                         });
-                        select.disabled = false;
+                        selectProfesor.disabled = false;
                     } else {
-                        select.innerHTML = '<option value="">No hay profesores disponibles</option>';
-                        select.disabled = true;
+                        selectProfesor.innerHTML = '<option value="">No hay profesores disponibles</option>';
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    mostrarMensaje('Error al cargar profesores', 'danger');
+                    console.error('ERROR:', error);
+                    selectProfesor.innerHTML = '<option value="">Error al cargar profesores</option>';
+                    mostrarMensaje('Error: ' + error.message, 'danger');
                 });
         }
 
@@ -439,14 +513,9 @@
         }
 
         function agregarHorario() {
-            // DEFINIR LAS VARIABLES PRIMERO
             const diasSeleccionados = obtenerDiasSeleccionados();
             const turnoSelect = document.getElementById('selectTurno');
             const profesorSelect = document.getElementById('selectProfesor');
-
-            console.log('Días seleccionados:', diasSeleccionados);
-            console.log('Turno ID:', turnoSelect.value);
-            console.log('Profesor ID:', profesorSelect.value);
 
             if (diasSeleccionados.length === 0) {
                 mostrarMensaje('Seleccione al menos un día', 'warning');
@@ -473,75 +542,54 @@
 
         function mostrarModalHorario(dias, turnoId, turnoNombre, horaMinima, horaMaxima) {
             const dia = dias[0];
-            
-            const html = `
-                <div class="modal fade" id="modalHorario" tabindex="-1" aria-labelledby="modalHorarioLabel" aria-hidden="false" data-bs-backdrop="static" data-bs-keyboard="false">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="modalHorarioLabel">
-                                    <i class="fas fa-clock"></i> Configurar Horario - ${dia}
-                                </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p class="text-muted">Turno: ${turnoNombre}</p>
-                                
-                                <div class="mb-3">
-                                    <label for="modalHoraInicio" class="form-label">Hora de inicio</label>
-                                    <input type="time" id="modalHoraInicio" class="form-control" 
-                                           min="${horaMinima}" max="${horaMaxima}" value="${horaMinima}" required>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="modalHoraFin" class="form-label">Hora de fin</label>
-                                    <input type="time" id="modalHoraFin" class="form-control" 
-                                           min="${horaMinima}" max="${horaMaxima}" value="${horaMaxima}" required>
-                                </div>
-                                
-                                <div id="modalValidacion" class="alert" style="display:none;" role="alert"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn btn-primary" id="btnConfirmarHorario">
-                                    <i class="fas fa-check"></i> Agregar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
+
+            const html = '<div class="modal fade" id="modalHorario" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">' +
+                '<div class="modal-dialog">' +
+                    '<div class="modal-content">' +
+                        '<div class="modal-header">' +
+                            '<h5 class="modal-title"><i class="fas fa-clock"></i> Configurar Horario - ' + dia + '</h5>' +
+                            '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
+                        '</div>' +
+                        '<div class="modal-body">' +
+                            '<p class="text-muted">Turno: ' + turnoNombre + '</p>' +
+                            '<div class="mb-3">' +
+                                '<label for="modalHoraInicio" class="form-label">Hora de inicio</label>' +
+                                '<input type="time" id="modalHoraInicio" class="form-control" min="' + horaMinima + '" max="' + horaMaxima + '" value="' + horaMinima + '" required>' +
+                            '</div>' +
+                            '<div class="mb-3">' +
+                                '<label for="modalHoraFin" class="form-label">Hora de fin</label>' +
+                                '<input type="time" id="modalHoraFin" class="form-control" min="' + horaMinima + '" max="' + horaMaxima + '" value="' + horaMaxima + '" required>' +
+                            '</div>' +
+                            '<div id="modalValidacion" class="alert" style="display:none;"></div>' +
+                        '</div>' +
+                        '<div class="modal-footer">' +
+                            '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+                            '<button type="button" class="btn btn-primary" id="btnConfirmarHorario"><i class="fas fa-check"></i> Agregar</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
             const modalAnterior = document.getElementById('modalHorario');
             if (modalAnterior) {
                 const instanceAnterior = bootstrap.Modal.getInstance(modalAnterior);
-                if (instanceAnterior) {
-                    instanceAnterior.dispose();
-                }
+                if (instanceAnterior) instanceAnterior.dispose();
                 modalAnterior.remove();
             }
-            
+
             document.body.insertAdjacentHTML('beforeend', html);
-            
+
             const modalElement = document.getElementById('modalHorario');
-            const modal = new bootstrap.Modal(modalElement, {
-            backdrop: true,  
-            keyboard: true,
-            focus: true
-             });
-            
+            const modal = new bootstrap.Modal(modalElement);
+
             document.getElementById('btnConfirmarHorario').addEventListener('click', function() {
                 confirmarHorario(dia, turnoId, modal);
             });
-            
-            modalElement.addEventListener('shown.bs.modal', function () {
-                document.getElementById('modalHoraInicio').focus();
-            });
-            
+
             modalElement.addEventListener('hidden.bs.modal', function () {
                 modalElement.remove();
             });
-            
+
             modal.show();
         }
 
@@ -549,7 +597,7 @@
             const horaInicio = document.getElementById('modalHoraInicio').value;
             const horaFin = document.getElementById('modalHoraFin').value;
             const profesorId = document.getElementById('selectProfesor').value;
-            
+
             if (!horaInicio || !horaFin) {
                 mostrarValidacionModal('Complete todos los horarios', 'warning');
                 return;
@@ -569,20 +617,16 @@
                         horaInicio: horaInicio,
                         horaFin: horaFin
                     };
-                    
+
                     horariosAgregados.push(horario);
                     renderizarHorarios();
-                    
                     modalInstance.hide();
-                    
-                    const checkbox = document.querySelector(`#diasSemana input[value="${dia}"]`);
-                    if (checkbox) {
-                        checkbox.checked = false;
-                    }
+
+                    const checkbox = document.querySelector('#diasSemana input[value="' + dia + '"]');
+                    if (checkbox) checkbox.checked = false;
+
                     verificarHabilitarAgregar();
-                    
                     mostrarMensaje('Horario agregado correctamente', 'success');
-                    
                     document.getElementById('btnSubmit').disabled = false;
                 } else {
                     mostrarValidacionModal(mensaje, 'danger');
@@ -599,12 +643,10 @@
                 horaInicio: horaInicio,
                 horaFin: horaFin
             });
-            
+
             fetch('RegistroCursoServlet?' + params.toString())
                 .then(response => response.json())
-                .then(data => {
-                    callback(data.disponible, data.mensaje);
-                })
+                .then(data => callback(data.disponible, data.mensaje))
                 .catch(error => {
                     console.error('Error:', error);
                     callback(false, 'Error al validar disponibilidad');
@@ -613,13 +655,11 @@
 
         function mostrarValidacionModal(texto, tipo) {
             const div = document.getElementById('modalValidacion');
-            div.className = `alert alert-${tipo}`;
+            div.className = 'alert alert-' + tipo;
             div.textContent = texto;
             div.style.display = 'block';
-            
-            setTimeout(() => {
-                div.style.display = 'none';
-            }, 4000);
+
+            setTimeout(() => div.style.display = 'none', 4000);
         }
 
         function renderizarHorarios() {
@@ -627,7 +667,6 @@
 
             if (horariosAgregados.length === 0) {
                 container.innerHTML = '<p class="text-muted"><i class="fas fa-info-circle"></i> No hay horarios agregados</p>';
-                // Asegurar que el botón submit esté deshabilitado
                 document.getElementById('btnSubmit').disabled = true;
                 return;
             }
@@ -637,30 +676,19 @@
             horariosAgregados.forEach(horario => {
                 const div = document.createElement('div');
                 div.className = 'horario-item';
-                div.innerHTML = `
-                    <button type="button" class="btn btn-sm btn-danger btn-remove-horario" 
-                            onclick="eliminarHorario(${horario.id})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <strong><i class="fas fa-calendar-day"></i> ${horario.dia}</strong>
-                        </div>
-                        <div class="col-md-4">
-                            <i class="fas fa-clock"></i> ${horario.horaInicio}
-                        </div>
-                        <div class="col-md-4">
-                            <i class="fas fa-clock"></i> ${horario.horaFin}
-                        </div>
-                    </div>
-                    <input type="hidden" name="dias[]" value="${horario.dia}">
-                    <input type="hidden" name="horasInicio[]" value="${horario.horaInicio}">
-                    <input type="hidden" name="horasFin[]" value="${horario.horaFin}">
-                `;
+                div.innerHTML = '<button type="button" class="btn btn-sm btn-danger btn-remove-horario" onclick="eliminarHorario(' + horario.id + ')">' +
+                    '<i class="fas fa-times"></i></button>' +
+                    '<div class="row">' +
+                        '<div class="col-md-4"><strong><i class="fas fa-calendar-day"></i> ' + horario.dia + '</strong></div>' +
+                        '<div class="col-md-4"><i class="fas fa-clock"></i> ' + horario.horaInicio + '</div>' +
+                        '<div class="col-md-4"><i class="fas fa-clock"></i> ' + horario.horaFin + '</div>' +
+                    '</div>' +
+                    '<input type="hidden" name="dias[]" value="' + horario.dia + '">' +
+                    '<input type="hidden" name="horasInicio[]" value="' + horario.horaInicio + '">' +
+                    '<input type="hidden" name="horasFin[]" value="' + horario.horaFin + '">';
                 container.appendChild(div);
             });
 
-            // Asegurar que el botón submit esté habilitado si hay horarios
             const curso = document.getElementById('selectCurso').value;
             const grado = document.getElementById('selectGrado').value;
             const profesor = document.getElementById('selectProfesor').value;
@@ -668,37 +696,28 @@
             const creditos = document.getElementById('inputCreditos').value;
 
             const camposBasicos = curso && grado && profesor && turno && creditos;
-            const tieneHorarios = horariosAgregados.length > 0;
-
-            document.getElementById('btnSubmit').disabled = !(camposBasicos && tieneHorarios);
+            document.getElementById('btnSubmit').disabled = !(camposBasicos && horariosAgregados.length > 0);
         }
 
         function eliminarHorario(id) {
             horariosAgregados = horariosAgregados.filter(h => h.id !== id);
             renderizarHorarios();
-            
             if (horariosAgregados.length === 0) {
                 document.getElementById('btnSubmit').disabled = true;
             }
-            
             mostrarMensaje('Horario eliminado', 'info');
         }
 
         function mostrarMensaje(texto, tipo) {
             const div = document.getElementById('validation-message');
-            div.className = `alert alert-${tipo}`;
+            div.className = 'alert alert-' + tipo;
             div.textContent = texto;
             div.style.display = 'block';
-            
-            setTimeout(() => {
-                div.style.display = 'none';
-            }, 3000);
+            setTimeout(() => div.style.display = 'none', 3000);
         }
     </script>
 
 </body>
 </html>
-
-<div class="modal fade" id="modalHorario" tabindex="-1" aria-labelledby="modalHorarioLabel" aria-hidden="false" data-bs-backdrop="static" data-bs-keyboard="false"></div>
                                          
                                        
