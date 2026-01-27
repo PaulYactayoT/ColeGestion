@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.util.*" %>
+<%@ page import="java.util.*, modelo.Curso" %>
 
 <%
     // ========== VALIDACIÓN DE SESIÓN ==========
@@ -30,7 +30,21 @@
     session.removeAttribute("mensaje");
     session.removeAttribute("error");
 %>
-
+<%
+    // ========== DATOS PARA MODO EDICIÓN ==========
+    Curso cursoEditar = (Curso) request.getAttribute("cursoEditar");
+    List<Map<String, Object>> horariosEditar = (List<Map<String, Object>>) request.getAttribute("horariosEditar");
+    Boolean modoEdicion = (Boolean) request.getAttribute("modoEdicion");
+    
+    if (modoEdicion == null) modoEdicion = false;
+    
+    // Debug
+    if (modoEdicion && cursoEditar != null) {
+        System.out.println("  JSP - Modo edición activado");
+        System.out.println("   Curso: " + cursoEditar.getNombre());
+        System.out.println("   ID: " + cursoEditar.getId());
+    }
+%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -181,8 +195,8 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center">
                     <h2>
-                        <i class="fas fa-book-open text-primary"></i> 
-                        Registro de Curso
+                        <i class="fas fa-<%= modoEdicion ? "edit" : "book-open" %> text-primary"></i> 
+                        <%= modoEdicion ? "Editar Curso" : "Registro de Curso" %>
                     </h2>
                     <a href="CursoServlet" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Volver a Cursos
@@ -208,10 +222,18 @@
 
         <!-- ========== FORMULARIO ========== -->
         <form id="formRegistroCurso" action="RegistroCursoServlet" method="post">
-            <input type="hidden" name="accion" value="registrar">
-            <input type="hidden" name="area" id="inputArea">
-            <input type="hidden" name="nivel" id="inputNivel">
-
+            <% if (modoEdicion && cursoEditar != null) { %>
+                <input type="hidden" name="curso_id" value="<%= cursoEditar.getId() %>">
+                <input type="hidden" name="accion" value="actualizar">
+            <% } else { %>
+                <input type="hidden" name="accion" value="registrar">
+            <% } %>
+        
+        <!-- ✅ CAMPOS HIDDEN NECESARIOS PARA EL JAVASCRIPT ✅ -->
+        <input type="hidden" id="inputNivel" name="nivel" value="">
+        <input type="hidden" id="inputArea" name="area" value="">
+        <!-- ============================================== -->
+        
             <!-- ========== SECCIÓN 1: NIVEL Y GRADO ========== -->
             <div class="form-section">
                 <div class="section-title">
@@ -354,7 +376,7 @@
                         </label>
                         <textarea name="descripcion" id="inputDescripcion" 
                                   class="form-control" rows="3" 
-                                  placeholder="Breve descripción del contenido del curso..."></textarea>
+                                  placeholder="Breve descripción del contenido del curso..."><%= (modoEdicion && cursoEditar != null && cursoEditar.getDescripcion() != null) ? cursoEditar.getDescripcion() : "" %></textarea>
                     </div>
                 </div>
             </div>
@@ -437,7 +459,8 @@
                     <i class="fas fa-times"></i> Cancelar
                 </a>
                 <button type="submit" id="btnSubmit" class="btn btn-primary btn-lg" disabled>
-                    <i class="fas fa-save"></i> Registrar Curso
+                    <i class="fas fa-save"></i> 
+                    <%= modoEdicion ? "Guardar Cambios" : "Registrar Curso" %>
                 </button>
             </div>
         </form>
@@ -996,6 +1019,46 @@
             }
             return true;
         });
+        
+                // Función para inicializar el formulario en modo edición
+        function inicializarFormularioEdicion() {
+            // Detectar si estamos en modo edición
+            const selectCurso = document.getElementById('selectCurso');
+            const selectProfesor = document.getElementById('selectProfesor');
+            const selectTurno = document.getElementById('selectTurno');
+
+            // Si hay un curso ya seleccionado (modo edición)
+            if (selectCurso && selectCurso.value) {
+                console.log('🔧 Detectado modo EDICIÓN - Cargando profesores filtrados');
+
+                // Guardar el profesor que estaba seleccionado
+                const profesorSeleccionado = selectProfesor ? selectProfesor.value : null;
+
+                // Esperar un momento para que las variables globales se inicialicen
+                setTimeout(() => {
+                    // Simular el cambio de curso para cargar profesores filtrados
+                    cambioCurso();
+
+                    // Después de cargar los profesores, reseleccionar el profesor original
+                    if (profesorSeleccionado) {
+                        setTimeout(() => {
+                            if (selectProfesor) {
+                                selectProfesor.value = profesorSeleccionado;
+                                console.log('✅ Profesor reseleccionado:', profesorSeleccionado);
+                            }
+                        }, 500);
+                    }
+                }, 300);
+            }
+        }
+
+        // Ejecutar cuando el DOM esté completamente cargado
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', inicializarFormularioEdicion);
+        } else {
+            // DOM ya está listo
+            inicializarFormularioEdicion();
+        }
     </script>
 </body>
 </html>

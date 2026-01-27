@@ -1,5 +1,4 @@
 package modelo;
-
 import java.sql.Date;
 import java.util.*;
 
@@ -22,6 +21,7 @@ public class Curso {
     private int totalHorarios;
     private int cantidadAlumnos;
     private int cantidadTareas;
+    private Integer turnoId; 
     
     // Constructor
     public Curso() {
@@ -31,7 +31,8 @@ public class Curso {
         this.totalHorarios = 0;
         this.cantidadAlumnos = 0;
         this.cantidadTareas = 0;
-        this.descripcion = ""; // Inicializar como vacío
+        this.descripcion = ""; 
+        this.turnoId = null;   
     }
     
     // Getters y Setters
@@ -50,7 +51,6 @@ public class Curso {
     public String getArea() { return area; }
     public void setArea(String area) { this.area = area; }
     
-    // NUEVO: Getter y Setter para descripción
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
     
@@ -89,4 +89,7 @@ public class Curso {
     
     public int getCantidadTareas() { return cantidadTareas; }
     public void setCantidadTareas(int cantidadTareas) { this.cantidadTareas = cantidadTareas; }
+    
+    public Integer getTurnoId() { return turnoId; }
+    public void setTurnoId(Integer turnoId) { this.turnoId = turnoId; }
 }

@@ -1,9 +1,4 @@
-<%--
-    Document   : cursos
-    Created on : 1 may. 2025, 9:27:58 p. m.
-    Author     : Juan Pablo Amaya
-    MODIFICADO: Agregadas columnas Nivel y Horarios, y cambiado diseño a cards para mejor visualización
---%>
+
 
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*, java.sql.*, modelo.Curso, modelo.Grado, conexion.Conexion" %>
@@ -21,7 +16,13 @@
 
     List<Grado> grados = (List<Grado>) request.getAttribute("grados");
     Integer gradoSeleccionado = (Integer) request.getAttribute("gradoSeleccionado");
+    
+    String mensaje = (String) session.getAttribute("mensaje");
+    String error = (String) session.getAttribute("error");
+    session.removeAttribute("mensaje");
+    session.removeAttribute("error");
 %>
+
 
 <%!
     // Método para obtener horarios de un curso
@@ -108,7 +109,22 @@
 <body class="dashboard-page">
 
     <jsp:include page="header.jsp" />
-
+    
+    <div class="container mt-4">
+        <% if (mensaje != null) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> <%= mensaje %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <% } %>
+        
+        <% if (error != null) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> <%= error %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <% } %>
+    </div>
     <div class="container mt-5">
         <h2 class="mb-4 text-center fw-bold"><i class="fas fa-book"></i> Listado de Cursos</h2>
 
@@ -271,4 +287,5 @@
             </div>
         </div>
     </footer>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -4,11 +4,7 @@ import java.sql.*;
 import java.util.*;
 import conexion.Conexion;
 
-/**
- * DAO para gestionar el registro de cursos
- * Autor: Tu nombre
- * Fecha: 2025
- */
+
 public class RegistroCursoDAO {
 
     /**
@@ -247,12 +243,12 @@ public class RegistroCursoDAO {
      * Ejemplo de conflicto:
      * - Horario existente: LUNES 08:00-09:30
      * - Nuevo horario: LUNES 09:00-10:00
-     * ❌ HAY CONFLICTO (se solapan de 09:00-09:30)
+     * HAY CONFLICTO (se solapan de 09:00-09:30)
      * 
      * Ejemplo sin conflicto:
      * - Horario existente: LUNES 08:00-09:00
      * - Nuevo horario: LUNES 09:00-10:00
-     * ✅ NO HAY CONFLICTO (uno termina cuando empieza el otro)
+     * NO HAY CONFLICTO (uno termina cuando empieza el otro)
      */
     public boolean validarConflictoHorario(int profesorId, int turnoId, 
             String diaSemana, String horaInicio, String horaFin) {
@@ -349,12 +345,12 @@ public class RegistroCursoDAO {
                     resultado.put("exito", false);
                     resultado.put("mensaje", rs.getString("mensaje"));
                     resultado.put("detalle", rs.getString("detalle"));
-                    System.out.println("❌ Error al registrar: " + rs.getString("detalle"));
+                    System.out.println(" Error al registrar: " + rs.getString("detalle"));
                 }
             }
             
         } catch (SQLException e) {
-            System.err.println("❌ Error SQL al registrar curso: " + e.getMessage());
+            System.err.println("Error SQL al registrar curso: " + e.getMessage());
             e.printStackTrace();
             resultado.put("exito", false);
             resultado.put("mensaje", "Error al registrar curso");
@@ -396,12 +392,12 @@ public class RegistroCursoDAO {
             
             if (rs.next()) {
                 boolean exito = rs.getInt("resultado") == 1;
-                System.out.println(exito ? "✅ Curso eliminado" : "❌ Error al eliminar");
+                System.out.println(exito ? " Curso eliminado" : "❌ Error al eliminar");
                 return exito;
             }
             
         } catch (SQLException e) {
-            System.err.println("❌ Error al eliminar curso: " + e.getMessage());
+            System.err.println(" Error al eliminar curso: " + e.getMessage());
             e.printStackTrace();
         }
         
@@ -425,72 +421,53 @@ public class RegistroCursoDAO {
             int turnoId, String descripcion, String area, String horariosJson) {
         
         Map<String, Object> resultado = new HashMap<>();
+        String sql = "CALL actualizar_curso_completo(?, ?, ?, ?, ?, ?, ?, ?)";
         
         System.out.println("\n=== ACTUALIZANDO CURSO ===");
         System.out.println("Curso ID: " + cursoId);
         System.out.println("Nuevo nombre: " + nombre);
+        System.out.println("Grado ID: " + gradoId);
+        System.out.println("Profesor ID: " + profesorId);
+        System.out.println("Turno ID: " + turnoId);
+        System.out.println("Área: " + area);
+        System.out.println("Horarios JSON: " + horariosJson);
         
-        Connection conn = null;
-        
-        try {
-            conn = Conexion.getConnection();
-            conn.setAutoCommit(false); // Iniciar transacción
+        try (Connection conn = Conexion.getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
             
-            // 1. Actualizar datos básicos del curso
-            String sqlUpdate = "UPDATE curso SET nombre = ?, grado_id = ?, " +
-                               "profesor_id = ?, area = ?, descripcion = ? " +
-                               "WHERE id = ? AND eliminado = 0";
+            cs.setInt(1, cursoId);
+            cs.setString(2, nombre);
+            cs.setInt(3, gradoId);
+            cs.setInt(4, profesorId);
+            cs.setInt(5, turnoId);
+            cs.setString(6, descripcion);
+            cs.setString(7, area);
+            cs.setString(8, horariosJson);
             
-            try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
-                ps.setString(1, nombre);
-                ps.setInt(2, gradoId);
-                ps.setInt(3, profesorId);
-                ps.setString(4, area);
-                ps.setString(5, descripcion);
-                ps.setInt(6, cursoId);
-                ps.executeUpdate();
-            }
+            ResultSet rs = cs.executeQuery();
             
-            // 2. Marcar horarios antiguos como eliminados
-            String sqlDeleteHorarios = "UPDATE horario_clase SET eliminado = 1, activo = 0 " +
-                                       "WHERE curso_id = ?";
-            
-            try (PreparedStatement ps = conn.prepareStatement(sqlDeleteHorarios)) {
-                ps.setInt(1, cursoId);
-                ps.executeUpdate();
-            }
-            
-            // 3. Insertar nuevos horarios (aquí deberías procesar el JSON)
-            // ... (lógica similar al registro)
-            
-            conn.commit(); // Confirmar transacción
-            
-            resultado.put("exito", true);
-            resultado.put("mensaje", "Curso actualizado correctamente");
-            System.out.println("✅ Curso actualizado");
-            
-        } catch (SQLException e) {
-            if (conn != null) {
-                try {
-                    conn.rollback(); // Revertir cambios si hay error
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
+            if (rs.next()) {
+                int exito = rs.getInt("exito");
+                
+                if (exito == 1) {
+                    resultado.put("exito", true);
+                    resultado.put("mensaje", rs.getString("mensaje"));
+                    resultado.put("detalle", rs.getString("detalle"));
+                    System.out.println("Curso actualizado exitosamente");
+                } else {
+                    resultado.put("exito", false);
+                    resultado.put("mensaje", rs.getString("mensaje"));
+                    resultado.put("detalle", rs.getString("detalle"));
+                    System.out.println("Error al actualizar: " + rs.getString("detalle"));
                 }
             }
-            System.err.println("❌ Error al actualizar curso: " + e.getMessage());
+            
+        } catch (SQLException e) {
+            System.err.println("Error SQL al actualizar curso: " + e.getMessage());
             e.printStackTrace();
             resultado.put("exito", false);
             resultado.put("mensaje", "Error al actualizar curso");
             resultado.put("detalle", e.getMessage());
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
         
         return resultado;
@@ -633,5 +610,28 @@ public class RegistroCursoDAO {
             }
 
             return resultado;
+        }
+        
+            public List<Curso> obtenerCursosPorArea(String area, String nivel) {
+            List<Curso> cursos = new ArrayList<>();
+            String sql = "{CALL obtener_cursos_por_area(?, ?)}";
+
+            try (Connection conn = Conexion.getConnection();
+                CallableStatement cs = conn.prepareCall(sql)) {    
+                cs.setString(1, area);
+                cs.setString(2, nivel); 
+
+                ResultSet rs = cs.executeQuery();
+                while (rs.next()) {
+                    Curso curso = new Curso();
+                    curso.setNombre(rs.getString("nombre"));
+                    curso.setArea(rs.getString("area"));
+                    curso.setDescripcion(rs.getString("descripcion"));
+                    cursos.add(curso);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return cursos;
         }
 }

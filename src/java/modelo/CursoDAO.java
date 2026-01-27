@@ -376,22 +376,48 @@ public List<Curso> listarPorGrado(int gradoId) {
      * @param id Identificador único del curso
      * @return Objeto Curso o null si no existe
      */
-    public Curso obtenerPorId(int id) {
-        String sql = "SELECT * FROM vista_cursos_activos WHERE id = ?";
+        public Curso obtenerPorId(int id) {
+        String sql = "SELECT c.*, g.nombre as grado_nombre, g.nivel, " +
+                     "CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre, " +
+                     "(SELECT turno_id FROM horario_clase WHERE curso_id = c.id AND eliminado = 0 LIMIT 1) as turno_id " +
+                     "FROM curso c " +
+                     "INNER JOIN grado g ON c.grado_id = g.id " +
+                     "LEFT JOIN profesor prof ON c.profesor_id = prof.id " +
+                     "LEFT JOIN persona p ON prof.persona_id = p.id " +
+                     "WHERE c.id = ? AND c.eliminado = 0";
 
         try (Connection con = Conexion.getConnection(); 
              PreparedStatement ps = con.prepareStatement(sql)) {
-            
+
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                Curso c = mapearDesdeVista(rs);
+                Curso c = new Curso();
+                c.setId(rs.getInt("id"));
+                c.setNombre(rs.getString("nombre"));
+                c.setGradoId(rs.getInt("grado_id"));
+                c.setGradoNombre(rs.getString("grado_nombre"));
+                c.setNivel(rs.getString("nivel"));
+                c.setProfesorId(rs.getInt("profesor_id"));
+                c.setProfesorNombre(rs.getString("profesor_nombre"));
+                c.setCreditos(rs.getInt("creditos"));
+                c.setArea(rs.getString("area"));
+                c.setDescripcion(rs.getString("descripcion"));
+
+                Integer turnoId = rs.getInt("turno_id");
+                if (!rs.wasNull()) {
+                    c.setTurnoId(turnoId);
+                }
+
+                System.out.println(" Curso obtenido: " + c.getNombre());
+                System.out.println("   Turno ID: " + c.getTurnoId());
+
                 return c;
             }
 
         } catch (SQLException e) {
-            System.err.println("Error al obtener curso por ID desde vista: " + e.getMessage());
+            System.err.println(" Error al obtener curso por ID: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -399,8 +425,6 @@ public List<Curso> listarPorGrado(int gradoId) {
     }
 
     /**
-     * AGREGAR NUEVO CURSO
-     * 
      * @param c Objeto Curso con los datos
      * @return ID del curso creado, o -1 si falla
      */
@@ -546,7 +570,7 @@ public List<Curso> listarPorGrado(int gradoId) {
      * @return true si la eliminación fue exitosa
      */
     public boolean eliminar(int cursoId) {
-        String sql = "{CALL eliminar_curso_completo(?)}";
+        String sql = "{CALL eliminar_curso_logico(?)}";
         
         try (Connection conn = Conexion.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
@@ -555,7 +579,7 @@ public List<Curso> listarPorGrado(int gradoId) {
             ResultSet rs = cs.executeQuery();
             
             if (rs.next()) {
-                int exito = rs.getInt("exito");
+                int exito = rs.getInt("resultado");
                 String mensaje = rs.getString("mensaje");
                 
                 System.out.println("Resultado de eliminación:");

@@ -140,15 +140,12 @@ public class ProfesorDAO {
             }
             
         } catch (SQLException e) {
-            System.err.println("❌ ERROR en obtenerPorId: " + e.getMessage());
+            System.err.println(" ERROR en obtenerPorId: " + e.getMessage());
         }
         
         return null;
     }
 
-    /**
-     * CREAR NUEVO PROFESOR
-     */
    /**
  * CREAR NUEVO PROFESOR
  */
@@ -273,7 +270,7 @@ public boolean crear(Profesor profesor) {
         psUsuario = conn.prepareStatement(sqlUsuario);
         psUsuario.setInt(1, personaId);
         
-        // ✅ USERNAME
+        // USERNAME
         String username = profesor.getUsername();
         if (username == null || username.trim().isEmpty()) {
             if (profesor.getCorreo() != null && !profesor.getCorreo().isEmpty()) {
@@ -287,7 +284,7 @@ public boolean crear(Profesor profesor) {
         psUsuario.setString(2, username);
         System.out.println("Username: " + username);
         
-        // ✅ PASSWORD
+        // PASSWORD
         String password;
         if (profesor.getPassword() != null && !profesor.getPassword().trim().isEmpty()) {
             password = profesor.getPassword();
@@ -339,8 +336,6 @@ public boolean crear(Profesor profesor) {
         }
     }
 }
-
-
 
     /**
      * GENERAR CÓDIGO DE PROFESOR ÚNICO
@@ -405,96 +400,86 @@ public boolean crear(Profesor profesor) {
             return password;
         }
     }
-
     /**
-     * OBTENER PROFESOR POR USERNAME (Para login) - MÉTODO CORREGIDO
-     */
-    public Profesor obtenerPorUsername(String username) {
-        Profesor profesor = null;
-        String sql = "SELECT " +
-                    "    u.username, " +
-                    "    u.rol, " +
-                    "    p.id as persona_id, " +
-                    "    p.nombres, " +
-                    "    p.apellidos, " +
-                    "    prof.turno_id, " +
-                    "    prof.persona_id, " +
-                    "    p.correo, " +
-                    "    p.telefono, " +
-                    "    p.dni, " +
-                    "    p.fecha_nacimiento, " +
-                    "    p.direccion, " +
-                    "    pr.id as profesor_id, " +
-                    "    pr.especialidad, " +
-                    "    pr.codigo_profesor, " +
-                    "    pr.fecha_contratacion, " +
-                    "    pr.estado " +
-                    "FROM usuario u " +
-                    "INNER JOIN persona p ON u.persona_id = p.id " +
-                    "INNER JOIN profesor pr ON p.id = pr.persona_id " +
-                    "WHERE u.username = ? " +
-                    "AND u.rol = 'docente' " +
-                    "AND u.activo = 1 " +
-                    "AND u.eliminado = 0 " +
-                    "AND pr.activo = 1 " +
-                    "AND pr.eliminado = 0";
+ * OBTENER PROFESOR POR USERNAME (Para login) - MÉTODO CORREGIDO
+ */
+public Profesor obtenerPorUsername(String username) {
+    Profesor profesor = null;
+    String sql = "SELECT " +
+                "    u.username, " +
+                "    u.rol, " +
+                "    p.id as persona_id, " +
+                "    p.nombres, " +
+                "    p.apellidos, " +
+                "    pr.turno_id, " +  
+                "    p.correo, " +    
+                "    p.telefono, " +
+                "    p.dni, " +
+                "    p.fecha_nacimiento, " +
+                "    p.direccion, " +
+                "    pr.id as profesor_id, " +
+                "    pr.especialidad, " +
+                "    pr.codigo_profesor, " +
+                "    pr.fecha_contratacion, " +
+                "    pr.estado " +
+                "FROM usuario u " +
+                "INNER JOIN persona p ON u.persona_id = p.id " +
+                "INNER JOIN profesor pr ON p.id = pr.persona_id " +
+                "WHERE u.username = ? " +
+                "AND u.rol = 'docente' " +
+                "AND u.activo = 1 " +
+                "AND u.eliminado = 0 " +
+                "AND pr.activo = 1 " +
+                "AND pr.eliminado = 0";
 
-        try (Connection conn = Conexion.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = Conexion.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        
+        ps.setString(1, username);
+        System.out.println(" Buscando profesor con username: " + username);
+        
+        ResultSet rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            profesor = new Profesor();
             
-            ps.setString(1, username);
-            System.out.println("Buscando profesor con username: " + username);
+            // Datos de usuario
+            profesor.setUsername(rs.getString("username"));
+            profesor.setRol(rs.getString("rol"));
             
-            ResultSet rs = ps.executeQuery();
+            // Datos de persona
+            profesor.setPersonaId(rs.getInt("persona_id"));
+            profesor.setNombres(rs.getString("nombres"));
+            profesor.setApellidos(rs.getString("apellidos"));
+            profesor.setCorreo(rs.getString("correo"));
+            profesor.setTelefono(rs.getString("telefono"));
+            profesor.setDni(rs.getString("dni"));
+            profesor.setFechaNacimiento(rs.getDate("fecha_nacimiento"));
+            profesor.setDireccion(rs.getString("direccion"));
             
-            if (rs.next()) {
-                profesor = new Profesor();
-                
-                // Datos de usuario
-                profesor.setUsername(rs.getString("username"));
-                profesor.setRol(rs.getString("rol"));
-                
-                // Datos de persona
-                profesor.setPersonaId(rs.getInt("persona_id"));
-                profesor.setNombres(rs.getString("nombres"));
-                profesor.setApellidos(rs.getString("apellidos"));
-                profesor.setCorreo(rs.getString("correo"));
-                profesor.setTelefono(rs.getString("telefono"));
-                profesor.setDni(rs.getString("dni"));
-                profesor.setFechaNacimiento(rs.getDate("fecha_nacimiento"));
-                profesor.setDireccion(rs.getString("direccion"));
-                
-                // Datos de profesor
-                profesor.setId(rs.getInt("profesor_id"));
-                profesor.setEspecialidad(rs.getString("especialidad"));
-                profesor.setCodigoProfesor(rs.getString("codigo_profesor"));
-                profesor.setFechaContratacion(rs.getDate("fecha_contratacion"));
-                profesor.setEstado(rs.getString("estado"));
-                
-                System.out.println("Profesor encontrado: " + profesor.getNombreCompleto());
-            } else {
-                System.out.println(" Profesor no encontrado con username: " + username);
-                
-                // DEBUG: Mostrar qué usuarios sí existen
-                String debugSql = "SELECT username, rol, persona_id FROM usuario WHERE username LIKE ?";
-                try (PreparedStatement debugPs = conn.prepareStatement(debugSql)) {
-                    debugPs.setString(1, "%" + username + "%");
-                    ResultSet debugRs = debugPs.executeQuery();
-                    while (debugRs.next()) {
-                        System.out.println("  🔍 Usuario similar: " + debugRs.getString("username") + 
-                                         " (rol: " + debugRs.getString("rol") + 
-                                         ", persona_id: " + debugRs.getInt("persona_id") + ")");
-                    }
-                }
-            }
+            // Datos de profesor
+            profesor.setId(rs.getInt("profesor_id"));
+            profesor.setEspecialidad(rs.getString("especialidad"));
+            profesor.setCodigoProfesor(rs.getString("codigo_profesor"));
+            profesor.setFechaContratacion(rs.getDate("fecha_contratacion"));
+            profesor.setEstado(rs.getString("estado"));
             
-        } catch (SQLException e) {
-            System.err.println("ERROR SQL en obtenerPorUsername: " + e.getMessage());
-            e.printStackTrace();
+            // Campo turno_id - IMPORTANTE
+            profesor.setTurnoId(rs.getInt("turno_id"));
+            
+            System.out.println(" Profesor encontrado: " + profesor.getNombreCompleto());
+            System.out.println(" ID Profesor: " + profesor.getId());
+        } else {
+            System.out.println(" Profesor no encontrado con username: " + username);
         }
         
-        return profesor;
+    } catch (SQLException e) {
+        System.err.println("ERROR SQL en obtenerPorUsername: " + e.getMessage());
+        e.printStackTrace();
     }
+    
+    return profesor;
+}
 
     /**
      * ACTUALIZAR PROFESOR
