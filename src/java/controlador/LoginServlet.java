@@ -292,7 +292,7 @@ public class LoginServlet extends HttpServlet {
                         out.println("<p class='success'>✅ Profesor encontrado:</p>");
                         out.println("<ul>");
                         out.println("<li>ID: " + rs.getInt("id") + "</li>");
-                        out.println("<li>Especialidad: " + rs.getString("especialidad") + "</li>");
+                        out.println("<li>Área ID: " + rs.getInt("area_id") + "</li>");
                         out.println("<li>Código: " + rs.getString("codigo_profesor") + "</li>");
                         out.println("<li>Activo: " + rs.getBoolean("activo") + "</li>");
                         out.println("<li>Eliminado: " + rs.getBoolean("eliminado") + "</li>");
@@ -313,7 +313,7 @@ public class LoginServlet extends HttpServlet {
                 out.println("<p class='success'>Profesor obtenido correctamente:</p>");
                 out.println("<ul>");
                 out.println("<li>Nombre: " + docente.getNombreCompleto() + "</li>");
-                out.println("<li>Especialidad: " + docente.getEspecialidad() + "</li>");
+                out.println("<li>Area: " + docente.getAreaId() + "</li>");
                 out.println("<li>Email: " + docente.getCorreo() + "</li>");
                 out.println("<li>Rol: " + docente.getRol() + "</li>");
                 out.println("<li>Username: " + docente.getUsername() + "</li>");
@@ -569,7 +569,7 @@ public class LoginServlet extends HttpServlet {
                 System.out.println("  Docente encontrado: " + docente.getNombreCompleto());
                 System.out.println("  Profesor ID: " + docente.getId());
                 System.out.println("  Persona ID: " + docente.getPersonaId());
-                System.out.println("  Especialidad: " + docente.getEspecialidad());
+                System.out.println("  Area: " + docente.getAreaId());
                 
                 return "DocenteDashboardServlet";
             } else {
@@ -602,7 +602,7 @@ public class LoginServlet extends HttpServlet {
                                 System.out.println("     - ID: " + rs.getInt("id"));
                                 System.out.println("     - Activo: " + rs.getBoolean("activo"));
                                 System.out.println("     - Eliminado: " + rs.getBoolean("eliminado"));
-                                System.out.println("     - Especialidad: " + rs.getString("especialidad"));
+                                System.out.println("     - Especialidad: " + rs.getInt("area_id"));
                             } else {
                                 System.out.println("  No hay registro en la tabla profesor para persona_id: " + usuario.getPersonaId());
                             }

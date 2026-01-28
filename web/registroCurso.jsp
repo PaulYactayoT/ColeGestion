@@ -595,90 +595,126 @@
             }
         }
 
-        // ========== 3. CAMBIO DE TURNO ==========
-        function cambioTurno() {
-            const selectTurno = document.getElementById('selectTurno');
-            const selectArea = document.getElementById('selectArea');
-            
-            turnoSeleccionado = selectTurno.value;
-            console.log('⏰ Turno seleccionado:', turnoSeleccionado);
-            
-            if (turnoSeleccionado && nivelSeleccionado) {
-                selectArea.disabled = false;
-                selectArea.innerHTML = '<option value="">Cargando áreas...</option>';
-                
-                fetch(CONTEXTPATH + '/RegistroCursoServlet?accion=obtenerAreas&nivel=' + encodeURIComponent(nivelSeleccionado))
-                    .then(response => response.json())
-                    .then(data => {
-                        selectArea.innerHTML = '<option value="">-- Seleccione un área --</option>';
-                        
-                        if (data && data.length > 0) {
-                            data.forEach(area => {
-                                const option = document.createElement('option');
-                                option.value = area.area;
-                                option.textContent = area.area;
-                                selectArea.appendChild(option);
-                            });
-                        } else {
-                            selectArea.innerHTML = '<option value="">No hay áreas disponibles</option>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('❌ Error al cargar áreas:', error);
-                        selectArea.innerHTML = '<option value="">Error al cargar áreas</option>';
-                        mostrarMensaje('Error al cargar áreas', 'danger');
-                    });
-                
-                resetearCamposSiguientes(selectArea);
-            } else {
-                selectArea.disabled = true;
-                selectArea.innerHTML = '<option value="">Seleccione primero un turno</option>';
-                resetearCamposSiguientes(selectArea);
-            }
-        }
+                // ========== 3. CAMBIO DE TURNO ==========
+         function cambioTurno() {
+             const selectTurno = document.getElementById('selectTurno');
+             const selectArea = document.getElementById('selectArea');
 
+             turnoSeleccionado = selectTurno.value;
+             console.log(' Turno seleccionado:', turnoSeleccionado);
+
+             if (turnoSeleccionado && nivelSeleccionado) {
+                 selectArea.disabled = false;
+                 selectArea.innerHTML = '<option value="">Cargando áreas...</option>';
+
+                 fetch(CONTEXTPATH + '/RegistroCursoServlet?accion=obtenerAreas&nivel=' + encodeURIComponent(nivelSeleccionado))
+                     .then(response => response.json())
+                     .then(data => {
+                         console.log('Áreas recibidas del servidor:', data); // DEBUG
+
+                         selectArea.innerHTML = '<option value="">-- Seleccione un área --</option>';
+
+                         if (data && data.length > 0) {
+                             data.forEach(area => {
+                                 console.log('  Procesando área:', area); // DEBUG
+                                 const option = document.createElement('option');
+
+                                 // ¡IMPORTANTE! Usar el campo correcto
+                                 // El DAO devuelve 'nombre' no 'area'
+                                 option.value = area.nombre;  // ← ¡CORRECTO!
+                                 option.textContent = area.nombre;
+
+                                 if (area.descripcion) option.title = area.descripcion;
+                                 selectArea.appendChild(option);
+                             });
+                             console.log('✅ ' + data.length + ' áreas cargadas correctamente');
+                         } else {
+                             selectArea.innerHTML = '<option value="">No hay áreas disponibles</option>';
+                             console.warn(' No se recibieron áreas del servidor');
+                         }
+                     })
+                     .catch(error => {
+                         console.error(' Error al cargar áreas:', error);
+                         selectArea.innerHTML = '<option value="">Error al cargar áreas</option>';
+                         mostrarMensaje('Error al cargar áreas: ' + error.message, 'danger');
+                     });
+
+                 resetearCamposSiguientes(selectArea);
+             } else {
+                 selectArea.disabled = true;
+                 selectArea.innerHTML = '<option value="">Seleccione primero un turno</option>';
+                 resetearCamposSiguientes(selectArea);
+             }
+         }
         // ========== 4. CAMBIO DE ÁREA ==========
-        function cambioArea() {
+            function cambioArea() {
             const selectArea = document.getElementById('selectArea');
             const selectCurso = document.getElementById('selectCurso');
             const inputArea = document.getElementById('inputArea');
-            const area = selectArea.value;
-            
-            inputArea.value = area;
-            console.log('📖 Área seleccionada:', area);
-            
-            if (area) {
+
+            // Obtener el valor seleccionado y el texto (nombre)
+            const areaValue = selectArea.value;
+            const areaText = selectArea.options[selectArea.selectedIndex].text;
+
+            console.log(' CAMBIO DE ÁREA DETECTADO:');
+            console.log('  Valor (value):', areaValue);
+            console.log('  Texto (nombre):', areaText);
+            console.log('  ¿Es undefined?:', areaValue === 'undefined');
+            console.log('  ¿Está vacío?:', areaValue === '');
+
+            // Usar el nombre del área (texto), no solo el valor
+            const areaNombre = areaText.trim();
+            inputArea.value = areaNombre;
+
+            console.log(' Área seleccionada:', areaNombre);
+
+            if (areaValue && areaValue !== '' && areaValue !== 'undefined' && areaNombre !== '-- Seleccione un área --') {
                 selectCurso.disabled = false;
                 selectCurso.innerHTML = '<option value="">Cargando cursos...</option>';
-                
-                fetch(CONTEXTPATH + '/RegistroCursoServlet?accion=obtenerCursos&area=' + encodeURIComponent(area))
-                    .then(response => response.json())
+
+                console.log(' Enviando petición para obtener cursos del área:', areaNombre);
+
+                // Enviar petición al servlet
+                fetch(CONTEXTPATH + '/RegistroCursoServlet?accion=obtenerCursos&area=' + encodeURIComponent(areaNombre))
+                    .then(response => {
+                        console.log(' Respuesta recibida, status:', response.status);
+                        if (!response.ok) {
+                            throw new Error('Error en la respuesta del servidor: ' + response.status);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log(' Datos recibidos:', data);
                         selectCurso.innerHTML = '<option value="">-- Seleccione un curso --</option>';
-                        
+
                         if (data && data.length > 0) {
                             data.forEach(curso => {
                                 const option = document.createElement('option');
                                 option.value = curso.nombre;
                                 option.textContent = curso.nombre;
                                 if (curso.descripcion) option.title = curso.descripcion;
+                                if (curso.creditos) option.textContent += ` (${curso.creditos} créditos)`;
                                 selectCurso.appendChild(option);
                             });
+                            console.log('✅ ' + data.length + ' cursos cargados correctamente');
                         } else {
-                            selectCurso.innerHTML = '<option value="">No hay cursos disponibles</option>';
+                            selectCurso.innerHTML = '<option value="">No hay cursos disponibles para esta área</option>';
+                            console.warn('️ No se encontraron cursos para el área:', areaNombre);
+                            mostrarMensaje('No se encontraron cursos para el área ' + areaNombre, 'warning');
                         }
+
+                        resetearCamposSiguientes(selectCurso);
                     })
                     .catch(error => {
-                        console.error('❌ Error al cargar cursos:', error);
+                        console.error(' Error al cargar cursos:', error);
                         selectCurso.innerHTML = '<option value="">Error al cargar cursos</option>';
-                        mostrarMensaje('Error al cargar cursos', 'danger');
+                        mostrarMensaje('Error al cargar cursos: ' + error.message, 'danger');
                     });
-                
-                resetearCamposSiguientes(selectCurso);
             } else {
                 selectCurso.disabled = true;
-                selectCurso.innerHTML = '<option value="">Seleccione primero un área</option>';
+                selectCurso.innerHTML = '<option value="">Seleccione primero un área válida</option>';
                 resetearCamposSiguientes(selectCurso);
+                console.warn('️ Área no seleccionada o inválida');
             }
         }
 

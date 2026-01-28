@@ -144,7 +144,7 @@ public class CursoServlet extends HttpServlet {
                 String idParam = request.getParameter("id");
                 
                 if (idParam == null || idParam.isEmpty()) {
-                    System.err.println("❌ ERROR: No se proporcionó ID de curso");
+                    System.err.println(" ERROR: No se proporcionó ID de curso");
                     session.setAttribute("error", "ID de curso no válido");
                     response.sendRedirect("CursoServlet?accion=listar");
                     return;

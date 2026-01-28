@@ -9,7 +9,7 @@ public class Curso {
     private int horasSemanales;
     private String area;
     private String descripcion; 
-    private String ciclo;
+    private String ciclo;  // Se mantiene por compatibilidad, pero puede ser null
     private Date fechaInicio;
     private Date fechaFin;
     private int gradoId;
@@ -32,6 +32,7 @@ public class Curso {
         this.cantidadAlumnos = 0;
         this.cantidadTareas = 0;
         this.descripcion = ""; 
+        this.ciclo = null;  // Inicializado como null
         this.turnoId = null;   
     }
     

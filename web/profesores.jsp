@@ -1,6 +1,6 @@
 <%-- 
     Document   : profesores
-    Created on : 1 may. 2025, 8:55:51 p. m.
+    Created on : 1 may. 2025, 8:55:51 p. m.
     Author     : Juan Pablo Amaya
 --%>
 
@@ -65,7 +65,7 @@
                     <th>Nombres</th>
                     <th>Apellidos</th>
                     <th>Correo</th>
-                    <th>Area</th>
+                    <th>Área</th>
                     <th>Nivel</th>
                     <th>Turno</th>
                     <th>Estado</th>
@@ -81,7 +81,7 @@
                     <td><%= p.getNombres()%></td>
                     <td><%= p.getApellidos()%></td>
                     <td><%= p.getCorreo()%></td>
-                    <td><%= p.getEspecialidad()%></td>
+                    <td><%= p.getAreaNombre() != null ? p.getAreaNombre() : "Sin área" %></td>
                     <td>
                         <% 
                             String nivel = p.getNivel();
@@ -177,7 +177,7 @@
             </div>
 
             <div class="text-center mt-0">
-                <p class="fs-6">&copy; 2025 Colegio SA - Todos los derechos reservados</p>
+                <p class="fs-6">&copy; 2026 Colegio SA - Todos los derechos reservados</p>
             </div>
         </div>
     </footer>

@@ -4,8 +4,6 @@ import conexion.Conexion;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;      
-import java.util.TreeSet; 
 
 public class ProfesorDAO {
 
@@ -19,6 +17,8 @@ public class ProfesorDAO {
                      "    prof.id, " +
                     "    prof.persona_id, " +
                     "    prof.turno_id, " +
+                    "    prof.area_id, " +
+                    "    a.nombre as area_nombre, " +
                     "    p.nombres, " +
                     "    p.apellidos, " +
                     "    p.correo, " +
@@ -26,7 +26,6 @@ public class ProfesorDAO {
                     "    p.dni, " +
                     "    p.fecha_nacimiento, " +
                     "    p.direccion, " +
-                    "    prof.especialidad, " +
                     "    prof.nivel, " +
                     "    prof.codigo_profesor, " +
                     "    prof.fecha_contratacion, " +
@@ -37,16 +36,14 @@ public class ProfesorDAO {
                     "JOIN persona p ON prof.persona_id = p.id " +
                     "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
                     "LEFT JOIN turno t ON prof.turno_id = t.id " +
+                    "LEFT JOIN area a ON prof.area_id = a.id " +
                     "WHERE prof.eliminado = 0 AND prof.activo = 1 " +
                     "ORDER BY p.apellidos, p.nombres";
         
         try (Connection con = Conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            // Agrega esto temporalmente en tu ProfesorDAO.listar()
-            System.out.println("Conectando a BD...");
-
-            System.out.println("Conexión exitosa: " + (con != null));
+            
             while (rs.next()) {
                 Profesor p = mapearResultSet(rs);
                 lista.add(p);
@@ -58,7 +55,6 @@ public class ProfesorDAO {
         }
         
         return lista;
-        
     }
 
     /**
@@ -76,14 +72,14 @@ public class ProfesorDAO {
         p.setDni(rs.getString("dni"));
         p.setDireccion(rs.getString("direccion"));
         
-        
-        
         java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
         if (fechaNac != null) {
             p.setFechaNacimiento(fechaNac);
         }
         
-        p.setEspecialidad(rs.getString("especialidad"));
+        p.setAreaId(rs.getInt("area_id"));
+        p.setAreaNombre(rs.getString("area_nombre"));
+        
         p.setNivel(rs.getString("nivel")); 
         p.setCodigoProfesor(rs.getString("codigo_profesor"));
         
@@ -109,6 +105,8 @@ public class ProfesorDAO {
                    "    prof.id, " +
                     "    prof.persona_id, " +
                     "    prof.turno_id, " +
+                    "    prof.area_id, " +
+                    "    a.nombre as area_nombre, " +
                     "    p.nombres, " +
                     "    p.apellidos, " +
                     "    p.correo, " +
@@ -116,7 +114,6 @@ public class ProfesorDAO {
                     "    p.dni, " +
                     "    p.fecha_nacimiento, " +
                     "    p.direccion, " +
-                    "    prof.especialidad, " +
                     "    prof.nivel, " + 
                     "    prof.codigo_profesor, " +
                     "    prof.fecha_contratacion, " +
@@ -127,6 +124,7 @@ public class ProfesorDAO {
                     "JOIN persona p ON prof.persona_id = p.id " +
                     "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
                     "LEFT JOIN turno t ON prof.turno_id = t.id " +
+                    "LEFT JOIN area a ON prof.area_id = a.id " +
                     "WHERE prof.id = ? AND prof.eliminado = 0";
         
         try (Connection con = Conexion.getConnection();
@@ -140,7 +138,7 @@ public class ProfesorDAO {
             }
             
         } catch (SQLException e) {
-            System.err.println(" ERROR en obtenerPorId: " + e.getMessage());
+            System.err.println("ERROR en obtenerPorId: " + e.getMessage());
         }
         
         return null;
@@ -201,13 +199,21 @@ public boolean crear(Profesor profesor) {
         rs.close();
         
         // ========== 2. INSERTAR EN PROFESOR ==========
-        String sqlProfesor = "INSERT INTO profesor (persona_id, especialidad, nivel, turno_id, codigo_profesor, " +
+        String sqlProfesor = "INSERT INTO profesor (persona_id, area_id, nivel, turno_id, codigo_profesor, " +
                     "fecha_contratacion, estado, activo) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
         
         psProfesor = conn.prepareStatement(sqlProfesor, Statement.RETURN_GENERATED_KEYS);
         psProfesor.setInt(1, personaId);
-        psProfesor.setString(2, profesor.getEspecialidad());
+        
+        // USAR DIRECTAMENTE area_id
+        if (profesor.getAreaId() > 0) {
+            psProfesor.setInt(2, profesor.getAreaId());
+            System.out.println("Asignando área ID: " + profesor.getAreaId());
+        } else {
+            psProfesor.setNull(2, Types.INTEGER);
+            System.out.println("Sin área asignada");
+        }
 
         //NIVEL
         if (profesor.getNivel() != null && !profesor.getNivel().isEmpty()) {
@@ -302,7 +308,7 @@ public boolean crear(Profesor profesor) {
         }
         
         conn.commit();
-        System.out.println("Profesor creado exitosamente: " + profesor.getNombreCompleto());
+        System.out.println(" Profesor creado exitosamente: " + profesor.getNombreCompleto());
         return true;
         
     } catch (SQLException e) {
@@ -400,54 +406,37 @@ public boolean crear(Profesor profesor) {
             return password;
         }
     }
+    
     /**
- * OBTENER PROFESOR POR USERNAME (Para login) - MÉTODO CORREGIDO
+ * OBTENER PROFESOR POR USERNAME (Para login)
  */
 public Profesor obtenerPorUsername(String username) {
     Profesor profesor = null;
     String sql = "SELECT " +
-                "    u.username, " +
-                "    u.rol, " +
-                "    p.id as persona_id, " +
-                "    p.nombres, " +
-                "    p.apellidos, " +
-                "    pr.turno_id, " +  
-                "    p.correo, " +    
-                "    p.telefono, " +
-                "    p.dni, " +
-                "    p.fecha_nacimiento, " +
-                "    p.direccion, " +
-                "    pr.id as profesor_id, " +
-                "    pr.especialidad, " +
-                "    pr.codigo_profesor, " +
-                "    pr.fecha_contratacion, " +
-                "    pr.estado " +
+                "    u.username, u.rol, p.id as persona_id, " +
+                "    p.nombres, p.apellidos, pr.turno_id, p.correo, " +
+                "    p.telefono, p.dni, p.fecha_nacimiento, p.direccion, " +
+                "    pr.id as profesor_id, pr.area_id, a.nombre as area_nombre, " +
+                "    pr.codigo_profesor, pr.fecha_contratacion, pr.estado " +
                 "FROM usuario u " +
                 "INNER JOIN persona p ON u.persona_id = p.id " +
                 "INNER JOIN profesor pr ON p.id = pr.persona_id " +
+                "LEFT JOIN area a ON pr.area_id = a.id " +
                 "WHERE u.username = ? " +
                 "AND u.rol = 'docente' " +
-                "AND u.activo = 1 " +
-                "AND u.eliminado = 0 " +
-                "AND pr.activo = 1 " +
-                "AND pr.eliminado = 0";
+                "AND u.activo = 1 AND u.eliminado = 0 " +
+                "AND pr.activo = 1 AND pr.eliminado = 0";
 
     try (Connection conn = Conexion.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
         
         ps.setString(1, username);
-        System.out.println(" Buscando profesor con username: " + username);
-        
         ResultSet rs = ps.executeQuery();
         
         if (rs.next()) {
             profesor = new Profesor();
-            
-            // Datos de usuario
             profesor.setUsername(rs.getString("username"));
             profesor.setRol(rs.getString("rol"));
-            
-            // Datos de persona
             profesor.setPersonaId(rs.getInt("persona_id"));
             profesor.setNombres(rs.getString("nombres"));
             profesor.setApellidos(rs.getString("apellidos"));
@@ -456,21 +445,13 @@ public Profesor obtenerPorUsername(String username) {
             profesor.setDni(rs.getString("dni"));
             profesor.setFechaNacimiento(rs.getDate("fecha_nacimiento"));
             profesor.setDireccion(rs.getString("direccion"));
-            
-            // Datos de profesor
             profesor.setId(rs.getInt("profesor_id"));
-            profesor.setEspecialidad(rs.getString("especialidad"));
+            profesor.setAreaId(rs.getInt("area_id"));
+            profesor.setAreaNombre(rs.getString("area_nombre"));
             profesor.setCodigoProfesor(rs.getString("codigo_profesor"));
             profesor.setFechaContratacion(rs.getDate("fecha_contratacion"));
             profesor.setEstado(rs.getString("estado"));
-            
-            // Campo turno_id - IMPORTANTE
             profesor.setTurnoId(rs.getInt("turno_id"));
-            
-            System.out.println(" Profesor encontrado: " + profesor.getNombreCompleto());
-            System.out.println(" ID Profesor: " + profesor.getId());
-        } else {
-            System.out.println(" Profesor no encontrado con username: " + username);
         }
         
     } catch (SQLException e) {
@@ -521,21 +502,23 @@ public Profesor obtenerPorUsername(String username) {
             psPersona.executeUpdate();
             
             // 2. Actualizar tabla profesor
-            
-            String sqlProfesor = "UPDATE profesor SET especialidad = ?, nivel = ?, turno_id = ?, codigo_profesor = ?, " +
+            String sqlProfesor = "UPDATE profesor SET area_id = ?, nivel = ?, turno_id = ?, codigo_profesor = ?, " +
                       "fecha_contratacion = ?, estado = ? WHERE id = ?";
             
             psProfesor = conn.prepareStatement(sqlProfesor);
-            psProfesor.setString(1, profesor.getEspecialidad());
+            
+            if (profesor.getAreaId() > 0) {
+                psProfesor.setInt(1, profesor.getAreaId());
+            } else {
+                psProfesor.setNull(1, Types.INTEGER);
+            }
                     
-            //NIVEL
             if (profesor.getNivel() != null && !profesor.getNivel().isEmpty()) {
                 psProfesor.setString(2, profesor.getNivel());
             } else {
                 psProfesor.setNull(2, Types.VARCHAR);
             }
             
-            // TURNO
             if (profesor.getTurnoId() > 0) {
                 psProfesor.setInt(3, profesor.getTurnoId());
             } else {
@@ -544,7 +527,6 @@ public Profesor obtenerPorUsername(String username) {
 
             psProfesor.setString(4, profesor.getCodigoProfesor());
         
-            //FECHA DE CONTRATACION
             if (profesor.getFechaContratacion() != null) {
                 psProfesor.setDate(5, new java.sql.Date(profesor.getFechaContratacion().getTime()));
             } else {
@@ -554,7 +536,7 @@ public Profesor obtenerPorUsername(String username) {
             psProfesor.setInt(7, profesor.getId());
             psProfesor.executeUpdate();
             
-            // 3. Actualizar tabla usuario (solo si se proporciona username o password)
+            // 3. Actualizar tabla usuario
             if ((profesor.getUsername() != null && !profesor.getUsername().isEmpty()) ||
                 (profesor.getPassword() != null && !profesor.getPassword().isEmpty())) {
                 
@@ -583,7 +565,7 @@ public Profesor obtenerPorUsername(String username) {
             }
             
             conn.commit();
-            System.out.println("Profesor actualizado: " + profesor.getNombreCompleto());
+            System.out.println(" Profesor actualizado: " + profesor.getNombreCompleto());
             return true;
             
         } catch (SQLException e) {
@@ -611,9 +593,6 @@ public Profesor obtenerPorUsername(String username) {
         }
     }
 
-    /**
-     * OBTENER PERSONA_ID POR PROFESOR_ID
-     */
     private int obtenerPersonaIdPorProfesorId(int profesorId) {
         String sql = "SELECT persona_id FROM profesor WHERE id = ?";
         
@@ -662,7 +641,6 @@ public Profesor obtenerPorUsername(String username) {
             psUsuario.executeUpdate();
             
             conn.commit();
-            System.out.println("Profesor eliminado con ID: " + id);
             return true;
             
         } catch (SQLException e) {
@@ -693,46 +671,32 @@ public Profesor obtenerPorUsername(String username) {
     public List<Profesor> buscar(String criterio) {
         List<Profesor> profesores = new ArrayList<>();
         String sql = "SELECT " +
-                   "    prof.id, " +
-                    "    prof.persona_id, " +
-                    "    prof.turno_id, " +
-                    "    p.nombres, " +
-                    "    p.apellidos, " +
-                    "    p.correo, " +
-                    "    p.telefono, " +
-                    "    p.dni, " +
-                    "    p.fecha_nacimiento, " +
-                    "    p.direccion, " +
-                    "    prof.especialidad, " +
-                    "    prof.nivel, " +
-                    "    prof.codigo_profesor, " +
-                    "    prof.fecha_contratacion, " +
-                    "    prof.estado, " +
-                    "    u.username, " +
-                    "    t.nombre as turno_nombre " +
+                   "    prof.id, prof.persona_id, prof.turno_id, prof.area_id, " +
+                    "    a.nombre as area_nombre, p.nombres, p.apellidos, p.correo, " +
+                    "    p.telefono, p.dni, p.fecha_nacimiento, p.direccion, " +
+                    "    prof.nivel, prof.codigo_profesor, prof.fecha_contratacion, " +
+                    "    prof.estado, u.username, t.nombre as turno_nombre " +
                     "FROM profesor prof " +
                     "JOIN persona p ON prof.persona_id = p.id " +
                     "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
                     "LEFT JOIN turno t ON prof.turno_id = t.id " +
+                    "LEFT JOIN area a ON prof.area_id = a.id " +
                     "WHERE (p.nombres LIKE ? OR p.apellidos LIKE ? OR " +
                     "CONCAT(p.nombres, ' ', p.apellidos) LIKE ? OR " +
-                    "prof.especialidad LIKE ? OR prof.codigo_profesor LIKE ?) " +
+                    "a.nombre LIKE ? OR prof.codigo_profesor LIKE ?) " +
                     "AND prof.eliminado = 0 AND prof.activo = 1 " +
                     "ORDER BY p.apellidos, p.nombres";
         try (Connection con = Conexion.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {
             
             String patron = "%" + criterio + "%";
-            pstmt.setString(1, patron);
-            pstmt.setString(2, patron);
-            pstmt.setString(3, patron);
-            pstmt.setString(4, patron);
-            pstmt.setString(5, patron);
+            for (int i = 1; i <= 5; i++) {
+                pstmt.setString(i, patron);
+            }
             
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                Profesor profesor = mapearResultSet(rs);
-                profesores.add(profesor);
+                profesores.add(mapearResultSet(rs));
             }
             
         } catch (SQLException e) {
@@ -761,82 +725,20 @@ public Profesor obtenerPorUsername(String username) {
         return total;
     }
     
-    
 /**
- * Obtiene todas las áreas únicas disponibles en la base de datos
- * desde la tabla curso (solo el campo 'area')
+ *  LISTAR ÁREAS - Usa AreaDAO
  */
-        public List<String> obtenerEspecialidadesDisponibles() {
-            List<String> especialidades = new ArrayList<>();
-            String sql = "SELECT DISTINCT area FROM curso WHERE area IS NOT NULL AND area != '' AND activo = 1 AND eliminado = 0 ORDER BY area";
-
-            try (Connection conn = Conexion.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql);
-                 ResultSet rs = pstmt.executeQuery()) {
-
-                while (rs.next()) {
-                    String area = rs.getString("area");
-                    if (area != null && !area.trim().isEmpty()) {
-                        especialidades.add(area.trim());
-                    }
-                }
-
-                System.out.println("Áreas/Especialidades cargadas: " + especialidades.size());
-
-            } catch (SQLException e) {
-                System.err.println("Error al obtener especialidades disponibles: " + e.getMessage());
-                e.printStackTrace();
-            }
-
-            return especialidades;
-        }
-/**
- * OBTENER TODOS LOS TURNOS DISPONIBLES
- */
-public List<Turno> listarTurnos() {
-    List<Turno> turnos = new ArrayList<>();
-    String sql = "SELECT id, nombre, hora_inicio, hora_fin FROM turno WHERE activo = 1 AND eliminado = 0 ORDER BY nombre";
-    
-    try (Connection con = Conexion.getConnection();
-         PreparedStatement pstmt = con.prepareStatement(sql);
-         ResultSet rs = pstmt.executeQuery()) {
-        
-        while (rs.next()) {
-            Turno turno = new Turno();
-            turno.setId(rs.getInt("id"));
-            turno.setNombre(rs.getString("nombre"));
-            turno.setHoraInicio(rs.getTime("hora_inicio"));
-            turno.setHoraFin(rs.getTime("hora_fin"));
-            turnos.add(turno);
-        }
-        
-    } catch (SQLException e) {
-        System.err.println("Error al listar turnos: " + e.getMessage());
-    }
-    
-    return turnos;
+public List<Area> listarAreas() {
+    AreaDAO areaDAO = new AreaDAO();
+    return areaDAO.obtenerAreasActivas();
 }
 
 /**
- * CLASE INTERNA TURNO
+ * LISTAR TURNOS - Usa TurnoDAO
  */
-public static class Turno {
-    private int id;
-    private String nombre;
-    private java.sql.Time horaInicio;
-    private java.sql.Time horaFin;
-    
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-    
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    
-    public java.sql.Time getHoraInicio() { return horaInicio; }
-    public void setHoraInicio(java.sql.Time horaInicio) { this.horaInicio = horaInicio; }
-    
-    public java.sql.Time getHoraFin() { return horaFin; }
-    public void setHoraFin(java.sql.Time horaFin) { this.horaFin = horaFin; }
+public List<Turno> listarTurnos() {
+    TurnoDAO turnoDAO = new TurnoDAO();
+    return turnoDAO.obtenerTurnosActivos();
 }
     
 }

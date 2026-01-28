@@ -12,7 +12,8 @@ public class Profesor {
     private String dni;
     private Date fechaNacimiento;
     private String direccion;
-    private String especialidad;
+    private int areaId;
+    private String areaNombre;
     private String codigoProfesor;
     private Date fechaContratacion;
     private String estado;
@@ -22,6 +23,7 @@ public class Profesor {
     private int turnoId;
     private String turnoNombre; 
     private String nivel;
+    
     // Constructor
     public Profesor() {
     }
@@ -99,12 +101,20 @@ public class Profesor {
         this.direccion = direccion;
     }
 
-    public String getEspecialidad() {
-        return especialidad;
+    public int getAreaId() {
+        return areaId;
     }
 
-    public void setEspecialidad(String especialidad) {
-        this.especialidad = especialidad;
+    public void setAreaId(int areaId) {
+        this.areaId = areaId;
+    }
+
+    public String getAreaNombre() {
+        return areaNombre;
+    }
+
+    public void setAreaNombre(String areaNombre) {
+        this.areaNombre = areaNombre;
     }
 
     public String getCodigoProfesor() {
@@ -147,7 +157,6 @@ public class Profesor {
         this.rol = rol;
     }
 
-    // Nuevo getter y setter para password
     public String getPassword() {
         return password;
     }
@@ -156,7 +165,7 @@ public class Profesor {
         this.password = password;
     }
     
-        public int getTurnoId() {
+    public int getTurnoId() {
         return turnoId;
     }
 
@@ -164,7 +173,7 @@ public class Profesor {
         this.turnoId = turnoId;
     }
     
-      public String getTurnoNombre() {
+    public String getTurnoNombre() {
         return turnoNombre;
     }
 
@@ -172,17 +181,17 @@ public class Profesor {
         this.turnoNombre = turnoNombre;
     }
 
-    // Método auxiliar
-    public String getNombreCompleto() {
-        return nombres + " " + apellidos;
-    }
-    
     public String getNivel() {
-    return nivel;
+        return nivel;
     }
 
     public void setNivel(String nivel) {
         this.nivel = nivel;
+    }
+
+    // Método auxiliar
+    public String getNombreCompleto() {
+        return nombres + " " + apellidos;
     }
   
 }

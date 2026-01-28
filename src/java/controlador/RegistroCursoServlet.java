@@ -68,7 +68,7 @@ public class RegistroCursoServlet extends HttpServlet {
             obtenerGradosPorNivel(request, response);
         }
         else if ("obtenerCursos".equals(accion)) {
-            obtenerCursosPorArea(request, response); 
+            obtenerCursos(request, response); 
         }
         else if ("obtenerProfesores".equals(accion)) {
             obtenerProfesores(request, response);
@@ -220,48 +220,79 @@ public class RegistroCursoServlet extends HttpServlet {
         System.out.println("✅ JSON enviado al cliente");
     }
 
-    /**
-     * ============================================================
-     * MÉTODO: obtenerCursosPorNivel
-     * ============================================================
-     * Razón: Petición AJAX para obtener cursos según el nivel.
-     * 
-     * Cada nivel tiene sus propios cursos:
-     * - INICIAL: Psicomotricidad, Lenguaje Oral, etc.
-     * - PRIMARIA: Matemática, Comunicación, etc.
-     * - SECUNDARIA: Álgebra, Física, Química, etc.
-     * 
-     * El stored procedure agrupa por nombre y área para evitar
-     * duplicados (el mismo curso puede estar en varios grados).
-     */
-    private void obtenerCursosPorNivel(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        String nivel = request.getParameter("nivel");
-        
-        System.out.println("=== OBTENIENDO CURSOS ===");
-        System.out.println("Nivel: " + nivel);
+        /**
+         * ============================================================
+         * MÉTODO: obtenerCursos (UNIFICADO)
+         * ============================================================
+         * Razón: Maneja tanto la obtención por nivel como por área
+         * según los parámetros recibidos
+         */
+        private void obtenerCursos(HttpServletRequest request, HttpServletResponse response)
+                throws ServletException, IOException {
 
-        // Validar que el nivel no sea nulo
-        if (nivel == null || nivel.isEmpty()) {
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("[]");
-            return;
+            // Obtener TODOS los parámetros posibles
+            String nivel = request.getParameter("nivel");
+            String area = request.getParameter("area");
+            String turno = request.getParameter("turno");
+
+            System.out.println("\n=== OBTENIENDO CURSOS ===");
+            System.out.println(" Parámetros recibidos:");
+            System.out.println("  Nivel: " + (nivel != null ? nivel : "(null)"));
+            System.out.println("  Área: " + (area != null ? area : "(null)"));
+            System.out.println("  Turno: " + (turno != null ? turno : "(null)"));
+
+            // Mostrar TODOS los parámetros para diagnóstico
+            System.out.println(" Todos los parámetros de la petición:");
+            Enumeration<String> paramNames = request.getParameterNames();
+            while (paramNames.hasMoreElements()) {
+                String paramName = paramNames.nextElement();
+                System.out.println("  - " + paramName + ": " + request.getParameter(paramName));
+            }
+
+            List<Map<String, Object>> cursos = new ArrayList<>();
+
+            try {
+                // ESTRATEGIA: Si viene área, usar obtenerCursosPorArea
+                // Si no viene área pero viene nivel, usar obtenerCursosPorNivel
+                // Si no viene ninguno, retornar vacío
+
+                if (area != null && !area.trim().isEmpty() && !"undefined".equals(area) && !"0".equals(area)) {
+                    // CASO 1: Tenemos área específica
+                    System.out.println(" Usando obtenerCursosPorArea");
+                    cursos = dao.obtenerCursosPorArea(area.trim());
+
+                } else if (nivel != null && !nivel.trim().isEmpty() && !"undefined".equals(nivel)) {
+                    // CASO 2: Tenemos solo nivel
+                    System.out.println(" Usando obtenerCursosPorNivel");
+                    cursos = dao.obtenerCursosPorNivel(nivel.trim());
+
+                } else {
+                    // CASO 3: No hay parámetros válidos
+                    System.out.println("️ No se recibieron parámetros válidos para filtrar cursos");
+                    System.out.println("   Área válida?: " + (area != null && !area.trim().isEmpty() && !"undefined".equals(area) && !"0".equals(area)));
+                    System.out.println("   Nivel válido?: " + (nivel != null && !nivel.trim().isEmpty() && !"undefined".equals(nivel)));
+                }
+
+                System.out.println(" Cursos encontrados: " + cursos.size());
+
+                // Convertir a JSON
+                String json = gson.toJson(cursos);
+
+                // Enviar respuesta
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(json);
+
+            } catch (Exception e) {
+                System.err.println(" Error al obtener cursos:");
+                e.printStackTrace();
+
+                // Enviar array vacío en caso de error
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write("[]");
+            }
         }
-
-        // Obtener cursos de la BD
-        List<Map<String, Object>> cursos = dao.obtenerCursosPorNivel(nivel);
-
-        System.out.println("Cursos encontrados: " + cursos.size());
-
-        // Convertir a JSON y enviar
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(gson.toJson(cursos));
-        
-        System.out.println("✅ JSON enviado al cliente");
-    }
 
     /**
      * ============================================================

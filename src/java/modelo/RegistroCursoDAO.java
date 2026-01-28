@@ -98,33 +98,47 @@ public class RegistroCursoDAO {
      * 
      * Este método evita duplicados agrupando por nombre y área.
      */
-    public List<Map<String, Object>> obtenerCursosPorNivel(String nivel) {
-        List<Map<String, Object>> cursos = new ArrayList<>();
-        String sql = "CALL obtener_cursos_por_nivel(?)";
-        
-        try (Connection conn = Conexion.getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
-            
-            cs.setString(1, nivel);
-            ResultSet rs = cs.executeQuery();
-            
-            while (rs.next()) {
-                Map<String, Object> curso = new HashMap<>();
-                curso.put("nombre", rs.getString("nombre"));
-                curso.put("area", rs.getString("area"));
-                curso.put("id_ejemplo", rs.getInt("id_ejemplo"));
-                cursos.add(curso);
-            }
-            
-            System.out.println("DAO - Cursos obtenidos para nivel " + nivel + ": " + cursos.size());
-            
-        } catch (SQLException e) {
-            System.err.println("Error al obtener cursos por nivel: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        return cursos;
-    }
+        public List<Map<String, Object>> obtenerCursosPorNivel(String nivel) {
+             List<Map<String, Object>> cursos = new ArrayList<>();
+
+             // CONSULTA DIRECTA CON COLLATE
+             String sql = "SELECT DISTINCT " +
+                         "    c.nombre, " +
+                         "    a.nombre as area, " +
+                         "    MIN(c.id) as id_ejemplo " +
+                         "FROM curso c " +
+                         "INNER JOIN grado g ON c.grado_id = g.id " +
+                         "INNER JOIN area a ON c.area_id = a.id " +
+                         "WHERE c.activo = 1 AND c.eliminado = 0 " +
+                         "AND (g.nivel COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci " +
+                         "     OR ? = 'TODOS') " +
+                         "GROUP BY c.nombre, a.nombre " +
+                         "ORDER BY a.nombre, c.nombre";
+
+             try (Connection conn = Conexion.getConnection();
+                  PreparedStatement ps = conn.prepareStatement(sql)) {
+
+                 ps.setString(1, nivel);
+                 ps.setString(2, nivel);
+                 ResultSet rs = ps.executeQuery();
+
+                 while (rs.next()) {
+                     Map<String, Object> curso = new HashMap<>();
+                     curso.put("nombre", rs.getString("nombre"));
+                     curso.put("area", rs.getString("area"));
+                     curso.put("id_ejemplo", rs.getInt("id_ejemplo"));
+                     cursos.add(curso);
+                 }
+
+                 System.out.println(" DAO - Cursos obtenidos para nivel " + nivel + ": " + cursos.size());
+
+             } catch (SQLException e) {
+                 System.err.println(" Error al obtener cursos por nivel: " + e.getMessage());
+                 e.printStackTrace();
+             }
+
+             return cursos;
+         }
 
     /**
      * ============================================================
@@ -153,21 +167,46 @@ public class RegistroCursoDAO {
             String nombreCurso, int turnoId, String nivel) {
         
         List<Map<String, Object>> profesores = new ArrayList<>();
-        String sql = "CALL obtener_profesores_por_curso_turno_nivel(?, ?, ?)";
         
+        // CONSULTA DIRECTA - más confiable que stored procedure
+        String sql = "SELECT DISTINCT " +
+                    "    p.id, " +
+                    "    per.apellidos, " +                          
+                    "    per.nombres, " +                            
+                    "    CONCAT(per.nombres, ' ', per.apellidos) as nombre_completo, " +
+                    "    a.nombre as especialidad, " +
+                    "    p.codigo_profesor " +
+                    "FROM profesor p " +
+                    "INNER JOIN persona per ON p.persona_id = per.id " +
+                    "INNER JOIN area a ON p.area_id = a.id " +
+                    "WHERE p.activo = 1 AND p.eliminado = 0 " +
+                    "AND p.estado = 'ACTIVO' " +
+                    "AND p.turno_id = ? " +
+                    "AND (p.nivel COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci " +
+                    "     OR p.nivel COLLATE utf8mb4_unicode_ci = 'TODOS') " +
+                    "AND a.nombre COLLATE utf8mb4_unicode_ci = (" +
+                    "    SELECT DISTINCT a2.nombre " +
+                    "    FROM curso c2 " +
+                    "    INNER JOIN area a2 ON c2.area_id = a2.id " +
+                    "    WHERE c2.nombre COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci " +
+                    "    AND c2.activo = 1 AND c2.eliminado = 0 " +
+                    "    LIMIT 1" +
+                    ") " +
+                    "ORDER BY per.apellidos, per.nombres";
+
         try (Connection conn = Conexion.getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, turnoId);
+            ps.setString(2, nivel);
+            ps.setString(3, nombreCurso);
             
-            cs.setString(1, nombreCurso);
-            cs.setInt(2, turnoId);
-            cs.setString(3, nivel);
-            
-            System.out.println("DAO - Buscando profesores para:");
+            System.out.println(" DAO - Buscando profesores para:");
             System.out.println("  Curso: " + nombreCurso);
             System.out.println("  Turno ID: " + turnoId);
             System.out.println("  Nivel: " + nivel);
             
-            ResultSet rs = cs.executeQuery();
+            ResultSet rs = ps.executeQuery();
             
             while (rs.next()) {
                 Map<String, Object> profesor = new HashMap<>();
@@ -178,10 +217,10 @@ public class RegistroCursoDAO {
                 profesores.add(profesor);
             }
             
-            System.out.println("DAO - Profesores encontrados: " + profesores.size());
+            System.out.println(" DAO - Profesores encontrados: " + profesores.size());
             
         } catch (SQLException e) {
-            System.err.println("Error al obtener profesores: " + e.getMessage());
+            System.err.println(" Error al obtener profesores: " + e.getMessage());
             e.printStackTrace();
         }
         
@@ -309,7 +348,7 @@ public class RegistroCursoDAO {
             String descripcion, String area, String horariosJson) {
         
         Map<String, Object> resultado = new HashMap<>();
-        String sql = "CALL registrar_curso_completo_v2(?, ?, ?, ?, ?, ?, ?)";
+        String sql = "CALL registrar_curso_completo(?, ?, ?, ?, ?, ?, ?)";
         
         System.out.println("\n=== REGISTRANDO CURSO EN BD ===");
         System.out.println("Nombre: " + nombre);
@@ -333,19 +372,32 @@ public class RegistroCursoDAO {
             ResultSet rs = cs.executeQuery();
             
             if (rs.next()) {
-                int cursoId = rs.getInt("curso_id");
+                int exito = rs.getInt("exito");
+                String mensaje = rs.getString("mensaje");
+                String detalle = rs.getString("detalle");
                 
-                if (cursoId > 0) {
+                if (exito == 1) {
                     resultado.put("exito", true);
-                    resultado.put("mensaje", rs.getString("mensaje"));
-                    resultado.put("detalle", rs.getString("detalle"));
-                    resultado.put("curso_id", cursoId);
-                    System.out.println("✅ Curso registrado exitosamente - ID: " + cursoId);
+                    resultado.put("mensaje", mensaje);
+                    resultado.put("detalle", detalle);
+                    
+                    // Extraer el ID del curso desde el detalle (formato: "ID: 123")
+                    if (detalle != null && detalle.startsWith("ID: ")) {
+                        try {
+                            int cursoId = Integer.parseInt(detalle.substring(4).trim());
+                            resultado.put("curso_id", cursoId);
+                            System.out.println("✅ Curso registrado exitosamente - ID: " + cursoId);
+                        } catch (NumberFormatException e) {
+                            System.out.println("✅ Curso registrado exitosamente");
+                        }
+                    } else {
+                        System.out.println("✅ Curso registrado exitosamente");
+                    }
                 } else {
                     resultado.put("exito", false);
-                    resultado.put("mensaje", rs.getString("mensaje"));
-                    resultado.put("detalle", rs.getString("detalle"));
-                    System.out.println(" Error al registrar: " + rs.getString("detalle"));
+                    resultado.put("mensaje", mensaje);
+                    resultado.put("detalle", detalle);
+                    System.out.println("❌ Error al registrar: " + detalle);
                 }
             }
             
@@ -512,26 +564,46 @@ public class RegistroCursoDAO {
          * ============================================================
          * Obtiene las áreas académicas según el nivel educativo
          */
-        public List<Map<String, Object>> obtenerAreasPorNivel(String nivel) {
+            public List<Map<String, Object>> obtenerAreasPorNivel(String nivel) {
             List<Map<String, Object>> areas = new ArrayList<>();
-            String sql = "{CALL obtener_areas_por_nivel(?)}";
+
+            // CONSULTA DIRECTA CON COLLATE EXPLÍCITO
+            String sql = "SELECT " +
+                        "    a.id, " +
+                        "    a.nombre, " +
+                        "    a.descripcion, " +
+                        "    a.nivel, " +
+                        "    COUNT(DISTINCT c.id) as total_cursos " +
+                        "FROM area a " +
+                        "LEFT JOIN curso c ON a.id = c.area_id AND c.activo = 1 AND c.eliminado = 0 " +
+                        "WHERE a.activo = 1 AND a.eliminado = 0 " +
+                        "AND (a.nivel COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci " +
+                        "     OR a.nivel COLLATE utf8mb4_unicode_ci = 'TODOS' " +
+                        "     OR ? = 'TODOS') " +
+                        "GROUP BY a.id, a.nombre, a.descripcion, a.nivel " +
+                        "ORDER BY a.nombre";
 
             try (Connection conn = Conexion.getConnection();
-                 CallableStatement cs = conn.prepareCall(sql)) {
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-                cs.setString(1, nivel);
-                ResultSet rs = cs.executeQuery();
+                ps.setString(1, nivel);
+                ps.setString(2, nivel);
+                ResultSet rs = ps.executeQuery();
 
                 while (rs.next()) {
                     Map<String, Object> area = new HashMap<>();
-                    area.put("area", rs.getString("area"));
+                    area.put("id", rs.getInt("id"));
+                    area.put("nombre", rs.getString("nombre"));
+                    area.put("descripcion", rs.getString("descripcion"));
+                    area.put("nivel", rs.getString("nivel"));
+                    area.put("total_cursos", rs.getInt("total_cursos"));
                     areas.add(area);
                 }
 
-                System.out.println("DAO - Áreas obtenidas para nivel " + nivel + ": " + areas.size());
+                System.out.println(" DAO - Áreas obtenidas para nivel " + nivel + ": " + areas.size());
 
             } catch (SQLException e) {
-                System.err.println("Error al obtener áreas por nivel: " + e.getMessage());
+                System.err.println(" Error al obtener áreas por nivel: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -546,26 +618,49 @@ public class RegistroCursoDAO {
          */
         public List<Map<String, Object>> obtenerCursosPorArea(String area) {
             List<Map<String, Object>> cursos = new ArrayList<>();
-            String sql = "{CALL obtener_cursos_por_area(?)}";
+
+            // VALIDACIÓN ROBUSTA
+            if (area == null || area.trim().isEmpty() || "undefined".equalsIgnoreCase(area) || "0".equals(area)) {
+                System.err.println(" ADVERTENCIA: El parámetro 'area' es inválido: " + area);
+                return cursos; // Retornar lista vacía
+            }
+
+            System.out.println(" Buscando cursos para área: '" + area + "'");
+
+            String sql = "SELECT DISTINCT " +
+                        "    MIN(c.id) as id, " +              // ✓ Toma el ID más bajo
+                        "    c.nombre, " +
+                        "    a.nombre as area_nombre, " +
+                        "    MIN(c.descripcion) as descripcion, " +
+                        "    MIN(c.creditos) as creditos " +
+                        "FROM curso c " +
+                        "INNER JOIN area a ON c.area_id = a.id " +
+                        "INNER JOIN grado g ON c.grado_id = g.id " +
+                        "WHERE a.nombre = ? " +
+                        "AND c.activo = 1 AND c.eliminado = 0 " +
+                        "GROUP BY c.nombre, a.nombre " +       
+                        "ORDER BY c.nombre";
 
             try (Connection conn = Conexion.getConnection();
-                 CallableStatement cs = conn.prepareCall(sql)) {
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-                cs.setString(1, area);
-                ResultSet rs = cs.executeQuery();
+                ps.setString(1, area.trim());
+                ResultSet rs = ps.executeQuery();
 
                 while (rs.next()) {
                     Map<String, Object> curso = new HashMap<>();
+                    curso.put("id", rs.getInt("id"));
                     curso.put("nombre", rs.getString("nombre"));
-                    curso.put("area", rs.getString("area"));
+                    curso.put("area", rs.getString("area_nombre"));
                     curso.put("descripcion", rs.getString("descripcion"));
+                    curso.put("creditos", rs.getInt("creditos"));
                     cursos.add(curso);
                 }
 
-                System.out.println("DAO - Cursos obtenidos para área '" + area + "': " + cursos.size());
+                System.out.println(" DAO - Cursos obtenidos para área '" + area + "': " + cursos.size());
 
             } catch (SQLException e) {
-                System.err.println("Error al obtener cursos por área: " + e.getMessage());
+                System.err.println(" Error al obtener cursos por área: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -610,28 +705,5 @@ public class RegistroCursoDAO {
             }
 
             return resultado;
-        }
-        
-            public List<Curso> obtenerCursosPorArea(String area, String nivel) {
-            List<Curso> cursos = new ArrayList<>();
-            String sql = "{CALL obtener_cursos_por_area(?, ?)}";
-
-            try (Connection conn = Conexion.getConnection();
-                CallableStatement cs = conn.prepareCall(sql)) {    
-                cs.setString(1, area);
-                cs.setString(2, nivel); 
-
-                ResultSet rs = cs.executeQuery();
-                while (rs.next()) {
-                    Curso curso = new Curso();
-                    curso.setNombre(rs.getString("nombre"));
-                    curso.setArea(rs.getString("area"));
-                    curso.setDescripcion(rs.getString("descripcion"));
-                    cursos.add(curso);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return cursos;
         }
 }

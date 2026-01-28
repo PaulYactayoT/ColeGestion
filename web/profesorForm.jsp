@@ -1,10 +1,13 @@
 <%@ page import="modelo.Profesor" %>
-<%@ page import="modelo.ProfesorDAO.Turno" %>
+<%@ page import="modelo.Turno" %>
+<%@ page import="modelo.Area" %>
 <%@ page import="java.util.List" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.time.LocalTime" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response.setHeader("Pragma", "no-cache");
@@ -17,7 +20,7 @@
 
    Profesor p = (Profesor) request.getAttribute("profesor");
     List<Turno> turnos = (List<Turno>) request.getAttribute("turnos");
-    List<String> especialidades = (List<String>) request.getAttribute("especialidades"); 
+    List<Area> areas = (List<Area>) request.getAttribute("areas");
     boolean editar = (p != null);
     
     String fechaNacimientoStr = "";
@@ -453,80 +456,82 @@
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                    <label class="form-label required-field">Area</label>
-                    <select class="form-select" name="especialidad" id="especialidad" required>
-                        <option value="">Seleccione la Area</option>
-                        <% 
-                            if (especialidades != null && !especialidades.isEmpty()) {
-                                for (String esp : especialidades) {
-                                    boolean selected = editar && esp.equals(p.getEspecialidad());
-                        %>
-                            <option value="<%= esp %>" <%= selected ? "selected" : "" %>>
-                                <%= esp %>
-                            </option>
-                        <% 
-                                }
-                            } else {
-                                // Fallback: mostrar opciones por defecto si no hay especialidades en BD
-                        %>
-                            <option value="Biología">Biología</option>
-                            <option value="Historia">Historia</option>
-                            <option value="Matemática">Matemática</option>
-                            <option value="Comunicación">Comunicación</option>
-                            <option value="Geografía">Geografía</option>
-                            <option value="Educación Física">Educación Física</option>
-                            <option value="Arte y Cultura">Arte y Cultura</option>
-                            <option value="Química">Química</option>
-                        <% 
-                            }
-                        %>
-                        <!-- Opción para agregar nueva especialidad -->
-                        <option value="__NUEVA__" style="font-weight: bold; background-color: #e8f5e9;">? Agregar nueva especialidad</option>
-                    </select>
-                    <div class="invalid-feedback"></div>
-
-                    <!-- Campo oculto para nueva especialidad -->
-                    <div id="nuevaEspecialidadDiv" style="display: none; margin-top: 10px;">
-                        <input type="text" class="form-control" id="nuevaEspecialidad" 
-                               placeholder="Ingrese la nueva especialidad" maxlength="100">
-                        <small class="form-text">Se agregará a la lista de especialidades</small>
+                        <label class="form-label required-field">Nivel que Enseña</label>
+                        <select class="form-select" name="nivel" id="nivel" required>
+                            <option value="">Seleccione un nivel</option>
+                            <option value="INICIAL" <%= (editar && "INICIAL".equals(p.getNivel())) ? "selected" : "" %>>Inicial</option>
+                            <option value="PRIMARIA" <%= (editar && "PRIMARIA".equals(p.getNivel())) ? "selected" : "" %>>Primaria</option>
+                            <option value="SECUNDARIA" <%= (editar && "SECUNDARIA".equals(p.getNivel())) ? "selected" : "" %>>Secundaria</option>
+                            <option value="TODOS" <%= (editar && "TODOS".equals(p.getNivel())) ? "selected" : "" %>>Todos los Niveles</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
                     </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label required-field">Nivel que Enseña</label>
-                    <select class="form-select" name="nivel" id="nivel" required>
-                        <option value="">Seleccione un nivel</option>
-                        <option value="INICIAL" <%= (editar && "INICIAL".equals(p.getNivel())) ? "selected" : "" %>>Inicial</option>
-                        <option value="PRIMARIA" <%= (editar && "PRIMARIA".equals(p.getNivel())) ? "selected" : "" %>>Primaria</option>
-                        <option value="SECUNDARIA" <%= (editar && "SECUNDARIA".equals(p.getNivel())) ? "selected" : "" %>>Secundaria</option>
-                        <option value="TODOS" <%= (editar && "TODOS".equals(p.getNivel())) ? "selected" : "" %>>Todos los Niveles</option>
-                    </select>
-                    <div class="invalid-feedback"></div>
-                </div>             
+                    
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Turno</label>
-                        <select class="form-select" name="turno_id" id="turno_id" required>
-                            <option value="">Seleccione un turno</option>
+                        <label class="form-label required-field">Área</label>
+                        <select class="form-select" name="area_id" id="area_id" required>
+                            <option value="">Primero seleccione un nivel</option>
                             <% 
-                                if (turnos != null) {
-                                    for (Turno turno : turnos) {
-                                        boolean selected = editar && p.getTurnoId() == turno.getId();
+                                if (areas != null && !areas.isEmpty()) {
+                                    for (Area area : areas) {
+                                        boolean selected = editar && p.getAreaId() == area.getId();
+                                        // ELIMINAMOS la concatenación del nivel
                             %>
-                                <option value="<%= turno.getId() %>" <%= selected ? "selected" : "" %>>
-                                    <%= turno.getNombre() %> 
-                                    (<%= new SimpleDateFormat("HH:mm").format(turno.getHoraInicio()) %> - 
-                                     <%= new SimpleDateFormat("HH:mm").format(turno.getHoraFin()) %>)
+                                <option value="<%= area.getId() %>" 
+                                        data-nivel="<%= area.getNivel() %>"
+                                        <%= selected ? "selected" : "" %>
+                                        style="display: none;">
+                                    <%= area.getNombre() %>
                                 </option>
                             <% 
                                     }
+                                } else {
+                            %>
+                                <option value="" disabled>No hay áreas disponibles</option>
+                            <% 
                                 }
                             %>
                         </select>
+                        <small class="form-text">Las áreas se filtran según el nivel seleccionado</small>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
                 <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required-field">Turno</label>
+                        <select class="form-select" name="turno_id" id="turno_id" required>
+                            <option value="">Seleccione un turno</option>
+                            <% 
+                                if (turnos != null && !turnos.isEmpty()) {
+                                    for (Turno turno : turnos) {
+                                        boolean selected = editar && p.getTurnoId() == turno.getId();
+                                        
+                                        // Formatear las horas usando LocalTime directamente
+                                        String horaInicio = "";
+                                        String horaFin = "";
+                                        if (turno.getHoraInicio() != null) {
+                                            horaInicio = turno.getHoraInicio().format(DateTimeFormatter.ofPattern("HH:mm"));
+                                        }
+                                        if (turno.getHoraFin() != null) {
+                                            horaFin = turno.getHoraFin().format(DateTimeFormatter.ofPattern("HH:mm"));
+                                        }
+                            %>
+                                <option value="<%= turno.getId() %>" <%= selected ? "selected" : "" %>>
+                                    <%= turno.getNombre() %> (<%= horaInicio %> - <%= horaFin %>)
+                                </option>
+                            <% 
+                                    }
+                                } else {
+                            %>
+                                <option value="" disabled>No hay turnos disponibles</option>
+                            <%
+                                }
+                            %>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Código de Profesor</label>
                         <div class="input-group-icon">
@@ -537,7 +542,9 @@
                         </div>
                         <small class="form-text">Opcional, se generará automáticamente</small>
                     </div>
+                </div>
 
+                <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Fecha de Contratación</label>
                         <div class="input-group-icon">
@@ -546,9 +553,7 @@
                                    value="<%= fechaContratacionStr %>">
                         </div>
                     </div>
-                </div>
 
-                <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Estado</label>
                         <select name="estado" class="form-select">
@@ -558,9 +563,7 @@
                             <option value="JUBILADO" <%= (editar && "JUBILADO".equals(p.getEstado())) ? "selected" : "" %>>JUBILADO</option>
                         </select>
                     </div>
-                </div>
-
-                <hr class="section-divider">
+                </div> 
 
                 <!-- BOTONES -->
                 <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid #e5e7eb;">
@@ -630,8 +633,64 @@
             const usernameInput = document.getElementById('username');
             const fechaNacInput = document.getElementById('fecha_nacimiento');
             const fechaContInput = document.getElementById('fecha_contratacion');
+            const nivelSelect = document.getElementById('nivel');
+            const areaSelect = document.getElementById('area_id');
             
-            // Establecer fechas por defecto si no estamos editando
+            // ============================================================
+            // FILTRADO DINÁMICO DE ÁREAS SEGÚN NIVEL SELECCIONADO
+            // ============================================================
+            function filtrarAreas() {
+                const nivelSeleccionado = nivelSelect.value;
+                const opciones = areaSelect.querySelectorAll('option');
+                let areasVisibles = 0;
+                
+                // Resetear el select de área
+                areaSelect.value = '';
+                
+                opciones.forEach(function(opcion) {
+                    // Mantener siempre visible la primera opción (placeholder)
+                    if (opcion.value === '') {
+                        opcion.style.display = '';
+                        if (nivelSeleccionado === '') {
+                            opcion.textContent = 'Primero seleccione un nivel';
+                        } else {
+                            opcion.textContent = 'Seleccione el área';
+                        }
+                        return;
+                    }
+                    
+                    const nivelArea = opcion.getAttribute('data-nivel');
+                    
+                    // Mostrar área si:
+                    // 1. El área es para TODOS los niveles, O
+                    // 2. El nivel del área coincide con el nivel seleccionado, O
+                    // 3. El profesor es de TODOS los niveles
+                    if (nivelArea === 'TODOS' || 
+                        nivelArea === nivelSeleccionado || 
+                        nivelSeleccionado === 'TODOS') {
+                        opcion.style.display = '';
+                        areasVisibles++;
+                    } else {
+                        opcion.style.display = 'none';
+                    }
+                });
+                
+                // Si no hay áreas visibles para el nivel seleccionado
+                if (areasVisibles === 0 && nivelSeleccionado !== '') {
+                    const placeholder = areaSelect.querySelector('option[value=""]');
+                    placeholder.textContent = 'No hay áreas disponibles para este nivel';
+                }
+            }
+            
+            // Ejecutar filtrado cuando cambia el nivel
+            nivelSelect.addEventListener('change', filtrarAreas);
+            
+            // Ejecutar filtrado al cargar la página (importante para modo edición)
+            filtrarAreas();
+            
+            // ============================================================
+            // ESTABLECER FECHAS POR DEFECTO
+            // ============================================================
             if (!<%= editar %>) {
                 if (!fechaNacInput.value) {
                     const hace30Anios = new Date();
@@ -644,7 +703,9 @@
                 }
             }
             
-            // Validación del DNI con feedback visual
+            // ============================================================
+            // VALIDACIÓN DEL DNI
+            // ============================================================
             if (dniInput) {
                 dniInput.addEventListener('input', function() {
                     // Solo números
@@ -670,7 +731,7 @@
                     if (dni.length !== 8) {
                         this.classList.add('is-invalid');
                         this.classList.remove('is-valid');
-                        feedback.textContent = '?? El DNI debe tener exactamente 8 dígitos';
+                        feedback.textContent = '? El DNI debe tener exactamente 8 dígitos';
                     } else {
                         this.classList.remove('is-invalid');
                         this.classList.add('is-valid');
@@ -680,7 +741,9 @@
                 });
             }
             
-            // Validación del correo electrónico
+            // ============================================================
+            // VALIDACIÓN DEL CORREO ELECTRÓNICO
+            // ============================================================
             if (correoInput) {
                 correoInput.addEventListener('blur', function() {
                     const correo = this.value.trim();
@@ -690,14 +753,14 @@
                     
                     if (correo.length === 0) {
                         this.classList.add('is-invalid');
-                        feedback.textContent = '?? El correo electrónico es obligatorio';
+                        feedback.textContent = '? El correo electrónico es obligatorio';
                         return;
                     }
                     
                     if (!emailRegex.test(correo)) {
                         this.classList.add('is-invalid');
                         this.classList.remove('is-valid');
-                        feedback.textContent = '?? Ingrese un correo electrónico válido';
+                        feedback.textContent = '? Ingrese un correo electrónico válido';
                     } else {
                         this.classList.remove('is-invalid');
                         this.classList.add('is-valid');
@@ -707,34 +770,9 @@
                 });
             }
             
-            // Validación del username
-            if (usernameInput) {
-                usernameInput.addEventListener('blur', function() {
-                    const username = this.value.trim();
-                    const feedback = this.parentElement.nextElementSibling.nextElementSibling;
-                    const validFeedback = feedback.nextElementSibling;
-                    
-                    if (username.length === 0) {
-                        this.classList.remove('is-invalid', 'is-valid');
-                        feedback.textContent = '';
-                        if (validFeedback) validFeedback.textContent = '';
-                        return;
-                    }
-                    
-                    if (username.length < 4) {
-                        this.classList.add('is-invalid');
-                        this.classList.remove('is-valid');
-                        feedback.textContent = '?? El username debe tener al menos 4 caracteres';
-                    } else {
-                        this.classList.remove('is-invalid');
-                        this.classList.add('is-valid');
-                        feedback.textContent = '';
-                        if (validFeedback) validFeedback.textContent = '? Username válido';
-                    }
-                });
-            }
-            
-            // Validación del teléfono (solo números)
+            // ============================================================
+            // VALIDACIÓN DEL TELÉFONO (solo números)
+            // ============================================================
             const telefonoInput = document.getElementById('telefono');
             if (telefonoInput) {
                 telefonoInput.addEventListener('input', function() {
@@ -742,24 +780,9 @@
                 });
             }
             
-            // ========== MANEJAR NUEVA ESPECIALIDAD ==========
-            const especialidadSelect = document.getElementById('especialidad');
-            const nuevaEspecialidadDiv = document.getElementById('nuevaEspecialidadDiv');
-            const nuevaEspecialidadInput = document.getElementById('nuevaEspecialidad');
-            
-            especialidadSelect.addEventListener('change', function() {
-                if (this.value === '__NUEVA__') {
-                    nuevaEspecialidadDiv.style.display = 'block';
-                    nuevaEspecialidadInput.required = true;
-                    nuevaEspecialidadInput.focus();
-                } else {
-                    nuevaEspecialidadDiv.style.display = 'none';
-                    nuevaEspecialidadInput.required = false;
-                    nuevaEspecialidadInput.value = '';
-                }
-            });
-            
-            // Validación antes de enviar el formulario
+            // ============================================================
+            // VALIDACIÓN ANTES DE ENVIAR EL FORMULARIO
+            // ============================================================
             form.addEventListener('submit', function(event) {
                 let errores = [];
                 
@@ -767,26 +790,11 @@
                 const nombres = document.getElementById('nombres').value.trim();
                 const apellidos = document.getElementById('apellidos').value.trim();
                 const correo = correoInput.value.trim();
-                const especialidad = especialidadSelect.value;
+                const areaId = areaSelect.value;
+                const nivel = nivelSelect.value;
                 const turnoId = document.getElementById('turno_id').value;
                 const dni = dniInput.value.trim();
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                
-                // ========== MANEJAR NUEVA ESPECIALIDAD ==========
-                if (especialidad === '__NUEVA__') {
-                    const nuevaEsp = nuevaEspecialidadInput.value.trim();
-                    if (nuevaEsp === '') {
-                        event.preventDefault();
-                        alert('Por favor ingrese el nombre de la nueva especialidad');
-                        nuevaEspecialidadInput.focus();
-                        return false;
-                    }
-                    // Crear una opción temporal con el nuevo valor y seleccionarla
-                    const option = document.createElement('option');
-                    option.value = nuevaEsp;
-                    option.selected = true;
-                    especialidadSelect.appendChild(option);
-                }
                 
                 // Validar campos obligatorios
                 if (!nombres) errores.push('Nombres es obligatorio');
@@ -798,8 +806,12 @@
                     errores.push('Correo electrónico no es válido');
                 }
                 
-                if (!especialidad || especialidad === '') {
-                    errores.push('Especialidad es obligatoria');
+                if (!nivel || nivel === '') {
+                    errores.push('Nivel es obligatorio');
+                }
+                
+                if (!areaId || areaId === '') {
+                    errores.push('Área es obligatoria');
                 }
                 
                 if (!turnoId) errores.push('Turno es obligatorio');
@@ -835,4 +847,4 @@
         });
     </script>
 </body>
-</html>   
+</html>
