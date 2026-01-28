@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+    <!-- Configuración de recursos para Tomcat -->
+    <Resource name="jdbc/colegioDB" auth="Container"
+              type="javax.sql.DataSource"
+              maxTotal="100" maxIdle="30" maxWaitMillis="10000"
+              username="root" password="1234"
+              driverClassName="com.mysql.cj.jdbc.Driver"
+              url="jdbc:mysql://192.168.18.83:3306/colegiogestion?useSSL=false&amp;serverTimezone=UTC"/>
+    
+    <!-- Para desarrollo, permite recarga automática -->
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+    <WatchedResource>${catalina.base}/conf/web.xml</WatchedResource>
+</Context>
