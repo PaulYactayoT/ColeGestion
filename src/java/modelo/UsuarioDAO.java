@@ -7,7 +7,217 @@ import java.util.*;
 
 public class UsuarioDAO {
 
-    // Método para mapear un ResultSet a un objeto Usuario
+    /**
+     * ===================================================================
+     * NUEVO: OBTENER PERSONAS SIN USUARIO (PARA ASIGNACIÓN)
+     * ===================================================================
+     */
+    
+    /**
+     * Obtener todos los profesores que NO tienen usuario asignado
+     */
+    public List<PersonaSinUsuario> obtenerProfesoresSinUsuario() {
+        List<PersonaSinUsuario> personas = new ArrayList<>();
+        
+        String sql = "SELECT " +
+                    "p.id, " +
+                    "p.nombres, " +
+                    "p.apellidos, " +
+                    "p.correo, " +
+                    "p.dni, " +
+                    "prof.codigo_profesor, " +
+                    "a.nombre as area_nombre, " +
+                    "'PROFESOR' as tipo_persona " +
+                    "FROM persona p " +
+                    "INNER JOIN profesor prof ON p.id = prof.persona_id " +
+                    "LEFT JOIN area a ON prof.area_id = a.id " +
+                    "LEFT JOIN usuario u ON p.id = u.persona_id " +
+                    "WHERE p.activo = 1 " +
+                    "AND p.eliminado = 0 " +
+                    "AND prof.activo = 1 " +
+                    "AND prof.eliminado = 0 " +
+                    "AND u.id IS NULL " +
+                    "ORDER BY p.apellidos, p.nombres";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                PersonaSinUsuario persona = new PersonaSinUsuario();
+                persona.setPersonaId(rs.getInt("id"));
+                persona.setNombres(rs.getString("nombres"));
+                persona.setApellidos(rs.getString("apellidos"));
+                persona.setCorreo(rs.getString("correo"));
+                persona.setDni(rs.getString("dni"));
+                persona.setCodigo(rs.getString("codigo_profesor"));
+                persona.setInformacionAdicional(rs.getString("area_nombre"));
+                persona.setTipoPersona(rs.getString("tipo_persona"));
+                personas.add(persona);
+            }
+            
+            System.out.println("✅ Profesores sin usuario encontrados: " + personas.size());
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error al obtener profesores sin usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return personas;
+    }
+    
+    /**
+     * Obtener todos los alumnos que NO tienen usuario asignado
+     */
+    public List<PersonaSinUsuario> obtenerAlumnosSinUsuario() {
+        List<PersonaSinUsuario> personas = new ArrayList<>();
+        
+        String sql = "SELECT " +
+                    "p.id, " +
+                    "p.nombres, " +
+                    "p.apellidos, " +
+                    "p.correo, " +
+                    "p.dni, " +
+                    "a.codigo_alumno, " +
+                    "g.nombre as grado_nombre, " +
+                    "'ALUMNO' as tipo_persona " +
+                    "FROM persona p " +
+                    "INNER JOIN alumno a ON p.id = a.persona_id " +
+                    "LEFT JOIN grado g ON a.grado_id = g.id " +
+                    "LEFT JOIN usuario u ON p.id = u.persona_id " +
+                    "WHERE p.activo = 1 " +
+                    "AND p.eliminado = 0 " +
+                    "AND a.activo = 1 " +
+                    "AND a.eliminado = 0 " +
+                    "AND u.id IS NULL " +
+                    "ORDER BY p.apellidos, p.nombres";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                PersonaSinUsuario persona = new PersonaSinUsuario();
+                persona.setPersonaId(rs.getInt("id"));
+                persona.setNombres(rs.getString("nombres"));
+                persona.setApellidos(rs.getString("apellidos"));
+                persona.setCorreo(rs.getString("correo"));
+                persona.setDni(rs.getString("dni"));
+                persona.setCodigo(rs.getString("codigo_alumno"));
+                persona.setInformacionAdicional(rs.getString("grado_nombre"));
+                persona.setTipoPersona(rs.getString("tipo_persona"));
+                personas.add(persona);
+            }
+            
+            System.out.println("✅ Alumnos sin usuario encontrados: " + personas.size());
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error al obtener alumnos sin usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return personas;
+    }
+    
+    /**
+     * Obtener todos los administrativos que NO tienen usuario asignado
+     */
+    public List<PersonaSinUsuario> obtenerAdministrativosSinUsuario() {
+        List<PersonaSinUsuario> personas = new ArrayList<>();
+        
+        String sql = "SELECT " +
+                    "p.id, " +
+                    "p.nombres, " +
+                    "p.apellidos, " +
+                    "p.correo, " +
+                    "p.dni, " +
+                    "adm.codigo_administrativo, " +
+                    "adm.cargo, " +
+                    "'ADMINISTRATIVO' as tipo_persona " +
+                    "FROM persona p " +
+                    "INNER JOIN administrativo adm ON p.id = adm.persona_id " +
+                    "LEFT JOIN usuario u ON p.id = u.persona_id " +
+                    "WHERE p.activo = 1 " +
+                    "AND p.eliminado = 0 " +
+                    "AND adm.activo = 1 " +
+                    "AND adm.eliminado = 0 " +
+                    "AND u.id IS NULL " +
+                    "ORDER BY p.apellidos, p.nombres";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                PersonaSinUsuario persona = new PersonaSinUsuario();
+                persona.setPersonaId(rs.getInt("id"));
+                persona.setNombres(rs.getString("nombres"));
+                persona.setApellidos(rs.getString("apellidos"));
+                persona.setCorreo(rs.getString("correo"));
+                persona.setDni(rs.getString("dni"));
+                persona.setCodigo(rs.getString("codigo_administrativo"));
+                persona.setInformacionAdicional(rs.getString("cargo"));
+                persona.setTipoPersona(rs.getString("tipo_persona"));
+                personas.add(persona);
+            }
+            
+            System.out.println("✅ Administrativos sin usuario encontrados: " + personas.size());
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error al obtener administrativos sin usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return personas;
+    }
+    
+    /**
+     * Obtener información completa de una persona por su ID
+     */
+    public PersonaSinUsuario obtenerPersonaPorId(int personaId) {
+        PersonaSinUsuario persona = null;
+        
+        String sql = "SELECT " +
+                    "p.id, " +
+                    "p.nombres, " +
+                    "p.apellidos, " +
+                    "p.correo, " +
+                    "p.dni, " +
+                    "p.tipo " +
+                    "FROM persona p " +
+                    "WHERE p.id = ? " +
+                    "AND p.activo = 1 " +
+                    "AND p.eliminado = 0";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, personaId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    persona = new PersonaSinUsuario();
+                    persona.setPersonaId(rs.getInt("id"));
+                    persona.setNombres(rs.getString("nombres"));
+                    persona.setApellidos(rs.getString("apellidos"));
+                    persona.setCorreo(rs.getString("correo"));
+                    persona.setDni(rs.getString("dni"));
+                    persona.setTipoPersona(rs.getString("tipo"));
+                }
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error al obtener persona por ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return persona;
+    }
+
+    // ===================================================================
+    // MÉTODOS EXISTENTES (mantenidos)
+    // ===================================================================
+
     private Usuario mapearUsuario(ResultSet rs) throws SQLException {
         Usuario usuario = new Usuario();
         usuario.setId(rs.getInt("id"));
@@ -24,7 +234,6 @@ public class UsuarioDAO {
         return usuario;
     }
 
-    // Método para obtener datos de bloqueo (FALTANTE)
     public Usuario obtenerDatosBloqueo(String username) {
         Usuario usuario = null;
         String sql = "SELECT intentos_fallidos, fecha_bloqueo FROM usuario WHERE username = ? AND eliminado = 0";
@@ -49,7 +258,6 @@ public class UsuarioDAO {
         return usuario;
     }
 
-    // Método para actualizar última conexión (FALTANTE)
     public boolean actualizarUltimaConexion(String username) {
         String sql = "UPDATE usuario SET ultima_conexion = NOW() WHERE username = ?";
         
@@ -67,7 +275,6 @@ public class UsuarioDAO {
         }
     }
 
-    // Resto de métodos existentes...
     public List<Usuario> listar() {
         List<Usuario> usuarios = new ArrayList<>();
         String sql = "SELECT * FROM usuario WHERE eliminado = 0";
@@ -141,7 +348,7 @@ public class UsuarioDAO {
 
             ps.setInt(1, usuario.getPersonaId());
             ps.setString(2, usuario.getUsername());
-            ps.setString(3, usuario.getPassword()); // Ya debe venir encriptada
+            ps.setString(3, usuario.getPassword());
             ps.setString(4, usuario.getRol());
             ps.setInt(5, usuario.getIntentosFallidos());
             
@@ -397,6 +604,64 @@ public class UsuarioDAO {
             System.err.println("Error al desbloquear usuarios expirados: " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+    
+    // ===================================================================
+    // CLASE INTERNA: PersonaSinUsuario
+    // ===================================================================
+    
+    public static class PersonaSinUsuario {
+        private int personaId;
+        private String nombres;
+        private String apellidos;
+        private String correo;
+        private String dni;
+        private String codigo; // codigo_profesor, codigo_alumno, etc.
+        private String informacionAdicional; // area, grado, cargo, etc.
+        private String tipoPersona; // PROFESOR, ALUMNO, ADMINISTRATIVO
+        
+        // Getters y Setters
+        public int getPersonaId() { return personaId; }
+        public void setPersonaId(int personaId) { this.personaId = personaId; }
+        
+        public String getNombres() { return nombres; }
+        public void setNombres(String nombres) { this.nombres = nombres; }
+        
+        public String getApellidos() { return apellidos; }
+        public void setApellidos(String apellidos) { this.apellidos = apellidos; }
+        
+        public String getCorreo() { return correo; }
+        public void setCorreo(String correo) { this.correo = correo; }
+        
+        public String getDni() { return dni; }
+        public void setDni(String dni) { this.dni = dni; }
+        
+        public String getCodigo() { return codigo; }
+        public void setCodigo(String codigo) { this.codigo = codigo; }
+        
+        public String getInformacionAdicional() { return informacionAdicional; }
+        public void setInformacionAdicional(String informacionAdicional) { 
+            this.informacionAdicional = informacionAdicional; 
+        }
+        
+        public String getTipoPersona() { return tipoPersona; }
+        public void setTipoPersona(String tipoPersona) { this.tipoPersona = tipoPersona; }
+        
+        public String getNombreCompleto() {
+            return nombres + " " + apellidos;
+        }
+        
+        public String getDescripcionCompleta() {
+            StringBuilder desc = new StringBuilder();
+            desc.append(getNombreCompleto());
+            if (codigo != null && !codigo.isEmpty()) {
+                desc.append(" [").append(codigo).append("]");
+            }
+            if (informacionAdicional != null && !informacionAdicional.isEmpty()) {
+                desc.append(" - ").append(informacionAdicional);
+            }
+            return desc.toString();
         }
     }
 }
