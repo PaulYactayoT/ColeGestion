@@ -706,4 +706,85 @@ public class RegistroCursoDAO {
 
             return resultado;
         }
+        
+        
+        /**
+        * ============================================================
+        * MÉTODO: obtenerCursosPorAreaYGrado
+        * ============================================================
+        * Obtiene los cursos de un área específica filtrados por el grado seleccionado.
+        * Esto evita que aparezcan cursos de otros niveles educativos.
+        * 
+        * Por ejemplo:
+        * - Si el usuario selecciona "3ero - PRIMARIA" y área "Idiomas"
+        * - Solo debe ver "Inglés - Building Stage"
+        * - NO debe ver "Discovery Stage" (Inicial) ni "Expansion & Fluency" (Secundaria)
+        * 
+        * @param area Nombre del área académica
+        * @param gradoId ID del grado seleccionado
+        * @return Lista de cursos que pertenecen al área y grado especificados
+        */
+       public List<Map<String, Object>> obtenerCursosPorAreaYGrado(String area, int gradoId) {
+           List<Map<String, Object>> cursos = new ArrayList<>();
+
+           // VALIDACIÓN ROBUSTA
+           if (area == null || area.trim().isEmpty() || "undefined".equalsIgnoreCase(area) || "0".equals(area)) {
+               System.err.println(" ADVERTENCIA: El parámetro 'area' es inválido: " + area);
+               return cursos; // Retornar lista vacía
+           }
+
+           if (gradoId <= 0) {
+               System.err.println(" ADVERTENCIA: El parámetro 'gradoId' es inválido: " + gradoId);
+               return cursos; // Retornar lista vacía
+           }
+
+           System.out.println("Buscando cursos para área: '" + area + "' y gradoId: " + gradoId);
+
+           String sql = "SELECT DISTINCT " +
+                       "    c.id, " +
+                       "    c.nombre, " +
+                       "    a.nombre as area_nombre, " +
+                       "    c.descripcion, " +
+                       "    c.creditos, " +
+                       "    c.horas_semanales, " +
+                       "    g.nombre as grado_nombre, " +
+                       "    g.nivel " +
+                       "FROM curso c " +
+                       "INNER JOIN area a ON c.area_id = a.id " +
+                       "INNER JOIN grado g ON c.grado_id = g.id " +
+                       "WHERE a.nombre = ? " +
+                       "AND c.grado_id = ? " +           
+                       "AND c.activo = 1 " +
+                       "AND c.eliminado = 0 " +
+                       "ORDER BY c.nombre";
+
+           try (Connection conn = Conexion.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+               ps.setString(1, area.trim());
+               ps.setInt(2, gradoId);
+               ResultSet rs = ps.executeQuery();
+
+               while (rs.next()) {
+                   Map<String, Object> curso = new HashMap<>();
+                   curso.put("id", rs.getInt("id"));
+                   curso.put("nombre", rs.getString("nombre"));
+                   curso.put("area", rs.getString("area_nombre"));
+                   curso.put("descripcion", rs.getString("descripcion"));
+                   curso.put("creditos", rs.getInt("creditos"));
+                   curso.put("horas_semanales", rs.getInt("horas_semanales"));
+                   curso.put("grado_nombre", rs.getString("grado_nombre"));
+                   curso.put("nivel", rs.getString("nivel"));
+                   cursos.add(curso);
+               }
+
+               System.out.println(" DAO - Cursos encontrados para área '" + area + "' y grado " + gradoId + ": " + cursos.size());
+
+           } catch (SQLException e) {
+               System.err.println(" Error al obtener cursos por área y grado: " + e.getMessage());
+               e.printStackTrace();
+           }
+
+           return cursos;
+       }
 }

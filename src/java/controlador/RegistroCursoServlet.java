@@ -159,10 +159,10 @@ public class RegistroCursoServlet extends HttpServlet {
             RequestDispatcher dispatcher = request.getRequestDispatcher("registroCurso.jsp");
             dispatcher.forward(request, response);
 
-            System.out.println("✅ Formulario cargado correctamente");
+            System.out.println(" Formulario cargado correctamente");
 
         } catch (Exception e) {
-            System.err.println("❌ ERROR al cargar formulario:");
+            System.err.println(" ERROR al cargar formulario:");
             e.printStackTrace();
             
             // Enviar página de error
@@ -217,82 +217,106 @@ public class RegistroCursoServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(gson.toJson(grados));
         
-        System.out.println("✅ JSON enviado al cliente");
+        System.out.println(" JSON enviado al cliente");
     }
 
         /**
-         * ============================================================
-         * MÉTODO: obtenerCursos (UNIFICADO)
-         * ============================================================
-         * Razón: Maneja tanto la obtención por nivel como por área
-         * según los parámetros recibidos
-         */
-        private void obtenerCursos(HttpServletRequest request, HttpServletResponse response)
-                throws ServletException, IOException {
+            * ============================================================
+            * MÉTODO: obtenerCursos (CORREGIDO)
+            * ============================================================
+            * Razón: Ahora filtra los cursos por área Y grado para evitar
+            * que aparezcan cursos de otros niveles educativos.
+            * 
+            * Ejemplo:
+            * - Usuario selecciona: Nivel PRIMARIA, Grado 3ero, Área Idiomas
+            * - ANTES: Mostraba Discovery Stage, Building Stage, Expansion & Fluency
+            * - AHORA: Solo muestra Building Stage (correspondiente a Primaria)
+            */
+           private void obtenerCursos(HttpServletRequest request, HttpServletResponse response)
+                   throws ServletException, IOException {
 
-            // Obtener TODOS los parámetros posibles
-            String nivel = request.getParameter("nivel");
-            String area = request.getParameter("area");
-            String turno = request.getParameter("turno");
+               // Obtener TODOS los parámetros posibles
+               String nivel = request.getParameter("nivel");
+               String area = request.getParameter("area");
+               String turno = request.getParameter("turno");
+               String gradoIdStr = request.getParameter("grado");  // ✅ NUEVO: Obtener el grado
 
-            System.out.println("\n=== OBTENIENDO CURSOS ===");
-            System.out.println(" Parámetros recibidos:");
-            System.out.println("  Nivel: " + (nivel != null ? nivel : "(null)"));
-            System.out.println("  Área: " + (area != null ? area : "(null)"));
-            System.out.println("  Turno: " + (turno != null ? turno : "(null)"));
+               System.out.println("\n=== OBTENIENDO CURSOS ===");
+               System.out.println(" Parámetros recibidos:");
+               System.out.println("  Nivel: " + (nivel != null ? nivel : "(null)"));
+               System.out.println("  Área: " + (area != null ? area : "(null)"));
+               System.out.println("  Turno: " + (turno != null ? turno : "(null)"));
+               System.out.println("  Grado: " + (gradoIdStr != null ? gradoIdStr : "(null)"));  // ✅ NUEVO
 
-            // Mostrar TODOS los parámetros para diagnóstico
-            System.out.println(" Todos los parámetros de la petición:");
-            Enumeration<String> paramNames = request.getParameterNames();
-            while (paramNames.hasMoreElements()) {
-                String paramName = paramNames.nextElement();
-                System.out.println("  - " + paramName + ": " + request.getParameter(paramName));
-            }
+               // Mostrar TODOS los parámetros para diagnóstico
+               System.out.println("Todos los parámetros de la petición:");
+               Enumeration<String> paramNames = request.getParameterNames();
+               while (paramNames.hasMoreElements()) {
+                   String paramName = paramNames.nextElement();
+                   System.out.println("  - " + paramName + ": " + request.getParameter(paramName));
+               }
 
-            List<Map<String, Object>> cursos = new ArrayList<>();
+               List<Map<String, Object>> cursos = new ArrayList<>();
 
-            try {
-                // ESTRATEGIA: Si viene área, usar obtenerCursosPorArea
-                // Si no viene área pero viene nivel, usar obtenerCursosPorNivel
-                // Si no viene ninguno, retornar vacío
+               try {
+                   // NUEVA ESTRATEGIA: Si viene área Y grado, usar obtenerCursosPorAreaYGrado
+                   // Si viene solo área, usar obtenerCursosPorArea
+                   // Si viene solo nivel, usar obtenerCursosPorNivel
 
-                if (area != null && !area.trim().isEmpty() && !"undefined".equals(area) && !"0".equals(area)) {
-                    // CASO 1: Tenemos área específica
-                    System.out.println(" Usando obtenerCursosPorArea");
-                    cursos = dao.obtenerCursosPorArea(area.trim());
+                   if (area != null && !area.trim().isEmpty() && !"undefined".equals(area) && !"0".equals(area)) {
 
-                } else if (nivel != null && !nivel.trim().isEmpty() && !"undefined".equals(nivel)) {
-                    // CASO 2: Tenemos solo nivel
-                    System.out.println(" Usando obtenerCursosPorNivel");
-                    cursos = dao.obtenerCursosPorNivel(nivel.trim());
+                       // CASO 1: Tenemos área Y grado (ÓPTIMO)
+                       if (gradoIdStr != null && !gradoIdStr.trim().isEmpty() && !"undefined".equals(gradoIdStr)) {
+                           try {
+                               int gradoId = Integer.parseInt(gradoIdStr);
+                               System.out.println(" Usando obtenerCursosPorAreaYGrado");
+                               cursos = dao.obtenerCursosPorAreaYGrado(area.trim(), gradoId);
+                           } catch (NumberFormatException e) {
+                               System.err.println(" Error al parsear gradoId: " + gradoIdStr);
+                               // Si falla, usar solo área
+                               System.out.println(" Fallback: Usando obtenerCursosPorArea");
+                               cursos = dao.obtenerCursosPorArea(area.trim());
+                           }
+                       } 
+                       // CASO 2: Tenemos solo área (sin grado)
+                       else {
+                           System.out.println(" Usando obtenerCursosPorArea (sin filtro de grado)");
+                           cursos = dao.obtenerCursosPorArea(area.trim());
+                       }
 
-                } else {
-                    // CASO 3: No hay parámetros válidos
-                    System.out.println("️ No se recibieron parámetros válidos para filtrar cursos");
-                    System.out.println("   Área válida?: " + (area != null && !area.trim().isEmpty() && !"undefined".equals(area) && !"0".equals(area)));
-                    System.out.println("   Nivel válido?: " + (nivel != null && !nivel.trim().isEmpty() && !"undefined".equals(nivel)));
-                }
+                   } else if (nivel != null && !nivel.trim().isEmpty() && !"undefined".equals(nivel)) {
+                       // CASO 3: Tenemos solo nivel
+                       System.out.println(" Usando obtenerCursosPorNivel");
+                       cursos = dao.obtenerCursosPorNivel(nivel.trim());
 
-                System.out.println(" Cursos encontrados: " + cursos.size());
+                   } else {
+                       // CASO 4: No hay parámetros válidos
+                       System.out.println("   No se recibieron parámetros válidos para filtrar cursos");
+                       System.out.println("   Área válida?: " + (area != null && !area.trim().isEmpty() && !"undefined".equals(area) && !"0".equals(area)));
+                       System.out.println("   Nivel válido?: " + (nivel != null && !nivel.trim().isEmpty() && !"undefined".equals(nivel)));
+                       System.out.println("   Grado válido?: " + (gradoIdStr != null && !gradoIdStr.trim().isEmpty() && !"undefined".equals(gradoIdStr)));
+                   }
 
-                // Convertir a JSON
-                String json = gson.toJson(cursos);
+                   System.out.println("✅ Cursos encontrados: " + cursos.size());
 
-                // Enviar respuesta
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write(json);
+                   // Convertir a JSON
+                   String json = gson.toJson(cursos);
 
-            } catch (Exception e) {
-                System.err.println(" Error al obtener cursos:");
-                e.printStackTrace();
+                   // Enviar respuesta
+                   response.setContentType("application/json");
+                   response.setCharacterEncoding("UTF-8");
+                   response.getWriter().write(json);
 
-                // Enviar array vacío en caso de error
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("[]");
-            }
-        }
+               } catch (Exception e) {
+                   System.err.println("❌ Error al obtener cursos:");
+                   e.printStackTrace();
+
+                   // Enviar array vacío en caso de error
+                   response.setContentType("application/json");
+                   response.setCharacterEncoding("UTF-8");
+                   response.getWriter().write("[]");
+               }
+           }
 
     /**
      * ============================================================
@@ -332,7 +356,7 @@ public class RegistroCursoServlet extends HttpServlet {
         if (curso == null || turnoIdStr == null || nivel == null ||
             curso.isEmpty() || turnoIdStr.isEmpty() || nivel.isEmpty()) {
             
-            System.out.println("❌ Parámetros incompletos");
+            System.out.println(" Parámetros incompletos");
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write("[]");
@@ -353,10 +377,10 @@ public class RegistroCursoServlet extends HttpServlet {
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write(gson.toJson(profesores));
             
-            System.out.println("✅ JSON enviado al cliente");
+            System.out.println(" JSON enviado al cliente");
             
         } catch (NumberFormatException e) {
-            System.err.println("❌ Error: turnoId no es un número válido");
+            System.err.println(" Error: turnoId no es un número válido");
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write("[]");
@@ -431,10 +455,10 @@ public class RegistroCursoServlet extends HttpServlet {
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write(gson.toJson(resultado));
             
-            System.out.println("✅ Validación completada");
+            System.out.println(" Validación completada");
             
         } catch (Exception e) {
-            System.err.println("❌ Error en validación:");
+            System.err.println(" Error en validación:");
             e.printStackTrace();
             
             // Enviar error en JSON

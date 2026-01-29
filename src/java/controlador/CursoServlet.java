@@ -92,27 +92,39 @@ public class CursoServlet extends HttpServlet {
                 return;
             }
 
-            String gradoStr = request.getParameter("grado_id");
-            request.setAttribute("grados", new GradoDAO().listar());
+            // Obtener parámetros de filtro
+            String gradoIdStr = request.getParameter("grado_id");
+            String nivel = request.getParameter("nivel");
+            String turno = request.getParameter("turno");
 
-            if (gradoStr == null || gradoStr.isEmpty()) {
-                request.setAttribute("lista", dao.listar());
-            } else {
+            Integer gradoId = null;
+            if (gradoIdStr != null && !gradoIdStr.isEmpty()) {
                 try {
-                    int gradoId = Integer.parseInt(gradoStr);
-                    request.setAttribute("lista", dao.listarPorGrado(gradoId));
-                    request.setAttribute("gradoSeleccionado", gradoId);
+                    gradoId = Integer.parseInt(gradoIdStr);
                 } catch (NumberFormatException e) {
-                    System.out.println("ERROR: grado_id inválido: " + gradoStr);
-                    session.setAttribute("error", "ID de grado inválido");
-                    request.setAttribute("lista", dao.listar());
+                    System.out.println("ERROR: grado_id inválido: " + gradoIdStr);
                 }
             }
 
-            request.getRequestDispatcher("cursos.jsp").forward(request, response);
-            return;
-        }
+            request.setAttribute("grados", new GradoDAO().listar());
 
+                // Aplicar filtros
+                if (gradoId == null && (nivel == null || nivel.isEmpty()) && (turno == null || turno.isEmpty())) {
+                    // Sin filtros, mostrar todos
+                    request.setAttribute("lista", dao.listar());
+                } else {
+                    // Con filtros
+                    request.setAttribute("lista", dao.listarConFiltros(gradoId, nivel, turno));
+                    request.setAttribute("gradoSeleccionado", gradoId);
+                    request.setAttribute("nivelSeleccionado", nivel);
+                    request.setAttribute("turnoSeleccionado", turno);
+
+                    System.out.println(" Filtros aplicados - Grado: " + gradoId + ", Nivel: " + nivel + ", Turno: " + turno);
+                }
+
+                request.getRequestDispatcher("cursos.jsp").forward(request, response);
+                return;
+            }
         // Formulario para nuevo curso (SOLO ADMIN)
         if (accion.equals("nuevo")) {
             if (!"admin".equals(rol)) {
@@ -340,27 +352,27 @@ public class CursoServlet extends HttpServlet {
                 request.setAttribute("turnos", turnos);
                 request.setAttribute("modoEdicion", true);
 
-                System.out.println("✅ Curso: " + curso.getNombre());
-                System.out.println("✅ Horarios: " + horarios.size());
+                System.out.println(" Curso: " + curso.getNombre());
+                System.out.println(" Horarios: " + horarios.size());
 
                 // Redirigir al formulario de registro (que sirve también para editar)
                 RequestDispatcher rd = request.getRequestDispatcher("registroCurso.jsp");
                 rd.forward(request, response);
 
-                System.out.println("✅ Datos del curso cargados para edición");
+                System.out.println(" Datos del curso cargados para edición");
             } else {
                 // Curso no encontrado
                 HttpSession session = request.getSession();
                 session.setAttribute("error", "Curso no encontrado");
-                System.out.println("❌ Curso no encontrado con ID: " + cursoId);
+                System.out.println(" Curso no encontrado con ID: " + cursoId);
                 response.sendRedirect("CursoServlet?accion=listar");
             }
 
         } catch (NumberFormatException e) {
-            System.err.println("❌ Error: ID de curso inválido");
+            System.err.println(" Error: ID de curso inválido");
             response.sendRedirect("CursoServlet?accion=listar");
         } catch (Exception e) {
-            System.err.println("❌ Error al cargar curso para editar: " + e.getMessage());
+            System.err.println(" Error al cargar curso para editar: " + e.getMessage());
             e.printStackTrace();
             response.sendRedirect("CursoServlet?accion=listar");
         }

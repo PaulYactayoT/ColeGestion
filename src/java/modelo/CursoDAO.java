@@ -802,63 +802,144 @@ public List<Curso> listarPorAlumno(int alumnoId) {
            return horarios;
        }
     
-    public boolean actualizarConHorarios(Curso c, String horariosJson) {
-    Connection conn = null;
-    
-    try {
-        conn = Conexion.getConnection();
-        conn.setAutoCommit(false);
-        
-        // 1. Actualizar datos del curso
-        String sqlCurso = "UPDATE curso SET nombre = ?, grado_id = ?, profesor_id = ?, " +
-                         "creditos = ?, area_id = (SELECT id FROM area WHERE nombre = ? LIMIT 1), descripcion = ? WHERE id = ?";
-        PreparedStatement psCurso = conn.prepareStatement(sqlCurso);
-        psCurso.setString(1, c.getNombre());
-        psCurso.setInt(2, c.getGradoId());
-        psCurso.setInt(3, c.getProfesorId());
-        psCurso.setInt(4, c.getCreditos());
-        psCurso.setString(5, c.getArea());
-        psCurso.setString(6, c.getDescripcion());
-        psCurso.setInt(7, c.getId());
-        psCurso.executeUpdate();
-        psCurso.close();
-        
-        // 2. Marcar horarios antiguos como eliminados
-        String sqlEliminar = "UPDATE horario_clase SET eliminado = 1, activo = 0 WHERE curso_id = ?";
-        PreparedStatement psEliminar = conn.prepareStatement(sqlEliminar);
-        psEliminar.setInt(1, c.getId());
-        psEliminar.executeUpdate();
-        psEliminar.close();
-        
-        // 3. Insertar nuevos horarios (procesar JSON si lo pasas)
-        // ... aquí procesarías el JSON de horarios ...
-        
-        conn.commit();
-        System.out.println("Curso y horarios actualizados: ID " + c.getId());
-        return true;
-        
-    } catch (SQLException e) {
-        System.err.println("Error al actualizar curso con horarios: " + e.getMessage());
-        e.printStackTrace();
-        
-        if (conn != null) {
+            public boolean actualizarConHorarios(Curso c, String horariosJson) {
+            Connection conn = null;
+
             try {
-                conn.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
+                conn = Conexion.getConnection();
+                conn.setAutoCommit(false);
+
+                // 1. Actualizar datos del curso
+                String sqlCurso = "UPDATE curso SET nombre = ?, grado_id = ?, profesor_id = ?, " +
+                                 "creditos = ?, area_id = (SELECT id FROM area WHERE nombre = ? LIMIT 1), descripcion = ? WHERE id = ?";
+                PreparedStatement psCurso = conn.prepareStatement(sqlCurso);
+                psCurso.setString(1, c.getNombre());
+                psCurso.setInt(2, c.getGradoId());
+                psCurso.setInt(3, c.getProfesorId());
+                psCurso.setInt(4, c.getCreditos());
+                psCurso.setString(5, c.getArea());
+                psCurso.setString(6, c.getDescripcion());
+                psCurso.setInt(7, c.getId());
+                psCurso.executeUpdate();
+                psCurso.close();
+
+                // 2. Marcar horarios antiguos como eliminados
+                String sqlEliminar = "UPDATE horario_clase SET eliminado = 1, activo = 0 WHERE curso_id = ?";
+                PreparedStatement psEliminar = conn.prepareStatement(sqlEliminar);
+                psEliminar.setInt(1, c.getId());
+                psEliminar.executeUpdate();
+                psEliminar.close();
+
+                // 3. Insertar nuevos horarios (procesar JSON si lo pasas)
+                // ... aquí procesarías el JSON de horarios ...
+
+                conn.commit();
+                System.out.println("Curso y horarios actualizados: ID " + c.getId());
+                return true;
+
+            } catch (SQLException e) {
+                System.err.println("Error al actualizar curso con horarios: " + e.getMessage());
+                e.printStackTrace();
+
+                if (conn != null) {
+                    try {
+                        conn.rollback();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+                return false;
+
+            } finally {
+                if (conn != null) {
+                    try {
+                        conn.setAutoCommit(true);
+                        conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
-        return false;
-        
-    } finally {
-        if (conn != null) {
-            try {
-                conn.setAutoCommit(true);
-                conn.close();
+            
+            public List<Curso> listarConFiltros(Integer gradoId, String nivel, String turno) {
+            List<Curso> lista = new ArrayList<>();
+            StringBuilder sql = new StringBuilder(
+                "SELECT c.*, " +
+                "g.nombre as grado_nombre, " +
+                "g.nivel as nivel_nombre, " +
+                "CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre, " +
+                "a.nombre as area_nombre " +
+                "FROM curso c " +
+                "LEFT JOIN grado g ON c.grado_id = g.id " +
+                "LEFT JOIN profesor prof ON c.profesor_id = prof.id " +
+                "LEFT JOIN persona p ON prof.persona_id = p.id " +
+                "LEFT JOIN area a ON c.area_id = a.id " +
+                "WHERE c.eliminado = 0 AND c.activo = 1"
+            );
+
+            // Agregar filtros dinámicamente
+            if (nivel != null && !nivel.isEmpty()) {
+                sql.append(" AND g.nivel = ?");
+            }
+
+            if (turno != null && !turno.isEmpty()) {
+                sql.append(" AND EXISTS (SELECT 1 FROM horario_clase hc " +
+                          "INNER JOIN turno t ON hc.turno_id = t.id " +
+                          "WHERE hc.curso_id = c.id AND t.nombre = ? AND hc.eliminado = 0)");
+            }
+
+            if (gradoId != null) {
+                sql.append(" AND c.grado_id = ?");
+            }
+
+            sql.append(" ORDER BY g.nivel, g.nombre, c.nombre");
+
+            try (Connection conn = Conexion.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+                int paramIndex = 1;
+
+                if (nivel != null && !nivel.isEmpty()) {
+                    ps.setString(paramIndex++, nivel);
+                }
+
+                if (turno != null && !turno.isEmpty()) {
+                    ps.setString(paramIndex++, turno);
+                }
+
+                if (gradoId != null) {
+                    ps.setInt(paramIndex++, gradoId);
+                }
+
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    //  MAPEAR RESULTADOS A OBJETO CURSO
+                    Curso c = new Curso();
+                    c.setId(rs.getInt("id"));
+                    c.setNombre(rs.getString("nombre"));
+                    c.setGradoId(rs.getInt("grado_id"));
+                    c.setGradoNombre(rs.getString("grado_nombre"));
+                    c.setNivel(rs.getString("nivel_nombre"));
+                    c.setProfesorId(rs.getInt("profesor_id"));
+                    c.setProfesorNombre(rs.getString("profesor_nombre"));
+                    c.setCreditos(rs.getInt("creditos"));
+                    c.setHorasSemanales(rs.getInt("horas_semanales"));
+                    c.setArea(rs.getString("area_nombre"));
+                    c.setDescripcion(rs.getString("descripcion"));
+                    c.setFechaInicio(rs.getDate("fecha_inicio"));
+                    c.setFechaFin(rs.getDate("fecha_fin"));
+
+                    lista.add(c);
+                }
+
+                System.out.println(" Filtros aplicados - Cursos encontrados: " + lista.size());
+
             } catch (SQLException e) {
+                System.err.println(" Error en listarConFiltros: " + e.getMessage());
                 e.printStackTrace();
             }
+
+            return lista;
         }
-    }
-}
 }

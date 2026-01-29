@@ -38,11 +38,32 @@
     
     if (modoEdicion == null) modoEdicion = false;
     
-    // Debug
+    // Declarar variables para JavaScript (FUERA del if)
+    String nivelCurso = "";
+    Integer gradoIdCurso = null;
+    Integer profesorIdCurso = null;
+    String nombreCurso = "";
+    String areaCurso = "";
+    Integer creditosCurso = 1;
+    Integer turnoId = null;
+    
+    // Obtener valores solo si está en modo edición
     if (modoEdicion && cursoEditar != null) {
-        System.out.println("  JSP - Modo edición activado");
+        System.out.println("   JSP - Modo edición activado");
         System.out.println("   Curso: " + cursoEditar.getNombre());
         System.out.println("   ID: " + cursoEditar.getId());
+        
+        nivelCurso = cursoEditar.getNivel();
+        gradoIdCurso = cursoEditar.getGradoId();
+        profesorIdCurso = cursoEditar.getProfesorId();
+        nombreCurso = cursoEditar.getNombre();
+        areaCurso = cursoEditar.getArea();
+        creditosCurso = cursoEditar.getCreditos();
+        
+        // Obtener el turno del primer horario
+        if (horariosEditar != null && !horariosEditar.isEmpty()) {
+            turnoId = (Integer) horariosEditar.get(0).get("turno_id");
+        }
     }
 %>
 <!DOCTYPE html>
@@ -60,128 +81,390 @@
     <link rel="stylesheet" href="assets/css/estilos.css">
     
     <style>
-        /* ========== ESTILOS PERSONALIZADOS ========== */
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        :root {
+            /* 🎨 NUEVA PALETA DE COLORES */
+            --color-fondo-principal: #E8E9EB;        /* Plomo muy claro */
+            --color-fondo-secundario: #F5F5F6;       /* Plomo casi blanco */
+            --color-celeste-bebe: #D4E9F7;           /* Celeste bebé */
+            --color-celeste-claro: #B8DAF0;          /* Celeste claro */
+            --color-celeste-medio: #A0CEE8;          /* Celeste medio */
+            --color-celeste-acento: #7FC3E3;         /* Celeste acento suave */
+            --color-texto-principal: #2B2D30;        /* Negro suave */
+            --color-texto-secundario: #5A5C5F;       /* Gris oscuro */
+            --color-borde: #D1D3D5;                  /* Borde gris claro */
+            --color-sombra: rgba(0, 0, 0, 0.06);     /* Sombra muy suave */
         }
-        
-        .form-section {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        .section-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--color-fondo-principal) 0%, #E0E2E4 100%);
+            color: var(--color-texto-principal);
+            min-height: 100vh;
+            padding-bottom: 60px;
         }
-        
-        /* Estilos para días de la semana */
-        .dias-semana {
+
+        /* ========== CONTENEDOR PRINCIPAL ========== */
+        .container {
+            max-width: 1400px;
+        }
+
+        /* ========== ENCABEZADO DE PÁGINA ========== */
+        .page-header {
+            background: var(--color-fondo-secundario);
+            border-radius: 20px;
+            padding: 30px 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px var(--color-sombra);
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid var(--color-celeste-acento);
         }
-        
+
+        .page-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-texto-principal);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 0;
+        }
+
+        .page-header h2 i {
+            color: var(--color-celeste-acento);
+            font-size: 2.2rem;
+        }
+
+        /* ========== SECCIONES DEL FORMULARIO ========== */
+        .form-section {
+            background: var(--color-fondo-secundario);
+            border-radius: 20px;
+            padding: 35px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 15px var(--color-sombra);
+            border: 1px solid var(--color-borde);
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-section:hover {
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--color-texto-principal);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--color-celeste-bebe);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title i {
+            color: var(--color-celeste-acento);
+            font-size: 1.5rem;
+        }
+
+        /* ========== FORMULARIOS ========== */
+        .form-label {
+            font-weight: 600;
+            color: var(--color-texto-principal);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-label i {
+            color: var(--color-celeste-acento);
+        }
+
+        .form-select,
+        .form-control {
+            border: 2px solid var(--color-borde);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: white;
+            color: var(--color-texto-principal);
+        }
+
+        .form-select:focus,
+        .form-control:focus {
+            border-color: var(--color-celeste-medio);
+            box-shadow: 0 0 0 0.2rem rgba(160, 206, 232, 0.25);
+            background: white;
+            outline: none;
+        }
+
+        .form-select:disabled,
+        .form-control:disabled {
+            background: #E9ECEF;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* ========== TEXTO DE AYUDA ========== */
+        .text-muted {
+            font-size: 0.85rem;
+            color: var(--color-texto-secundario);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        /* ========== DÍAS DE LA SEMANA ========== */
+        .dias-semana {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
         .dia-checkbox {
-            flex: 1;
-            min-width: 120px;
+            position: relative;
         }
-        
+
         .dia-checkbox input[type="checkbox"] {
             display: none;
         }
-        
+
         .dia-checkbox label {
             display: block;
-            padding: 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
+            padding: 18px 15px;
+            background: var(--color-celeste-bebe);
+            border: 3px solid var(--color-celeste-claro);
+            border-radius: 15px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
-            background: white;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: var(--color-texto-principal);
         }
-        
-        .dia-checkbox input[type="checkbox"]:checked + label {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: #667eea;
-            transform: scale(1.05);
-        }
-        
+
         .dia-checkbox label:hover {
-            border-color: #667eea;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            background: var(--color-celeste-claro);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(127, 195, 227, 0.3);
         }
-        
-        /* Estilos para horarios agregados */
+
+        .dia-checkbox input[type="checkbox"]:checked + label {
+            background: linear-gradient(135deg, var(--color-celeste-medio), var(--color-celeste-acento));
+            color: var(--color-texto-principal);
+            border-color: var(--color-celeste-acento);
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(127, 195, 227, 0.4);
+        }
+
+        .dia-checkbox label i {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* ========== HORARIOS AGREGADOS ========== */
         .horario-item {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--color-celeste-bebe), #E8F4FA);
+            border: 2px solid var(--color-celeste-claro);
+            border-radius: 15px;
+            padding: 20px 25px;
+            margin-bottom: 15px;
             position: relative;
-            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+            color: var(--color-texto-principal);
         }
-        
+
         .horario-item:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 5px 20px rgba(127, 195, 227, 0.2);
+            transform: translateX(5px);
         }
-        
+
         .btn-remove-horario {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+            background: #FFE5E5;
+            color: #D32F2F;
+            border: 2px solid #FFCDD2;
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        
-        /* Mensaje de validación */
-        #validation-message {
-            display: none;
-            margin-top: 10px;
-            padding: 12px;
-            border-radius: 8px;
-            animation: fadeIn 0.3s;
+
+        .btn-remove-horario:hover {
+            background: #FFCDD2;
+            transform: scale(1.1);
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        /* ========== BOTONES ========== */
+        .btn {
+            border-radius: 12px;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
-        
-        /* Select deshabilitado */
-        select:disabled {
-            background-color: #e9ecef;
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-celeste-medio), var(--color-celeste-acento));
+            border: none;
+            color: var(--color-texto-principal);
+            box-shadow: 0 4px 15px rgba(127, 195, 227, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(127, 195, 227, 0.4);
+            background: linear-gradient(135deg, var(--color-celeste-acento), #6BB8D9);
+        }
+
+        .btn-secondary {
+            background: var(--color-fondo-principal);
+            border: 2px solid var(--color-borde);
+            color: var(--color-texto-secundario);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-celeste-bebe);
+            border-color: var(--color-celeste-claro);
+            color: var(--color-texto-principal);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #A8D5BA, #88C9A1);
+            border: none;
+            color: var(--color-texto-principal);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(136, 201, 161, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-outline-primary {
+            background: transparent;
+            border: 2px solid var(--color-celeste-acento);
+            color: var(--color-celeste-acento);
+        }
+
+        .btn-outline-primary:hover:not(:disabled) {
+            background: var(--color-celeste-bebe);
+            border-color: var(--color-celeste-medio);
+            color: var(--color-texto-principal);
+        }
+
+        /* ========== BOTÓN VOLVER ========== */
+        .btn-volver {
+            background: var(--color-fondo-principal);
+            border: 2px solid var(--color-celeste-claro);
+            color: var(--color-texto-principal);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-volver:hover {
+            background: var(--color-celeste-bebe);
+            border-color: var(--color-celeste-medio);
+            color: var(--color-texto-principal);
+            transform: translateX(-3px);
+        }
+
+        /* ========== ALERTAS ========== */
+        .alert {
+            border-radius: 15px;
+            padding: 18px 25px;
+            border: none;
+            box-shadow: 0 2px 10px var(--color-sombra);
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            color: #2E7D32;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+            color: #C62828;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+            color: #E65100;
+        }
+
+        /* ========== ENTRADA DE HORARIO ========== */
+        #horarioEntry {
+            background: var(--color-fondo-secundario);
+            border: 2px solid var(--color-celeste-claro);
+        }
+
+        /* ========== ANIMACIONES ========== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+                padding: 25px 20px;
+            }
+
+            .page-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .form-section {
+                padding: 25px 20px;
+            }
+
+            .dias-semana {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
         }
         
-        /* Badges informativos */
-        .info-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.85em;
-            margin-right: 5px;
-        }
-        
-        .badge-turno {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-        
-        .badge-nivel {
-            background: #f3e5f5;
-            color: #7b1fa2;
-        }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- SweetAlert2 (para alertas bonitas) -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="dashboard-page">
 
@@ -191,18 +474,15 @@
     <div class="container mt-4 mb-5">
         
         <!-- ========== TÍTULO ========== -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h2>
-                        <i class="fas fa-<%= modoEdicion ? "edit" : "book-open" %> text-primary"></i> 
-                        <%= modoEdicion ? "Editar Curso" : "Registro de Curso" %>
-                    </h2>
-                    <a href="CursoServlet" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Volver a Cursos
-                    </a>
-                </div>
-            </div>
+        <div class="page-header">
+            <h2>
+                <i class="fas fa-<%= modoEdicion ? "edit" : "book-open" %>"></i>
+                <%= modoEdicion ? "Editar Curso" : "Registro de Curso" %>
+            </h2>
+            <a href="CursoServlet" class="btn-volver">
+                <i class="fas fa-arrow-left"></i>
+                Volver a Cursos
+            </a>
         </div>
 
         <!-- ========== MENSAJES ========== -->
@@ -236,9 +516,10 @@
         
             <!-- ========== SECCIÓN 1: NIVEL Y GRADO ========== -->
             <div class="form-section">
-                <div class="section-title">
-                    <i class="fas fa-layer-group"></i> Paso 1: Seleccionar Nivel y Grado
-                </div>
+            <div class="section-title">
+                <i class="fas fa-layer-group"></i>
+                <span>Paso 1: Seleccionar Nivel y Grado</span>
+            </div>
 
                 <div class="row">
                     <!-- Nivel Educativo -->
@@ -470,7 +751,7 @@
     <!-- Footer -->
     <footer class="bg-dark text-white py-3 mt-5">
         <div class="container text-center">
-            <p class="mb-0">&copy; 2025 Sistema Escolar - Todos los derechos reservados</p>
+            <p class="mb-0">&copy; 2026 Sistema Escolar - Todos los derechos reservados</p>
         </div>
     </footer>
     
@@ -481,7 +762,7 @@
  <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- ========== JAVASCRIPT COMPLETO ========== -->
+    <!-- ========== JAVASCRIPT COMPLETO (SIN CAMBIOS EN LA LÓGICA) ========== -->
     <script>
         // ========== VARIABLES GLOBALES ==========
         let horariosAgregados = [];
@@ -601,7 +882,7 @@
              const selectArea = document.getElementById('selectArea');
 
              turnoSeleccionado = selectTurno.value;
-             console.log(' Turno seleccionado:', turnoSeleccionado);
+             console.log('⏰ Turno seleccionado:', turnoSeleccionado);
 
              if (turnoSeleccionado && nivelSeleccionado) {
                  selectArea.disabled = false;
@@ -610,18 +891,16 @@
                  fetch(CONTEXTPATH + '/RegistroCursoServlet?accion=obtenerAreas&nivel=' + encodeURIComponent(nivelSeleccionado))
                      .then(response => response.json())
                      .then(data => {
-                         console.log('Áreas recibidas del servidor:', data); // DEBUG
+                         console.log('Áreas recibidas del servidor:', data);
 
                          selectArea.innerHTML = '<option value="">-- Seleccione un área --</option>';
 
                          if (data && data.length > 0) {
                              data.forEach(area => {
-                                 console.log('  Procesando área:', area); // DEBUG
+                                 console.log('  Procesando área:', area);
                                  const option = document.createElement('option');
 
-                                 // ¡IMPORTANTE! Usar el campo correcto
-                                 // El DAO devuelve 'nombre' no 'area'
-                                 option.value = area.nombre;  // ← ¡CORRECTO!
+                                 option.value = area.nombre;
                                  option.textContent = area.nombre;
 
                                  if (area.descripcion) option.title = area.descripcion;
@@ -630,11 +909,11 @@
                              console.log('✅ ' + data.length + ' áreas cargadas correctamente');
                          } else {
                              selectArea.innerHTML = '<option value="">No hay áreas disponibles</option>';
-                             console.warn(' No se recibieron áreas del servidor');
+                             console.warn('⚠️ No se recibieron áreas del servidor');
                          }
                      })
                      .catch(error => {
-                         console.error(' Error al cargar áreas:', error);
+                         console.error('❌ Error al cargar áreas:', error);
                          selectArea.innerHTML = '<option value="">Error al cargar áreas</option>';
                          mostrarMensaje('Error al cargar áreas: ' + error.message, 'danger');
                      });
@@ -651,40 +930,68 @@
             const selectArea = document.getElementById('selectArea');
             const selectCurso = document.getElementById('selectCurso');
             const inputArea = document.getElementById('inputArea');
+            const selectGrado = document.getElementById('selectGrado');
 
-            // Obtener el valor seleccionado y el texto (nombre)
             const areaValue = selectArea.value;
             const areaText = selectArea.options[selectArea.selectedIndex].text;
+            const gradoId = selectGrado.value;
 
-            console.log(' CAMBIO DE ÁREA DETECTADO:');
+            console.log('📚 CAMBIO DE ÁREA DETECTADO:');
             console.log('  Valor (value):', areaValue);
             console.log('  Texto (nombre):', areaText);
+            console.log('  Grado ID:', gradoId);
             console.log('  ¿Es undefined?:', areaValue === 'undefined');
             console.log('  ¿Está vacío?:', areaValue === '');
 
-            // Usar el nombre del área (texto), no solo el valor
             const areaNombre = areaText.trim();
             inputArea.value = areaNombre;
 
-            console.log(' Área seleccionada:', areaNombre);
+            console.log('✅ Área seleccionada:', areaNombre);
+            console.log('✅ Grado ID:', gradoId);
+
+            if (!gradoId || gradoId === '' || gradoId === 'undefined' || gradoId === '0') {
+                console.warn('⚠️ Grado no seleccionado');
+                selectCurso.disabled = true;
+                selectCurso.innerHTML = '<option value="">Seleccione un grado primero</option>';
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Grado no seleccionado',
+                        text: 'Por favor, seleccione un grado antes de elegir un área',
+                        confirmButtonColor: '#64B5F6'
+                    });
+                }
+                return;
+            }
 
             if (areaValue && areaValue !== '' && areaValue !== 'undefined' && areaNombre !== '-- Seleccione un área --') {
                 selectCurso.disabled = false;
                 selectCurso.innerHTML = '<option value="">Cargando cursos...</option>';
 
-                console.log(' Enviando petición para obtener cursos del área:', areaNombre);
+                console.log('🔄 Enviando petición para obtener cursos');
+                console.log('   Área:', areaNombre);
+                console.log('   Grado:', gradoId);
 
-                // Enviar petición al servlet
-                fetch(CONTEXTPATH + '/RegistroCursoServlet?accion=obtenerCursos&area=' + encodeURIComponent(areaNombre))
+                const url = CONTEXTPATH + '/RegistroCursoServlet?accion=obtenerCursos' +
+                            '&area=' + encodeURIComponent(areaNombre) +
+                            '&grado=' + encodeURIComponent(gradoId) +
+                            '&nivel=' + encodeURIComponent(nivelSeleccionado);
+
+                console.log('🌐 URL:', url);
+
+                fetch(url)
                     .then(response => {
-                        console.log(' Respuesta recibida, status:', response.status);
+                        console.log('📡 Respuesta recibida, status:', response.status);
                         if (!response.ok) {
                             throw new Error('Error en la respuesta del servidor: ' + response.status);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        console.log(' Datos recibidos:', data);
+                        console.log('📦 Datos recibidos:', data);
+                        console.log('📊 Total de cursos:', data.length);
+
                         selectCurso.innerHTML = '<option value="">-- Seleccione un curso --</option>';
 
                         if (data && data.length > 0) {
@@ -698,23 +1005,29 @@
                             });
                             console.log('✅ ' + data.length + ' cursos cargados correctamente');
                         } else {
-                            selectCurso.innerHTML = '<option value="">No hay cursos disponibles para esta área</option>';
-                            console.warn('️ No se encontraron cursos para el área:', areaNombre);
-                            mostrarMensaje('No se encontraron cursos para el área ' + areaNombre, 'warning');
+                            selectCurso.innerHTML = '<option value="">No hay cursos disponibles para esta área y grado</option>';
+                            console.warn('⚠️ No se encontraron cursos para el área:', areaNombre, 'y grado:', gradoId);
+
+                            if (typeof mostrarMensaje === 'function') {
+                                mostrarMensaje('No se encontraron cursos para el área ' + areaNombre + ' en este grado', 'warning');
+                            }
                         }
 
                         resetearCamposSiguientes(selectCurso);
                     })
                     .catch(error => {
-                        console.error(' Error al cargar cursos:', error);
+                        console.error('❌ Error al cargar cursos:', error);
                         selectCurso.innerHTML = '<option value="">Error al cargar cursos</option>';
-                        mostrarMensaje('Error al cargar cursos: ' + error.message, 'danger');
+
+                        if (typeof mostrarMensaje === 'function') {
+                            mostrarMensaje('Error al cargar cursos: ' + error.message, 'danger');
+                        }
                     });
             } else {
                 selectCurso.disabled = true;
                 selectCurso.innerHTML = '<option value="">Seleccione primero un área válida</option>';
                 resetearCamposSiguientes(selectCurso);
-                console.warn('️ Área no seleccionada o inválida');
+                console.warn('⚠️ Área no seleccionada o inválida');
             }
         }
 
@@ -1056,45 +1369,158 @@
             return true;
         });
         
-                // Función para inicializar el formulario en modo edición
-        function inicializarFormularioEdicion() {
-            // Detectar si estamos en modo edición
-            const selectCurso = document.getElementById('selectCurso');
-            const selectProfesor = document.getElementById('selectProfesor');
-            const selectTurno = document.getElementById('selectTurno');
+        const datosEdicion = {
+            nivel: "<%= nivelCurso != null ? nivelCurso : "" %>",
+            gradoId: <%= gradoIdCurso != null ? gradoIdCurso : "null" %>,
+            turnoId: <%= turnoId != null ? turnoId : "null" %>,
+            area: "<%= areaCurso != null ? areaCurso : "" %>",
+            nombreCurso: "<%= nombreCurso != null ? nombreCurso.replace("\"", "\\\"") : "" %>",
+            profesorId: <%= profesorIdCurso != null ? profesorIdCurso : "null" %>,
+            creditos: <%= creditosCurso != null ? creditosCurso : 1 %>,
+            horarios: [
+                <% if (horariosEditar != null && !horariosEditar.isEmpty()) {
+                    for (int i = 0; i < horariosEditar.size(); i++) {
+                        Map<String, Object> h = horariosEditar.get(i);
+                %>
+                {
+                    dia: "<%= h.get("dia_semana") %>",
+                    hora_inicio: "<%= h.get("hora_inicio") %>",
+                    hora_fin: "<%= h.get("hora_fin") %>"
+                }<%= i < horariosEditar.size() - 1 ? "," : "" %>
+                <% }} %>
+            ]
+        };
 
-            // Si hay un curso ya seleccionado (modo edición)
-            if (selectCurso && selectCurso.value) {
-                console.log('🔧 Detectado modo EDICIÓN - Cargando profesores filtrados');
+        console.log(" MODO EDICIÓN - Datos a cargar:", datosEdicion);
 
-                // Guardar el profesor que estaba seleccionado
-                const profesorSeleccionado = selectProfesor ? selectProfesor.value : null;
+        // FUNCIÓN DE INICIALIZACIÓN
+        function inicializarModoEdicion() {
+            console.log(" Iniciando carga de datos...");
 
-                // Esperar un momento para que las variables globales se inicialicen
-                setTimeout(() => {
-                    // Simular el cambio de curso para cargar profesores filtrados
-                    cambioCurso();
+            // 1. NIVEL
+            const selectNivel = document.getElementById('selectNivel');
+            if (datosEdicion.nivel) {
+                selectNivel.value = datosEdicion.nivel;
+                nivelSeleccionado = datosEdicion.nivel;
+                document.getElementById('inputNivel').value = datosEdicion.nivel;
 
-                    // Después de cargar los profesores, reseleccionar el profesor original
-                    if (profesorSeleccionado) {
-                        setTimeout(() => {
-                            if (selectProfesor) {
-                                selectProfesor.value = profesorSeleccionado;
-                                console.log('✅ Profesor reseleccionado:', profesorSeleccionado);
-                            }
-                        }, 500);
-                    }
-                }, 300);
+                // 2. GRADOS
+                const selectGrado = document.getElementById('selectGrado');
+                selectGrado.disabled = false;
+
+                fetch(CONTEXTPATH + '/RegistroCursoServlet?accion=obtenerGrados&nivel=' + datosEdicion.nivel)
+                    .then(r => r.json())
+                    .then(grados => {
+                        selectGrado.innerHTML = '<option value="">-- Seleccione un grado --</option>';
+                        grados.forEach(g => {
+                            const opt = document.createElement('option');
+                            opt.value = g.id;
+                            opt.textContent = g.nombre + ' - ' + g.nivel;
+                            selectGrado.appendChild(opt);
+                        });
+
+                        selectGrado.value = datosEdicion.gradoId;
+
+                        // 3. TURNO
+                        const selectTurno = document.getElementById('selectTurno');
+                        selectTurno.disabled = false;
+                        if (datosEdicion.turnoId) {
+                            selectTurno.value = datosEdicion.turnoId;
+                            turnoSeleccionado = datosEdicion.turnoId;
+                        }
+
+                        // 4. ÁREAS
+                        return fetch(CONTEXTPATH + '/RegistroCursoServlet?accion=obtenerAreas&nivel=' + datosEdicion.nivel);
+                    })
+                    .then(r => r.json())
+                    .then(areas => {
+                        const selectArea = document.getElementById('selectArea');
+                        selectArea.disabled = false;
+                        selectArea.innerHTML = '<option value="">-- Seleccione un área --</option>';
+                        areas.forEach(a => {
+                            const opt = document.createElement('option');
+                            opt.value = a.nombre;
+                            opt.textContent = a.nombre;
+                            selectArea.appendChild(opt);
+                        });
+
+                        selectArea.value = datosEdicion.area;
+                        document.getElementById('inputArea').value = datosEdicion.area;
+
+                        // 5. CURSOS
+                        const params = new URLSearchParams({
+                            accion: 'obtenerCursos',
+                            area: datosEdicion.area,
+                            grado_id: datosEdicion.gradoId
+                        });
+                        return fetch(CONTEXTPATH + '/RegistroCursoServlet?' + params);
+                    })
+                    .then(r => r.json())
+                    .then(cursos => {
+                        const selectCurso = document.getElementById('selectCurso');
+                        selectCurso.disabled = false;
+                        selectCurso.innerHTML = '<option value="">-- Seleccione un curso --</option>';
+                        cursos.forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.nombre;
+                            opt.textContent = c.nombre;
+                            selectCurso.appendChild(opt);
+                        });
+
+                        selectCurso.value = datosEdicion.nombreCurso;
+
+                        // 6. PROFESORES
+                        const paramsPro = new URLSearchParams({
+                            accion: 'obtenerProfesores',
+                            area: datosEdicion.area,
+                            nivel: datosEdicion.nivel,
+                            turno_id: datosEdicion.turnoId
+                        });
+                        return fetch(CONTEXTPATH + '/RegistroCursoServlet?' + paramsPro);
+                    })
+                    .then(r => r.json())
+                    .then(profesores => {
+                        const selectProfesor = document.getElementById('selectProfesor');
+                        selectProfesor.disabled = false;
+                        selectProfesor.innerHTML = '<option value="">-- Seleccione un profesor --</option>';
+                        profesores.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p.id;
+                            opt.textContent = p.nombres + ' ' + p.apellidos;
+                            selectProfesor.appendChild(opt);
+                        });
+
+                        selectProfesor.value = datosEdicion.profesorId;
+
+                        // 7. CRÉDITOS
+                        document.getElementById('inputCreditos').value = datosEdicion.creditos;
+
+                        // 8. HORARIOS
+                        if (datosEdicion.horarios.length > 0) {
+                            horariosAgregados = [];
+                            datosEdicion.horarios.forEach(h => {
+                                horariosAgregados.push({
+                                    dia: h.dia,
+                                    hora_inicio: h.hora_inicio,
+                                    hora_fin: h.hora_fin
+                                });
+                            });
+                            renderHorarios();
+                        }
+
+                        validarFormulario();
+                        mostrarMensaje(' Datos cargados correctamente', 'success');
+                        console.log(" Inicialización completada");
+                    })
+                    .catch(error => {
+                        console.error(" Error:", error);
+                        mostrarMensaje('Error al cargar datos: ' + error.message, 'danger');
+                    });
             }
         }
-
-        // Ejecutar cuando el DOM esté completamente cargado
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', inicializarFormularioEdicion);
-        } else {
-            // DOM ya está listo
-            inicializarFormularioEdicion();
-        }
-    </script>
+        <% if (modoEdicion && cursoEditar != null) { %>
+            setTimeout(inicializarModoEdicion, 600);
+        <% } %>
+     </script>
 </body>
 </html>
