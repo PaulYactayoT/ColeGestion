@@ -67,7 +67,55 @@ public class CursoDAO {
 
         return lista;
     }
-
+/**
+ * LISTAR CURSOS EN LOS QUE ESTÁ MATRICULADO UN ALUMNO
+ */
+public List<Curso> listarPorAlumnoMatriculado(int alumnoId) {
+    List<Curso> lista = new ArrayList<>();
+    String sql = "SELECT DISTINCT c.id, c.nombre, c.descripcion, " +
+                 "c.creditos, c.horas_semanales, " +
+                 "CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre, " +
+                 "g.nombre as grado_nombre, " +
+                 "a.nombre as area_nombre " +
+                 "FROM curso c " +
+                 "INNER JOIN matricula m ON c.id = m.curso_id " +
+                 "LEFT JOIN profesor prof ON c.profesor_id = prof.id " +
+                 "LEFT JOIN persona p ON prof.persona_id = p.id " +
+                 "LEFT JOIN grado g ON c.grado_id = g.id " +
+                 "LEFT JOIN area a ON c.area_id = a.id " +
+                 "WHERE m.alumno_id = ? " +
+                 "AND m.estado = 'INSCRITO' " +
+                 "AND c.activo = 1 " +
+                 "AND c.eliminado = 0 " +
+                 "ORDER BY c.nombre";
+    
+    try (Connection con = Conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        
+        ps.setInt(1, alumnoId);
+        ResultSet rs = ps.executeQuery();
+        
+        while (rs.next()) {
+            Curso curso = new Curso();
+            curso.setId(rs.getInt("id"));
+            curso.setNombre(rs.getString("nombre"));
+            curso.setDescripcion(rs.getString("descripcion"));
+            curso.setCreditos(rs.getInt("creditos"));
+            curso.setHorasSemanales(rs.getInt("horas_semanales"));
+            curso.setProfesorNombre(rs.getString("profesor_nombre"));
+            curso.setGradoNombre(rs.getString("grado_nombre"));
+          
+            
+            lista.add(curso);
+        }
+        
+    } catch (SQLException e) {
+        System.err.println("Error al listar cursos por alumno matriculado: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return lista;
+}
     /**
      * LISTAR CURSOS POR PROFESOR
      */
