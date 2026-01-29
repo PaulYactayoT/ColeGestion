@@ -351,6 +351,7 @@
             <form action="UsuarioServlet" method="post" id="usuarioForm">
                 <input type="hidden" name="id" value="<%= id %>">
                 <input type="hidden" name="persona_id" id="persona_id_hidden" value="<%= personaId %>">
+                <input type="hidden" name="rol" id="rol_hidden" value="<%= rol %>">
 
                 <% if (!esEditar) { %>
                 <!-- SECCIÓN: SELECCIONAR PERSONA -->
@@ -362,17 +363,17 @@
                 <div class="filter-section">
                     <label class="form-label">Seleccione el tipo de persona:</label>
                     <div class="d-flex flex-wrap gap-2">
-                        <div class="tipo-badge" data-tipo="PROFESOR">
+                        <div class="tipo-badge" data-tipo="PROFESOR" data-rol="docente">
                             <i class="fas fa-chalkboard-teacher"></i>
                             Profesor
                             <span class="badge bg-primary ms-2"><%= profesoresSinUsuario != null ? profesoresSinUsuario.size() : 0 %></span>
                         </div>
-                        <div class="tipo-badge" data-tipo="ALUMNO">
+                        <div class="tipo-badge" data-tipo="ALUMNO" data-rol="padre">
                             <i class="fas fa-user-graduate"></i>
                             Alumno (Padre)
                             <span class="badge bg-success ms-2"><%= alumnosSinUsuario != null ? alumnosSinUsuario.size() : 0 %></span>
                         </div>
-                        <div class="tipo-badge" data-tipo="ADMINISTRATIVO">
+                        <div class="tipo-badge" data-tipo="ADMINISTRATIVO" data-rol="administrativo">
                             <i class="fas fa-user-cog"></i>
                             Administrativo
                             <span class="badge bg-warning ms-2"><%= administrativosSinUsuario != null ? administrativosSinUsuario.size() : 0 %></span>
@@ -511,32 +512,6 @@
                     <% } %>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label required">Rol del Usuario:</label>
-                    <div class="input-group-icon">
-                        <i class="fas fa-user-tag"></i>
-                        <select class="form-select" name="rol" id="rol" required>
-                            <option value="">-- Seleccione un rol --</option>
-                            <option value="admin" <%= "admin".equals(rol) ? "selected" : "" %>>
-                                <i class="fas fa-user-shield"></i> Administrador
-                            </option>
-                            <option value="docente" <%= "docente".equals(rol) ? "selected" : "" %>>
-                                <i class="fas fa-chalkboard-teacher"></i> Docente
-                            </option>
-                            <option value="padre" <%= "padre".equals(rol) ? "selected" : "" %>>
-                                <i class="fas fa-user-friends"></i> Padre/Tutor
-                            </option>
-                            <option value="administrativo" <%= "administrativo".equals(rol) ? "selected" : "" %>>
-                                <i class="fas fa-user-cog"></i> Administrativo
-                            </option>
-                        </select>
-                    </div>
-                    <small class="help-text">
-                        <i class="fas fa-info-circle"></i>
-                        Seleccione el nivel de acceso que tendrá este usuario
-                    </small>
-                </div>
-
                 <!-- BOTONES -->
                 <div class="d-flex justify-content-between mt-4 pt-3" style="border-top: 2px solid #e5e7eb;">
                     <a href="UsuarioServlet" class="btn-modern btn-secondary-modern">
@@ -571,12 +546,12 @@
             %>
             {
                 personaId: <%= p.getPersonaId() %>,
-                nombres: "<%= p.getNombres() != null ? p.getNombres() : "" %>",
-                apellidos: "<%= p.getApellidos() != null ? p.getApellidos() : "" %>",
-                correo: "<%= p.getCorreo() != null ? p.getCorreo() : "" %>",
-                dni: "<%= p.getDni() != null ? p.getDni() : "" %>",
-                codigo: "<%= p.getCodigo() != null ? p.getCodigo() : "" %>",
-                infoAdicional: "<%= p.getInformacionAdicional() != null ? p.getInformacionAdicional() : "" %>"
+                nombres: "<%= p.getNombres() != null ? p.getNombres().replace("\"", "\\\"") : "" %>",
+                apellidos: "<%= p.getApellidos() != null ? p.getApellidos().replace("\"", "\\\"") : "" %>",
+                correo: "<%= p.getCorreo() != null ? p.getCorreo().replace("\"", "\\\"") : "" %>",
+                dni: "<%= p.getDni() != null ? p.getDni().replace("\"", "\\\"") : "" %>",
+                codigo: "<%= p.getCodigo() != null ? p.getCodigo().replace("\"", "\\\"") : "" %>",
+                infoAdicional: "<%= p.getInformacionAdicional() != null ? p.getInformacionAdicional().replace("\"", "\\\"") : "" %>"
             }<%= i < profesoresSinUsuario.size() - 1 ? "," : "" %>
             <% }
             } %>
@@ -589,12 +564,12 @@
             %>
             {
                 personaId: <%= p.getPersonaId() %>,
-                nombres: "<%= p.getNombres() != null ? p.getNombres() : "" %>",
-                apellidos: "<%= p.getApellidos() != null ? p.getApellidos() : "" %>",
-                correo: "<%= p.getCorreo() != null ? p.getCorreo() : "" %>",
-                dni: "<%= p.getDni() != null ? p.getDni() : "" %>",
-                codigo: "<%= p.getCodigo() != null ? p.getCodigo() : "" %>",
-                infoAdicional: "<%= p.getInformacionAdicional() != null ? p.getInformacionAdicional() : "" %>"
+                nombres: "<%= p.getNombres() != null ? p.getNombres().replace("\"", "\\\"") : "" %>",
+                apellidos: "<%= p.getApellidos() != null ? p.getApellidos().replace("\"", "\\\"") : "" %>",
+                correo: "<%= p.getCorreo() != null ? p.getCorreo().replace("\"", "\\\"") : "" %>",
+                dni: "<%= p.getDni() != null ? p.getDni().replace("\"", "\\\"") : "" %>",
+                codigo: "<%= p.getCodigo() != null ? p.getCodigo().replace("\"", "\\\"") : "" %>",
+                infoAdicional: "<%= p.getInformacionAdicional() != null ? p.getInformacionAdicional().replace("\"", "\\\"") : "" %>"
             }<%= i < alumnosSinUsuario.size() - 1 ? "," : "" %>
             <% }
             } %>
@@ -607,12 +582,12 @@
             %>
             {
                 personaId: <%= p.getPersonaId() %>,
-                nombres: "<%= p.getNombres() != null ? p.getNombres() : "" %>",
-                apellidos: "<%= p.getApellidos() != null ? p.getApellidos() : "" %>",
-                correo: "<%= p.getCorreo() != null ? p.getCorreo() : "" %>",
-                dni: "<%= p.getDni() != null ? p.getDni() : "" %>",
-                codigo: "<%= p.getCodigo() != null ? p.getCodigo() : "" %>",
-                infoAdicional: "<%= p.getInformacionAdicional() != null ? p.getInformacionAdicional() : "" %>"
+                nombres: "<%= p.getNombres() != null ? p.getNombres().replace("\"", "\\\"") : "" %>",
+                apellidos: "<%= p.getApellidos() != null ? p.getApellidos().replace("\"", "\\\"") : "" %>",
+                correo: "<%= p.getCorreo() != null ? p.getCorreo().replace("\"", "\\\"") : "" %>",
+                dni: "<%= p.getDni() != null ? p.getDni().replace("\"", "\\\"") : "" %>",
+                codigo: "<%= p.getCodigo() != null ? p.getCodigo().replace("\"", "\\\"") : "" %>",
+                infoAdicional: "<%= p.getInformacionAdicional() != null ? p.getInformacionAdicional().replace("\"", "\\\"") : "" %>"
             }<%= i < administrativosSinUsuario.size() - 1 ? "," : "" %>
             <% }
             } %>
@@ -642,19 +617,32 @@
                     this.classList.add('active');
                     
                     const tipo = this.dataset.tipo;
+                    const rol = this.dataset.rol;
+                    
+                    // ✅ ACTUALIZAR EL ROL OCULTO
+                    document.getElementById('rol_hidden').value = rol;
+                    console.log('✅ Rol establecido:', rol);
+                    
                     cargarPersonasPorTipo(tipo);
                 });
             });
         }
 
+        // ✅ FUNCIÓN CORREGIDA PARA MOSTRAR NOMBRES REALES
         function cargarPersonasPorTipo(tipo) {
             const select = document.getElementById('persona_id_select');
             
-            console.log('🔄 Limpiando select...');
-            select.innerHTML = ''; // Limpiar completamente el select
+            console.log('='.repeat(60));
+            console.log('🔄 INICIANDO CARGA DE PERSONAS');
+            console.log('='.repeat(60));
+            
+            // Limpiar select
+            select.innerHTML = '';
+            console.log('✅ Select limpiado');
             
             let personas = [];
             
+            // Determinar qué array usar
             if (tipo === 'PROFESOR') {
                 personas = profesoresSinUsuario;
             } else if (tipo === 'ALUMNO') {
@@ -663,17 +651,18 @@
                 personas = administrativosSinUsuario;
             }
             
-            console.log(`🔍 Tipo seleccionado: ${tipo}`);
-            console.log(`📊 Personas a cargar:`, personas);
-            console.log(`📊 Total personas encontradas: ${personas.length}`);
+            console.log('🔍 Tipo seleccionado:', tipo);
+            console.log('📊 Total personas encontradas:', personas.length);
+            console.log('📊 Array completo:', personas);
             
+            // Validar que hay personas
             if (personas.length === 0) {
                 const optionVacia = document.createElement('option');
                 optionVacia.value = '';
                 optionVacia.textContent = 'No hay personas disponibles de este tipo';
                 select.appendChild(optionVacia);
                 select.disabled = true;
-                console.log('⚠️ No hay personas disponibles');
+                console.log('⚠️ No hay personas disponibles de tipo:', tipo);
                 return;
             }
             
@@ -684,30 +673,89 @@
             select.appendChild(optionDefault);
             console.log('✅ Opción por defecto agregada');
             
-            // Agregar todas las personas
+            console.log('\n📋 PROCESANDO PERSONAS:');
+            console.log('-'.repeat(60));
+            
+            // ✅ AGREGAR PERSONAS CON VALIDACIÓN DE DATOS MEJORADA
             personas.forEach((p, index) => {
+                console.log('\n[' + (index + 1) + '] Procesando persona:', p);
+                
                 const option = document.createElement('option');
                 option.value = p.personaId;
                 
-                // Formato mejorado del texto
-                let textoOpcion = `${p.apellidos}, ${p.nombres}`;
-                if (p.codigo && p.codigo.trim() !== '') {
-                    textoOpcion += ` [${p.codigo}]`;
+                // ✅ VALIDAR que los datos no sean undefined/null/vacíos/false/"false"
+                const apellidos = (p.apellidos && 
+                                  p.apellidos !== 'false' && 
+                                  p.apellidos !== false && 
+                                  String(p.apellidos).trim() !== '' &&
+                                  String(p.apellidos).trim() !== 'null') 
+                                 ? String(p.apellidos).trim() : '';
+                                 
+                const nombres = (p.nombres && 
+                                p.nombres !== 'false' && 
+                                p.nombres !== false && 
+                                String(p.nombres).trim() !== '' &&
+                                String(p.nombres).trim() !== 'null') 
+                               ? String(p.nombres).trim() : '';
+                               
+                const codigo = (p.codigo && String(p.codigo).trim() !== '') ? String(p.codigo).trim() : '';
+                const infoAdicional = (p.infoAdicional && String(p.infoAdicional).trim() !== '') ? String(p.infoAdicional).trim() : '';
+                
+                console.log('  - Apellidos RAW:', p.apellidos);
+                console.log('  - Apellidos PROCESADO: "' + apellidos + '"');
+                console.log('  - Nombres RAW:', p.nombres);
+                console.log('  - Nombres PROCESADO: "' + nombres + '"');
+                console.log('  - Código: "' + codigo + '"');
+                console.log('  - Info adicional: "' + infoAdicional + '"');
+                
+                // Construir el texto de la opción
+                let textoOpcion = '';
+                
+                // Priorizar mostrar apellidos y nombres
+                if (apellidos !== '' && nombres !== '') {
+                    textoOpcion = apellidos + ', ' + nombres;
+                    console.log('  ✅ Opción A: Apellido + Nombre = "' + textoOpcion + '"');
+                } else if (apellidos !== '') {
+                    textoOpcion = apellidos;
+                    console.log('  ✅ Opción B: Solo Apellido = "' + textoOpcion + '"');
+                } else if (nombres !== '') {
+                    textoOpcion = nombres;
+                    console.log('  ✅ Opción C: Solo Nombre = "' + textoOpcion + '"');
+                } else {
+                    textoOpcion = 'Persona ID: ' + p.personaId;
+                    console.log('  ⚠️ Opción D: Sin nombre, usando ID = "' + textoOpcion + '"');
                 }
-                if (p.infoAdicional && p.infoAdicional.trim() !== '') {
-                    textoOpcion += ` - ${p.infoAdicional}`;
+                
+                // Agregar código si existe
+                if (codigo !== '') {
+                    textoOpcion = textoOpcion + ' [' + codigo + ']';
+                    console.log('  ✅ Agregado código: "' + textoOpcion + '"');
                 }
+                
+                // Agregar información adicional si existe
+                if (infoAdicional !== '') {
+                    textoOpcion = textoOpcion + ' - ' + infoAdicional;
+                    console.log('  ✅ Agregada info adicional: "' + textoOpcion + '"');
+                }
+                
+                console.log('  🎯 TEXTO FINAL: "' + textoOpcion + '"');
+                console.log('  🔢 VALOR (ID): ' + p.personaId);
                 
                 option.textContent = textoOpcion;
                 option.dataset.persona = JSON.stringify(p);
                 select.appendChild(option);
                 
-                console.log(`✅ [${index + 1}] Agregada persona: ${textoOpcion} (ID: ${p.personaId})`);
+                console.log('  ✅ Opción agregada al select');
             });
             
             select.disabled = false;
-            console.log(`✅ SELECT POBLADO: ${personas.length} personas de tipo ${tipo} cargadas correctamente`);
-            console.log(`✅ Total opciones en el select:`, select.options.length);
+            
+            console.log('\n' + '='.repeat(60));
+            console.log('✅ CARGA COMPLETADA');
+            console.log('📊 Total opciones en el select:', select.options.length);
+            console.log('📊 Personas procesadas:', personas.length);
+            console.log('📊 Tipo:', tipo);
+            console.log('='.repeat(60) + '\n');
         }
 
         // Cuando se selecciona una persona, mostrar su información
@@ -748,7 +796,8 @@
         function mostrarInfoPersona(persona) {
             console.log('📋 Mostrando información de persona:', persona);
             
-            document.getElementById('infoNombre').textContent = `${persona.nombres} ${persona.apellidos}`;
+            const nombreCompleto = (persona.nombres || '') + ' ' + (persona.apellidos || '');
+            document.getElementById('infoNombre').textContent = nombreCompleto.trim() || '-';
             document.getElementById('infoCorreo').textContent = persona.correo || '-';
             document.getElementById('infoDni').textContent = persona.dni || '-';
             document.getElementById('infoCodigo').textContent = persona.codigo || '-';
@@ -879,6 +928,16 @@
                     return false;
                 }
                 console.log('✅ Persona ID válido:', personaId);
+                
+                // Validar que se haya seleccionado un rol
+                const rol = document.getElementById('rol_hidden').value;
+                console.log('🔍 Validando rol:', rol);
+                
+                if (!rol || rol === '') {
+                    alert('❌ Debe seleccionar un tipo de persona (esto establece el rol automáticamente)');
+                    return false;
+                }
+                console.log('✅ Rol válido:', rol);
             }
             
             const password = document.getElementById('passwordInput').value;
