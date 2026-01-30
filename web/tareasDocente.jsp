@@ -1,9 +1,3 @@
-<%-- 
-    Document   : tareasDocente
-    Created on : 31 may. 2025, 3:18:19 a. m.
-    Author     : Juan Pablo Amaya
---%>
-
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="modelo.Tarea, modelo.Curso, modelo.Profesor, java.util.List" %>
 
@@ -81,6 +75,29 @@
         <div class="mb-3">
             <a href="LoginServlet?accion=dashboard" class="btn btn-outline-dark">&larr; Regresar al Inicio</a>
         </div>
+        
+        <!-- MENSAJES DE ÉXITO O ERROR -->
+        <% 
+            String mensaje = (String) session.getAttribute("mensaje");
+            String error = (String) session.getAttribute("error");
+            
+            if (mensaje != null) { 
+                session.removeAttribute("mensaje");
+        %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <%= mensaje %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <% if (error != null) { 
+                session.removeAttribute("error");
+        %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
 
         <% if ("registrar".equals(accion)) {%>
         <!-- FORMULARIO DE REGISTRO -->
@@ -88,7 +105,8 @@
             <div class="card-header bg-primary text-white">Registrar Nueva Tarea</div>
             <div class="card-body">
                 <form action="TareaServlet" method="post">
-                    <input type="hidden" name="accion" value="registrar">
+                    <!-- CORREGIDO: Cambiar accion a "guardar" -->
+                    <input type="hidden" name="accion" value="guardar">
                     <input type="hidden" name="curso_id" value="<%= curso.getId()%>">
 
                     <div class="mb-3">
@@ -105,13 +123,27 @@
                         <label class="form-label">Fecha de Entrega:</label>
                         <input type="date" name="fecha_entrega" class="form-control" required>
                     </div>
+                    
+                    <!-- NUEVOS CAMPOS AGREGADOS -->
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Tarea:</label>
+                        <select name="tipo" class="form-select">
+                            <option value="TAREA">Tarea</option>
+                            <option value="EXAMEN">Examen</option>
+                            <option value="PROYECTO">Proyecto</option>
+                            <option value="PRACTICA">Práctica</option>
+                        </select>
+                    </div>
 
                     <div class="mb-3">
-                        <label class="form-label">¿Activo?</label>
-                        <select name="activo" class="form-select">
-                            <option value="true">Sí</option>
-                            <option value="false">No</option>
-                        </select>
+                        <label class="form-label">Peso (%):</label>
+                        <input type="number" name="peso" class="form-control" min="0" max="100" step="0.01" value="1.0">
+                        <small class="text-muted">Peso de esta tarea en la nota final del curso (0-100)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Instrucciones:</label>
+                        <textarea name="instrucciones" class="form-control" rows="3"></textarea>
                     </div>
 
                     <div class="text-end">
@@ -131,6 +163,8 @@
             <div class="card-header bg-warning text-dark">Editar Tarea</div>
             <div class="card-body">
                 <form action="TareaServlet" method="post">
+                    <!-- CORREGIDO: Agregar name="accion" con value="actualizar" -->
+                    <input type="hidden" name="accion" value="actualizar">
                     <input type="hidden" name="id" value="<%= tarea.getId()%>">
                     <input type="hidden" name="curso_id" value="<%= curso.getId()%>">
 
@@ -148,13 +182,27 @@
                         <label class="form-label">Fecha de Entrega:</label>
                         <input type="date" name="fecha_entrega" class="form-control" value="<%= tarea.getFechaEntrega()%>" required>
                     </div>
+                    
+                    <!-- NUEVOS CAMPOS -->
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Tarea:</label>
+                        <select name="tipo" class="form-select">
+                            <option value="TAREA" <%= "TAREA".equals(tarea.getTipo()) ? "selected" : "" %>>Tarea</option>
+                            <option value="EXAMEN" <%= "EXAMEN".equals(tarea.getTipo()) ? "selected" : "" %>>Examen</option>
+                            <option value="PROYECTO" <%= "PROYECTO".equals(tarea.getTipo()) ? "selected" : "" %>>Proyecto</option>
+                            <option value="PRACTICA" <%= "PRACTICA".equals(tarea.getTipo()) ? "selected" : "" %>>Práctica</option>
+                        </select>
+                    </div>
 
                     <div class="mb-3">
-                        <label class="form-label">¿Activo?</label>
-                        <select name="activo" class="form-select">
-                            <option value="true" <%= tarea.isActivo() ? "selected" : ""%>>Sí</option>
-                            <option value="false" <%= !tarea.isActivo() ? "selected" : ""%>>No</option>
-                        </select>
+                        <label class="form-label">Peso (%):</label>
+                        <input type="number" name="peso" class="form-control" min="0" max="100" step="0.01" value="<%= tarea.getPeso()%>">
+                        <small class="text-muted">Peso de esta tarea en la nota final del curso (0-100)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Instrucciones:</label>
+                        <textarea name="instrucciones" class="form-control" rows="3"><%= tarea.getInstrucciones()%></textarea>
                     </div>
 
                     <div class="text-end">
@@ -187,9 +235,40 @@
                             <td><%= t.getNombre()%></td>
                             <td><%= t.getDescripcion()%></td>
                             <td><%= t.getFechaEntrega()%></td>
-                            <td><%= t.isActivo() ? "Sí" : "No"%></td>
                             <td>
-                                <a href="TareaServlet?accion=editar&id=<%= t.getId()%>&curso_id=<%= curso.getId()%>" class="btn btn-sm btn-primary">Editar</a>
+                                <% if (t.isActivo()) { %>
+                                    <span class="badge bg-success">Activa</span>
+                                <% } else { %>
+                                    <span class="badge bg-secondary">Inactiva</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <a href="TareaServlet?accion=editar&id=<%= t.getId()%>&curso_id=<%= curso.getId()%>" 
+                                   class="btn btn-sm btn-primary">Editar</a>
+                                
+                                <!-- BOTÓN PARA ACTIVAR/DESACTIVAR -->
+                                <% if (t.isActivo()) { %>
+                                    <form action="TareaServlet" method="post" style="display: inline;">
+                                        <input type="hidden" name="accion" value="cambiarEstado">
+                                        <input type="hidden" name="id" value="<%= t.getId()%>">
+                                        <input type="hidden" name="estado" value="false">
+                                        <button type="submit" class="btn btn-sm btn-warning" 
+                                                onclick="return confirm('¿Desactivar esta tarea?')">
+                                            Desactivar
+                                        </button>
+                                    </form>
+                                <% } else { %>
+                                    <form action="TareaServlet" method="post" style="display: inline;">
+                                        <input type="hidden" name="accion" value="cambiarEstado">
+                                        <input type="hidden" name="id" value="<%= t.getId()%>">
+                                        <input type="hidden" name="estado" value="true">
+                                        <button type="submit" class="btn btn-sm btn-success" 
+                                                onclick="return confirm('¿Activar esta tarea?')">
+                                            Activar
+                                        </button>
+                                    </form>
+                                <% } %>
+                                
                                 <a href="TareaServlet?accion=eliminar&id=<%= t.getId()%>&curso_id=<%= curso.getId()%>"
                                    class="btn btn-sm btn-danger"
                                    onclick="return confirm('¿Eliminar esta tarea?')">Eliminar</a>
@@ -232,12 +311,9 @@
             </div>
 
             <div class="text-center mt-0">
-                <p class="fs-6">&copy; 2025 Colegio SA - Todos los derechos reservados</p>
+                <p class="fs-6">&copy; 2026 Colegio SA - Todos los derechos reservados</p>
             </div>
         </div>
     </footer>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
-
-
-

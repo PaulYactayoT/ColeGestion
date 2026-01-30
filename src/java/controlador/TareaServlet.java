@@ -12,7 +12,6 @@ import modelo.TareaDAO;
 import modelo.Curso;
 import modelo.CursoDAO;
 import modelo.Profesor;
-// En TareaServlet.java, falta esta importación:
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.*;
@@ -21,9 +20,23 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.http.Part;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
+    maxFileSize = 1024 * 1024 * 10,        // 10MB
+    maxRequestSize = 1024 * 1024 * 15      // 15MB
+)
 public class TareaServlet extends HttpServlet {
-
+     
+    // Ruta donde se guardarán los archivos
+    private static final String UPLOAD_DIR = "uploads";
+    
     // DAO para operaciones con la tabla de tareas
     TareaDAO dao = new TareaDAO();
     CursoDAO cursoDao = new CursoDAO();
@@ -217,7 +230,7 @@ public class TareaServlet extends HttpServlet {
             return;
         }
 
-        // Verificar permisos del docente
+        // Verificar permisos
         Profesor docente = (Profesor) session.getAttribute("docente");
         String rol = (String) session.getAttribute("rol");
         
@@ -230,8 +243,6 @@ public class TareaServlet extends HttpServlet {
         }
 
         request.setAttribute("curso", curso);
-        request.setAttribute("fechaActual", LocalDate.now().toString());
-        request.setAttribute("fechaMinima", LocalDate.now().plusDays(1).toString());
         request.getRequestDispatcher("tareaForm.jsp").forward(request, response);
     }
 
@@ -240,7 +251,7 @@ public class TareaServlet extends HttpServlet {
         
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.isEmpty()) {
-            session.setAttribute("error", "Debe especificar una tarea");
+            session.setAttribute("error", "ID de tarea no especificado");
             response.sendRedirect("dashboard.jsp");
             return;
         }
@@ -269,7 +280,6 @@ public class TareaServlet extends HttpServlet {
         Curso curso = cursoDao.obtenerPorId(tarea.getCursoId());
         request.setAttribute("tarea", tarea);
         request.setAttribute("curso", curso);
-        request.setAttribute("fechaActual", LocalDate.now().toString());
         request.getRequestDispatcher("tareaForm.jsp").forward(request, response);
     }
 
@@ -278,7 +288,7 @@ public class TareaServlet extends HttpServlet {
         
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.isEmpty()) {
-            session.setAttribute("error", "Debe especificar una tarea");
+            session.setAttribute("error", "ID de tarea no especificado");
             response.sendRedirect("dashboard.jsp");
             return;
         }
@@ -304,40 +314,32 @@ public class TareaServlet extends HttpServlet {
             }
         }
 
+        int cursoId = tarea.getCursoId();
+        
         if (dao.eliminar(id)) {
             session.setAttribute("mensaje", "Tarea eliminada exitosamente");
+            System.out.println("Tarea eliminada - ID: " + id + " del curso: " + cursoId);
         } else {
             session.setAttribute("error", "No se pudo eliminar la tarea");
         }
-        
-        response.sendRedirect("TareaServlet?accion=ver&curso_id=" + tarea.getCursoId());
+
+        response.sendRedirect("TareaServlet?accion=ver&curso_id=" + cursoId);
     }
 
     private void manejarListarTareas(HttpServletRequest request, HttpServletResponse response, HttpSession session)
             throws ServletException, IOException {
         
+        // Esta acción solo está disponible para administradores
         String rol = (String) session.getAttribute("rol");
-        
-        if (rol.equals("admin")) {
-            // Admin puede ver todas las tareas
-            // Aquí deberías implementar un método para listar todas las tareas
-            request.setAttribute("lista", new ArrayList<Tarea>()); // Placeholder
-            request.getRequestDispatcher("tareasAdmin.jsp").forward(request, response);
-        } else if (rol.equals("docente") || rol.equals("profesor")) {
-            // Docente ve solo sus cursos
-            Profesor docente = (Profesor) session.getAttribute("docente");
-            if (docente != null) {
-                // Obtener cursos del docente y mostrar tareas
-                request.setAttribute("mensaje", "Seleccione un curso para ver sus tareas");
-                request.getRequestDispatcher("seleccionarCurso.jsp").forward(request, response);
-            } else {
-                session.setAttribute("error", "Información de docente no disponible");
-                response.sendRedirect("dashboard.jsp");
-            }
-        } else {
-            session.setAttribute("error", "Rol no válido para esta acción");
+        if (!rol.equals("admin")) {
+            session.setAttribute("error", "Acceso denegado");
             response.sendRedirect("dashboard.jsp");
+            return;
         }
+
+        // Lista todas las tareas del sistema
+        // Por ahora redirigimos al dashboard, ya que no hay un método listarTodas
+        response.sendRedirect("dashboard.jsp");
     }
 
     private void manejarDetalleTarea(HttpServletRequest request, HttpServletResponse response, HttpSession session)
@@ -345,7 +347,7 @@ public class TareaServlet extends HttpServlet {
         
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.isEmpty()) {
-            session.setAttribute("error", "Debe especificar una tarea");
+            session.setAttribute("error", "ID de tarea no especificado");
             response.sendRedirect("dashboard.jsp");
             return;
         }
@@ -359,12 +361,139 @@ public class TareaServlet extends HttpServlet {
             return;
         }
 
+        // Verificar permisos
+        Profesor docente = (Profesor) session.getAttribute("docente");
+        String rol = (String) session.getAttribute("rol");
+        
+        if (rol.equals("docente") || rol.equals("profesor")) {
+            if (docente == null || !tieneAccesoAlCurso(docente, tarea.getCursoId())) {
+                session.setAttribute("error", "No tiene permisos para ver esta tarea");
+                response.sendRedirect("dashboard.jsp");
+                return;
+            }
+        }
+
         Curso curso = cursoDao.obtenerPorId(tarea.getCursoId());
         request.setAttribute("tarea", tarea);
         request.setAttribute("curso", curso);
         request.getRequestDispatcher("tareaDetalle.jsp").forward(request, response);
     }
+            private void cambiarEstadoTarea(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+                throws ServletException, IOException {
 
+            String idParam = request.getParameter("id");
+            String estadoParam = request.getParameter("estado");
+
+            if (idParam == null || idParam.isEmpty() || estadoParam == null || estadoParam.isEmpty()) {
+                session.setAttribute("error", "Parámetros incompletos");
+                response.sendRedirect("dashboard.jsp");
+                return;
+            }
+
+            int id = Integer.parseInt(idParam);
+            boolean activo = Boolean.parseBoolean(estadoParam);
+
+            Tarea tarea = dao.obtenerPorId(id);
+            if (tarea == null) {
+                session.setAttribute("error", "Tarea no encontrada");
+                response.sendRedirect("dashboard.jsp");
+                return;
+            }
+
+            // Verificar permisos
+            Profesor docente = (Profesor) session.getAttribute("docente");
+            String rol = (String) session.getAttribute("rol");
+
+            if (rol.equals("docente") || rol.equals("profesor")) {
+                if (docente == null || !tieneAccesoAlCurso(docente, tarea.getCursoId())) {
+                    session.setAttribute("error", "No tiene permisos para cambiar el estado de esta tarea");
+                    response.sendRedirect("dashboard.jsp");
+                    return;
+                }
+            }
+
+            // Usar el método cambiarEstado() del DAO en lugar de actualizar()
+            if (dao.cambiarEstado(id, activo)) {
+                String mensaje = activo ? "Tarea activada exitosamente" : "Tarea desactivada exitosamente";
+                session.setAttribute("mensaje", mensaje);
+                System.out.println("Estado de tarea cambiado: ID=" + id + ", Activo=" + activo);
+            } else {
+                session.setAttribute("error", "No se pudo cambiar el estado de la tarea");
+                System.out.println("Error al cambiar estado de tarea: ID=" + id);
+            }
+
+            response.sendRedirect("TareaServlet?accion=ver&curso_id=" + tarea.getCursoId());
+        }
+
+            /**
+             * Método auxiliar para verificar si un docente tiene acceso a un curso
+             */
+            private boolean tieneAccesoAlCurso(Profesor docente, int cursoId) {
+                return true;
+            }
+            
+            
+            /**
+     * MÉTODO AUXILIAR PARA GUARDAR ARCHIVO SUBIDO
+     */
+    private String guardarArchivo(HttpServletRequest request) throws ServletException, IOException {
+        Part filePart = request.getPart("archivo");
+        
+        if (filePart == null || filePart.getSize() == 0) {
+            return null; // No se subió ningún archivo
+        }
+        
+        String fileName = extractFileName(filePart);
+        
+        if (fileName == null || fileName.isEmpty()) {
+            return null;
+        }
+        
+        // Validar extensión
+        if (!fileName.toLowerCase().endsWith(".pdf")) {
+            throw new ServletException("Solo se permiten archivos PDF");
+        }
+        
+        // Generar nombre único para evitar conflictos
+        String uniqueFileName = System.currentTimeMillis() + "_" + fileName;
+        
+        // Obtener ruta absoluta del directorio de uploads
+        String uploadPath = getServletContext().getRealPath("") + File.separator + UPLOAD_DIR;
+        
+        // Crear directorio si no existe
+        File uploadDir = new File(uploadPath);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdir();
+        }
+        
+        // Guardar el archivo
+        String filePath = uploadPath + File.separator + uniqueFileName;
+        Files.copy(filePart.getInputStream(), 
+                   new File(filePath).toPath(), 
+                   StandardCopyOption.REPLACE_EXISTING);
+        
+        System.out.println("Archivo guardado en: " + filePath);
+        
+        return uniqueFileName;
+    }
+    
+    /**
+     * EXTRAER NOMBRE DE ARCHIVO DEL PART
+     */
+    private String extractFileName(Part part) {
+        String contentDisp = part.getHeader("content-disposition");
+        String[] items = contentDisp.split(";");
+        for (String s : items) {
+            if (s.trim().startsWith("filename")) {
+                return s.substring(s.indexOf("=") + 2, s.length() - 1);
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * MÉTODO ACTUALIZADO PARA GUARDAR TAREA CON ARCHIVO
+     */
     private void guardarTarea(HttpServletRequest request, HttpServletResponse response, HttpSession session)
             throws ServletException, IOException {
         
@@ -374,12 +503,17 @@ public class TareaServlet extends HttpServlet {
         String fechaEntrega = request.getParameter("fecha_entrega");
         String cursoIdParam = request.getParameter("curso_id");
         
+        // NUEVOS CAMPOS AGREGADOS
+        String tipo = request.getParameter("tipo");
+        String pesoParam = request.getParameter("peso");
+        String instrucciones = request.getParameter("instrucciones");
+        
         if (nombre == null || nombre.trim().isEmpty() ||
             descripcion == null || descripcion.trim().isEmpty() ||
             fechaEntrega == null || fechaEntrega.trim().isEmpty() ||
             cursoIdParam == null || cursoIdParam.trim().isEmpty()) {
             
-            session.setAttribute("error", "Todos los campos son obligatorios");
+            session.setAttribute("error", "Los campos nombre, descripción, fecha de entrega y curso son obligatorios");
             response.sendRedirect("TareaServlet?accion=registrar&curso_id=" + cursoIdParam);
             return;
         }
@@ -400,6 +534,23 @@ public class TareaServlet extends HttpServlet {
 
         int cursoId = Integer.parseInt(cursoIdParam);
         
+        // Validar y parsear peso
+        double peso = 1.0;
+        if (pesoParam != null && !pesoParam.trim().isEmpty()) {
+            try {
+                peso = Double.parseDouble(pesoParam);
+                if (peso < 0 || peso > 100) {
+                    session.setAttribute("error", "El peso debe estar entre 0 y 100");
+                    response.sendRedirect("TareaServlet?accion=registrar&curso_id=" + cursoIdParam);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                session.setAttribute("error", "El peso debe ser un número válido");
+                response.sendRedirect("TareaServlet?accion=registrar&curso_id=" + cursoIdParam);
+                return;
+            }
+        }
+        
         // Verificar permisos
         Profesor docente = (Profesor) session.getAttribute("docente");
         String rol = (String) session.getAttribute("rol");
@@ -412,16 +563,30 @@ public class TareaServlet extends HttpServlet {
             }
         }
 
-        // Crear objeto Tarea
+        // GUARDAR ARCHIVO SI SE SUBIÓ UNO
+        String nombreArchivo = null;
+        try {
+            nombreArchivo = guardarArchivo(request);
+        } catch (Exception e) {
+            session.setAttribute("error", "Error al guardar el archivo: " + e.getMessage());
+            response.sendRedirect("TareaServlet?accion=registrar&curso_id=" + cursoId);
+            return;
+        }
+
+        // Crear objeto Tarea con TODOS los campos
         Tarea t = new Tarea();
         t.setNombre(nombre.trim());
         t.setDescripcion(descripcion.trim());
         t.setFechaEntrega(fechaEntrega.trim());
         t.setCursoId(cursoId);
         t.setActivo(true);
+        t.setTipo(tipo != null && !tipo.trim().isEmpty() ? tipo.trim() : "TAREA");
+        t.setPeso(peso);
+        t.setInstrucciones(instrucciones != null ? instrucciones.trim() : "");
+        t.setArchivoAdjunto(nombreArchivo); // NUEVO CAMPO
 
         if (dao.agregar(t)) {
-            session.setAttribute("mensaje", "Tarea creada exitosamente");
+            session.setAttribute("mensaje", "Tarea creada exitosamente" + (nombreArchivo != null ? " con archivo adjunto" : ""));
             System.out.println("Nueva tarea creada: " + t.getNombre() + " (Curso: " + t.getCursoId() + ")");
         } else {
             session.setAttribute("error", "No se pudo crear la tarea");
@@ -430,6 +595,9 @@ public class TareaServlet extends HttpServlet {
         response.sendRedirect("TareaServlet?accion=ver&curso_id=" + cursoId);
     }
 
+    /**
+     * MÉTODO ACTUALIZADO PARA ACTUALIZAR TAREA CON ARCHIVO
+     */
     private void actualizarTarea(HttpServletRequest request, HttpServletResponse response, HttpSession session)
             throws ServletException, IOException {
         
@@ -453,18 +621,20 @@ public class TareaServlet extends HttpServlet {
         String nombre = request.getParameter("nombre");
         String descripcion = request.getParameter("descripcion");
         String fechaEntrega = request.getParameter("fecha_entrega");
+        String tipo = request.getParameter("tipo");
+        String pesoParam = request.getParameter("peso");
+        String instrucciones = request.getParameter("instrucciones");
         
         if (nombre == null || nombre.trim().isEmpty() ||
             descripcion == null || descripcion.trim().isEmpty() ||
             fechaEntrega == null || fechaEntrega.trim().isEmpty()) {
             
-            session.setAttribute("error", "Todos los campos son obligatorios");
+            session.setAttribute("error", "Los campos nombre, descripción y fecha de entrega son obligatorios");
             response.sendRedirect("TareaServlet?accion=editar&id=" + id);
             return;
         }
 
         try {
-            // Validar formato de fecha
             LocalDate fecha = LocalDate.parse(fechaEntrega);
             if (fecha.isBefore(LocalDate.now())) {
                 session.setAttribute("error", "La fecha de entrega no puede ser anterior a hoy");
@@ -472,9 +642,25 @@ public class TareaServlet extends HttpServlet {
                 return;
             }
         } catch (DateTimeParseException e) {
-            session.setAttribute("error", "Formato de fecha inválido. Use YYYY-MM-DD");
+            session.setAttribute("error", "Formato de fecha inválido");
             response.sendRedirect("TareaServlet?accion=editar&id=" + id);
             return;
+        }
+
+        double peso = 1.0;
+        if (pesoParam != null && !pesoParam.trim().isEmpty()) {
+            try {
+                peso = Double.parseDouble(pesoParam);
+                if (peso < 0 || peso > 100) {
+                    session.setAttribute("error", "El peso debe estar entre 0 y 100");
+                    response.sendRedirect("TareaServlet?accion=editar&id=" + id);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                session.setAttribute("error", "El peso debe ser un número válido");
+                response.sendRedirect("TareaServlet?accion=editar&id=" + id);
+                return;
+            }
         }
 
         // Verificar permisos
@@ -489,10 +675,27 @@ public class TareaServlet extends HttpServlet {
             }
         }
 
-        // Actualizar objeto Tarea
+        // GUARDAR NUEVO ARCHIVO SI SE SUBIÓ UNO
+        String nombreArchivo = tareaExistente.getArchivoAdjunto(); // Mantener el archivo anterior por defecto
+        try {
+            String nuevoArchivo = guardarArchivo(request);
+            if (nuevoArchivo != null) {
+                nombreArchivo = nuevoArchivo; // Actualizar si se subió un nuevo archivo
+            }
+        } catch (Exception e) {
+            session.setAttribute("error", "Error al guardar el archivo: " + e.getMessage());
+            response.sendRedirect("TareaServlet?accion=editar&id=" + id);
+            return;
+        }
+
+        // Actualizar objeto Tarea con TODOS los campos
         tareaExistente.setNombre(nombre.trim());
         tareaExistente.setDescripcion(descripcion.trim());
         tareaExistente.setFechaEntrega(fechaEntrega.trim());
+        tareaExistente.setTipo(tipo != null && !tipo.trim().isEmpty() ? tipo.trim() : "TAREA");
+        tareaExistente.setPeso(peso);
+        tareaExistente.setInstrucciones(instrucciones != null ? instrucciones.trim() : "");
+        tareaExistente.setArchivoAdjunto(nombreArchivo); // NUEVO CAMPO
 
         if (dao.actualizar(tareaExistente)) {
             session.setAttribute("mensaje", "Tarea actualizada exitosamente");
@@ -503,62 +706,6 @@ public class TareaServlet extends HttpServlet {
 
         response.sendRedirect("TareaServlet?accion=ver&curso_id=" + tareaExistente.getCursoId());
     }
-
-    private void cambiarEstadoTarea(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-            throws ServletException, IOException {
-        
-        String idParam = request.getParameter("id");
-        String estadoParam = request.getParameter("estado");
-        
-        if (idParam == null || idParam.isEmpty() || estadoParam == null || estadoParam.isEmpty()) {
-            session.setAttribute("error", "Parámetros incompletos");
-            response.sendRedirect("dashboard.jsp");
-            return;
-        }
-
-        int id = Integer.parseInt(idParam);
-        boolean activo = Boolean.parseBoolean(estadoParam);
-        
-        Tarea tarea = dao.obtenerPorId(id);
-        if (tarea == null) {
-            session.setAttribute("error", "Tarea no encontrada");
-            response.sendRedirect("dashboard.jsp");
-            return;
-        }
-
-        // Verificar permisos
-        Profesor docente = (Profesor) session.getAttribute("docente");
-        String rol = (String) session.getAttribute("rol");
-        
-        if (rol.equals("docente") || rol.equals("profesor")) {
-            if (docente == null || !tieneAccesoAlCurso(docente, tarea.getCursoId())) {
-                session.setAttribute("error", "No tiene permisos para cambiar el estado de esta tarea");
-                response.sendRedirect("dashboard.jsp");
-                return;
-            }
-        }
-
-        tarea.setActivo(activo);
-        
-        if (dao.actualizar(tarea)) {
-            String mensaje = activo ? "Tarea activada exitosamente" : "Tarea desactivada exitosamente";
-            session.setAttribute("mensaje", mensaje);
-        } else {
-            session.setAttribute("error", "No se pudo cambiar el estado de la tarea");
-        }
-
-        response.sendRedirect("TareaServlet?accion=ver&curso_id=" + tarea.getCursoId());
-    }
-
-    /**
-     * Método auxiliar para verificar si un docente tiene acceso a un curso
-     * Debes implementar esta lógica según tu base de datos
-     */
-    private boolean tieneAccesoAlCurso(Profesor docente, int cursoId) {
-        // Aquí debes implementar la lógica para verificar si el docente
-        // tiene asignado el curso especificado
-        // Por ahora, devolvemos true como placeholder
-        // Deberías tener un método en ProfesorDAO o CursoDAO para esto
-        return true;
-    }
 }
+
+

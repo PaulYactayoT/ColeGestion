@@ -2,6 +2,8 @@ package controlador;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
@@ -17,8 +19,16 @@ import modelo.Profesor;
 import modelo.Padre;
 import modelo.Alumno;
 import modelo.AlumnoDAO;
+import modelo.ConfiguracionLimiteDAO;
 
 public class AsistenciaServlet extends HttpServlet {
+    
+    private ConfiguracionLimiteDAO configuracionDAO;
+    
+    @Override
+    public void init() throws ServletException {
+        configuracionDAO = new ConfiguracionLimiteDAO();
+    }
 
     /**
      * METODO GET - MANEJA SOLICITUDES DE CONSULTA Y NAVEGACION
@@ -39,7 +49,7 @@ public class AsistenciaServlet extends HttpServlet {
 
         // VALIDACIÓN DE PERMISOS POR ROL
         if (!validarAccesoRol(rol, accion)) {
-            System.out.println("ACCESO DENEGADO: Rol " + rol + " intentó acceder con acción: " + accion);
+            System.out.println(" ACCESO DENEGADO: Rol " + rol + " intentó acceder con acción: " + accion);
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -52,7 +62,6 @@ public class AsistenciaServlet extends HttpServlet {
                     } else if ("padre".equals(rol)) {
                         verAsistenciasPadre(request, response);
                     } else if ("admin".equals(rol)) {
-                        // Admin puede ver ambas vistas
                         response.sendRedirect("dashboard.jsp");
                     }
                     break;
@@ -62,13 +71,16 @@ public class AsistenciaServlet extends HttpServlet {
                 case "registrar":
                     mostrarFormRegistro(request, response);
                     break;
+                case "verificarLimite": 
+                    verificarLimiteEdicion(request, response);
+                    break;
                 case "reportes":
                     mostrarReportes(request, response);
                     break;
                 case "verPadre":
                     verAsistenciasPadreDetalle(request, response);
                     break;
-                case "verCursoJson":  // NUEVA ACCIÓN: Retorna asistencias en formato JSON
+                case "verCursoJson":
                     verAsistenciasCursoJson(request, response);
                     break;
                 default:
@@ -96,11 +108,11 @@ public class AsistenciaServlet extends HttpServlet {
             accion = "registrar";
         }
 
-        System.out.println("AsistenciaServlet POST - Acción: " + accion + ", Rol: " + rol);
+        System.out.println(" AsistenciaServlet POST - Acción: " + accion + ", Rol: " + rol);
 
         // VALIDACIÓN DE PERMISOS POR ROL
         if (!validarAccesoRol(rol, accion)) {
-            System.out.println("ACCESO DENEGADO POST: Rol " + rol + " intentó acceder con acción: " + accion);
+            System.out.println(" ACCESO DENEGADO POST: Rol " + rol + " intentó acceder con acción: " + accion);
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -125,6 +137,50 @@ public class AsistenciaServlet extends HttpServlet {
             response.sendRedirect("AsistenciaServlet?accion=ver");
         }
     }
+    
+    // ═══════════════════════════════════════════════════════════════════
+    //VERIFICAR LÍMITE DE EDICIÓN (ENDPOINT AJAX)
+    // ═══════════════════════════════════════════════════════════════════
+    
+    /**
+     * Verifica si se puede editar una asistencia según límites configurados
+     * Responde en formato JSON para llamadas AJAX
+     */
+    private void verificarLimiteEdicion(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        try {
+            int cursoId = Integer.parseInt(request.getParameter("cursoId"));
+            int turnoId = Integer.parseInt(request.getParameter("turnoId"));
+            LocalDate fecha = LocalDate.parse(request.getParameter("fecha"));
+            LocalTime horaClase = LocalTime.parse(request.getParameter("horaClase"));
+            
+            boolean puedeEditar = configuracionDAO.puedeEditarAsistencia(cursoId, turnoId, fecha, horaClase);
+            String mensaje = configuracionDAO.obtenerMensajeTiempoLimite(cursoId, turnoId, fecha, horaClase);
+            
+            // Responder en JSON
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            PrintWriter out = response.getWriter();
+            
+            String json = String.format(
+                "{\"puedeEditar\": %b, \"mensaje\": \"%s\"}", 
+                puedeEditar, 
+                mensaje.replace("\"", "\\\"").replace("\n", "\\n")
+            );
+            
+            out.print(json);
+            out.flush();
+            
+            System.out.println(" Verificación de límite: puedeEditar=" + puedeEditar);
+            
+        } catch (Exception e) {
+            System.out.println(" Error al verificar límite: " + e.getMessage());
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+        }
+    }
 
     /**
      * VALIDAR ACCESO POR ROL Y ACCIÓN
@@ -141,7 +197,7 @@ public class AsistenciaServlet extends HttpServlet {
                 // Docente puede ver, verCurso, registrar y registrarGrupal
                 return "ver".equals(accion) || "verCurso".equals(accion) || 
                        "registrar".equals(accion) || "registrarGrupal".equals(accion) ||
-                       "verCursoJson".equals(accion); // Agregado para la nueva acción
+                       "verCursoJson".equals(accion) || "verificarLimite".equals(accion); // ← AGREGADO verificarLimite
                 
             case "padre":
                 // Padre solo puede ver y verPadre (sus propias asistencias)
@@ -216,7 +272,7 @@ public class AsistenciaServlet extends HttpServlet {
             }
 
             if (fecha == null) {
-                fecha = java.time.LocalDate.now().toString();
+                fecha = LocalDate.now().toString();
             }
 
             System.out.println("Buscando asistencias para curso: " + cursoId + ", fecha: " + fecha + ", turno: " + turnoId);
@@ -247,7 +303,7 @@ public class AsistenciaServlet extends HttpServlet {
     }
 
     /**
-     * NUEVO MÉTODO: RETORNAR ASISTENCIAS EN FORMATO JSON
+     * RETORNAR ASISTENCIAS EN FORMATO JSON
      */
     private void verAsistenciasCursoJson(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -259,7 +315,7 @@ public class AsistenciaServlet extends HttpServlet {
                     ? Integer.parseInt(request.getParameter("turno_id")) : 1;
 
             if (fecha == null) {
-                fecha = java.time.LocalDate.now().toString();
+                fecha = LocalDate.now().toString();
             }
 
             System.out.println("Obteniendo asistencias JSON para curso: " + cursoId + ", fecha: " + fecha);
@@ -342,9 +398,9 @@ public class AsistenciaServlet extends HttpServlet {
             }
 
             int mes = request.getParameter("mes") != null
-                    ? Integer.parseInt(request.getParameter("mes")) : java.time.LocalDate.now().getMonthValue();
+                    ? Integer.parseInt(request.getParameter("mes")) : LocalDate.now().getMonthValue();
             int anio = request.getParameter("anio") != null
-                    ? Integer.parseInt(request.getParameter("anio")) : java.time.LocalDate.now().getYear();
+                    ? Integer.parseInt(request.getParameter("anio")) : LocalDate.now().getYear();
 
             System.out.println("Cargando asistencias para alumno (hijo del padre): " + alumnoId + 
                              ", Padre: " + padre.getUsername() + ", Alumno: " + padre.getAlumnoNombre());
@@ -359,7 +415,7 @@ public class AsistenciaServlet extends HttpServlet {
             request.setAttribute("resumen", resumen);
             request.setAttribute("mes", mes);
             request.setAttribute("anio", anio);
-            request.setAttribute("alumnoId", alumnoId); // Siempre el del hijo del padre
+            request.setAttribute("alumnoId", alumnoId);
 
         } catch (Exception e) {
             System.out.println("Error en verAsistenciasPadre:");
@@ -436,6 +492,42 @@ public class AsistenciaServlet extends HttpServlet {
                 cursoSeleccionado = cursos.get(0);
             }
             
+            // ═══════════════════════════════════════════════════════════════════
+            // VERIFICAR LÍMITE DE EDICIÓN
+            // ═══════════════════════════════════════════════════════════════════
+            
+            boolean puedeEditar = true;
+            String mensajeLimite = "";
+            
+            if (cursoSeleccionado != null && fechaParam != null && !fechaParam.isEmpty() && 
+                turnoIdParam != null && !turnoIdParam.isEmpty() && 
+                horaClaseParam != null && !horaClaseParam.isEmpty()) {
+                
+                try {
+                    LocalDate fecha = LocalDate.parse(fechaParam);
+                    LocalTime horaClase = LocalTime.parse(horaClaseParam);
+                    int turnoId = Integer.parseInt(turnoIdParam);
+                    
+                    puedeEditar = configuracionDAO.puedeEditarAsistencia(
+                        cursoSeleccionado.getId(), turnoId, fecha, horaClase
+                    );
+                    
+                    mensajeLimite = configuracionDAO.obtenerMensajeTiempoLimite(
+                        cursoSeleccionado.getId(), turnoId, fecha, horaClase
+                    );
+                    
+                    System.out.println(" Verificación límite: puedeEditar=" + puedeEditar + ", mensaje=" + mensajeLimite);
+                    
+                } catch (Exception e) {
+                    System.out.println(" Error al verificar límite: " + e.getMessage());
+                    // Si hay error, permitir edición por defecto
+                    puedeEditar = true;
+                    mensajeLimite = "No se pudo verificar el límite de tiempo.";
+                }
+            }
+            
+            // ═══════════════════════════════════════════════════════════════════
+            
             // OBTENER ALUMNOS DEL CURSO SELECCIONADO USANDO LA TABLA MATRICULA
             List<Alumno> alumnos = new java.util.ArrayList<>();
             if (cursoSeleccionado != null) {
@@ -484,6 +576,10 @@ public class AsistenciaServlet extends HttpServlet {
             request.setAttribute("horaClaseParam", horaClaseParam);
             request.setAttribute("cursoSeleccionado", cursoSeleccionado);
             request.setAttribute("asistenciasExistentes", asistenciasExistentes);
+            
+            // ← NUEVO: Pasar información de límites a la vista
+            request.setAttribute("puedeEditar", puedeEditar);
+            request.setAttribute("mensajeLimite", mensajeLimite);
 
             request.getRequestDispatcher("registrarAsistencia.jsp").forward(request, response);
 
@@ -596,8 +692,13 @@ public class AsistenciaServlet extends HttpServlet {
         request.getRequestDispatcher("reportesAsistencia.jsp").forward(request, response);
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // ← MODIFICADO: REGISTRO GRUPAL CON VALIDACIÓN DE LÍMITES
+    // ═══════════════════════════════════════════════════════════════════
+    
     /**
      * REGISTRO GRUPAL DE ASISTENCIAS
+     * MODIFICADO: Ahora valida límites de tiempo antes de registrar
      */
     private void registrarAsistenciaGrupal(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -633,6 +734,40 @@ public class AsistenciaServlet extends HttpServlet {
                 return;
             }
 
+            // ═══════════════════════════════════════════════════════════════════
+            //  VALIDAR LÍMITE DE TIEMPO ANTES DE REGISTRAR
+            // ═══════════════════════════════════════════════════════════════════
+            
+            LocalDate fecha = LocalDate.parse(fechaStr);
+            LocalTime horaClaseTime = LocalTime.parse(horaClase);
+            
+            boolean puedeEditar = configuracionDAO.puedeEditarAsistencia(
+                cursoId, turnoId, fecha, horaClaseTime
+            );
+            
+            if (!puedeEditar) {
+                String mensajeLimite = configuracionDAO.obtenerMensajeTiempoLimite(
+                    cursoId, turnoId, fecha, horaClaseTime
+                );
+                
+                System.out.println(" BLOQUEO: No se puede registrar asistencia. " + mensajeLimite);
+                
+                session.setAttribute("error", "⏱️ No se puede registrar/editar la asistencia. " + mensajeLimite);
+                
+                // Redirigir al formulario con los parámetros
+                String redirectUrl = "AsistenciaServlet?accion=registrar";
+                redirectUrl += "&curso_id=" + cursoId;
+                redirectUrl += "&turno_id=" + turnoId;
+                redirectUrl += "&fecha=" + fechaStr;
+                redirectUrl += "&hora_clase=" + horaClase;
+                response.sendRedirect(redirectUrl);
+                return;
+            }
+            
+            System.out.println(" Límite de tiempo verificado: Puede editar");
+            
+            // ═══════════════════════════════════════════════════════════════════
+
             int registradoPor = docente.getId();
 
             // Validar parámetros obligatorios
@@ -648,26 +783,25 @@ public class AsistenciaServlet extends HttpServlet {
                 return;
             }
 
-            // Convertir la fecha de String a LocalDate
-            java.time.LocalDate fecha = java.time.LocalDate.parse(fechaStr);
-
             AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
-            boolean resultado = asistenciaDAO.registrarAsistenciaGrupal(cursoId, turnoId, fecha, horaClase, alumnosJson, registradoPor);
+            boolean resultado = asistenciaDAO.registrarAsistenciaGrupal(
+                cursoId, turnoId, fecha, horaClase, alumnosJson, registradoPor
+            );
 
             if (resultado) {
-                session.setAttribute("mensaje", "Asistencias grupales registradas correctamente");
-                System.out.println("✅ Asistencias guardadas correctamente para curso: " + cursoId + ", fecha: " + fechaStr);
+                session.setAttribute("mensaje", " Asistencias grupales registradas correctamente");
+                System.out.println(" Asistencias guardadas correctamente para curso: " + cursoId + ", fecha: " + fechaStr);
             } else {
                 session.setAttribute("error", "Error al registrar las asistencias grupales");
-                System.out.println("❌ Error al guardar asistencias para curso: " + cursoId + ", fecha: " + fechaStr);
+                System.out.println(" Error al guardar asistencias para curso: " + cursoId + ", fecha: " + fechaStr);
             }
 
             // Redirigir a la vista de asistencias del curso
-            response.sendRedirect("AsistenciaServlet?accion=verCurso&curso_id=" + cursoId + "&fecha=" + fechaStr + "&turno_id=" + turnoId);
+            response.sendRedirect("AsistenciaServlet?accion=verCurso&curso_id=" + cursoId + 
+                                "&fecha=" + fechaStr + "&turno_id=" + turnoId);
 
         } catch (java.time.format.DateTimeParseException e) {
-            session.setAttribute("error", "Formato de fecha incorrecto. Use YYYY-MM-DD");
-            // Redirigir manteniendo los parámetros
+            session.setAttribute("error", "Formato de fecha u hora incorrecto. Use YYYY-MM-DD y HH:mm");
             String redirectUrl = "AsistenciaServlet?accion=registrar";
             redirectUrl += "&curso_id=" + cursoId;
             redirectUrl += "&turno_id=" + turnoId;
@@ -677,7 +811,6 @@ public class AsistenciaServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             session.setAttribute("error", "Error al registrar asistencias grupales: " + e.getMessage());
-            // Redirigir manteniendo los parámetros
             String redirectUrl = "AsistenciaServlet?accion=registrar";
             redirectUrl += "&curso_id=" + cursoId;
             redirectUrl += "&turno_id=" + turnoId;
