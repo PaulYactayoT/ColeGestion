@@ -172,32 +172,77 @@ public List<Curso> listarPorGrado(int gradoId) {
         return c;
     }
 
-    /**
-     * OBTENER UN CURSO POR ID
-     * 
-     * @param id Identificador del curso
-     * @return Objeto Curso o null si no existe
-     */
-    public Curso obtenerPorId(int id) {
-        String sql = "SELECT * FROM vista_cursos_activos WHERE id = ?";
-        
-        try (Connection con = Conexion.getConnection(); 
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-            
-            if (rs.next()) {
-                return mapearDesdeVista(rs);
+            /**
+         * OBTENER UN CURSO POR ID - VERSIÓN COMPLETA PARA EDICIÓN
+         * Incluye TODOS los campos necesarios para el formulario de edición
+         */
+        public Curso obtenerPorId(int id) {
+            // SQL que obtiene datos directamente de las tablas, no de la vista
+            String sql = "SELECT c.*, " +
+                         "g.id as grado_id, " +
+                         "g.nombre as grado_nombre, " +
+                         "g.nivel as nivel, " +
+                         "prof.id as profesor_id, " +
+                         "CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre, " +
+                         "a.id as area_id, " +
+                         "a.nombre as area_nombre " +
+                         "FROM curso c " +
+                         "LEFT JOIN grado g ON c.grado_id = g.id " +
+                         "LEFT JOIN profesor prof ON c.profesor_id = prof.id " +
+                         "LEFT JOIN persona p ON prof.persona_id = p.id " +
+                         "LEFT JOIN area a ON c.area_id = a.id " +
+                         "WHERE c.id = ? AND c.eliminado = 0 AND c.activo = 1";
+
+            try (Connection con = Conexion.getConnection(); 
+                 PreparedStatement ps = con.prepareStatement(sql)) {
+
+                ps.setInt(1, id);
+                ResultSet rs = ps.executeQuery();
+
+                if (rs.next()) {
+                    Curso curso = new Curso();
+
+                    //  Datos básicos del curso
+                    curso.setId(rs.getInt("id"));
+                    curso.setNombre(rs.getString("nombre"));
+                    curso.setCreditos(rs.getInt("creditos"));
+                    curso.setHorasSemanales(rs.getInt("horas_semanales"));
+                    curso.setDescripcion(rs.getString("descripcion"));
+
+                    //  IDs necesarios para el formulario (CRÍTICO)
+                    curso.setGradoId(rs.getInt("grado_id"));
+                    curso.setProfesorId(rs.getInt("profesor_id"));
+
+                    //  Nombres para mostrar
+                    curso.setGradoNombre(rs.getString("grado_nombre"));
+                    curso.setNivel(rs.getString("nivel"));
+                    curso.setProfesorNombre(rs.getString("profesor_nombre"));
+                    curso.setArea(rs.getString("area_nombre"));
+
+                    //  Fechas
+                    curso.setFechaInicio(rs.getDate("fecha_inicio"));
+                    curso.setFechaFin(rs.getDate("fecha_fin"));
+
+                    System.out.println("    Curso obtenido para edición:");
+                    System.out.println("   - ID: " + curso.getId());
+                    System.out.println("   - Nombre: " + curso.getNombre());
+                    System.out.println("   - Grado ID: " + curso.getGradoId());
+                    System.out.println("   - Profesor ID: " + curso.getProfesorId());
+                    System.out.println("   - Nivel: " + curso.getNivel());
+                    System.out.println("   - Área: " + curso.getArea());
+
+                    return curso;
+                }
+
+                System.out.println(" No se encontró curso con ID: " + id);
+
+            } catch (SQLException e) {
+                System.err.println(" Error al obtener curso por ID: " + e.getMessage());
+                e.printStackTrace();
             }
-            
-        } catch (SQLException e) {
-            System.err.println("Error al obtener curso por ID desde vista: " + e.getMessage());
-            e.printStackTrace();
+
+            return null;
         }
-        
-        return null;
-    }
 
     /**
      * LISTAR CURSOS POR NIVEL EDUCATIVO

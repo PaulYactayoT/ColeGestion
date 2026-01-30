@@ -640,47 +640,53 @@
             // FILTRADO DINÁMICO DE ÁREAS SEGÚN NIVEL SELECCIONADO
             // ============================================================
             function filtrarAreas() {
-                const nivelSeleccionado = nivelSelect.value;
-                const opciones = areaSelect.querySelectorAll('option');
-                let areasVisibles = 0;
-                
-                // Resetear el select de área
-                areaSelect.value = '';
-                
-                opciones.forEach(function(opcion) {
-                    // Mantener siempre visible la primera opción (placeholder)
-                    if (opcion.value === '') {
-                        opcion.style.display = '';
-                        if (nivelSeleccionado === '') {
-                            opcion.textContent = 'Primero seleccione un nivel';
-                        } else {
-                            opcion.textContent = 'Seleccione el área';
-                        }
-                        return;
+            const nivelSeleccionado = nivelSelect.value;
+            const opciones = areaSelect.querySelectorAll('option');
+            let areasVisibles = 0;
+
+            // Resetear el select de área
+            areaSelect.value = '';
+
+            opciones.forEach(function(opcion) {
+                // Mantener siempre visible la primera opción (placeholder)
+                if (opcion.value === '') {
+                    opcion.style.display = '';
+                    if (nivelSeleccionado === '') {
+                        opcion.textContent = 'Primero seleccione un nivel';
+                    } else {
+                        opcion.textContent = 'Seleccione el área';
                     }
-                    
-                    const nivelArea = opcion.getAttribute('data-nivel');
-                    
-                    // Mostrar área si:
-                    // 1. El área es para TODOS los niveles, O
-                    // 2. El nivel del área coincide con el nivel seleccionado, O
-                    // 3. El profesor es de TODOS los niveles
-                    if (nivelArea === 'TODOS' || 
-                        nivelArea === nivelSeleccionado || 
-                        nivelSeleccionado === 'TODOS') {
+                    return;
+                }
+
+                const nivelArea = opcion.getAttribute('data-nivel');
+
+                // ? LÓGICA CORREGIDA:
+                if (nivelSeleccionado === 'TODOS') {
+                    // Solo mostrar áreas con nivel "TODOS"
+                    if (nivelArea === 'TODOS') {
                         opcion.style.display = '';
                         areasVisibles++;
                     } else {
                         opcion.style.display = 'none';
                     }
-                });
-                
-                // Si no hay áreas visibles para el nivel seleccionado
-                if (areasVisibles === 0 && nivelSeleccionado !== '') {
-                    const placeholder = areaSelect.querySelector('option[value=""]');
-                    placeholder.textContent = 'No hay áreas disponibles para este nivel';
+                } else {
+                    // Mostrar áreas del nivel seleccionado + áreas "TODOS"
+                    if (nivelArea === 'TODOS' || nivelArea === nivelSeleccionado) {
+                        opcion.style.display = '';
+                        areasVisibles++;
+                    } else {
+                        opcion.style.display = 'none';
+                    }
                 }
+            });
+
+            // Si no hay áreas visibles para el nivel seleccionado
+            if (areasVisibles === 0 && nivelSeleccionado !== '') {
+                const placeholder = areaSelect.querySelector('option[value=""]');
+                placeholder.textContent = 'No hay áreas disponibles para este nivel';
             }
+        }
             
             // Ejecutar filtrado cuando cambia el nivel
             nivelSelect.addEventListener('change', filtrarAreas);

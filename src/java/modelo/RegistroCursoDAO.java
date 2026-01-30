@@ -616,29 +616,30 @@ public class RegistroCursoDAO {
          * ============================================================
          * Obtiene los cursos que pertenecen a un área específica
          */
-        public List<Map<String, Object>> obtenerCursosPorArea(String area) {
+       public List<Map<String, Object>> obtenerCursosPorArea(String area) {
             List<Map<String, Object>> cursos = new ArrayList<>();
 
-            // VALIDACIÓN ROBUSTA
             if (area == null || area.trim().isEmpty() || "undefined".equalsIgnoreCase(area) || "0".equals(area)) {
                 System.err.println(" ADVERTENCIA: El parámetro 'area' es inválido: " + area);
-                return cursos; // Retornar lista vacía
+                return cursos;
             }
 
             System.out.println(" Buscando cursos para área: '" + area + "'");
 
-            String sql = "SELECT DISTINCT " +
-                        "    MIN(c.id) as id, " +              // ✓ Toma el ID más bajo
+            // ✅ CONSULTA MEJORADA: Solo retorna UN curso por nombre
+            String sql = "SELECT " +
+                        "    MIN(c.id) as id, " +              
                         "    c.nombre, " +
                         "    a.nombre as area_nombre, " +
                         "    MIN(c.descripcion) as descripcion, " +
-                        "    MIN(c.creditos) as creditos " +
+                        "    MIN(c.creditos) as creditos, " +
+                        "    COUNT(DISTINCT g.id) as cantidad_grados " +
                         "FROM curso c " +
                         "INNER JOIN area a ON c.area_id = a.id " +
                         "INNER JOIN grado g ON c.grado_id = g.id " +
-                        "WHERE a.nombre = ? " +
+                        "WHERE a.nombre COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci " +
                         "AND c.activo = 1 AND c.eliminado = 0 " +
-                        "GROUP BY c.nombre, a.nombre " +       
+                        "GROUP BY c.nombre, a.nombre " +
                         "ORDER BY c.nombre";
 
             try (Connection conn = Conexion.getConnection();
@@ -657,10 +658,10 @@ public class RegistroCursoDAO {
                     cursos.add(curso);
                 }
 
-                System.out.println(" DAO - Cursos obtenidos para área '" + area + "': " + cursos.size());
+                System.out.println(" Cursos únicos: " + cursos.size());
 
             } catch (SQLException e) {
-                System.err.println(" Error al obtener cursos por área: " + e.getMessage());
+                System.err.println(" Error: " + e.getMessage());
                 e.printStackTrace();
             }
 
