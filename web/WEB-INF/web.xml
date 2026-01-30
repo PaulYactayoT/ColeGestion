@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
+    
+    <!-- ========================================= -->
+    <!-- NOTA: LoginServlet usa @WebServlet en su clase Java -->
+    <!-- Por eso NO está aquí -->
+    <!-- ========================================= -->
+    
+    <servlet>
+        <servlet-name>JustificacionServlet</servlet-name>
+        <servlet-class>controlador.JustificacionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>JustificacionServlet</servlet-name>
+        <url-pattern>/JustificacionServlet</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>AsistenciaServlet</servlet-name>
+        <servlet-class>controlador.AsistenciaServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AsistenciaServlet</servlet-name>
+        <url-pattern>/AsistenciaServlet</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>AlumnoServlet</servlet-name>
+        <servlet-class>controlador.AlumnoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AlumnoServlet</servlet-name>
+        <url-pattern>/AlumnoServlet</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>TareaServlet</servlet-name>
+        <servlet-class>controlador.TareaServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TareaServlet</servlet-name>
+        <url-pattern>/TareaServlet</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>ObservacionServlet</servlet-name>
+        <servlet-class>controlador.ObservacionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ObservacionServlet</servlet-name>
+        <url-pattern>/ObservacionServlet</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>NotasPadreServlet</servlet-name>
+        <servlet-class>controlador.NotasPadreServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>NotasPadreServlet</servlet-name>
+        <url-pattern>/NotasPadreServlet</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>ObservacionesPadreServlet</servlet-name>
+        <servlet-class>controlador.ObservacionesPadreServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ObservacionesPadreServlet</servlet-name>
+        <url-pattern>/ObservacionesPadreServlet</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>TareasPadreServlet</servlet-name>
+        <servlet-class>controlador.TareasPadreServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>TareasPadreServlet</servlet-name>
+        <url-pattern>/TareasPadreServlet</url-pattern>
+    </servlet-mapping>
+
+    <!-- Filtro de Seguridad -->
+    <filter>
+        <filter-name>SecurityFilter</filter-name>
+        <filter-class>SecurityFilter.SecurityFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>SecurityFilter</filter-name>
+        
+        <!-- Directorios protegidos -->
+        <url-pattern>/admin/*</url-pattern>
+        <url-pattern>/padre/*</url-pattern>
+        <url-pattern>/docente/*</url-pattern>
+        
+        <!-- Páginas protegidas -->
+        <url-pattern>/dashboard.jsp</url-pattern>
+        <url-pattern>/usuarios.jsp</url-pattern>
+        <url-pattern>/cursos.jsp</url-pattern>
+        <url-pattern>/profesores.jsp</url-pattern>
+        <url-pattern>/docenteDashboard.jsp</url-pattern>
+        <url-pattern>/justificacionesPadre.jsp</url-pattern>
+        <url-pattern>/notasDocente.jsp</url-pattern>
+        <url-pattern>/notasPadre.jsp</url-pattern>
+        <url-pattern>/observacionesDocente.jsp</url-pattern>
+        <url-pattern>/observacionesPadre.jsp</url-pattern>
+        <url-pattern>/tareaDocente.jsp</url-pattern>
+        <url-pattern>/tareaPadre.jsp</url-pattern>
+        <url-pattern>/verAlumnos.jsp</url-pattern>
+        <url-pattern>/asistenciasDocente.jsp</url-pattern>
+        <url-pattern>/asistenciasCurso.jsp</url-pattern>
+        <url-pattern>/asistenciasPadre.jsp</url-pattern>
+        <url-pattern>/registrarAsistencia.jsp</url-pattern>
+        <url-pattern>/justificacionesPendientes.jsp</url-pattern>
+        <url-pattern>/justificarAusencia.jsp</url-pattern>
+        <url-pattern>/albumPadre.jsp</url-pattern>
+        <url-pattern>/reporteAsistencia.jsp</url-pattern>
+        <url-pattern>/grados.jsp</url-pattern>
+        <url-pattern>/gradoForm.jsp</url-pattern>
+        <url-pattern>/notaForm.jsp</url-pattern>
+        <url-pattern>/tareaForm.jsp</url-pattern>
+        <url-pattern>/uploadImage.jsp</url-pattern>
+        
+        <!-- Servlets protegidos -->
+        <url-pattern>/AlumnoServlet</url-pattern>
+        <url-pattern>/ProfesorServlet</url-pattern>
+        <url-pattern>/AsistenciaServlet</url-pattern>
+        <url-pattern>/TareaServlet</url-pattern>
+        <url-pattern>/ObservacionServlet</url-pattern>
+        <url-pattern>/JustificacionServlet</url-pattern>
+        <url-pattern>/NotasPadreServlet</url-pattern>
+        <url-pattern>/ObservacionesPadreServlet</url-pattern>
+        <url-pattern>/TareasPadreServlet</url-pattern>
+    </filter-mapping>
+    
+    <!-- Página de inicio -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+</web-app>
