@@ -38,7 +38,7 @@ public class LoginServlet extends HttpServlet {
         String captchaHidden = request.getParameter("captchaHidden");
 
         System.out.println("═══════════════════════════════════════");
-        System.out.println("🔐 Intento de login: " + user);
+        System.out.println("Intento de login: " + user);
         System.out.println("Contraseña recibida (primeros 20 chars): " + 
                           (hashedPasswordFromFrontend != null && hashedPasswordFromFrontend.length() > 20 ? 
                            hashedPasswordFromFrontend.substring(0, 20) + "..." : 
@@ -51,7 +51,7 @@ public class LoginServlet extends HttpServlet {
 
             // Verificar si el usuario está bloqueado
             if (usuarioDAO.estaBloqueado(user)) {
-                System.out.println("⛔ Usuario bloqueado: " + user);
+                System.out.println("Usuario bloqueado: " + user);
                 long tiempoRestante = calcularTiempoRestanteBloqueo(user);
                 String json = "{\"success\": false, \"error\": \"Usuario bloqueado. Intente más tarde.\", \"tipoError\": \"bloqueado\", \"tiempoRestante\": " + tiempoRestante + "}";
                 response.getWriter().write(json);
@@ -62,12 +62,12 @@ public class LoginServlet extends HttpServlet {
             Usuario usuario = usuarioDAO.obtenerPorUsername(user);
             
             if (usuario == null) {
-                System.out.println("✗ Usuario no encontrado: " + user);
+                System.out.println("Usuario no encontrado: " + user);
                 manejarCredencialesInvalidas(user, response);
                 return;
             }
 
-            System.out.println("✓ Usuario encontrado:");
+            System.out.println("Usuario encontrado:");
             System.out.println("  - ID: " + usuario.getId());
             System.out.println("  - Persona ID: " + usuario.getPersonaId());
             System.out.println("  - Rol: " + usuario.getRol());
@@ -79,34 +79,34 @@ public class LoginServlet extends HttpServlet {
 
             // Verificar si está activo
             if (!usuario.isActivo()) {
-                System.out.println("⚠️ Usuario inactivo: " + user);
+                System.out.println("Usuario inactivo: " + user);
                 enviarJson(response, false, "Usuario inactivo. Contacte al administrador.", "inactivo");
                 return;
             }
 
             // Validar credenciales
-            System.out.println("🔍 Comparando contraseñas...");
+            System.out.println("Comparando contraseñas...");
             boolean credencialesCorrectas = usuario.getPassword().equals(hashedPasswordFromFrontend);
             
             if (!credencialesCorrectas) {
-                System.out.println("✗ Credenciales incorrectas para: " + user);
+                System.out.println("Credenciales incorrectas para: " + user);
                 System.out.println("  - Hash en BD: " + usuario.getPassword());
                 System.out.println("  - Hash recibido: " + hashedPasswordFromFrontend);
                 manejarCredencialesInvalidas(user, response);
                 return;
             }
 
-            System.out.println("✓ Credenciales correctas");
+            System.out.println("Credenciales correctas");
 
             // Validar CAPTCHA
             if (captchaInput == null || captchaHidden == null || !captchaInput.trim().equalsIgnoreCase(captchaHidden.trim())) {
-                System.out.println("✗ CAPTCHA incorrecto");
+                System.out.println("CAPTCHA incorrecto");
                 String json = "{\"success\": false, \"error\": \"Código de verificación incorrecto\", \"tipoError\": \"requiere_captcha\"}";
                 response.getWriter().write(json);
                 return;
             }
 
-            System.out.println("✓ CAPTCHA validado");
+            System.out.println("CAPTCHA validado");
 
             // Login exitoso
             usuarioDAO.resetearIntentosUsuario(user);
@@ -120,7 +120,7 @@ public class LoginServlet extends HttpServlet {
             String redirectUrl = determinarRedireccion(usuario.getRol(), user, request, response);
             
             if (redirectUrl != null) {
-                System.out.println("✓ LOGIN EXITOSO → " + redirectUrl);
+                System.out.println("LOGIN EXITOSO → " + redirectUrl);
                 System.out.println("═══════════════════════════════════════");
                 enviarJson(response, true, redirectUrl);
             } else {
@@ -128,7 +128,7 @@ public class LoginServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            System.err.println("❌ ERROR EN LOGIN:");
+            System.err.println("ERROR EN LOGIN:");
             e.printStackTrace();
             enviarJson(response, false, "Error interno del servidor", "sistema");
         }
@@ -138,7 +138,7 @@ public class LoginServlet extends HttpServlet {
         usuarioDAO.incrementarIntentoFallido(username);
         int intentosRestantes = getIntentosRestantes(username);
 
-        System.out.println("⚠️ Intentos restantes: " + intentosRestantes);
+        System.out.println("Intentos restantes: " + intentosRestantes);
 
         if (intentosRestantes <= 0) {
             usuarioDAO.bloquearUsuario(username);
@@ -233,16 +233,16 @@ public class LoginServlet extends HttpServlet {
         out.println(".error { color: red; }");
         out.println(".info { color: blue; }");
         out.println("</style></head><body>");
-        out.println("<h1>🔍 Test de conexión para usuario: " + username + "</h1>");
+        out.println("<h1>Test de conexión para usuario: " + username + "</h1>");
         
         try {
             // 1. Verificar usuario en tabla usuario
             out.println("<h2>1. Verificando tabla usuario...</h2>");
             Usuario usuario = usuarioDAO.obtenerPorUsername(username);
             if (usuario == null) {
-                out.println("<p class='error'>❌ Usuario no encontrado en tabla usuario</p>");
+                out.println("<p class='error'>Usuario no encontrado en tabla usuario</p>");
             } else {
-                out.println("<p class='success'>✅ Usuario encontrado:</p>");
+                out.println("<p class='success'>Usuario encontrado:</p>");
                 out.println("<ul>");
                 out.println("<li>ID: " + usuario.getId() + "</li>");
                 out.println("<li>Persona ID: " + usuario.getPersonaId() + "</li>");
@@ -264,7 +264,7 @@ public class LoginServlet extends HttpServlet {
                     ps.setInt(1, usuario.getPersonaId());
                     ResultSet rs = ps.executeQuery();
                     if (rs.next()) {
-                        out.println("<p class='success'>✅ Persona encontrada:</p>");
+                        out.println("<p class='success'>Persona encontrada:</p>");
                         out.println("<ul>");
                         out.println("<li>Nombres: " + rs.getString("nombres") + "</li>");
                         out.println("<li>Apellidos: " + rs.getString("apellidos") + "</li>");
@@ -273,11 +273,11 @@ public class LoginServlet extends HttpServlet {
                         out.println("<li>Activo: " + rs.getBoolean("activo") + "</li>");
                         out.println("</ul>");
                     } else {
-                        out.println("<p class='error'>❌ No existe persona con ID: " + usuario.getPersonaId() + "</p>");
+                        out.println("<p class='error'>No existe persona con ID: " + usuario.getPersonaId() + "</p>");
                     }
                 }
             } else {
-                out.println("<p class='error'>❌ Usuario no tiene persona_id válido</p>");
+                out.println("<p class='error'>Usuario no tiene persona_id válido</p>");
             }
             
             // 3. Verificar profesor
@@ -298,7 +298,7 @@ public class LoginServlet extends HttpServlet {
                         out.println("<li>Eliminado: " + rs.getBoolean("eliminado") + "</li>");
                         out.println("</ul>");
                     } else {
-                        out.println("<p class='error'>❌ No existe profesor para persona_id: " + usuario.getPersonaId() + "</p>");
+                        out.println("<p class='error'>No existe profesor para persona_id: " + usuario.getPersonaId() + "</p>");
                     }
                 }
             }
@@ -308,9 +308,9 @@ public class LoginServlet extends HttpServlet {
             ProfesorDAO profesorDAO = new ProfesorDAO();
             Profesor docente = profesorDAO.obtenerPorUsername(username);
             if (docente == null) {
-                out.println("<p class='error'>❌ ProfesorDAO.obtenerPorUsername devolvió null</p>");
+                out.println("<p class='error'>ProfesorDAO.obtenerPorUsername devolvió null</p>");
             } else {
-                out.println("<p class='success'>✅ Profesor obtenido correctamente:</p>");
+                out.println("<p class='success'>Profesor obtenido correctamente:</p>");
                 out.println("<ul>");
                 out.println("<li>Nombre: " + docente.getNombreCompleto() + "</li>");
                 out.println("<li>Especialidad: " + docente.getEspecialidad() + "</li>");
@@ -321,7 +321,7 @@ public class LoginServlet extends HttpServlet {
             }
             
         } catch (Exception e) {
-            out.println("<p class='error'>❌ Error: " + e.getMessage() + "</p>");
+            out.println("<p class='error'>Error: " + e.getMessage() + "</p>");
             e.printStackTrace();
         }
         
@@ -349,14 +349,14 @@ public class LoginServlet extends HttpServlet {
         out.println(".info { color: blue; }");
         out.println(".warning { color: orange; }");
         out.println("</style></head><body>");
-        out.println("<h1>🔍 DEBUG - Padre/Aprendiz: " + username + "</h1>");
+        out.println("<h1>DEBUG - Padre/Aprendiz: " + username + "</h1>");
         
         try {
             // 1. Verificar usuario
             out.println("<h2>1. Verificando usuario...</h2>");
             Usuario usuario = usuarioDAO.obtenerPorUsername(username);
             if (usuario == null) {
-                out.println("<p class='error'>❌ Usuario no encontrado en tabla usuario</p>");
+                out.println("<p class='error'>Usuario no encontrado en tabla usuario</p>");
                 return;
             } else {
                 out.println("<p class='success'>✅ Usuario encontrado:</p>");
@@ -420,9 +420,9 @@ public class LoginServlet extends HttpServlet {
             PadreDAO padreDAO = new PadreDAO();
             Padre padre = padreDAO.obtenerPorUsername(username);
             if (padre == null) {
-                out.println("<p class='error'>❌ PadreDAO.obtenerPorUsername devolvió null</p>");
+                out.println("<p class='error'>PadreDAO.obtenerPorUsername devolvió null</p>");
             } else {
-                out.println("<p class='success'>✅ Padre obtenido correctamente:</p>");
+                out.println("<p class='success'>Padre obtenido correctamente:</p>");
                 out.println("<ul>");
                 out.println("<li>ID: " + padre.getId() + "</li>");
                 out.println("<li>Nombre: " + padre.getNombreCompleto() + "</li>");
@@ -432,7 +432,7 @@ public class LoginServlet extends HttpServlet {
             }
             
         } catch (Exception e) {
-            out.println("<p class='error'>❌ Error: " + e.getMessage() + "</p>");
+            out.println("<p class='error'>Error: " + e.getMessage() + "</p>");
             e.printStackTrace();
         }
         
@@ -546,7 +546,7 @@ public class LoginServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         if (session != null) {
             String usuario = (String) session.getAttribute("usuario");
-            System.out.println("👋 Cerrando sesión: " + usuario);
+            System.out.println("Cerrando sesión: " + usuario);
             session.invalidate();
         }
         response.sendRedirect("index.jsp?mensaje=Sesión cerrada");
@@ -566,18 +566,18 @@ public class LoginServlet extends HttpServlet {
             if (docente != null) {
                 HttpSession session = request.getSession();
                 session.setAttribute("docente", docente);
-                System.out.println("  ✅ Docente encontrado: " + docente.getNombreCompleto());
-                System.out.println("  ✅ Profesor ID: " + docente.getId());
-                System.out.println("  ✅ Persona ID: " + docente.getPersonaId());
-                System.out.println("  ✅ Especialidad: " + docente.getEspecialidad());
+                System.out.println("  Docente encontrado: " + docente.getNombreCompleto());
+                System.out.println("  Profesor ID: " + docente.getId());
+                System.out.println("  Persona ID: " + docente.getPersonaId());
+                System.out.println("  Especialidad: " + docente.getEspecialidad());
                 
                 return "DocenteDashboardServlet";
             } else {
-                System.out.println("  ❌ Docente no encontrado en la base de datos para usuario: " + user);
+                System.out.println(" Docente no encontrado en la base de datos para usuario: " + user);
                 
                 Usuario usuario = usuarioDAO.obtenerPorUsername(user);
                 if (usuario != null) {
-                    System.out.println("  📋 Usuario existe:");
+                    System.out.println("  Usuario existe:");
                     System.out.println("     - ID: " + usuario.getId());
                     System.out.println("     - Persona ID: " + usuario.getPersonaId());
                     System.out.println("     - Rol: " + usuario.getRol());
@@ -589,7 +589,7 @@ public class LoginServlet extends HttpServlet {
                             ResultSet rs = ps.executeQuery();
                             if (rs.next()) {
                                 int count = rs.getInt("count");
-                                System.out.println("  📋 Profesores encontrados para persona_id " + usuario.getPersonaId() + ": " + count);
+                                System.out.println("  Profesores encontrados para persona_id " + usuario.getPersonaId() + ": " + count);
                             }
                         }
                         
@@ -598,20 +598,20 @@ public class LoginServlet extends HttpServlet {
                             ps.setInt(1, usuario.getPersonaId());
                             ResultSet rs = ps.executeQuery();
                             if (rs.next()) {
-                                System.out.println("  📋 Detalles del profesor:");
+                                System.out.println("  Detalles del profesor:");
                                 System.out.println("     - ID: " + rs.getInt("id"));
                                 System.out.println("     - Activo: " + rs.getBoolean("activo"));
                                 System.out.println("     - Eliminado: " + rs.getBoolean("eliminado"));
                                 System.out.println("     - Especialidad: " + rs.getString("especialidad"));
                             } else {
-                                System.out.println("  ❌ No hay registro en la tabla profesor para persona_id: " + usuario.getPersonaId());
+                                System.out.println("  No hay registro en la tabla profesor para persona_id: " + usuario.getPersonaId());
                             }
                         }
                     } catch (SQLException e) {
-                        System.err.println("  ❌ Error al verificar profesor: " + e.getMessage());
+                        System.err.println("  Error al verificar profesor: " + e.getMessage());
                     }
                 } else {
-                    System.out.println("  ❌ Usuario no encontrado en usuarioDAO");
+                    System.out.println("  Usuario no encontrado en usuarioDAO");
                 }
                 
                 return "index.jsp?error=docente_no_encontrado";
@@ -619,16 +619,16 @@ public class LoginServlet extends HttpServlet {
         }
 
         if ("padre".equalsIgnoreCase(rol)) {
-            System.out.println("  🔍 Buscando información del padre: " + user);
+            System.out.println("  Buscando información del padre: " + user);
             
             // Primero obtener el usuario
             Usuario usuario = usuarioDAO.obtenerPorUsername(user);
             if (usuario == null) {
-                System.out.println("  ❌ Usuario no encontrado en usuarioDAO");
+                System.out.println("  Usuario no encontrado en usuarioDAO");
                 return "index.jsp?error=usuario_no_encontrado";
             }
             
-            System.out.println("  📋 Usuario obtenido:");
+            System.out.println("  ?Usuario obtenido:");
             System.out.println("     - Persona ID: " + usuario.getPersonaId());
             
             // Verificar si la persona tiene tipo correcto
@@ -639,7 +639,7 @@ public class LoginServlet extends HttpServlet {
                     ResultSet rs = ps.executeQuery();
                     if (rs.next()) {
                         String tipoPersona = rs.getString("tipo");
-                        System.out.println("  📋 Tipo de persona: " + tipoPersona);
+                        System.out.println("   Tipo de persona: " + tipoPersona);
                         
                         if (!"PADRE".equals(tipoPersona)) {
                             System.out.println("  ⚠️ Persona no es de tipo PADRE, es: " + tipoPersona);
@@ -657,7 +657,7 @@ public class LoginServlet extends HttpServlet {
                             }
                         }
                     } else {
-                        System.out.println("  ❌ No se encontró persona con ID: " + usuario.getPersonaId());
+                        System.out.println("  No se encontró persona con ID: " + usuario.getPersonaId());
                     }
                 }
                 
@@ -668,10 +668,10 @@ public class LoginServlet extends HttpServlet {
                     ResultSet rs = ps.executeQuery();
                     if (rs.next()) {
                         int count = rs.getInt("count");
-                        System.out.println("  📋 Relaciones familiares encontradas: " + count);
+                        System.out.println("   Relaciones familiares encontradas: " + count);
                         
                         if (count == 0) {
-                            System.out.println("  ⚠️ No tiene relación familiar, buscando alumno para asociar...");
+                            System.out.println("   No tiene relación familiar, buscando alumno para asociar...");
                             
                             // Buscar un alumno para asociar (podría ser el primer alumno disponible)
                             String alumnoSql = "SELECT id FROM alumno WHERE eliminado = 0 LIMIT 1";
@@ -679,7 +679,7 @@ public class LoginServlet extends HttpServlet {
                                 ResultSet rsAlumno = psAlumno.executeQuery();
                                 if (rsAlumno.next()) {
                                     int alumnoId = rsAlumno.getInt("id");
-                                    System.out.println("  🔄 Asociando con alumno ID: " + alumnoId);
+                                    System.out.println("   Asociando con alumno ID: " + alumnoId);
                                     
                                     String insertRelacion = "INSERT INTO relacion_familiar (alumno_id, persona_id, parentesco, es_contacto_principal) VALUES (?, ?, 'PADRE', 1)";
                                     try (PreparedStatement psInsert = conn.prepareStatement(insertRelacion)) {
@@ -696,7 +696,7 @@ public class LoginServlet extends HttpServlet {
                     }
                 }
             } catch (SQLException e) {
-                System.err.println("  ❌ Error verificando datos del padre: " + e.getMessage());
+                System.err.println("  Error verificando datos del padre: " + e.getMessage());
             }
             
             // Ahora intentar obtener el padre
@@ -706,12 +706,12 @@ public class LoginServlet extends HttpServlet {
             if (padre != null) {
                 HttpSession session = request.getSession();
                 session.setAttribute("padre", padre);
-                System.out.println("  ✅ Padre encontrado: " + padre.getNombreCompleto());
-                System.out.println("  ✅ Alumno asociado: " + padre.getAlumnoNombre());
-                System.out.println("  ✅ Código alumno: " + padre.getAlumnoCodigo());
+                System.out.println("  Padre encontrado: " + padre.getNombreCompleto());
+                System.out.println("  Alumno asociado: " + padre.getAlumnoNombre());
+                System.out.println("  Código alumno: " + padre.getAlumnoCodigo());
                 return "padreDashboard.jsp";
             } else {
-                System.out.println("  ❌ Padre no encontrado en PadreDAO");
+                System.out.println("  Padre no encontrado en PadreDAO");
                 
                 // Crear un objeto padre básico con la información disponible
                 try (Connection conn = Conexion.getConnection()) {
@@ -732,19 +732,19 @@ public class LoginServlet extends HttpServlet {
                             
                             HttpSession session = request.getSession();
                             session.setAttribute("padre", padreBasico);
-                            System.out.println("  ✅ Padre básico creado: " + nombres + " " + apellidos);
+                            System.out.println("  Padre básico creado: " + nombres + " " + apellidos);
                             return "padreDashboard.jsp";
                         }
                     }
                 } catch (SQLException e) {
-                    System.err.println("  ❌ Error creando padre básico: " + e.getMessage());
+                    System.err.println("  Error creando padre básico: " + e.getMessage());
                 }
                 
                 return "index.jsp?error=padre_invalido";
             }
         }
 
-        System.out.println("✗ Rol desconocido: " + rol);
+        System.out.println("Rol desconocido: " + rol);
         return "index.jsp?error=rol_no_reconocido";
     }
 }

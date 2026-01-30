@@ -3,12 +3,16 @@ package controlador;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import javax.servlet.RequestDispatcher;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import modelo.Curso;
 import modelo.CursoDAO;
 import modelo.GradoDAO;
 import modelo.ProfesorDAO;
 import modelo.Profesor;
+import modelo.RegistroCursoDAO;
 
 @WebServlet("/CursoServlet")
 public class CursoServlet extends HttpServlet {
@@ -32,7 +36,7 @@ public class CursoServlet extends HttpServlet {
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
-
+        
         // Para docentes que quieren ver cursos, validar ownership
         if ("docente".equals(rol) && ("editar".equals(accion) || "eliminar".equals(accion))) {
             Profesor docente = (Profesor) session.getAttribute("docente");
@@ -74,6 +78,9 @@ public class CursoServlet extends HttpServlet {
                 request.setAttribute("lista", dao.listar());
             }
             
+            System.out.println("Cursos encontrados en vista: " + 
+                ((java.util.List<Curso>)request.getAttribute("lista")).size());
+            
             request.getRequestDispatcher("cursos.jsp").forward(request, response);
             return;
         }
@@ -113,83 +120,58 @@ public class CursoServlet extends HttpServlet {
                 return;
             }
             
-            request.setAttribute("grados", new GradoDAO().listar());
-            request.setAttribute("profesores", new ProfesorDAO().listar());
-            request.getRequestDispatcher("cursoForm.jsp").forward(request, response);
+            response.sendRedirect("RegistroCursoServlet?accion=cargarFormulario");
             return;
         }
 
-        // Editar curso existente
+        // Editar curso existente - LLAMAR AL MÉTODO
         if (accion.equals("editar")) {
-            try {
-                int idEditar = Integer.parseInt(request.getParameter("id"));
-                
-                // Usar el nuevo método que trae todos los campos incluida la descripción
-                Curso c = dao.obtenerCursoCompletoPorId(idEditar);
-                
-                if (c == null) {
-                    System.out.println("ERROR: Curso no encontrado con ID: " + idEditar);
-                    session.setAttribute("error", "Curso no encontrado.");
-                    response.sendRedirect("CursoServlet");
-                    return;
-                }
-                
-                // Si es docente, verificar que sea su curso
-                if ("docente".equals(rol)) {
-                    Profesor docente = (Profesor) session.getAttribute("docente");
-                    if (docente == null || c.getProfesorId() != docente.getId()) {
-                        response.sendRedirect("acceso_denegado.jsp");
-                        return;
-                    }
-                }
-                
-                request.setAttribute("curso", c);
-                request.setAttribute("grados", new GradoDAO().listar());
-                request.setAttribute("profesores", new ProfesorDAO().listar());
-                request.getRequestDispatcher("cursoForm.jsp").forward(request, response);
-                
-            } catch (NumberFormatException e) {
-                System.out.println("ERROR: ID de curso inválido para editar");
-                session.setAttribute("error", "ID de curso inválido.");
-                response.sendRedirect("CursoServlet");
-            }
+            editarCurso(request, response);
             return;
         }
 
-        // Eliminar curso (SOLO ADMIN)
+        // ============================================================
+        // ELIMINAR CURSO - MÉTODO CORREGIDO
+        // ============================================================
         if (accion.equals("eliminar")) {
             if (!"admin".equals(rol)) {
+                System.out.println("ACCESO DENEGADO: Solo admin puede eliminar cursos");
                 response.sendRedirect("acceso_denegado.jsp");
                 return;
             }
             
             try {
-                int idEliminar = Integer.parseInt(request.getParameter("id"));
+                String idParam = request.getParameter("id");
                 
-                // Verificar si tiene dependencias antes de eliminar
-                if (dao.tieneTareas(idEliminar) || dao.tieneHorarios(idEliminar)) {
-                    System.out.println("ADVERTENCIA: Intento de eliminar curso " + idEliminar + 
-                                     " con tareas/horarios asociados");
-                    session.setAttribute("error", 
-                        "No se puede eliminar el curso porque tiene tareas o horarios asociados. " +
-                        "Considera desactivarlo en su lugar.");
+                if (idParam == null || idParam.isEmpty()) {
+                    System.err.println("❌ ERROR: No se proporcionó ID de curso");
+                    session.setAttribute("error", "ID de curso no válido");
                     response.sendRedirect("CursoServlet?accion=listar");
                     return;
                 }
                 
+                int idEliminar = Integer.parseInt(idParam);
+                System.out.println("🗑️ Intentando eliminar curso ID: " + idEliminar);
+                
+                // Llamar al método eliminar del DAO
                 boolean resultado = dao.eliminar(idEliminar);
                 
                 if (resultado) {
-                    System.out.println("Curso eliminado exitosamente: ID " + idEliminar);
+                    System.out.println("✅ Curso eliminado exitosamente: ID " + idEliminar);
                     session.setAttribute("mensaje", "Curso eliminado correctamente");
                 } else {
-                    System.out.println("ERROR: No se pudo eliminar el curso " + idEliminar);
-                    session.setAttribute("error", "Error al eliminar el curso");
+                    System.out.println("❌ ERROR: No se pudo eliminar el curso " + idEliminar);
+                    session.setAttribute("error", "No se pudo eliminar el curso. Es posible que no exista o ya esté eliminado.");
                 }
                 
             } catch (NumberFormatException e) {
-                System.out.println("ERROR: ID de curso inválido para eliminar");
+                System.out.println("❌ ERROR: ID de curso inválido para eliminar");
                 session.setAttribute("error", "ID de curso inválido.");
+                e.printStackTrace();
+            } catch (Exception e) {
+                System.out.println("❌ ERROR inesperado al eliminar curso: " + e.getMessage());
+                session.setAttribute("error", "Error al eliminar el curso: " + e.getMessage());
+                e.printStackTrace();
             }
             
             response.sendRedirect("CursoServlet?accion=listar");
@@ -197,7 +179,7 @@ public class CursoServlet extends HttpServlet {
         }
 
         // Acción desconocida
-        System.out.println("ADVERTENCIA: Acción desconocida: " + accion);
+        System.out.println("⚠️ ADVERTENCIA: Acción desconocida: " + accion);
         response.sendRedirect("CursoServlet?accion=listar");
     }
 
@@ -279,7 +261,7 @@ public class CursoServlet extends HttpServlet {
             c.setArea(area);
         }
 
-        // NUEVO: Capturar descripción
+        // Capturar descripción
         String descripcion = request.getParameter("descripcion");
         if (descripcion != null && !descripcion.isEmpty()) {
             c.setDescripcion(descripcion);
@@ -300,10 +282,10 @@ public class CursoServlet extends HttpServlet {
             resultado = nuevoId > 0;
             
             if (resultado) {
-                System.out.println("Nuevo curso creado: " + c.getNombre() + " (ID: " + nuevoId + ")");
+                System.out.println("✅ Nuevo curso creado: " + c.getNombre() + " (ID: " + nuevoId + ")");
                 session.setAttribute("mensaje", "Curso creado correctamente");
             } else {
-                System.out.println("ERROR: No se pudo crear el curso: " + c.getNombre());
+                System.out.println("❌ ERROR: No se pudo crear el curso: " + c.getNombre());
                 session.setAttribute("error", "Error al crear el curso");
             }
         } else {
@@ -312,14 +294,75 @@ public class CursoServlet extends HttpServlet {
             resultado = dao.actualizar(c);
             
             if (resultado) {
-                System.out.println("Curso actualizado: " + c.getNombre() + " (ID: " + id + ")");
+                System.out.println("✅ Curso actualizado: " + c.getNombre() + " (ID: " + id + ")");
                 session.setAttribute("mensaje", "Curso actualizado correctamente");
             } else {
-                System.out.println("ERROR: No se pudo actualizar el curso " + id);
+                System.out.println("❌ ERROR: No se pudo actualizar el curso " + id);
                 session.setAttribute("error", "Error al actualizar el curso");
             }
         }
 
         response.sendRedirect("CursoServlet?accion=listar");
+    }
+    
+    /**
+     * ============================================================
+     * MÉTODO: editarCurso
+     * ============================================================
+     * Carga los datos de un curso existente para editarlo en el
+     * formulario de registro (registroCurso.jsp)
+     */
+    private void editarCurso(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            // Obtener el ID del curso a editar
+            int cursoId = Integer.parseInt(request.getParameter("id"));
+
+            System.out.println("\n=== CARGANDO CURSO PARA EDITAR ===");
+            System.out.println("ID del curso: " + cursoId);
+
+            // Obtener datos del curso desde la base de datos
+            Curso curso = dao.obtenerPorId(cursoId);
+
+            if (curso != null) {
+                // Obtener datos adicionales necesarios para el formulario
+                RegistroCursoDAO registroDAO = new RegistroCursoDAO();
+
+                // Obtener turnos
+                List<Map<String, Object>> turnos = registroDAO.obtenerTurnos();
+
+                // Obtener horarios del curso
+                List<Map<String, Object>> horarios = dao.obtenerHorariosPorCurso(cursoId);
+
+                // Pasar datos al request
+                request.setAttribute("cursoEditar", curso);
+                request.setAttribute("horariosEditar", horarios);
+                request.setAttribute("turnos", turnos);
+                request.setAttribute("modoEdicion", true);
+
+                System.out.println("✅ Curso: " + curso.getNombre());
+                System.out.println("✅ Horarios: " + horarios.size());
+
+                // Redirigir al formulario de registro (que sirve también para editar)
+                RequestDispatcher rd = request.getRequestDispatcher("registroCurso.jsp");
+                rd.forward(request, response);
+
+                System.out.println("✅ Datos del curso cargados para edición");
+            } else {
+                // Curso no encontrado
+                HttpSession session = request.getSession();
+                session.setAttribute("error", "Curso no encontrado");
+                System.out.println("❌ Curso no encontrado con ID: " + cursoId);
+                response.sendRedirect("CursoServlet?accion=listar");
+            }
+
+        } catch (NumberFormatException e) {
+            System.err.println("❌ Error: ID de curso inválido");
+            response.sendRedirect("CursoServlet?accion=listar");
+        } catch (Exception e) {
+            System.err.println("❌ Error al cargar curso para editar: " + e.getMessage());
+            e.printStackTrace();
+            response.sendRedirect("CursoServlet?accion=listar");
+        }
     }
 }

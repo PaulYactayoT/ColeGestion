@@ -40,6 +40,15 @@ public class UsuarioServlet extends HttpServlet {
         try {
             switch (accion) {
                 case "nuevo":
+                    // ✅ CARGAR PERSONAS SIN USUARIO
+                    request.setAttribute("profesoresSinUsuario", dao.obtenerProfesoresSinUsuario());
+                    request.setAttribute("alumnosSinUsuario", dao.obtenerAlumnosSinUsuario());
+                    request.setAttribute("administrativosSinUsuario", dao.obtenerAdministrativosSinUsuario());
+                    
+                    System.out.println("✅ Profesores sin usuario: " + dao.obtenerProfesoresSinUsuario().size());
+                    System.out.println("✅ Alumnos sin usuario: " + dao.obtenerAlumnosSinUsuario().size());
+                    System.out.println("✅ Administrativos sin usuario: " + dao.obtenerAdministrativosSinUsuario().size());
+                    
                     request.getRequestDispatcher("usuarioForm.jsp").forward(request, response);
                     break;
                     
@@ -126,8 +135,15 @@ public class UsuarioServlet extends HttpServlet {
         String rolUsuario = request.getParameter("rol");
         String personaIdParam = request.getParameter("persona_id");
 
-        System.out.println("Datos recibidos - ID: " + idParam + ", Username: " + username + 
-                         ", Rol: " + rolUsuario + ", Persona ID: " + personaIdParam);
+        System.out.println("========================================");
+        System.out.println("REGISTRO/ACTUALIZACIÓN DE USUARIO");
+        System.out.println("========================================");
+        System.out.println("ID: " + idParam);
+        System.out.println("Username: " + username);
+        System.out.println("Rol: " + rolUsuario);
+        System.out.println("Persona ID: " + personaIdParam);
+        System.out.println("Password recibido: " + (hashedPasswordFromFrontend != null && !hashedPasswordFromFrontend.isEmpty() ? "SÍ (encriptado)" : "NO"));
+        System.out.println("========================================");
 
         // Validaciones básicas
         if (username == null || username.trim().isEmpty() || 
@@ -153,19 +169,27 @@ public class UsuarioServlet extends HttpServlet {
             try {
                 personaId = Integer.parseInt(personaIdParam);
             } catch (NumberFormatException e) {
-                // Persona ID no es obligatorio en algunos casos
-                System.out.println("Persona ID no válido o no proporcionado");
+                System.out.println("⚠️ Persona ID no válido o no proporcionado");
             }
         }
 
         try {
             if (id == 0) {
+                // ===================================================================
                 // CREAR NUEVO USUARIO
-                System.out.println("Creando nuevo usuario: " + username);
+                // ===================================================================
+                System.out.println("📝 CREANDO NUEVO USUARIO: " + username);
+
+                // ✅ VALIDAR QUE SE HAYA SELECCIONADO UNA PERSONA
+                if (personaId <= 0) {
+                    session.setAttribute("error", "Debe seleccionar una persona para asociar el usuario");
+                    response.sendRedirect("UsuarioServlet?accion=nuevo");
+                    return;
+                }
 
                 if (dao.existeUsuario(username.trim())) {
-                    System.out.println("Usuario ya existe: " + username);
-                    session.setAttribute("error", "No se pudo registrar el usuario. El nombre de usuario '" + username + "' ya existe.");
+                    System.out.println("❌ Usuario ya existe: " + username);
+                    session.setAttribute("error", "El nombre de usuario '" + username + "' ya existe");
                     response.sendRedirect("UsuarioServlet?accion=nuevo");
                     return;
                 }
@@ -180,7 +204,7 @@ public class UsuarioServlet extends HttpServlet {
                 Usuario nuevoUsuario = new Usuario();
                 nuevoUsuario.setPersonaId(personaId);
                 nuevoUsuario.setUsername(username.trim());
-                nuevoUsuario.setPassword(hashedPasswordFromFrontend.trim());
+                nuevoUsuario.setPassword(hashedPasswordFromFrontend.trim()); // Ya viene encriptado desde el frontend
                 nuevoUsuario.setRol(rolUsuario.trim());
                 nuevoUsuario.setActivo(true);
                 nuevoUsuario.setEliminado(false);
@@ -192,16 +216,19 @@ public class UsuarioServlet extends HttpServlet {
                 nuevoUsuario.setUltimaConexion(ahora);
 
                 if (dao.agregar(nuevoUsuario)) {
-                    System.out.println("Usuario creado exitosamente: " + username);
-                    session.setAttribute("mensaje", "Usuario registrado exitosamente");
+                    System.out.println("✅ Usuario creado exitosamente: " + username);
+                    System.out.println("✅ Asociado a persona ID: " + personaId);
+                    session.setAttribute("mensaje", "Usuario registrado exitosamente y asociado a la persona");
                 } else {
-                    System.out.println("Error al crear usuario: " + username);
-                    session.setAttribute("error", "No se pudo registrar el usuario. Error del sistema.");
+                    System.out.println("❌ Error al crear usuario: " + username);
+                    session.setAttribute("error", "No se pudo registrar el usuario");
                 }
 
             } else {
+                // ===================================================================
                 // ACTUALIZAR USUARIO EXISTENTE
-                System.out.println("Actualizando usuario ID: " + id);
+                // ===================================================================
+                System.out.println("📝 ACTUALIZANDO USUARIO ID: " + id);
 
                 // Obtener usuario actual de la base de datos
                 Usuario usuarioActual = dao.obtenerPorId(id);
@@ -214,39 +241,37 @@ public class UsuarioServlet extends HttpServlet {
                 // Verificar si el username cambió
                 if (!usuarioActual.getUsername().equals(username.trim())) {
                     if (dao.existeUsuario(username.trim())) {
-                        System.out.println("Nombre de usuario ya existe: " + username);
-                        session.setAttribute("error", "No se pudo actualizar el usuario. El nombre de usuario '" + username + "' ya existe.");
+                        System.out.println("❌ Nombre de usuario ya existe: " + username);
+                        session.setAttribute("error", "El nombre de usuario '" + username + "' ya existe");
                         response.sendRedirect("UsuarioServlet?accion=editar&id=" + id);
                         return;
                     }
                 }
 
                 // Actualizar los campos
-                usuarioActual.setPersonaId(personaId);
                 usuarioActual.setUsername(username.trim());
                 usuarioActual.setRol(rolUsuario.trim());
                 
-                // Manejar la contraseña
+                // Manejar la contraseña (solo si se proporciona nueva)
                 if (hashedPasswordFromFrontend != null && !hashedPasswordFromFrontend.trim().isEmpty()) {
                     usuarioActual.setPassword(hashedPasswordFromFrontend.trim());
-                    System.out.println("Actualizando contraseña para usuario: " + username);
+                    System.out.println("✅ Actualizando contraseña para usuario: " + username);
                 }
-                // Si no se proporciona contraseña, se mantiene la actual (no se modifica el campo)
-
+                
                 // Actualizar la última conexión
                 usuarioActual.setUltimaConexion(new java.util.Date());
 
                 if (dao.actualizar(usuarioActual)) {
-                    System.out.println("Usuario actualizado exitosamente: " + username);
+                    System.out.println("✅ Usuario actualizado exitosamente: " + username);
                     session.setAttribute("mensaje", "Usuario actualizado exitosamente");
                 } else {
-                    System.out.println("Error al actualizar usuario: " + username);
-                    session.setAttribute("error", "No se pudo actualizar el usuario. Verifique los datos o contacte al administrador.");
+                    System.out.println("❌ Error al actualizar usuario: " + username);
+                    session.setAttribute("error", "No se pudo actualizar el usuario");
                 }
             }
 
         } catch (Exception e) {
-            System.err.println("Error en el servlet UsuarioServlet:");
+            System.err.println("❌ ERROR EN EL SERVLET:");
             e.printStackTrace();
             session.setAttribute("error", "Error en el sistema: " + e.getMessage());
         }

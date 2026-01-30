@@ -236,7 +236,7 @@
                                 <i class="bi bi-arrow-clockwise"></i> Recargar
                             </a>
                         </div>
-                    </div>
+                    </div>seleccioncurso
                     <%
                         }
                     %>
