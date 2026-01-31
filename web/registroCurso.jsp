@@ -19,11 +19,12 @@
     }
 
     // ========== OBTENER DATOS ==========
-    List<Map<String, Object>> turnos = (List<Map<String, Object>>) request.getAttribute("turnos");
     
-    if (turnos == null) {
-        turnos = new ArrayList<>();
-    }
+    List<Map<String, Object>> turnos = (List<Map<String, Object>>) request.getAttribute("turnos");
+    List<Map<String, Object>> aulas = (List<Map<String, Object>>) request.getAttribute("aulas"); // ✅ NUEVO
+
+    if (turnos == null) turnos = new ArrayList<>();
+    if (aulas == null) aulas = new ArrayList<>();
     
     String mensaje = (String) session.getAttribute("mensaje");
     String error = (String) session.getAttribute("error");
@@ -1146,6 +1147,8 @@
 
             container.appendChild(createLabel('Día'));
             container.appendChild(diaSelect);
+            container.appendChild(createLabel('Aula'));
+            container.appendChild(aulaSelect);
             container.appendChild(createLabel('Hora inicio'));
             container.appendChild(horaInicio);
             container.appendChild(createLabel('Hora fin'));

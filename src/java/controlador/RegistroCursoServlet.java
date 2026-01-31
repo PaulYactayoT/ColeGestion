@@ -82,6 +82,14 @@ public class RegistroCursoServlet extends HttpServlet {
         else if ("validarHorario".equals(accion)) {
             validarHorarioEnTurno(request, response);
         }
+        // ... otros if ...
+        else if ("jsonAulas".equals(accion)) {
+            List<Map<String, Object>> aulas = dao.obtenerAulas();
+            String json = new Gson().toJson(aulas);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(json);
+        }
         else {
             // Si no hay acción o es desconocida, cargar formulario
             cargarFormulario(request, response);
@@ -142,8 +150,10 @@ public class RegistroCursoServlet extends HttpServlet {
 
             System.out.println("=== CARGANDO FORMULARIO INICIAL ===");
 
-            // Solo obtener turnos al inicio
-            List<Map<String, Object>> turnos = dao.obtenerTurnos();
+           List<Map<String, Object>> turnos = dao.obtenerTurnos();
+           List<Map<String, Object>> aulas = dao.obtenerAulas(); 
+           request.setAttribute("turnos", turnos);
+           request.setAttribute("aulas", aulas); 
 
             // Verificar que no sea null
             if (turnos == null) {
@@ -506,10 +516,10 @@ public class RegistroCursoServlet extends HttpServlet {
         
         try {
             System.out.println("\n========================================");
-            System.out.println("REGISTRANDO CURSO");
+            System.out.println("REGISTRANDO CURSO (CORREGIDO)");
             System.out.println("========================================");
             
-            // Capturar datos del formulario (SIN créditos)
+            // 1. Capturar datos del formulario
             String nombreCurso = request.getParameter("curso");
             int gradoId = Integer.parseInt(request.getParameter("grado"));
             int profesorId = Integer.parseInt(request.getParameter("profesor"));
@@ -517,31 +527,28 @@ public class RegistroCursoServlet extends HttpServlet {
             String descripcion = request.getParameter("descripcion");
             String area = request.getParameter("area");
             
-            // Capturar horarios (arrays)
-            String[] dias = request.getParameterValues("dias[]");
-            String[] horasInicio = request.getParameterValues("horasInicio[]");
-            String[] horasFin = request.getParameterValues("horasFin[]");
+            // 2. Capturar horarios (arrays) Y AULAS
+        String[] dias = request.getParameterValues("dias[]");
+        String[] horasInicio = request.getParameterValues("horasInicio[]");
+        String[] horasFin = request.getParameterValues("horasFin[]");
+        String[] aulas = request.getParameterValues("aulas[]");
             
-            // Log de datos recibidos
-            System.out.println("Datos recibidos:");
-            System.out.println("  Curso: " + nombreCurso);
-            System.out.println("  Grado ID: " + gradoId);
-            System.out.println("  Profesor ID: " + profesorId);
-            System.out.println("  Turno ID: " + turnoId);
-            System.out.println("  Área: " + area);
-            System.out.println("  Días: " + Arrays.toString(dias));
-            System.out.println("  Horas inicio: " + Arrays.toString(horasInicio));
-            System.out.println("  Horas fin: " + Arrays.toString(horasFin));
-
-            // Validar que haya horarios
+            // Validaciones básicas
             if (dias == null || dias.length == 0) {
                 session.setAttribute("error", "Debe agregar al menos un horario");
                 response.sendRedirect("RegistroCursoServlet?accion=cargarFormulario");
                 return;
             }
             
-            // Construir JSON de horarios
-            // Formato: [{"dia":"LUNES","hora_inicio":"08:00","hora_fin":"09:00"}]
+            if (aulas == null || aulas.length != dias.length) {
+            session.setAttribute("error", "Debe seleccionar un aula para cada horario");
+            response.sendRedirect("RegistroCursoServlet?accion=cargarFormulario");
+            return;
+           
+            }
+            
+            // 3. Construir JSON de horarios INCLUYENDO EL AULA_ID
+            // El Store Procedure espera: [{"dia":"LUNES", "hora_inicio":"...", "hora_fin":"...", "aula_id": 1}]
             StringBuilder horariosJson = new StringBuilder("[");
             
             for (int i = 0; i < dias.length; i++) {
@@ -549,20 +556,23 @@ public class RegistroCursoServlet extends HttpServlet {
                     horariosJson.append(",");
                 }
                 horariosJson.append("{")
-                    .append("\"dia\":\"").append(dias[i]).append("\",")
-                    .append("\"hora_inicio\":\"").append(horasInicio[i]).append("\",")
-                    .append("\"hora_fin\":\"").append(horasFin[i]).append("\"")
-                    .append("}");
+                .append("\"dia\":\"").append(dias[i]).append("\",")
+                .append("\"hora_inicio\":\"").append(horasInicio[i]).append("\",")
+                .append("\"hora_fin\":\"").append(horasFin[i]).append("\",")
+                .append("\"aula_id\":").append(aulas[i]) // ✅ CRÍTICO
+                .append("}");
+                
             }
             horariosJson.append("]");
             
-            System.out.println("JSON generado: " + horariosJson.toString());
+            System.out.println("JSON generado (Con Aulas): " + horariosJson.toString());
             
-            // Llamar al DAO para registrar (SIN créditos)
+            // 4. Llamar al DAO
             Map<String, Object> resultado = dao.registrarCursoCompleto(
                 nombreCurso, gradoId, profesorId, turnoId, 
                 descripcion, area, horariosJson.toString()
             );
+                        
             
             System.out.println("Resultado del DAO: " + resultado);
             
@@ -625,17 +635,25 @@ public class RegistroCursoServlet extends HttpServlet {
             String[] dias = request.getParameterValues("dias[]");
             String[] horasInicio = request.getParameterValues("horasInicio[]");
             String[] horasFin = request.getParameterValues("horasFin[]");
+            String[] aulas = request.getParameterValues("aulas[]");
+            
+            if (aulas == null || aulas.length != dias.length) {
+            session.setAttribute("error", "Debe seleccionar un aula para cada horario");
+            response.sendRedirect("RegistroCursoServlet?accion=cargarFormulario");
+            return;
+}
             
             // Construir JSON
             StringBuilder horariosJson = new StringBuilder("[");
             if (dias != null) {
                 for (int i = 0; i < dias.length; i++) {
                     if (i > 0) horariosJson.append(",");
-                    horariosJson.append("{")
-                        .append("\"dia\":\"").append(dias[i]).append("\",")
-                        .append("\"hora_inicio\":\"").append(horasInicio[i]).append("\",")
-                        .append("\"hora_fin\":\"").append(horasFin[i]).append("\"")
-                        .append("}");
+                  horariosJson.append("{")
+                    .append("\"dia\":\"").append(dias[i]).append("\",")
+                    .append("\"hora_inicio\":\"").append(horasInicio[i]).append("\",")
+                    .append("\"hora_fin\":\"").append(horasFin[i]).append("\",")
+                    .append("\"aula_id\":").append(aulas[i]) 
+                    .append("}");
                 }
             }
             horariosJson.append("]");

@@ -787,5 +787,29 @@ public class RegistroCursoDAO {
            }
 
            return cursos;
+           
        }
+       
+       /**
+     * Obtener lista de aulas disponibles desde la BD
+     */
+    public List<Map<String, Object>> obtenerAulas() {
+        List<Map<String, Object>> aulas = new ArrayList<>();
+        String sql = "{CALL sp_listar_aulas()}"; // Llamamos al SP nuevo
+
+        try (Connection conn = Conexion.getConnection();
+             CallableStatement cs = conn.prepareCall(sql);
+             ResultSet rs = cs.executeQuery()) {
+
+            while (rs.next()) {
+                Map<String, Object> aula = new HashMap<>();
+                aula.put("id", rs.getInt("id"));
+                aula.put("nombre", rs.getString("nombre"));
+                aulas.add(aula);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return aulas;
+    }
 }
