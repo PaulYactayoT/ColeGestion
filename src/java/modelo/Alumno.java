@@ -86,6 +86,15 @@ public class Alumno {
     
     // Método auxiliar
     public String getNombreCompleto() {
-        return nombres + " " + apellidos;
+        if (this.apellidos != null && this.nombres != null) {
+            return this.apellidos + ", " + this.nombres;
+        }
+        if (this.nombres != null) {
+            return this.nombres;
+        }
+        if (this.apellidos != null) {
+            return this.apellidos;
+        }
+        return "Sin nombre";
     }
 }

@@ -8,42 +8,29 @@
         return;
     }
     
-    Integer personaId = (Integer) session.getAttribute("personaId");
+    // Obtener datos que el Servlet pasa por request.setAttribute
+    List<Curso> cursos = (List<Curso>) request.getAttribute("cursos");
+    List<Alumno> alumnos = (List<Alumno>) request.getAttribute("alumnos");
+    Curso cursoSeleccionado = (Curso) request.getAttribute("cursoSeleccionado");
+    List<Asistencia> asistenciasExistentes = (List<Asistencia>) request.getAttribute("asistenciasExistentes");
+    Boolean puedeEditar = (Boolean) request.getAttribute("puedeEditar");
+    String mensajeLimite = (String) request.getAttribute("mensajeLimite");
     
-    // Obtener parámetros
-    String cursoIdStr = request.getParameter("cursoId");
-    String turnoIdStr = request.getParameter("turnoId");
-    String fechaStr = request.getParameter("fecha");
-    String horaClaseStr = request.getParameter("horaClase");
+    // Parámetros
+    String cursoIdParam = (String) request.getAttribute("cursoIdParam");
+    String fechaParam = (String) request.getAttribute("fechaParam");
+    String turnoIdParam = (String) request.getAttribute("turnoIdParam");
+    String horaClaseParam = (String) request.getAttribute("horaClaseParam");
     
-    int cursoId = cursoIdStr != null ? Integer.parseInt(cursoIdStr) : 0;
-    int turnoId = turnoIdStr != null ? Integer.parseInt(turnoIdStr) : 0;
-    LocalDate fecha = fechaStr != null ? LocalDate.parse(fechaStr) : LocalDate.now();
-    LocalTime horaClase = horaClaseStr != null ? LocalTime.parse(horaClaseStr) : LocalTime.of(8, 0);
-    
-    // DAOs
-    AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
-    AlumnoDAO alumnoDAO = new AlumnoDAO();
-    CursoDAO cursoDAO = new CursoDAO();
-    TurnoDAO turnoDAO = new TurnoDAO();
-    ConfiguracionLimiteDAO configuracionDAO = new ConfiguracionLimiteDAO();
-    
-    // Obtener datos
-    Curso curso = null;
-    List<Alumno> alumnos = new ArrayList<>();
-    List<Asistencia> asistenciasExistentes = new ArrayList<>();
-    boolean puedeEditar = true;
-    String mensajeLimite = "";
-    
-    if (cursoId > 0 && turnoId > 0) {
-        curso = cursoDAO.obtenerCursoPorId(cursoId);
-        alumnos = alumnoDAO.obtenerAlumnosPorCurso(cursoId, turnoId);
-        asistenciasExistentes = asistenciaDAO.obtenerAsistenciasPorCursoYFecha(cursoId, turnoId, fecha);
-        
-        // Verificar si puede editar
-        puedeEditar = configuracionDAO.puedeEditarAsistencia(cursoId, turnoId, fecha, horaClase);
-        mensajeLimite = configuracionDAO.obtenerMensajeTiempoLimite(cursoId, turnoId, fecha, horaClase);
-    }
+    // Valores por defecto
+    if (cursos == null) cursos = new ArrayList<>();
+    if (alumnos == null) alumnos = new ArrayList<>();
+    if (asistenciasExistentes == null) asistenciasExistentes = new ArrayList<>();
+    if (puedeEditar == null) puedeEditar = true;
+    if (mensajeLimite == null) mensajeLimite = "";
+    if (fechaParam == null) fechaParam = LocalDate.now().toString();
+    if (horaClaseParam == null) horaClaseParam = "08:00";
+    if (turnoIdParam == null) turnoIdParam = "1";
     
     // Crear mapa de asistencias existentes
     Map<Integer, Asistencia> mapaAsistencias = new HashMap<>();
@@ -51,13 +38,15 @@
         mapaAsistencias.put(asist.getAlumnoId(), asist);
     }
     
-    // Obtener listas para filtros
-    List<Curso> cursos = cursoDAO.obtenerCursosPorDocente(personaId);
-    List<Turno> turnos = turnoDAO.listarTurnos();
-    
     // Mensajes
-    String mensaje = request.getParameter("mensaje");
-    String tipoMensaje = request.getParameter("tipo");
+    String mensaje = (String) session.getAttribute("mensaje");
+    String error = (String) session.getAttribute("error");
+    String advertencia = (String) session.getAttribute("advertencia");
+    
+    // Limpiar mensajes de sesión después de mostrarlos
+    session.removeAttribute("mensaje");
+    session.removeAttribute("error");
+    session.removeAttribute("advertencia");
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -65,6 +54,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Asistencia - Sistema Escolar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -83,10 +73,10 @@
         
         /* Header */
         .main-header {
-            background-color: #000000;
+            background-color: #1a1a1a;
             color: #ffffff;
-            padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 12px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
         
         .header-content {
@@ -98,14 +88,55 @@
             align-items: center;
         }
         
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+        
         .header-title {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 600;
+            color: #ffffff;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         .header-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-size: 14px;
-            opacity: 0.9;
+            color: #ffffff;
+        }
+        
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background-color: transparent;
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-logout:hover {
+            background-color: #ffffff;
+            color: #1a1a1a;
         }
         
         /* Container Principal */
@@ -125,17 +156,41 @@
             border-radius: 12px;
             margin-bottom: 30px;
             box-shadow: 0 4px 15px rgba(168, 216, 234, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .page-header h1 {
+        .page-header-left h1 {
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 8px;
         }
         
-        .page-header p {
+        .page-header-left p {
             font-size: 15px;
             opacity: 0.85;
+        }
+        
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #000000;
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-back:hover {
+            background-color: #333333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            color: #ffffff;
         }
         
         /* Alertas */
@@ -470,6 +525,12 @@
                 text-align: center;
             }
             
+            .page-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
             .form-row {
                 grid-template-columns: 1fr;
             }
@@ -493,41 +554,71 @@
     <!-- Header -->
     <header class="main-header">
         <div class="header-content">
-            <div class="header-title">🏫 Sistema de Asistencia Escolar</div>
-            <div class="header-user">👤 <%= session.getAttribute("nombres") %> (<%= rol.toUpperCase() %>)</div>
+            <div class="header-left">
+                <img src="assets/img/logosa.png" alt="Logo" class="logo-img">
+                <span class="header-title">Colegio SA</span>
+            </div>
+            <div class="header-right">
+                <div class="header-user">
+                    <i class="bi bi-person-circle"></i>
+                    <span><%= session.getAttribute("nombres") %></span>
+                </div>
+                <a href="LogoutServlet" class="btn-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Cerrar sesión</span>
+                </a>
+            </div>
         </div>
     </header>
     
     <!-- Container Principal -->
     <div class="container">
-        <!-- Título de Página -->
+        <!-- Titulo de Pagina -->
         <div class="page-header">
-            <h1>✅ Registrar Asistencia</h1>
-            <p>Gestiona la asistencia de los alumnos de forma rápida y eficiente</p>
+            <div class="page-header-left">
+                <h1><i class="bi bi-clipboard-check"></i> Registrar Asistencia</h1>
+                <p>Gestiona la asistencia de los alumnos de forma rapida y eficiente</p>
+            </div>
+            <a href="DocenteDashboardServlet" class="btn-back">
+                <i class="bi bi-arrow-left-circle"></i>
+                <span>Volver al Panel</span>
+            </a>
         </div>
         
         <!-- Mensajes -->
         <% if (mensaje != null) { %>
-            <div class="alert alert-<%= tipoMensaje %>">
-                <span><%= mensaje %></span>
+            <div class="alert alert-success">
+                <span><i class="bi bi-check-circle"></i> <%= mensaje %></span>
             </div>
         <% } %>
         
-        <!-- Información de Límite de Tiempo -->
-        <% if (cursoId > 0 && turnoId > 0) { %>
+        <% if (error != null) { %>
+            <div class="alert alert-error">
+                <span><i class="bi bi-x-circle"></i> <%= error %></span>
+            </div>
+        <% } %>
+        
+        <% if (advertencia != null) { %>
+            <div class="alert alert-warning">
+                <span><i class="bi bi-exclamation-triangle"></i> <%= advertencia %></span>
+            </div>
+        <% } %>
+        
+        <!-- Informacion de Limite de Tiempo -->
+        <% if (cursoSeleccionado != null && mensajeLimite != null && !mensajeLimite.isEmpty()) { %>
             <div class="info-box">
-                <p><strong>⏰ Estado de Edición:</strong> <%= mensajeLimite %></p>
+                <p><strong><i class="bi bi-clock"></i> Estado de Edicion:</strong> <%= mensajeLimite %></p>
                 <% if (!puedeEditar) { %>
-                    <p><strong>⚠️ IMPORTANTE:</strong> Ya no puedes modificar esta asistencia porque el tiempo límite ha vencido.</p>
+                    <p><strong><i class="bi bi-exclamation-triangle"></i> IMPORTANTE:</strong> Ya no puedes modificar esta asistencia porque el tiempo limite ha vencido.</p>
                 <% } %>
             </div>
         <% } %>
         
         <!-- Mensaje de Bloqueo -->
-        <% if (cursoId > 0 && turnoId > 0 && !puedeEditar) { %>
+        <% if (cursoSeleccionado != null && !puedeEditar) { %>
             <div class="locked-message">
-                <div class="icon">🔒</div>
-                <h3>Edición Bloqueada</h3>
+                <div class="icon"><i class="bi bi-lock" style="font-size: 64px;"></i></div>
+                <h3>Edicion Bloqueada</h3>
                 <p><%= mensajeLimite %></p>
                 <p>Para modificar esta asistencia, contacta al administrador del sistema.</p>
             </div>
@@ -535,65 +626,62 @@
         
         <!-- Formulario de Filtros -->
         <div class="filter-section">
-            <form method="GET" action="registrarAsistencia.jsp">
+            <form method="GET" action="AsistenciaServlet">
+                <input type="hidden" name="accion" value="registrar">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="cursoId">📚 Curso</label>
-                        <select name="cursoId" id="cursoId" class="form-control" required>
+                        <label for="curso_id"><i class="bi bi-book"></i> Curso</label>
+                        <select name="curso_id" id="curso_id" class="form-control" required>
                             <option value="">-- Seleccione un curso --</option>
                             <% for (Curso c : cursos) { %>
-                                <option value="<%= c.getId() %>" <%= c.getId() == cursoId ? "selected" : "" %>>
-                                    <%= c.getNombre() %> - <%= c.getGradoNombre() %> <%= c.getSeccion() %>
+                                <option value="<%= c.getId() %>" <%= c.getId() == (cursoSeleccionado != null ? cursoSeleccionado.getId() : 0) ? "selected" : "" %>>
+                                    <%= c.getNombre() %><%= c.getGradoNombre() != null ? " - " + c.getGradoNombre() : "" %>
                                 </option>
                             <% } %>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="turnoId">🕐 Turno</label>
-                        <select name="turnoId" id="turnoId" class="form-control" required>
-                            <option value="">-- Seleccione un turno --</option>
-                            <% for (Turno t : turnos) { %>
-                                <option value="<%= t.getId() %>" <%= t.getId() == turnoId ? "selected" : "" %>>
-                                    <%= t.getNombre() %> (<%= t.getHoraInicio() %> - <%= t.getHoraFin() %>)
-                                </option>
-                            <% } %>
+                        <label for="turno_id"><i class="bi bi-clock"></i> Turno</label>
+                        <select name="turno_id" id="turno_id" class="form-control" required>
+                            <option value="1" <%= "1".equals(turnoIdParam) ? "selected" : "" %>>Manana</option>
+                            <option value="2" <%= "2".equals(turnoIdParam) ? "selected" : "" %>>Tarde</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="fecha">📅 Fecha</label>
+                        <label for="fecha"><i class="bi bi-calendar"></i> Fecha</label>
                         <input type="date" name="fecha" id="fecha" class="form-control" 
-                               value="<%= fecha %>" 
+                               value="<%= fechaParam %>" 
                                max="<%= LocalDate.now() %>" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="horaClase">⏰ Hora de Clase</label>
-                        <input type="time" name="horaClase" id="horaClase" class="form-control" 
-                               value="<%= horaClase %>" required>
+                        <label for="hora_clase"><i class="bi bi-alarm"></i> Hora de Clase</label>
+                        <input type="time" name="hora_clase" id="hora_clase" class="form-control" 
+                               value="<%= horaClaseParam %>" required>
                     </div>
                 </div>
                 
                 <button type="submit" class="btn btn-primary">
-                    🔄 Cargar Asistencia
+                    <i class="bi bi-arrow-repeat"></i> Cargar Asistencia
                 </button>
             </form>
         </div>
         
         <!-- Tabla de Asistencias -->
-        <% if (cursoId > 0 && turnoId > 0 && alumnos.size() > 0) { %>
+        <% if (cursoSeleccionado != null && alumnos != null && alumnos.size() > 0) { %>
             <div class="table-container">
                 <div class="table-header">
-                    <h2>👥 Lista de Alumnos - <%= curso != null ? curso.getNombre() : "" %></h2>
+                    <h2><i class="bi bi-people"></i> Lista de Alumnos - <%= cursoSeleccionado.getNombre() %></h2>
                 </div>
                 
                 <form method="POST" action="AsistenciaServlet">
-                    <input type="hidden" name="accion" value="registrar">
-                    <input type="hidden" name="cursoId" value="<%= cursoId %>">
-                    <input type="hidden" name="turnoId" value="<%= turnoId %>">
-                    <input type="hidden" name="fecha" value="<%= fecha %>">
-                    <input type="hidden" name="horaClase" value="<%= horaClase %>">
+                    <input type="hidden" name="accion" value="registrarGrupal">
+                    <input type="hidden" name="cursoId" value="<%= cursoSeleccionado.getId() %>">
+                    <input type="hidden" name="turnoId" value="<%= turnoIdParam %>">
+                    <input type="hidden" name="fecha" value="<%= fechaParam %>">
+                    <input type="hidden" name="horaClase" value="<%= horaClaseParam %>">
                     
                     <table>
                         <thead>
@@ -634,21 +722,21 @@
                                                        value="PRESENTE"
                                                        <%= "PRESENTE".equals(estadoActual) ? "checked" : "" %>
                                                        <%= !puedeEditar ? "disabled" : "" %>>
-                                                ✓ Presente
+                                                <i class="bi bi-check-circle"></i> Presente
                                             </label>
                                             <label class="radio-option">
                                                 <input type="radio" name="estado_<%= alumno.getId() %>" 
                                                        value="TARDANZA"
                                                        <%= "TARDANZA".equals(estadoActual) ? "checked" : "" %>
                                                        <%= !puedeEditar ? "disabled" : "" %>>
-                                                ⏱ Tardanza
+                                                <i class="bi bi-clock-history"></i> Tardanza
                                             </label>
                                             <label class="radio-option">
                                                 <input type="radio" name="estado_<%= alumno.getId() %>" 
                                                        value="AUSENTE"
                                                        <%= ("AUSENTE".equals(estadoActual) || asistExistente == null) ? "checked" : "" %>
                                                        <%= !puedeEditar ? "disabled" : "" %>>
-                                                ✗ Ausente
+                                                <i class="bi bi-x-circle"></i> Ausente
                                             </label>
                                         </div>
                                     </td>
@@ -666,14 +754,14 @@
                     
                     <div class="table-footer">
                         <button type="submit" class="btn btn-success" <%= !puedeEditar ? "disabled" : "" %>>
-                            💾 Guardar Asistencias
+                            <i class="bi bi-save"></i> Guardar Asistencias
                         </button>
                     </div>
                 </form>
             </div>
-        <% } else if (cursoId > 0 && turnoId > 0 && alumnos.size() == 0) { %>
+        <% } else if (cursoSeleccionado != null && (alumnos == null || alumnos.size() == 0)) { %>
             <div class="alert alert-warning">
-                <span>⚠️ No hay alumnos registrados en este curso y turno.</span>
+                <span><i class="bi bi-exclamation-triangle"></i> No hay alumnos registrados en este curso y turno.</span>
             </div>
         <% } %>
     </div>
@@ -681,7 +769,7 @@
     <!-- Footer -->
     <footer class="main-footer">
         <div class="footer-content">
-            © 2025 Sistema de Asistencia Escolar. Todos los derechos reservados.
+            &copy; 2025 Sistema de Asistencia Escolar. Todos los derechos reservados.
         </div>
     </footer>
 </body>

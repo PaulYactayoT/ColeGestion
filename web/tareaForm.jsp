@@ -21,6 +21,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= editar ? "Editar Tarea" : "Registrar Tarea"%> - Colegio SA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -37,85 +38,72 @@
             flex-direction: column;
         }
 
-        /* HEADER */
-        .header {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            color: white;
-            padding: 20px 0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        /* HEADER - NUEVO DISEÑO */
+        .main-header {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            padding: 12px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-
+        
         .header-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
         }
-
+        
         .header-left {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
-
-        .header-logo {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: white;
-            padding: 5px;
+        
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
         }
-
-        .header-info h1 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin: 0;
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
         }
-
-        .header-info p {
-            font-size: 0.9rem;
-            margin: 0;
-            opacity: 0.9;
-        }
-
+        
         .header-right {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
-
-        .user-info {
-            text-align: right;
+        
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #ffffff;
         }
-
-        .user-info .name {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .user-info .role {
-            font-size: 0.85rem;
-            opacity: 0.8;
-        }
-
+        
         .btn-logout {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 8px 20px;
-            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background-color: transparent;
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 13px;
             text-decoration: none;
             transition: all 0.3s ease;
         }
-
+        
         .btn-logout:hover {
-            background: rgba(255,255,255,0.3);
-            color: white;
-            transform: translateY(-2px);
+            background-color: #ffffff;
+            color: #1a1a1a;
         }
 
         /* MAIN CONTAINER */
@@ -125,6 +113,52 @@
             margin: 40px auto;
             padding: 0 20px;
             width: 100%;
+        }
+
+        /* PAGE HEADER CON BOTÓN DE VOLVER */
+        .page-header {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-header-left h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .page-header-left p {
+            font-size: 15px;
+            opacity: 0.95;
+            margin: 0;
+        }
+        
+        .btn-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-back:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            color: #ffffff;
         }
 
         /* CARD */
@@ -400,64 +434,69 @@
             opacity: 0.7;
         }
 
-        /* ICON STYLES */
-        .input-icon {
-            position: relative;
-        }
-
-        .input-icon i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9E9E9E;
-        }
-
-        .input-icon .form-control {
-            padding-left: 45px;
-        }
-
         /* LOADING ANIMATION */
         .btn-primary:disabled {
             opacity: 0.7;
             cursor: not-allowed;
         }
+
+        /* RESPONSIVO */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- HEADER -->
-    <div class="header">
+    <header class="main-header">
         <div class="header-content">
             <div class="header-left">
-                <img src="assets/img/logosa.png" alt="Logo Colegio" class="header-logo" />
-                <div class="header-info">
-                    <h1>Colegio SA</h1>
-                    <p><i class="fas fa-book"></i> <%= curso.getNombre()%> - <%= curso.getGradoNombre()%></p>
-                </div>
+                <img src="assets/img/logosa.png" alt="Logo" class="logo-img">
+                <span class="header-title">Colegio SA</span>
             </div>
             <div class="header-right">
-                <div class="user-info">
-                    <div class="name"><i class="fas fa-user-tie"></i> <%= docente.getNombres()%> <%= docente.getApellidos()%></div>
-                    <div class="role">Docente</div>
+                <div class="header-user">
+                    <i class="bi bi-person-circle"></i>
+                    <span><%= docente.getNombres()%> <%= docente.getApellidos()%></span>
                 </div>
                 <a href="LogoutServlet" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Cerrar sesión</span>
                 </a>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- MAIN CONTENT -->
+    <!-- PAGE HEADER CON BOTÓN VOLVER -->
     <div class="main-container">
-        <div class="form-card">
-            <div class="form-card-header">
-                <h2>
+        <div class="page-header">
+            <div class="page-header-left">
+                <h1>
                     <i class="fas fa-<%= editar ? "edit" : "plus-circle" %>"></i>
                     <%= editar ? "Editar Tarea" : "Registrar Nueva Tarea"%>
-                </h2>
-                <p><%= editar ? "Actualice la información de la tarea" : "Complete los datos de la nueva tarea"%></p>
+                </h1>
+                <p>
+                    <i class="fas fa-book"></i> <%= curso.getNombre()%> - <%= curso.getGradoNombre()%>
+                </p>
             </div>
+            <a href="TareaServlet?accion=ver&curso_id=<%= curso.getId()%>" class="btn-back">
+                <i class="bi bi-arrow-left-circle"></i>
+                <span>Volver a Tareas</span>
+            </a>
+        </div>
 
+        <!-- MAIN CONTENT -->
+        <div class="form-card">
             <div class="form-card-body">
                 <form action="TareaServlet" method="post" enctype="multipart/form-data" id="tareaForm">
                     <input type="hidden" name="curso_id" value="<%= curso.getId()%>">
@@ -614,7 +653,7 @@
         </div>
         
         <div class="footer-bottom">
-            <p>&copy; 2026 Colegio SA - Todos los derechos reservados</p>
+            <p>&copy; 2025 Colegio SA - Todos los derechos reservados</p>
         </div>
     </div>
 

@@ -1,56 +1,41 @@
 package modelo;
 
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import java.time.DayOfWeek;
 
 /**
- * Clase para configurar límites de edición de asistencia por turno
- * Define cuánto tiempo después de iniciar la clase se puede editar la asistencia
+ * Clase modelo para Configuración de Límites de Edición de Asistencia
  */
 public class ConfiguracionLimiteEdicion {
-    
-    public enum DiaSemana {
-        LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO, DOMINGO;
-        
-        public static DiaSemana fromString(String text) {
-            for (DiaSemana dia : DiaSemana.values()) {
-                if (dia.name().equalsIgnoreCase(text)) {
-                    return dia;
-                }
-            }
-            return LUNES;
-        }
-    }
     
     private int id;
     private int cursoId;
     private int turnoId;
-    private DiaSemana diaSemana;
+    private DayOfWeek diaSemana;
     private LocalTime horaInicioClase;
-    private int limiteEdicionMinutos; // Minutos después del inicio para editar
+    private int limiteEdicionMinutos;
     private boolean aplicaTodosCursos;
     private String descripcion;
     private boolean activo;
     
-    // Campos adicionales
+    // Campos adicionales para mostrar información
     private String cursoNombre;
     private String turnoNombre;
     
     // Constructores
     public ConfiguracionLimiteEdicion() {
         this.activo = true;
-        this.limiteEdicionMinutos = 120; // 2 horas por defecto
         this.aplicaTodosCursos = false;
     }
     
-    public ConfiguracionLimiteEdicion(int cursoId, int turnoId, DiaSemana dia, 
-                                     LocalTime horaInicio, int limiteMinutos) {
+    public ConfiguracionLimiteEdicion(int turnoId, DayOfWeek diaSemana, LocalTime horaInicioClase, 
+                                     int limiteEdicionMinutos) {
         this();
-        this.cursoId = cursoId;
         this.turnoId = turnoId;
-        this.diaSemana = dia;
-        this.horaInicioClase = horaInicio;
-        this.limiteEdicionMinutos = limiteMinutos;
+        this.diaSemana = diaSemana;
+        this.horaInicioClase = horaInicioClase;
+        this.limiteEdicionMinutos = limiteEdicionMinutos;
+        this.aplicaTodosCursos = true;
     }
     
     // Getters y Setters
@@ -78,20 +63,40 @@ public class ConfiguracionLimiteEdicion {
         this.turnoId = turnoId;
     }
     
-    public DiaSemana getDiaSemana() {
+    public DayOfWeek getDiaSemana() {
         return diaSemana;
     }
     
-    public void setDiaSemana(DiaSemana diaSemana) {
+    public void setDiaSemana(DayOfWeek diaSemana) {
         this.diaSemana = diaSemana;
     }
     
-    public void setDiaSemanaFromString(String dia) {
-        this.diaSemana = DiaSemana.fromString(dia);
+    // Método para setear día desde String
+    public void setDiaSemanaFromString(String diaSemanaStr) {
+        if (diaSemanaStr != null && !diaSemanaStr.isEmpty()) {
+            this.diaSemana = DayOfWeek.valueOf(diaSemanaStr.toUpperCase());
+        }
     }
     
+    // Método para obtener día como String
     public String getDiaSemanaString() {
         return diaSemana != null ? diaSemana.name() : "";
+    }
+    
+    // Método para obtener día en español
+    public String getDiaSemanaEspanol() {
+        if (diaSemana == null) return "";
+        
+        switch (diaSemana) {
+            case MONDAY: return "Lunes";
+            case TUESDAY: return "Martes";
+            case WEDNESDAY: return "Miércoles";
+            case THURSDAY: return "Jueves";
+            case FRIDAY: return "Viernes";
+            case SATURDAY: return "Sábado";
+            case SUNDAY: return "Domingo";
+            default: return "";
+        }
     }
     
     public LocalTime getHoraInicioClase() {
@@ -102,17 +107,28 @@ public class ConfiguracionLimiteEdicion {
         this.horaInicioClase = horaInicioClase;
     }
     
-    public String getHoraInicioClaseFormateada() {
-        return horaInicioClase != null ? 
-               horaInicioClase.format(DateTimeFormatter.ofPattern("HH:mm")) : "";
-    }
-    
     public int getLimiteEdicionMinutos() {
         return limiteEdicionMinutos;
     }
     
     public void setLimiteEdicionMinutos(int limiteEdicionMinutos) {
         this.limiteEdicionMinutos = limiteEdicionMinutos;
+    }
+    
+    // Método para obtener el límite en formato legible
+    public String getLimiteEdicionFormateado() {
+        if (limiteEdicionMinutos < 60) {
+            return limiteEdicionMinutos + " minutos";
+        } else {
+            int horas = limiteEdicionMinutos / 60;
+            int minutos = limiteEdicionMinutos % 60;
+            if (minutos == 0) {
+                return horas + (horas == 1 ? " hora" : " horas");
+            } else {
+                return horas + (horas == 1 ? " hora " : " horas ") + 
+                       minutos + " minutos";
+            }
+        }
     }
     
     public boolean isAplicaTodosCursos() {
@@ -155,38 +171,17 @@ public class ConfiguracionLimiteEdicion {
         this.turnoNombre = turnoNombre;
     }
     
-    // Métodos de utilidad
-    
-    /**
-     * Calcula la hora límite para editar
-     */
-    public LocalTime getHoraLimiteEdicion() {
-        if (horaInicioClase == null) return null;
-        return horaInicioClase.plusMinutes(limiteEdicionMinutos);
-    }
-    
-    /**
-     * Obtiene descripción del límite en formato legible
-     */
-    public String getDescripcionLimite() {
-        int horas = limiteEdicionMinutos / 60;
-        int minutos = limiteEdicionMinutos % 60;
-        
-        if (horas > 0 && minutos > 0) {
-            return horas + " hora" + (horas > 1 ? "s" : "") + " y " + 
-                   minutos + " minuto" + (minutos > 1 ? "s" : "");
-        } else if (horas > 0) {
-            return horas + " hora" + (horas > 1 ? "s" : "");
-        } else {
-            return minutos + " minuto" + (minutos > 1 ? "s" : "");
-        }
-    }
-    
     @Override
     public String toString() {
         return String.format(
-            "ConfiguracionLimite{id=%d, curso=%s, turno=%s, dia=%s, hora=%s, limite=%d min}",
-            id, cursoNombre, turnoNombre, diaSemana, getHoraInicioClaseFormateada(), limiteEdicionMinutos
+            "ConfiguracionLimiteEdicion{id=%d, curso='%s', turno='%s', dia=%s, hora=%s, limite=%d min, todos=%b}",
+            id,
+            cursoNombre != null ? cursoNombre : "N/A",
+            turnoNombre != null ? turnoNombre : "N/A",
+            getDiaSemanaEspanol(),
+            horaInicioClase != null ? horaInicioClase.toString() : "N/A",
+            limiteEdicionMinutos,
+            aplicaTodosCursos
         );
     }
 }

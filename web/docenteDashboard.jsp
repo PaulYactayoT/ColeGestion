@@ -71,23 +71,68 @@
                 height: 100vh;
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             }
+            
             .header-bar {
-                background-color: #111;
+                background-color: #1a1a1a;
                 color: white;
-                padding: 15px 30px;
+                padding: 12px 30px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             }
-            .nav-links a {
-                color: white;
-                margin-right: 25px;
+            
+            .header-left {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .logo-img {
+                width: 40px;
+                height: 40px;
+                object-fit: contain;
+            }
+            
+            .header-title {
+                font-size: 20px;
+                font-weight: 600;
+                color: #ffffff;
+            }
+            
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .header-user {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 14px;
+                color: #ffffff;
+            }
+            
+            .btn-logout-header {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                background-color: transparent;
+                border: 1px solid #ffffff;
+                color: #ffffff;
+                padding: 6px 16px;
+                border-radius: 6px;
+                font-size: 13px;
                 text-decoration: none;
+                transition: all 0.3s ease;
             }
-            .nav-links a:hover {
-                text-decoration: underline;
+            
+            .btn-logout-header:hover {
+                background-color: #ffffff;
+                color: #1a1a1a;
             }
+            
             .card-box {
                 background-color: #fff8ed;
                 border-radius: 15px;
@@ -98,10 +143,12 @@
                 border: 1px solid #e9ecef;
                 height: 100%;
             }
+            
             .card-box:hover {
                 transform: translateY(-5px);
                 box-shadow: 0 6px 12px rgba(0,0,0,0.15);
             }
+            
             .asistencia-badge {
                 font-size: 0.8rem;
                 padding: 4px 8px;
@@ -190,7 +237,6 @@
                 color: #212529;
             }
             
-            /* Nuevo estilo para botón de Material de Apoyo */
             .btn-purple-dashboard {
                 background: linear-gradient(135deg, #6f42c1, #563d7c);
                 color: white;
@@ -245,14 +291,18 @@
     <body>
 
         <div class="header-bar">
-            <div class="nav-links">
-                <img src="assets/img/logosa.png" alt="Logo" style="width: 30px; height: auto; margin-right: 10px;" />
-                <span class="fw-bold fs-6">Colegio SA</span>
+            <div class="header-left">
+                <img src="assets/img/logosa.png" alt="Logo" class="logo-img">
+                <span class="header-title">Colegio SA</span>
             </div>
-            <div>
-                <span><i class="bi bi-person-circle"></i> <%= docente.getNombres()%> <%= docente.getApellidos()%></span>
-                <a href="LogoutServlet" class="btn btn-outline-light btn-sm ms-3">
-                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+            <div class="header-right">
+                <div class="header-user">
+                    <i class="bi bi-person-circle"></i>
+                    <span><%= docente.getNombres()%> <%= docente.getApellidos()%></span>
+                </div>
+                <a href="LogoutServlet" class="btn-logout-header">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Cerrar sesión</span>
                 </a>
             </div>
         </div>
@@ -405,7 +455,7 @@
                 </div>
 
                 <div class="text-center mt-0">
-                    <p class="fs-6">&copy; 2025 Colegio SA - Todos los derechos reservados</p>
+                    <p class="fs-6">&copy; 2026 Colegio SA - Todos los derechos reservados</p>
                 </div>
             </div>
         </footer>

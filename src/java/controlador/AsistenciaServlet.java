@@ -24,10 +24,14 @@ import modelo.ConfiguracionLimiteDAO;
 public class AsistenciaServlet extends HttpServlet {
     
     private ConfiguracionLimiteDAO configuracionDAO;
+    private AsistenciaDAO asistenciaDAO;
+    private AlumnoDAO alumnoDAO;
     
     @Override
     public void init() throws ServletException {
         configuracionDAO = new ConfiguracionLimiteDAO();
+        asistenciaDAO = new AsistenciaDAO();
+        alumnoDAO = new AlumnoDAO();
     }
 
     /**
@@ -277,7 +281,6 @@ public class AsistenciaServlet extends HttpServlet {
 
             System.out.println("Buscando asistencias para curso: " + cursoId + ", fecha: " + fecha + ", turno: " + turnoId);
 
-            AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
             List<Asistencia> asistencias = asistenciaDAO.obtenerAsistenciasPorCursoTurnoFecha(cursoId, turnoId, fecha);
 
             CursoDAO cursoDAO = new CursoDAO();
@@ -320,7 +323,6 @@ public class AsistenciaServlet extends HttpServlet {
 
             System.out.println("Obteniendo asistencias JSON para curso: " + cursoId + ", fecha: " + fecha);
 
-            AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
             List<Asistencia> asistencias = asistenciaDAO.obtenerAsistenciasPorCursoTurnoFecha(cursoId, turnoId, fecha);
 
             // Configurar respuesta como JSON
@@ -405,7 +407,6 @@ public class AsistenciaServlet extends HttpServlet {
             System.out.println("Cargando asistencias para alumno (hijo del padre): " + alumnoId + 
                              ", Padre: " + padre.getUsername() + ", Alumno: " + padre.getAlumnoNombre());
 
-            AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
             List<Asistencia> asistencias = asistenciaDAO.obtenerAsistenciasPorAlumnoTurno(alumnoId, 1, mes, anio);
             Map<String, Object> resumen = asistenciaDAO.obtenerResumenAsistenciaAlumnoTurno(alumnoId, 1, mes, anio);
 
@@ -556,7 +557,6 @@ public class AsistenciaServlet extends HttpServlet {
             if (cursoSeleccionado != null && fechaParam != null && !fechaParam.isEmpty() && 
                 turnoIdParam != null && !turnoIdParam.isEmpty()) {
                 try {
-                    AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
                     asistenciasExistentes = asistenciaDAO.obtenerAsistenciasPorCursoTurnoFecha(
                         cursoSeleccionado.getId(), 
                         Integer.parseInt(turnoIdParam), 
@@ -691,134 +691,225 @@ public class AsistenciaServlet extends HttpServlet {
             throws ServletException, IOException {
         request.getRequestDispatcher("reportesAsistencia.jsp").forward(request, response);
     }
-
-    // ═══════════════════════════════════════════════════════════════════
-    // ← MODIFICADO: REGISTRO GRUPAL CON VALIDACIÓN DE LÍMITES
-    // ═══════════════════════════════════════════════════════════════════
     
     /**
-     * REGISTRO GRUPAL DE ASISTENCIAS
-     * MODIFICADO: Ahora valida límites de tiempo antes de registrar
-     */
-    private void registrarAsistenciaGrupal(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
+    * REGISTRAR ASISTENCIA GRUPAL
+    */
+        private void registrarAsistenciaGrupal(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+    try {
         HttpSession session = request.getSession();
+        Integer personaId = (Integer) session.getAttribute("personaId");
 
-        System.out.println("INICIANDO REGISTRO GRUPAL");
-
-        // Variables para poder usarlas en caso de error
-        String fechaStr = null;
-        int cursoId = 0;
-        int turnoId = 0;
-        String horaClase = null;
-
-        try {
-            cursoId = Integer.parseInt(request.getParameter("curso_id"));
-            turnoId = Integer.parseInt(request.getParameter("turno_id"));
-            fechaStr = request.getParameter("fecha");
-            horaClase = request.getParameter("hora_clase");
-            String alumnosJson = request.getParameter("alumnos_json");
-
-            // VALIDACIÓN CRÍTICA: Verificar que el docente tiene acceso a este curso
+        // Si personaId es null, intentar obtenerlo del profesor
+        if (personaId == null) {
+            System.out.println("⚠️ personaId es null, intentando obtener de otras fuentes...");
+            
+            //  Obtener del objeto Profesor en sesión
             Profesor docente = (Profesor) session.getAttribute("docente");
-            if (docente == null) {
-                session.setAttribute("error", "Sesión expirada.");
-                response.sendRedirect("index.jsp");
-                return;
+            
+            if (docente != null) {
+                personaId = docente.getPersonaId();
+                System.out.println(" personaId obtenido del objeto Profesor: " + personaId);
+                session.setAttribute("personaId", personaId); // Guardarlo para próximas veces
             }
-
-            if (!isCursoAssignedToProfesor(cursoId, docente.getId())) {
-                session.setAttribute("error", "No tienes permisos para registrar asistencias en este curso.");
-                response.sendRedirect("acceso_denegado.jsp");
-                return;
+            
+            // Opción 2: Si todavía es null, obtener de profesorId
+            if (personaId == null) {
+                Integer profesorId = (Integer) session.getAttribute("profesorId");
+                if (profesorId != null) {
+                    System.out.println(" Obteniendo personaId desde BD usando profesorId: " + profesorId);
+                    try {
+                        String sql = "SELECT persona_id FROM profesor WHERE id = ?";
+                        java.sql.Connection con = conexion.Conexion.getConnection();
+                        java.sql.PreparedStatement ps = con.prepareStatement(sql);
+                        ps.setInt(1, profesorId);
+                        java.sql.ResultSet rs = ps.executeQuery();
+                        
+                        if (rs.next()) {
+                            personaId = rs.getInt("persona_id");
+                            System.out.println(" personaId obtenido de BD: " + personaId);
+                            session.setAttribute("personaId", personaId);
+                        }
+                        
+                        rs.close();
+                        ps.close();
+                        con.close();
+                    } catch (Exception e) {
+                        System.out.println(" Error al obtener personaId de BD: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
             }
-
-            // ═══════════════════════════════════════════════════════════════════
-            //  VALIDAR LÍMITE DE TIEMPO ANTES DE REGISTRAR
-            // ═══════════════════════════════════════════════════════════════════
             
-            LocalDate fecha = LocalDate.parse(fechaStr);
-            LocalTime horaClaseTime = LocalTime.parse(horaClase);
-            
-            boolean puedeEditar = configuracionDAO.puedeEditarAsistencia(
-                cursoId, turnoId, fecha, horaClaseTime
-            );
-            
-            if (!puedeEditar) {
-                String mensajeLimite = configuracionDAO.obtenerMensajeTiempoLimite(
-                    cursoId, turnoId, fecha, horaClaseTime
-                );
+            // Si después de todo sigue siendo null, error fatal
+            if (personaId == null) {
+                System.out.println(" ERROR FATAL: No se pudo obtener personaId por ningún método");
+                System.out.println("   Atributos en sesión:");
+                java.util.Enumeration<String> attrs = session.getAttributeNames();
+                while (attrs.hasMoreElements()) {
+                    String attr = attrs.nextElement();
+                    System.out.println("   - " + attr + " = " + session.getAttribute(attr));
+                }
                 
-                System.out.println(" BLOQUEO: No se puede registrar asistencia. " + mensajeLimite);
-                
-                session.setAttribute("error", "⏱️ No se puede registrar/editar la asistencia. " + mensajeLimite);
-                
-                // Redirigir al formulario con los parámetros
-                String redirectUrl = "AsistenciaServlet?accion=registrar";
-                redirectUrl += "&curso_id=" + cursoId;
-                redirectUrl += "&turno_id=" + turnoId;
-                redirectUrl += "&fecha=" + fechaStr;
-                redirectUrl += "&hora_clase=" + horaClase;
-                response.sendRedirect(redirectUrl);
+                session.setAttribute("error", "Error de sesión. Por favor cierre sesión e inicie nuevamente.");
+                response.sendRedirect("login.jsp");
                 return;
             }
-            
-            System.out.println(" Límite de tiempo verificado: Puede editar");
-            
-            // ═══════════════════════════════════════════════════════════════════
-
-            int registradoPor = docente.getId();
-
-            // Validar parámetros obligatorios
-            if (alumnosJson == null || alumnosJson.trim().isEmpty()) {
-                session.setAttribute("error", "No se recibieron datos de alumnos");
-                // Redirigir manteniendo los parámetros
-                String redirectUrl = "AsistenciaServlet?accion=registrar";
-                redirectUrl += "&curso_id=" + cursoId;
-                redirectUrl += "&turno_id=" + turnoId;
-                redirectUrl += "&fecha=" + (fechaStr != null ? fechaStr : "");
-                redirectUrl += "&hora_clase=" + (horaClase != null ? horaClase : "");
-                response.sendRedirect(redirectUrl);
-                return;
-            }
-
-            AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
-            boolean resultado = asistenciaDAO.registrarAsistenciaGrupal(
-                cursoId, turnoId, fecha, horaClase, alumnosJson, registradoPor
-            );
-
-            if (resultado) {
-                session.setAttribute("mensaje", " Asistencias grupales registradas correctamente");
-                System.out.println(" Asistencias guardadas correctamente para curso: " + cursoId + ", fecha: " + fechaStr);
-            } else {
-                session.setAttribute("error", "Error al registrar las asistencias grupales");
-                System.out.println(" Error al guardar asistencias para curso: " + cursoId + ", fecha: " + fechaStr);
-            }
-
-            // Redirigir a la vista de asistencias del curso
-            response.sendRedirect("AsistenciaServlet?accion=verCurso&curso_id=" + cursoId + 
-                                "&fecha=" + fechaStr + "&turno_id=" + turnoId);
-
-        } catch (java.time.format.DateTimeParseException e) {
-            session.setAttribute("error", "Formato de fecha u hora incorrecto. Use YYYY-MM-DD y HH:mm");
-            String redirectUrl = "AsistenciaServlet?accion=registrar";
-            redirectUrl += "&curso_id=" + cursoId;
-            redirectUrl += "&turno_id=" + turnoId;
-            redirectUrl += "&hora_clase=" + (horaClase != null ? horaClase : "");
-            response.sendRedirect(redirectUrl);
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            session.setAttribute("error", "Error al registrar asistencias grupales: " + e.getMessage());
-            String redirectUrl = "AsistenciaServlet?accion=registrar";
-            redirectUrl += "&curso_id=" + cursoId;
-            redirectUrl += "&turno_id=" + turnoId;
-            redirectUrl += "&fecha=" + (fechaStr != null ? fechaStr : "");
-            redirectUrl += "&hora_clase=" + (horaClase != null ? horaClase : "");
-            response.sendRedirect(redirectUrl);
         }
+
+        System.out.println(" PersonaId confirmado: " + personaId);
+
+        // Obtener parámetros del formulario
+        String cursoIdStr = request.getParameter("cursoId");
+        String turnoIdStr = request.getParameter("turnoId");
+        String fechaStr = request.getParameter("fecha");
+        String horaClaseStr = request.getParameter("horaClase");
+        
+        System.out.println("   Parámetros recibidos:");
+        System.out.println("   cursoId: " + cursoIdStr);
+        System.out.println("   turnoId: " + turnoIdStr);
+        System.out.println("   fecha: " + fechaStr);
+        System.out.println("   horaClase: " + horaClaseStr);
+        
+        // Validar que los parámetros no sean nulos
+        if (cursoIdStr == null || turnoIdStr == null || fechaStr == null || horaClaseStr == null) {
+            System.out.println(" ERROR: Faltan parámetros requeridos");
+            session.setAttribute("error", "Faltan datos requeridos en el formulario");
+            response.sendRedirect("AsistenciaServlet?accion=registrar");
+            return;
+        }
+        
+        int cursoId = Integer.parseInt(cursoIdStr);
+        int turnoId = Integer.parseInt(turnoIdStr);
+        LocalDate fecha = LocalDate.parse(fechaStr);
+        LocalTime horaClase = LocalTime.parse(horaClaseStr);
+
+        System.out.println("  Parámetros parseados correctamente");
+        System.out.println("   Curso: " + cursoId + ", Turno: " + turnoId);
+        System.out.println("   Fecha: " + fecha + ", Hora: " + horaClase);
+
+        // Obtener lista de alumnos del curso
+        List<Alumno> alumnos = alumnoDAO.obtenerAlumnosPorCurso(cursoId);
+        
+        // Si el método anterior falla, intentar con el alternativo
+        if (alumnos == null || alumnos.isEmpty()) {
+            System.out.println(" obtenerAlumnosPorCurso retornó vacío, intentando método alternativo...");
+            alumnos = obtenerAlumnosPorCursoAlternativo(cursoId);
+        }
+        
+        if (alumnos == null || alumnos.isEmpty()) {
+            System.out.println(" ERROR: No se encontraron alumnos para el curso " + cursoId);
+            session.setAttribute("error", "No hay alumnos registrados en este curso");
+            response.sendRedirect("AsistenciaServlet?accion=registrar&curso_id=" + cursoId);
+            return;
+        }
+        
+        System.out.println(" Se encontraron " + alumnos.size() + " alumnos en el curso");
+
+        // Registrar asistencia para cada alumno
+        int registrados = 0;
+        int errores = 0;
+        int omitidos = 0;
+        
+        for (Alumno alumno : alumnos) {
+            try {
+                String estadoParam = request.getParameter("estado_" + alumno.getId());
+                String observaciones = request.getParameter("observaciones_" + alumno.getId());
+
+                System.out.println("    Alumno ID " + alumno.getId() + ": " + alumno.getNombreCompleto());
+                System.out.println("    Estado recibido: " + estadoParam);
+
+                if (estadoParam != null && !estadoParam.trim().isEmpty()) {
+                    Asistencia asistencia = new Asistencia();
+                    asistencia.setAlumnoId(alumno.getId());
+                    asistencia.setCursoId(cursoId);
+                    asistencia.setTurnoId(turnoId);
+                    asistencia.setFecha(fecha);
+                    asistencia.setHoraClase(horaClase);
+                    asistencia.setEstadoFromString(estadoParam.trim());
+                    asistencia.setObservaciones(observaciones != null ? observaciones.trim() : "");
+                    asistencia.setRegistradoPor(personaId);
+
+                    System.out.println("       Intentando guardar en BD...");
+                    System.out.println("         - alumnoId: " + asistencia.getAlumnoId());
+                    System.out.println("         - cursoId: " + asistencia.getCursoId());
+                    System.out.println("         - turnoId: " + asistencia.getTurnoId());
+                    System.out.println("         - fecha: " + asistencia.getFecha());
+                    System.out.println("         - horaClase: " + asistencia.getHoraClase());
+                    System.out.println("         - estado: " + asistencia.getEstadoString());
+                    System.out.println("         - registradoPor: " + asistencia.getRegistradoPor());
+                    
+                    if (asistenciaDAO.registrarAsistencia(asistencia)) {
+                        registrados++;
+                        System.out.println("GUARDADO EXITOSAMENTE");
+                    } else {
+                        errores++;
+                        System.out.println("ERROR AL GUARDAR (registrarAsistencia retornó false)");
+                    }
+                } else {
+                    omitidos++;
+                    System.out.println("Sin estado seleccionado, se omite");
+                }
+            } catch (Exception e) {
+                errores++;
+                System.out.println(" EXCEPCIÓN al procesar alumno: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("");
+        System.out.println("═══════════════════════════════════════");
+        System.out.println(" RESUMEN FINAL:");
+        System.out.println("    Registrados exitosamente: " + registrados);
+        System.out.println("    Errores: " + errores);
+        System.out.println("    Omitidos (sin estado): " + omitidos);
+        System.out.println("    Total procesados: " + alumnos.size());
+        System.out.println("═══════════════════════════════════════");
+        System.out.println("");
+
+        // Establecer mensaje según resultados
+        if (registrados > 0) {
+            String mensaje = " Asistencia registrada exitosamente para " + registrados + " alumno(s)";
+            if (errores > 0) {
+                mensaje += ". Hubo " + errores + " error(es)";
+            }
+            if (omitidos > 0) {
+                mensaje += ". ℹ️ Se omitieron " + omitidos + " alumno(s) sin estado seleccionado";
+            }
+            session.setAttribute("mensaje", mensaje);
+            System.out.println(" " + mensaje);
+        } else {
+            String errorMsg = " No se pudo registrar ninguna asistencia";
+            if (errores > 0) {
+                errorMsg += ". Hubo " + errores + " error(es)";
+            }
+            session.setAttribute("error", errorMsg);
+            System.out.println(errorMsg);
+        }
+        
+        // Redireccionar de vuelta al formulario con los mismos parámetros
+        String redirectUrl = "AsistenciaServlet?accion=registrar" +
+                           "&curso_id=" + cursoId +
+                           "&turno_id=" + turnoId +
+                           "&fecha=" + fechaStr +
+                           "&hora_clase=" + horaClaseStr;
+        
+        System.out.println(" Redireccionando a: " + redirectUrl);
+        response.sendRedirect(redirectUrl);
+
+    } catch (NumberFormatException e) {
+        System.out.println(" Error de formato en parámetros numéricos: " + e.getMessage());
+        e.printStackTrace();
+        request.getSession().setAttribute("error", "Error en el formato de los datos: " + e.getMessage());
+        response.sendRedirect("AsistenciaServlet?accion=registrar");
+    } catch (Exception e) {
+        System.out.println(" Error general al registrar asistencia grupal: " + e.getMessage());
+        e.printStackTrace();
+        request.getSession().setAttribute("error", "Error al procesar asistencia: " + e.getMessage());
+        response.sendRedirect("AsistenciaServlet?accion=registrar");
     }
+}
 
     /**
      * METODO AUXILIAR PARA VERIFICAR ASIGNACIÓN CURSO-PROFESOR
@@ -843,4 +934,79 @@ public class AsistenciaServlet extends HttpServlet {
         
         return false;
     }
+        
+    /**
+    * EDITAR ASISTENCIA CON VALIDACIÓN DE TIEMPO LÍMITE
+    */
+   private void editarAsistencia(HttpServletRequest request, HttpServletResponse response)
+           throws ServletException, IOException {
+       try {
+           HttpSession session = request.getSession();
+           Integer personaId = (Integer) session.getAttribute("personaId");
+
+           if (personaId == null) {
+               response.sendRedirect("login.jsp");
+               return;
+           }
+
+           int asistenciaId = Integer.parseInt(request.getParameter("asistenciaId"));
+           String nuevoEstado = request.getParameter("estado");
+           String observaciones = request.getParameter("observaciones");
+           int cursoId = Integer.parseInt(request.getParameter("cursoId"));
+           int turnoId = Integer.parseInt(request.getParameter("turnoId"));
+
+           // Obtener la asistencia actual
+           Asistencia asistencia = asistenciaDAO.obtenerAsistenciaPorId(asistenciaId);
+
+           if (asistencia == null) {
+               response.sendRedirect("asistenciasCurso.jsp?mensaje=Asistencia no encontrada&tipo=error");
+               return;
+           }
+
+           // VALIDACIÓN DE TIEMPO LÍMITE
+           boolean puedeEditar = configuracionDAO.puedeEditarAsistencia(
+               asistencia.getCursoId(),
+               asistencia.getTurnoId(),
+               asistencia.getFecha(),
+               asistencia.getHoraClase()
+           );
+
+           if (!puedeEditar) {
+               String mensaje = configuracionDAO.obtenerMensajeTiempoLimite(
+                   asistencia.getCursoId(),
+                   asistencia.getTurnoId(),
+                   asistencia.getFecha(),
+                   asistencia.getHoraClase()
+               );
+
+               response.sendRedirect("asistenciasCurso.jsp?cursoId=" + cursoId +
+                                   "&turnoId=" + turnoId +
+                                   "&mensaje=" + mensaje + "&tipo=error");
+               return;
+           }
+
+           // Actualizar asistencia
+           asistencia.setEstadoFromString(nuevoEstado);
+           asistencia.setObservaciones(observaciones);
+
+           boolean resultado = asistenciaDAO.actualizarAsistencia(asistencia);
+
+           if (resultado) {
+               response.sendRedirect("asistenciasCurso.jsp?cursoId=" + cursoId +
+                                   "&turnoId=" + turnoId +
+                                   "&mensaje=Asistencia actualizada exitosamente&tipo=success");
+           } else {
+               response.sendRedirect("asistenciasCurso.jsp?cursoId=" + cursoId +
+                                   "&turnoId=" + turnoId +
+                                   "&mensaje=Error al actualizar asistencia&tipo=error");
+           }
+
+       } catch (Exception e) {
+           System.out.println(" Error al editar asistencia: " + e.getMessage());
+           e.printStackTrace();
+           response.sendRedirect("asistenciasCurso.jsp?mensaje=Error: " + 
+                               e.getMessage() + "&tipo=error");
+       }
+   }
+    
 }

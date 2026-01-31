@@ -7,16 +7,7 @@
     <!-- NOTA: LoginServlet usa @WebServlet en su clase Java -->
     <!-- Por eso NO está aquí -->
     <!-- ========================================= -->
-    
-    <servlet>
-        <servlet-name>JustificacionServlet</servlet-name>
-        <servlet-class>controlador.JustificacionServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>JustificacionServlet</servlet-name>
-        <url-pattern>/JustificacionServlet</url-pattern>
-    </servlet-mapping>
-    
+   
     <servlet>
         <servlet-name>AsistenciaServlet</servlet-name>
         <servlet-class>controlador.AsistenciaServlet</servlet-class>
