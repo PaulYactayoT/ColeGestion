@@ -1135,6 +1135,24 @@
             horaFin.className = 'form-control mb-2';
             horaFin.id = 'horarioHoraFin';
 
+            // ✅ CREAR SELECT DE AULAS
+            const aulaSelect = document.createElement('select');
+            aulaSelect.className = 'form-select mb-2';
+            aulaSelect.id = 'horarioAula';
+            // Agregar opción por defecto
+            const opcionDefault = document.createElement('option');
+            opcionDefault.value = '';
+            opcionDefault.textContent = '-- Seleccione un aula --';
+            aulaSelect.appendChild(opcionDefault);
+            // Agregar las aulas disponibles desde el servidor
+            <% if (aulas != null && !aulas.isEmpty()) {
+                for (Map<String, Object> aula : aulas) { %>
+                    const opcionAula<%= aula.get("id") %> = document.createElement('option');
+                    opcionAula<%= aula.get("id") %>.value = '<%= aula.get("id") %>';
+                    opcionAula<%= aula.get("id") %>.textContent = '<%= aula.get("nombre") %> (Capacidad: <%= aula.get("capacidad") %>)';
+                    aulaSelect.appendChild(opcionAula<%= aula.get("id") %>);
+            <% }} %>
+
             const btnValidar = document.createElement('button');
             btnValidar.type = 'button';
             btnValidar.className = 'btn btn-success me-2';
@@ -1164,11 +1182,12 @@
                 const dia = diaSelect.value;
                 const hInicio = horaInicio.value;
                 const hFin = horaFin.value;
+                const aulaId = aulaSelect.value; // ✅ CAPTURAR EL AULA
                 const turnoId = document.getElementById('selectTurno').value;
                 const profesorId = document.getElementById('selectProfesor').value;
 
-                if (!dia || !hInicio || !hFin) {
-                    mostrarMensaje('Complete día, hora inicio y hora fin', 'warning');
+                if (!dia || !hInicio || !hFin || !aulaId) { // ✅ VALIDAR QUE SE SELECCIONÓ EL AULA
+                    mostrarMensaje('Complete día, aula, hora inicio y hora fin', 'warning');
                     return;
                 }
 
@@ -1218,7 +1237,8 @@
                     id: ++contadorHorarios,
                     dia: dia,
                     hora_inicio: hInicio,
-                    hora_fin: hFin
+                    hora_fin: hFin,
+                    aula_id: aulaId // ✅ GUARDAR EL AULA_ID
                 });
 
                 container.remove();
@@ -1233,6 +1253,19 @@
             lbl.className = 'form-label mt-2 fw-bold';
             lbl.textContent = text;
             return lbl;
+        }
+
+        // ✅ FUNCIÓN PARA OBTENER NOMBRE DEL AULA
+        function obtenerNombreAula(aulaId) {
+            // Crear un objeto con las aulas desde el servidor
+            const aulasDisponibles = {
+                <% if (aulas != null && !aulas.isEmpty()) {
+                    for (int i = 0; i < aulas.size(); i++) {
+                        Map<String, Object> aula = aulas.get(i); %>
+                        '<%= aula.get("id") %>': '<%= aula.get("nombre") %>'<%= i < aulas.size() - 1 ? "," : "" %>
+                <% }} %>
+            };
+            return aulasDisponibles[aulaId] || 'Aula desconocida';
         }
 
         // ========== RENDERIZAR HORARIOS ==========
@@ -1251,8 +1284,11 @@
                 const item = document.createElement('div');
                 item.className = 'horario-item';
 
+                // ✅ OBTENER NOMBRE DEL AULA
+                const aulaNombre = obtenerNombreAula(h.aula_id);
+                
                 const texto = document.createElement('div');
-                texto.innerHTML = '<strong>' + h.dia + '</strong> — ' + h.hora_inicio + ' a ' + h.hora_fin;
+                texto.innerHTML = '<strong>' + h.dia + '</strong> — ' + h.hora_inicio + ' a ' + h.hora_fin + ' <span class="badge bg-info">' + aulaNombre + '</span>';
 
                 const btnRemove = document.createElement('button');
                 btnRemove.type = 'button';
@@ -1271,6 +1307,7 @@
                 appendHiddenInput('dias[]', h.dia);
                 appendHiddenInput('horasInicio[]', h.hora_inicio);
                 appendHiddenInput('horasFin[]', h.hora_fin);
+                appendHiddenInput('aulas[]', h.aula_id); // ✅ AGREGAR INPUT HIDDEN PARA AULA
             });
         }
 

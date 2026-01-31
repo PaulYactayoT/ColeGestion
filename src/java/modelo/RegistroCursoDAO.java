@@ -805,9 +805,14 @@ public class RegistroCursoDAO {
                 Map<String, Object> aula = new HashMap<>();
                 aula.put("id", rs.getInt("id"));
                 aula.put("nombre", rs.getString("nombre"));
+                aula.put("capacidad", rs.getInt("capacidad")); 
                 aulas.add(aula);
             }
+            
+            System.out.println(" DAO - Aulas obtenidas: " + aulas.size());
+            
         } catch (SQLException e) {
+            System.err.println(" Error al obtener aulas: " + e.getMessage());
             e.printStackTrace();
         }
         return aulas;

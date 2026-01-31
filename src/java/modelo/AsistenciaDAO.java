@@ -28,24 +28,29 @@ public class AsistenciaDAO {
             cs.setDate(4, java.sql.Date.valueOf(a.getFecha()));
             cs.setTime(5, java.sql.Time.valueOf(a.getHoraClase()));
             cs.setString(6, a.getEstadoString());
-            cs.setString(7, a.getObservaciones());
-            cs.setInt(8, a.getRegistradoPor());
+            cs.setInt(7, a.getRegistradoPor());        // ← CORREGIDO: registradoPor va en posición 7
+            cs.setString(8, a.getObservaciones());     // ← CORREGIDO: observaciones va en posición 8
 
             boolean tieneResultados = cs.execute();
-            int resultado = 0;
+            boolean exito = false;
             
             if (tieneResultados) {
                 ResultSet rs = cs.getResultSet();
                 if (rs.next()) {
-                    resultado = rs.getInt("filas_afectadas");
+                    // El SP retorna columnas: exito, mensaje, id
+                    exito = rs.getInt("exito") == 1;
+                    String mensaje = rs.getString("mensaje");
+                    System.out.println("✅ Resultado del SP: " + mensaje);
                 }
                 rs.close();
             } else {
-                resultado = cs.getUpdateCount();
+                // Si no retorna ResultSet, usar update count
+                int updateCount = cs.getUpdateCount();
+                exito = updateCount > 0;
+                System.out.println("✅ Update count: " + updateCount);
             }
             
-            System.out.println("✅ Asistencia registrada. Filas afectadas: " + resultado);
-            return resultado > 0;
+            return exito;
 
         } catch (SQLException e) {
             System.out.println("❌ Error SQL al registrar asistencia:");
@@ -152,24 +157,26 @@ public class AsistenciaDAO {
                     cs.setDate(4, sqlFecha);
                     cs.setTime(5, sqlHora);
                     cs.setString(6, estado);
-                    cs.setString(7, ""); // Observaciones vacías
-                    cs.setInt(8, registradoPor);
+                    cs.setInt(7, registradoPor);        // ← CORREGIDO
+                    cs.setString(8, "");               // ← CORREGIDO: Observaciones vacías
 
                     // Ejecutar y obtener resultado
                     boolean tieneResultados = cs.execute();
-                    int resultado = 0;
+                    boolean exitoRegistro = false;
                     
                     if (tieneResultados) {
                         ResultSet rs = cs.getResultSet();
                         if (rs.next()) {
-                            resultado = rs.getInt("filas_afectadas");
+                            // El SP retorna columnas: exito, mensaje, id
+                            exitoRegistro = rs.getInt("exito") == 1;
                         }
                         rs.close();
                     } else {
-                        resultado = cs.getUpdateCount();
+                        int updateCount = cs.getUpdateCount();
+                        exitoRegistro = updateCount > 0;
                     }
                     
-                    if (resultado > 0) {
+                    if (exitoRegistro) {
                         exitosos++;
                         System.out.println("   ✅ Alumno " + alumnoId + " guardado exitosamente");
                     } else {
@@ -1296,8 +1303,6 @@ public class AsistenciaDAO {
                asist.setEstadoFromString(rs.getString("estado"));
                asist.setObservaciones(rs.getString("observaciones"));
                asist.setRegistradoPor(rs.getInt("registrado_por"));
-
-               // Campos adicionales
                asist.setCursoNombre(rs.getString("curso_nombre"));
                asist.setTurnoNombre(rs.getString("turno_nombre"));
                asist.setAlumnoNombre(rs.getString("alumno_nombre"));
