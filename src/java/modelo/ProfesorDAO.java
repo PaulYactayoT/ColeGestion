@@ -99,6 +99,7 @@ public class ProfesorDAO {
 
     /**
      * OBTENER PROFESOR POR ID
+     * ✅ CORREGIDO: Ahora carga las disponibilidades del profesor
      */
     public Profesor obtenerPorId(int id) {
         String sql = "SELECT " +
@@ -134,7 +135,13 @@ public class ProfesorDAO {
             ResultSet rs = ps.executeQuery();
             
             if (rs.next()) {
-                return mapearResultSet(rs);
+                Profesor profesor = mapearResultSet(rs);
+                
+                //  CARGAR DISPONIBILIDADES
+                List<Disponibilidad> disponibilidades = obtenerDisponibilidadesPorProfesor(id);
+                profesor.setDisponibilidades(disponibilidades);
+                
+                return profesor;
             }
             
         } catch (SQLException e) {
@@ -143,23 +150,80 @@ public class ProfesorDAO {
         
         return null;
     }
-
-   /**
- * CREAR NUEVO PROFESOR
- */
-public boolean crear(Profesor profesor) {
-    Connection conn = null;
-    PreparedStatement psPersona = null;
-    PreparedStatement psProfesor = null;
-    PreparedStatement psUsuario = null;
-    ResultSet rs = null;
     
-    try {
-        conn = Conexion.getConnection();
-        conn.setAutoCommit(false);
-        
-        System.out.println("Iniciando creación de profesor: " + profesor.getNombres() + " " + profesor.getApellidos());
-        
+    /**
+    * OBTENER PROFESOR POR CORREO
+    * Útil para recuperar el profesor recién creado cuando el ID no se establece automáticamente
+    */
+   public Profesor obtenerPorCorreo(String correo) {
+       String sql = "SELECT " +
+                  "    prof.id, " +
+                   "    prof.persona_id, " +
+                   "    prof.turno_id, " +
+                   "    prof.area_id, " +
+                   "    a.nombre as area_nombre, " +
+                   "    p.nombres, " +
+                   "    p.apellidos, " +
+                   "    p.correo, " +
+                   "    p.telefono, " +
+                   "    p.dni, " +
+                   "    p.fecha_nacimiento, " +
+                   "    p.direccion, " +
+                   "    prof.nivel, " + 
+                   "    prof.codigo_profesor, " +
+                   "    prof.fecha_contratacion, " +
+                   "    prof.estado, " +
+                   "    u.username, " +
+                   "    t.nombre as turno_nombre " +
+                   "FROM profesor prof " +
+                   "JOIN persona p ON prof.persona_id = p.id " +
+                   "LEFT JOIN usuario u ON p.id = u.persona_id AND u.rol = 'docente' " +
+                   "LEFT JOIN turno t ON prof.turno_id = t.id " +
+                   "LEFT JOIN area a ON prof.area_id = a.id " +
+                   "WHERE p.correo = ? AND prof.eliminado = 0 " +
+                   "ORDER BY prof.id DESC " +  // Obtener el más reciente si hay duplicados
+                   "LIMIT 1";
+
+       try (Connection con = Conexion.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql)) {
+
+           ps.setString(1, correo);
+           ResultSet rs = ps.executeQuery();
+
+           if (rs.next()) {
+               Profesor profesor = mapearResultSet(rs);
+
+               // Cargar disponibilidades si existen
+               List<Disponibilidad> disponibilidades = obtenerDisponibilidadesPorProfesor(profesor.getId());
+               profesor.setDisponibilidades(disponibilidades);
+
+               return profesor;
+           }
+
+       } catch (SQLException e) {
+           System.err.println("ERROR en obtenerPorCorreo: " + e.getMessage());
+           e.printStackTrace();
+       }
+
+       return null;
+   }
+
+        /**
+        * CREAR NUEVO PROFESOR
+        */
+       public boolean crear(Profesor profesor) {
+           Connection conn = null;
+           PreparedStatement psPersona = null;
+           PreparedStatement psProfesor = null;
+           PreparedStatement psUsuario = null;
+           ResultSet rs = null;
+
+           try {
+               conn = Conexion.getConnection();
+               conn.setAutoCommit(false);
+
+               System.out.println("Iniciando creación de profesor: " + profesor.getNombres() + " " + profesor.getApellidos());
+
         // ========== 1. INSERTAR EN PERSONA ==========
         String sqlPersona = "INSERT INTO persona (nombres, apellidos, correo, telefono, dni, " +
                            "fecha_nacimiento, direccion, tipo, activo) " +
@@ -308,7 +372,7 @@ public boolean crear(Profesor profesor) {
         }
         
         conn.commit();
-        System.out.println(" Profesor creado exitosamente: " + profesor.getNombreCompleto());
+        System.out.println("✅ Profesor creado exitosamente: " + profesor.getNombreCompleto());
         return true;
         
     } catch (SQLException e) {
@@ -565,7 +629,7 @@ public Profesor obtenerPorUsername(String username) {
             }
             
             conn.commit();
-            System.out.println(" Profesor actualizado: " + profesor.getNombreCompleto());
+            System.out.println("✅ Profesor actualizado: " + profesor.getNombreCompleto());
             return true;
             
         } catch (SQLException e) {
@@ -725,20 +789,334 @@ public Profesor obtenerPorUsername(String username) {
         return total;
     }
     
-/**
- *  LISTAR ÁREAS - Usa AreaDAO
- */
-public List<Area> listarAreas() {
-    AreaDAO areaDAO = new AreaDAO();
-    return areaDAO.obtenerAreasActivas();
-}
+            /**
+             *  LISTAR ÁREAS - Usa AreaDAO
+             */
+            public List<Area> listarAreas() {
+                AreaDAO areaDAO = new AreaDAO();
+                return areaDAO.obtenerAreasActivas();
+            }
 
-/**
- * LISTAR TURNOS - Usa TurnoDAO
- */
-public List<Turno> listarTurnos() {
-    TurnoDAO turnoDAO = new TurnoDAO();
-    return turnoDAO.obtenerTurnosActivos();
-}
-    
+            /**
+             * LISTAR TURNOS - Usa TurnoDAO
+             */
+            public List<Turno> listarTurnos() {
+                TurnoDAO turnoDAO = new TurnoDAO();
+                return turnoDAO.obtenerTurnosActivos();
+            }
+
+        /**
+         * ========================================
+         * OBTENER DISPONIBILIDADES DE UN PROFESOR
+         * ========================================
+         * Obtiene todas las disponibilidades horarias de un profesor específico
+         * desde la tabla 'disponibilidad_profesor', incluyendo información del turno.
+         * 
+         * @param profesorId ID del profesor del cual obtener las disponibilidades
+         * @return Lista de objetos Disponibilidad con todas sus propiedades
+         */
+        public List<Disponibilidad> obtenerDisponibilidadesPorProfesor(int profesorId) {
+            List<Disponibilidad> disponibilidades = new ArrayList<>();
+
+            // SQL: Consulta que obtiene las disponibilidades con JOIN a la tabla turno
+            // para traer el nombre del turno
+            String sql = "SELECT " +
+                        "    dp.id, " +
+                        "    dp.profesor_id, " +
+                        "    dp.turno_id, " +
+                        "    t.nombre as turno_nombre, " +
+                        "    dp.dia_semana, " +
+                        "    dp.hora_inicio, " +
+                        "    dp.hora_fin, " +
+                        "    dp.disponible, " +
+                        "    dp.observaciones " +
+                        "FROM disponibilidad_profesor dp " +
+                        "LEFT JOIN turno t ON dp.turno_id = t.id " +
+                        "WHERE dp.profesor_id = ? " +
+                        "AND dp.eliminado = 0 AND dp.activo = 1 " +
+                        "ORDER BY FIELD(dp.dia_semana, 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'), " +
+                        "dp.hora_inicio";
+
+            try (Connection con = Conexion.getConnection();
+                 PreparedStatement ps = con.prepareStatement(sql)) {
+
+                ps.setInt(1, profesorId); // Establecer el ID del profesor en la consulta
+
+                ResultSet rs = ps.executeQuery();
+
+                // Recorrer los resultados y crear objetos Disponibilidad
+                while (rs.next()) {
+                    Disponibilidad disp = new Disponibilidad();
+
+                    disp.setId(rs.getInt("id"));
+                    disp.setProfesorId(rs.getInt("profesor_id"));
+                    disp.setTurnoId(rs.getInt("turno_id"));
+                    disp.setTurnoNombre(rs.getString("turno_nombre"));
+                    disp.setDiaSemana(rs.getString("dia_semana"));
+                    disp.setHoraInicio(rs.getTime("hora_inicio"));
+                    disp.setHoraFin(rs.getTime("hora_fin"));
+                    disp.setDisponible(rs.getBoolean("disponible"));
+                    disp.setObservaciones(rs.getString("observaciones"));
+
+                    disponibilidades.add(disp);
+                }
+
+                System.out.println(" Se encontraron " + disponibilidades.size() + 
+                                 " disponibilidades para el profesor ID: " + profesorId);
+
+            } catch (SQLException e) {
+                System.err.println(" ERROR al obtener disponibilidades del profesor: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            return disponibilidades;
+        }
+        
+         /**
+            * ========================================
+            * GUARDAR DISPONIBILIDADES DE UN PROFESOR
+            * ========================================
+            * Guarda o actualiza todas las disponibilidades de un profesor.
+            * Este método:
+            * 1. Elimina (marca como eliminado) todas las disponibilidades anteriores del profesor
+            * 2. Inserta las nuevas disponibilidades recibidas
+            * 
+            * Se usa una transacción para garantizar la integridad de los datos.
+            * 
+            * @param profesorId ID del profesor
+            * @param disponibilidades Lista de objetos Disponibilidad a guardar
+            * @return true si se guardaron correctamente, false si hubo error
+            */
+           public boolean guardarDisponibilidades(int profesorId, List<Disponibilidad> disponibilidades) {
+                System.out.println("\n═══════════════════════════════════");
+                System.out.println("📌 GUARDANDO DISPONIBILIDADES");
+                System.out.println("Profesor ID: " + profesorId);
+                System.out.println("Total a guardar: " + disponibilidades.size());
+
+                for(Disponibilidad d : disponibilidades){
+                    System.out.println("  ✓ " + d.getDiaSemana() + " | " + 
+                                      d.getHoraInicio() + " - " + d.getHoraFin());
+                }
+                 System.out.println("═══════════════════════════════════\n");
+               Connection conn = null;
+               PreparedStatement psEliminar = null;
+               PreparedStatement psInsertar = null;
+
+               try {
+                   conn = Conexion.getConnection();
+                   conn.setAutoCommit(false); // Iniciar transacción
+
+                   System.out.println(" Guardando disponibilidades para profesor ID: " + profesorId);
+
+                   // ===== PASO 1: ELIMINAR DISPONIBILIDADES ANTERIORES =====
+                   // Marcamos como eliminadas las disponibilidades existentes
+                   String sqlEliminar = "UPDATE disponibilidad_profesor " +
+                                      "SET eliminado = 1, activo = 0 " +
+                                      "WHERE profesor_id = ?";
+
+                   psEliminar = conn.prepareStatement(sqlEliminar);
+                   psEliminar.setInt(1, profesorId);
+                   int eliminados = psEliminar.executeUpdate();
+                   System.out.println("🗑️ Disponibilidades anteriores marcadas como eliminadas: " + eliminados);
+
+                   // ===== PASO 2: INSERTAR NUEVAS DISPONIBILIDADES =====
+                   if (disponibilidades != null && !disponibilidades.isEmpty()) {
+                       String sqlInsertar = "INSERT INTO disponibilidad_profesor " +
+                                          "(profesor_id, turno_id, dia_semana, hora_inicio, hora_fin, " +
+                                          "disponible, observaciones, activo, eliminado) " +
+                                          "VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0)";
+
+                       psInsertar = conn.prepareStatement(sqlInsertar);
+
+                       // Insertar cada disponibilidad en un batch para mejor rendimiento
+                       for (Disponibilidad disp : disponibilidades) {
+                           psInsertar.setInt(1, profesorId);
+                           psInsertar.setInt(2, disp.getTurnoId());
+                           psInsertar.setString(3, disp.getDiaSemana());
+                           psInsertar.setTime(4, disp.getHoraInicio());
+                           psInsertar.setTime(5, disp.getHoraFin());
+                           psInsertar.setBoolean(6, disp.isDisponible());
+                           psInsertar.setString(7, disp.getObservaciones());
+
+                           psInsertar.addBatch(); // Agregar al batch
+                       }
+
+                       int[] resultados = psInsertar.executeBatch(); // Ejecutar todas las inserciones
+                       System.out.println(" Se insertaron " + resultados.length + " nuevas disponibilidades");
+                   } else {
+                       System.out.println(" No hay disponibilidades para insertar");
+                   }
+
+                   conn.commit(); // Confirmar la transacción
+                   System.out.println(" Disponibilidades guardadas exitosamente");
+                   return true;
+
+               } catch (SQLException e) {
+                   System.err.println(" ERROR al guardar disponibilidades: " + e.getMessage());
+                   e.printStackTrace();
+
+                   // En caso de error, revertir la transacción
+                   if (conn != null) {
+                       try {
+                           conn.rollback();
+                           System.err.println(" Transacción revertida");
+                       } catch (SQLException ex) {
+                           System.err.println(" Error al revertir transacción: " + ex.getMessage());
+                       }
+                   }
+                   return false;
+
+               } finally {
+                   // Cerrar recursos
+                   try {
+                       if (psEliminar != null) psEliminar.close();
+                       if (psInsertar != null) psInsertar.close();
+                       if (conn != null) {
+                           conn.setAutoCommit(true); // Restaurar auto-commit
+                           conn.close();
+                       }
+                   } catch (SQLException e) {
+                       System.err.println(" Error cerrando recursos: " + e.getMessage());
+                   }
+               }
+           }   
+        /**
+            * ========================================
+            * ELIMINAR UNA DISPONIBILIDAD ESPECÍFICA
+            * ========================================
+            * Elimina (marca como eliminada) una disponibilidad específica por su ID.
+            * 
+            * @param disponibilidadId ID de la disponibilidad a eliminar
+            * @return true si se eliminó correctamente, false si hubo error
+            */
+           public boolean eliminarDisponibilidad(int disponibilidadId) {
+               String sql = "UPDATE disponibilidad_profesor " +
+                          "SET eliminado = 1, activo = 0 " +
+                          "WHERE id = ?";
+
+               try (Connection con = Conexion.getConnection();
+                    PreparedStatement ps = con.prepareStatement(sql)) {
+
+                   ps.setInt(1, disponibilidadId);
+                   int filas = ps.executeUpdate();
+
+                   if (filas > 0) {
+                       System.out.println(" Disponibilidad ID " + disponibilidadId + " eliminada correctamente");
+                       return true;
+                   } else {
+                       System.out.println(" No se encontró la disponibilidad ID: " + disponibilidadId);
+                       return false;
+                   }
+
+               } catch (SQLException e) {
+                   System.err.println("❌ ERROR al eliminar disponibilidad: " + e.getMessage());
+                   return false;
+               }
+           }
+
+           /**
+            * ========================================
+            * AGREGAR UNA DISPONIBILIDAD INDIVIDUAL
+            * ========================================
+            * Agrega una única disponibilidad para un profesor.
+            * Útil cuando se quiere agregar un horario sin eliminar los existentes.
+            * 
+            * @param disponibilidad Objeto Disponibilidad a insertar
+            * @return ID generado de la disponibilidad insertada, o 0 si hubo error
+            */
+           public int agregarDisponibilidad(Disponibilidad disponibilidad) {
+               String sql = "INSERT INTO disponibilidad_profesor " +
+                          "(profesor_id, turno_id, dia_semana, hora_inicio, hora_fin, " +
+                          "disponible, observaciones, activo, eliminado) " +
+                          "VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0)";
+
+               try (Connection con = Conexion.getConnection();
+                    PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+                   ps.setInt(1, disponibilidad.getProfesorId());
+                   ps.setInt(2, disponibilidad.getTurnoId());
+                   ps.setString(3, disponibilidad.getDiaSemana());
+                   ps.setTime(4, disponibilidad.getHoraInicio());
+                   ps.setTime(5, disponibilidad.getHoraFin());
+                   ps.setBoolean(6, disponibilidad.isDisponible());
+                   ps.setString(7, disponibilidad.getObservaciones());
+
+                   int filas = ps.executeUpdate();
+
+                   if (filas > 0) {
+                       ResultSet rs = ps.getGeneratedKeys();
+                       if (rs.next()) {
+                           int idGenerado = rs.getInt(1);
+                           System.out.println(" Disponibilidad agregada con ID: " + idGenerado);
+                           return idGenerado;
+                       }
+                   }
+
+               } catch (SQLException e) {
+                   System.err.println(" ERROR al agregar disponibilidad: " + e.getMessage());
+                   e.printStackTrace();
+               }
+
+               return 0;
+           }
+
+           /**
+            * ========================================
+            * VERIFICAR SI EXISTE CONFLICTO DE HORARIO
+            * ========================================
+            * Verifica si ya existe una disponibilidad que se traslape con el horario propuesto.
+            * Esto es útil para evitar que se registren horarios duplicados o conflictivos.
+            * 
+            * @param profesorId ID del profesor
+            * @param diaSemana Día de la semana
+            * @param horaInicio Hora de inicio
+            * @param horaFin Hora de fin
+            * @param idExcluir ID de disponibilidad a excluir de la búsqueda (útil para actualizaciones)
+            * @return true si existe conflicto, false si no hay conflicto
+            */
+           public boolean existeConflictoHorario(int profesorId, String diaSemana, 
+                                                Time horaInicio, Time horaFin, int idExcluir) {
+               String sql = "SELECT COUNT(*) as total " +
+                          "FROM disponibilidad_profesor " +
+                          "WHERE profesor_id = ? " +
+                          "AND dia_semana = ? " +
+                          "AND eliminado = 0 " +
+                          "AND activo = 1 " +
+                          "AND id != ? " + // Excluir el ID especificado
+                          "AND (" +
+                          "    (hora_inicio <= ? AND hora_fin > ?) OR " +  // El nuevo horario inicia durante uno existente
+                          "    (hora_inicio < ? AND hora_fin >= ?) OR " +  // El nuevo horario termina durante uno existente
+                          "    (hora_inicio >= ? AND hora_fin <= ?)" +     // El nuevo horario está completamente dentro de uno existente
+                          ")";
+
+               try (Connection con = Conexion.getConnection();
+                    PreparedStatement ps = con.prepareStatement(sql)) {
+
+                   ps.setInt(1, profesorId);
+                   ps.setString(2, diaSemana);
+                   ps.setInt(3, idExcluir);
+                   ps.setTime(4, horaInicio);
+                   ps.setTime(5, horaInicio);
+                   ps.setTime(6, horaFin);
+                   ps.setTime(7, horaFin);
+                   ps.setTime(8, horaInicio);
+                   ps.setTime(9, horaFin);
+
+                   ResultSet rs = ps.executeQuery();
+
+                   if (rs.next()) {
+                       int total = rs.getInt("total");
+                       if (total > 0) {
+                           System.out.println(" Se detectó conflicto de horario: " + total + " registros");
+                           return true;
+                       }
+                   }
+
+               } catch (SQLException e) {
+                   System.err.println(" ERROR al verificar conflicto de horario: " + e.getMessage());
+               }
+
+               return false;
+           }
+        
 }

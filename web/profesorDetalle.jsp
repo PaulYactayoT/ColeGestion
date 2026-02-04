@@ -1,7 +1,7 @@
 <%@ page import="modelo.Profesor" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-
+<%@ page import="modelo.Disponibilidad" %>
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response.setHeader("Pragma", "no-cache");
@@ -702,7 +702,200 @@
                 </div>
             </div>
         </div>
-
+         <%-- ========================================
+             SECCIÓN: DISPONIBILIDAD HORARIA
+             Muestra todos los horarios en los que el profesor está disponible
+             ======================================== --%>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm" style="border-radius: 15px; border: none;">
+                    <div class="card-header" style="background: linear-gradient(135deg, #4f46e5, #4338ca); 
+                                                    color: white; border-radius: 15px 15px 0 0; padding: 1.5rem;">
+                        <h4 class="mb-0" style="font-weight: 700;">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            Disponibilidad Horaria
+                        </h4>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <% 
+                        // Verificar si el profesor tiene disponibilidades registradas
+                        if (p.getDisponibilidades() != null && !p.getDisponibilidades().isEmpty()) {
+                        %>
+                            <%-- ===== SI HAY DISPONIBILIDADES ===== --%>
+                            <div class="alert alert-info mb-4" style="border-left: 4px solid #4f46e5;">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Total de horarios registrados:</strong> 
+                                <%= p.getDisponibilidades().size() %> horario(s)
+                            </div>
+                            
+                            <%-- Tabla responsiva con las disponibilidades --%>
+                            <div class="table-responsive">
+                                <table class="table table-hover" style="border-collapse: separate; border-spacing: 0 10px;">
+                                    <thead style="background: #f9fafb;">
+                                        <tr>
+                                            <th style="border: none; padding: 1rem; color: #4f46e5; font-weight: 600;">
+                                                <i class="fas fa-calendar-day"></i> Día
+                                            </th>
+                                            <th style="border: none; padding: 1rem; color: #4f46e5; font-weight: 600;">
+                                                <i class="fas fa-sun"></i> Turno
+                                            </th>
+                                            <th style="border: none; padding: 1rem; color: #4f46e5; font-weight: 600;">
+                                                <i class="fas fa-clock"></i> Horario
+                                            </th>
+                                            <th style="border: none; padding: 1rem; color: #4f46e5; font-weight: 600;">
+                                                <i class="fas fa-check-circle"></i> Estado
+                                            </th>
+                                            <th style="border: none; padding: 1rem; color: #4f46e5; font-weight: 600;">
+                                                <i class="fas fa-comment"></i> Observaciones
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% 
+                                        // Iterar sobre cada disponibilidad del profesor
+                                        for (modelo.Disponibilidad disp : p.getDisponibilidades()) {
+                                            // Formatear las horas
+                                            String horaInicio = disp.getHoraInicio() != null ? 
+                                                disp.getHoraInicio().toString().substring(0, 5) : "N/A";
+                                            String horaFin = disp.getHoraFin() != null ? 
+                                                disp.getHoraFin().toString().substring(0, 5) : "N/A";
+                                        %>
+                                        <tr style="background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+                                                   border-radius: 10px;">
+                                            <%-- Columna: Día de la semana --%>
+                                            <td style="padding: 1rem; vertical-align: middle; border: none; 
+                                                       border-radius: 10px 0 0 10px;">
+                                                <span style="font-weight: 600; color: #1f2937;">
+                                                    <%= disp.getDiaSemana() %>
+                                                </span>
+                                            </td>
+                                            
+                                            <%-- Columna: Turno --%>
+                                            <td style="padding: 1rem; vertical-align: middle; border: none;">
+                                                <span class="badge" style="background: #dbeafe; color: #1e40af; 
+                                                                          padding: 0.5rem 1rem; border-radius: 8px; 
+                                                                          font-size: 0.85rem; font-weight: 600;">
+                                                    <i class="fas fa-sun"></i> 
+                                                    <%= disp.getTurnoNombre() != null ? disp.getTurnoNombre() : "Sin turno" %>
+                                                </span>
+                                            </td>
+                                            
+                                            <%-- Columna: Horario (Inicio - Fin) --%>
+                                            <td style="padding: 1rem; vertical-align: middle; border: none;">
+                                                <span style="font-family: 'Courier New', monospace; 
+                                                             font-weight: 600; color: #4f46e5; font-size: 1rem;">
+                                                    <%= horaInicio %> - <%= horaFin %>
+                                                </span>
+                                            </td>
+                                            
+                                            <%-- Columna: Estado (Disponible/No Disponible) --%>
+                                            <td style="padding: 1rem; vertical-align: middle; border: none;">
+                                                <% if (disp.isDisponible()) { %>
+                                                    <%-- Badge verde si está disponible --%>
+                                                    <span class="badge" style="background: #d1fae5; color: #065f46; 
+                                                                              padding: 0.5rem 1rem; border-radius: 8px; 
+                                                                              font-size: 0.85rem; font-weight: 600;">
+                                                        <i class="fas fa-check-circle"></i> DISPONIBLE
+                                                    </span>
+                                                <% } else { %>
+                                                    <%-- Badge rojo si NO está disponible --%>
+                                                    <span class="badge" style="background: #fee2e2; color: #991b1b; 
+                                                                              padding: 0.5rem 1rem; border-radius: 8px; 
+                                                                              font-size: 0.85rem; font-weight: 600;">
+                                                        <i class="fas fa-times-circle"></i> NO DISPONIBLE
+                                                    </span>
+                                                <% } %>
+                                            </td>
+                                            
+                                            <%-- Columna: Observaciones --%>
+                                            <td style="padding: 1rem; vertical-align: middle; border: none; 
+                                                       border-radius: 0 10px 10px 0;">
+                                                <% if (disp.getObservaciones() != null && 
+                                                       !disp.getObservaciones().trim().isEmpty()) { %>
+                                                    <small style="color: #6b7280; font-style: italic;">
+                                                        <%= disp.getObservaciones() %>
+                                                    </small>
+                                                <% } else { %>
+                                                    <small style="color: #9ca3af;">Sin observaciones</small>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <%-- Resumen visual de días disponibles --%>
+                            <div class="mt-4 p-3" style="background: #f9fafb; border-radius: 10px;">
+                                <h6 style="color: #4f46e5; font-weight: 600; margin-bottom: 1rem;">
+                                    <i class="fas fa-calendar-week"></i> Resumen Semanal
+                                </h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <% 
+                                    // Array con todos los días de la semana
+                                    String[] diasSemana = {"LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"};
+                                    
+                                    // Recorrer cada día y verificar si el profesor tiene disponibilidad
+                                    for (String dia : diasSemana) {
+                                        boolean tieneDisponibilidad = false;
+                                        
+                                        // Verificar si hay alguna disponibilidad para este día
+                                        for (modelo.Disponibilidad disp : p.getDisponibilidades()) {
+                                            if (dia.equals(disp.getDiaSemana()) && disp.isDisponible()) {
+                                                tieneDisponibilidad = true;
+                                                break;
+                                            }
+                                        }
+                                        
+                                        // Mostrar badge según si tiene disponibilidad o no
+                                        if (tieneDisponibilidad) {
+                                    %>
+                                        <%-- Badge verde para días con disponibilidad --%>
+                                        <span class="badge" style="background: #d1fae5; color: #065f46; 
+                                                                  padding: 0.75rem 1.25rem; border-radius: 10px; 
+                                                                  font-size: 0.9rem; font-weight: 600;">
+                                            <i class="fas fa-check"></i> <%= dia %>
+                                        </span>
+                                    <% } else { %>
+                                        <%-- Badge gris para días sin disponibilidad --%>
+                                        <span class="badge" style="background: #f3f4f6; color: #6b7280; 
+                                                                  padding: 0.75rem 1.25rem; border-radius: 10px; 
+                                                                  font-size: 0.9rem; font-weight: 500;">
+                                            <%= dia %>
+                                        </span>
+                                    <% 
+                                        }
+                                    }
+                                    %>
+                                </div>
+                            </div>
+                            
+                        <% } else { %>
+                            <%-- ===== SI NO HAY DISPONIBILIDADES ===== --%>
+                            <div class="text-center py-5">
+                                <div style="font-size: 4rem; color: #e5e7eb; margin-bottom: 1rem;">
+                                    <i class="fas fa-calendar-times"></i>
+                                </div>
+                                <h5 style="color: #6b7280; font-weight: 600;">
+                                    No hay disponibilidad horaria registrada
+                                </h5>
+                                <p style="color: #9ca3af; margin-bottom: 1.5rem;">
+                                    Este profesor aún no tiene horarios de disponibilidad configurados.
+                                </p>
+                                <a href="ProfesorServlet?accion=editar&id=<%= p.getId() %>" 
+                                   class="btn btn-primary" 
+                                   style="background: linear-gradient(135deg, #4f46e5, #4338ca); 
+                                          border: none; padding: 0.75rem 2rem; border-radius: 10px; 
+                                          font-weight: 600;">
+                                    <i class="fas fa-plus-circle"></i> Agregar Disponibilidad
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>               
         <!-- Action Buttons - SOLO VOLVER -->
         <div class="action-buttons-container">
             <a href="ProfesorServlet?accion=listar" 

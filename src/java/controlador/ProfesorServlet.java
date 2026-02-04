@@ -4,9 +4,13 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
+import java.sql.Time;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
+import modelo.Disponibilidad;
 import modelo.Profesor;
 import modelo.ProfesorDAO;
 
@@ -44,7 +48,7 @@ public class ProfesorServlet extends HttpServlet {
         // Mostrar formulario para nuevo profesor
         if ("nuevo".equals(accion)) {
             request.setAttribute("turnos", dao.listarTurnos());
-            request.setAttribute("areas", dao.listarAreas()); // ✅ Cambio de especialidades a areas
+            request.setAttribute("areas", dao.listarAreas());
             request.getRequestDispatcher("profesorForm.jsp").forward(request, response);
             return;
         }
@@ -57,7 +61,7 @@ public class ProfesorServlet extends HttpServlet {
                 if (p != null) {
                     request.setAttribute("profesor", p);
                     request.setAttribute("turnos", dao.listarTurnos());
-                    request.setAttribute("areas", dao.listarAreas()); // ✅ Cambio de especialidades a areas
+                    request.setAttribute("areas", dao.listarAreas());
                     request.getRequestDispatcher("profesorForm.jsp").forward(request, response);
                 } else {
                     session.setAttribute("error", "Profesor no encontrado");
@@ -124,7 +128,7 @@ public class ProfesorServlet extends HttpServlet {
             p.setTelefono(request.getParameter("telefono"));
             p.setDireccion(request.getParameter("direccion"));
             
-            // Capturar area_id en lugar de especialidad
+            // Capturar area_id
             String areaIdStr = request.getParameter("area_id");
             if (areaIdStr != null && !areaIdStr.isEmpty()) {
                 try {
@@ -142,7 +146,7 @@ public class ProfesorServlet extends HttpServlet {
             p.setCodigoProfesor(request.getParameter("codigo_profesor"));
             p.setUsername(request.getParameter("username"));
             
-            // CAPTURAR PASSWORD (CRÍTICO)
+            // CAPTURAR PASSWORD
             String password = request.getParameter("password");
             if (password != null && !password.trim().isEmpty()) {
                 p.setPassword(password);
@@ -211,7 +215,6 @@ public class ProfesorServlet extends HttpServlet {
                 return;
             }
 
-            //  Validar area_id en lugar de especialidad
             if (p.getAreaId() <= 0) {
                 session.setAttribute("error", "Debe seleccionar un área");
                 response.sendRedirect("ProfesorServlet?accion=" + (id == 0 ? "nuevo" : "editar&id=" + id));
@@ -242,10 +245,33 @@ public class ProfesorServlet extends HttpServlet {
                 resultado = dao.crear(p);
                 
                 if (resultado) {
-                    System.out.println("PROFESOR CREADO EXITOSAMENTE");
+                    System.out.println(" PROFESOR CREADO EXITOSAMENTE");
+                    
+                // Verificar que el ID se haya establecido
+                    if (p.getId() > 0) {
+                        System.out.println(" ID del profesor generado: " + p.getId());
+                        
+                        // ========== PROCESAR DISPONIBILIDADES (NUEVO PROFESOR) ==========
+                        procesarDisponibilidades(request, p.getId());
+                    } else {
+                        // ⚠️ Si el ID no se estableció, intentar recuperarlo de la BD
+                        System.out.println(" ADVERTENCIA: El ID del profesor no se estableció automáticamente");
+                        System.out.println(" Intentando recuperar el profesor recién creado...");
+                        
+                        // Buscar el profesor recién creado por correo
+                        Profesor profesorCreado = dao.obtenerPorCorreo(p.getCorreo());
+                        if (profesorCreado != null && profesorCreado.getId() > 0) {
+                            System.out.println(" Profesor recuperado con ID: " + profesorCreado.getId());
+                            procesarDisponibilidades(request, profesorCreado.getId());
+                        } else {
+                            System.out.println(" ERROR: No se pudo recuperar el ID del profesor");
+                            session.setAttribute("error", "Profesor creado pero no se pudieron guardar las disponibilidades. Por favor, edite el profesor para agregarlas.");
+                        }
+                    }
+                    
                     session.setAttribute("mensaje", "Profesor creado correctamente");
                 } else {
-                    System.out.println("ERROR AL CREAR PROFESOR");
+                    System.out.println(" ERROR AL CREAR PROFESOR");
                     session.setAttribute("error", "Error al crear el profesor. Verifique que el correo o DNI no existan.");
                 }
             } else {
@@ -255,10 +281,14 @@ public class ProfesorServlet extends HttpServlet {
                 resultado = dao.actualizar(p);
                 
                 if (resultado) {
-                    System.out.println("Profesor actualizado");
+                    System.out.println(" Profesor actualizado");
+                    
+                    // ========== PROCESAR DISPONIBILIDADES (ACTUALIZACIÓN) ==========
+                    procesarDisponibilidades(request, id);
+                    
                     session.setAttribute("mensaje", "Profesor actualizado correctamente");
                 } else {
-                    System.out.println("Error al actualizar");
+                    System.out.println(" Error al actualizar");
                     session.setAttribute("error", "Error al actualizar el profesor");
                 }
             }
@@ -267,11 +297,108 @@ public class ProfesorServlet extends HttpServlet {
             response.sendRedirect("ProfesorServlet?accion=listar");
 
         } catch (Exception e) {
-            System.out.println("EXCEPCIÓN EN doPost:");
+            System.out.println(" EXCEPCIÓN EN doPost:");
             e.printStackTrace();
             session.setAttribute("error", "Error al procesar la solicitud: " + e.getMessage());
             response.sendRedirect("ProfesorServlet?accion=listar");
         }
+    }
+    
+    /**
+     * ========================================
+     * MÉTODO AUXILIAR: PROCESAR DISPONIBILIDADES
+     * ========================================
+     * Extrae las disponibilidades del request y las guarda en la base de datos
+     */
+    private void procesarDisponibilidades(HttpServletRequest request, int profesorId) {
+        System.out.println("========================================");
+        System.out.println(" PROCESANDO DISPONIBILIDADES PARA PROFESOR ID: " + profesorId);
+        System.out.println("========================================");
+        
+        String totalDispStr = request.getParameter("total_disponibilidades");
+        
+        if (totalDispStr != null && !totalDispStr.isEmpty()) {
+            try {
+                int totalDisp = Integer.parseInt(totalDispStr);
+                System.out.println(" Total de disponibilidades a procesar: " + totalDisp);
+                
+                if (totalDisp == 0) {
+                    System.out.println(" No hay disponibilidades para guardar (total = 0)");
+                    return;
+                }
+                
+                List<Disponibilidad> disponibilidades = new ArrayList<>();
+
+                for (int i = 0; i < totalDisp; i++) {
+                    String dia = request.getParameter("disp_dia_" + i);
+                    String turnoIdStr = request.getParameter("disp_turno_" + i);
+                    String horaInicioStr = request.getParameter("disp_hora_inicio_" + i);
+                    String horaFinStr = request.getParameter("disp_hora_fin_" + i);
+                    String disponibleStr = request.getParameter("disp_disponible_" + i);
+                    String observaciones = request.getParameter("disp_observaciones_" + i);
+
+                    System.out.println("   Disponibilidad " + (i+1) + ":");
+                    System.out.println("     - Día: " + dia);
+                    System.out.println("     - Turno ID: " + turnoIdStr);
+                    System.out.println("     - Hora inicio: " + horaInicioStr);
+                    System.out.println("     - Hora fin: " + horaFinStr);
+                    System.out.println("     - Disponible: " + disponibleStr);
+
+                    if (dia != null && !dia.isEmpty() && 
+                        turnoIdStr != null && !turnoIdStr.isEmpty() && 
+                        horaInicioStr != null && !horaInicioStr.isEmpty() && 
+                        horaFinStr != null && !horaFinStr.isEmpty()) {
+                        
+                        try {
+                            Disponibilidad disp = new Disponibilidad();
+                            disp.setProfesorId(profesorId);
+                            disp.setTurnoId(Integer.parseInt(turnoIdStr));
+                            disp.setDiaSemana(dia);
+                            
+                            String horaInicioCompleta = horaInicioStr.contains(":") ? 
+                                (horaInicioStr.split(":").length == 2 ? horaInicioStr + ":00" : horaInicioStr) : 
+                                horaInicioStr + ":00:00";
+                            String horaFinCompleta = horaFinStr.contains(":") ? 
+                                (horaFinStr.split(":").length == 2 ? horaFinStr + ":00" : horaFinStr) : 
+                                horaFinStr + ":00:00";
+                            
+                            disp.setHoraInicio(Time.valueOf(horaInicioCompleta));
+                            disp.setHoraFin(Time.valueOf(horaFinCompleta));
+                            disp.setDisponible(disponibleStr != null ? Boolean.parseBoolean(disponibleStr) : true);
+                            disp.setObservaciones(observaciones);
+
+                            disponibilidades.add(disp);
+                            System.out.println("      Disponibilidad agregada a la lista");
+                        } catch (Exception ex) {
+                            System.out.println("      Error al parsear disponibilidad " + (i+1) + ": " + ex.getMessage());
+                        }
+                    } else {
+                        System.out.println("    Disponibilidad " + (i+1) + " tiene campos vacíos, se omite");
+                    }
+                }
+
+                // Guardar todas las disponibilidades
+                if (!disponibilidades.isEmpty()) {
+                    System.out.println(" Guardando " + disponibilidades.size() + " disponibilidades en la base de datos...");
+                    boolean dispGuardadas = dao.guardarDisponibilidades(profesorId, disponibilidades);
+                    if (dispGuardadas) {
+                        System.out.println(" " + disponibilidades.size() + " disponibilidades guardadas correctamente");
+                    } else {
+                        System.out.println(" ERROR: No se pudieron guardar las disponibilidades");
+                    }
+                } else {
+                    System.out.println(" No hay disponibilidades válidas para guardar");
+                }
+
+            } catch (Exception e) {
+                System.err.println(" ERROR PROCESANDO DISPONIBILIDADES:");
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println(" No se enviaron disponibilidades en el formulario (parámetro 'total_disponibilidades' no encontrado)");
+        }
+        
+        System.out.println("========================================");
     }
 
 }

@@ -1,6 +1,8 @@
 package modelo;
 
 import java.util.Date;
+import java.util.List; // Para manejar la lista de disponibilidades
+import java.util.ArrayList; // Para inicializar la lista
 
 public class Profesor {
     private int id;
@@ -24,8 +26,15 @@ public class Profesor {
     private String turnoNombre; 
     private String nivel;
     
+    // Lista de disponibilidades del profesor
+    // Esta lista almacenará todos los horarios disponibles del docente
+    // ========================================
+    private List<Disponibilidad> disponibilidades;
+    
     // Constructor
     public Profesor() {
+        // ✅ Inicializar la lista de disponibilidades vacía
+        this.disponibilidades = new ArrayList<>();
     }
 
     // Getters y Setters
@@ -187,6 +196,35 @@ public class Profesor {
 
     public void setNivel(String nivel) {
         this.nivel = nivel;
+    }
+
+    // ========================================
+    // Permiten acceder y modificar la lista de horarios disponibles
+    // ========================================
+    
+    /**
+     * Obtiene la lista completa de disponibilidades del profesor
+     * @return Lista de objetos Disponibilidad
+     */
+    public List<Disponibilidad> getDisponibilidades() {
+        return disponibilidades;
+    }
+
+    /**
+     * Establece la lista completa de disponibilidades del profesor
+     * @param disponibilidades Lista de objetos Disponibilidad a asignar
+     */
+    public void setDisponibilidades(List<Disponibilidad> disponibilidades) {
+        this.disponibilidades = disponibilidades;
+    }
+    
+    /**
+     * Agrega una disponibilidad individual a la lista
+     * Útil para ir construyendo la lista de horarios uno por uno
+     * @param disponibilidad Objeto Disponibilidad a agregar
+     */
+    public void agregarDisponibilidad(Disponibilidad disponibilidad) {
+        this.disponibilidades.add(disponibilidad);
     }
 
     // Método auxiliar
