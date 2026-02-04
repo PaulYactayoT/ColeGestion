@@ -243,35 +243,42 @@ public class ProfesorServlet extends HttpServlet {
                 System.out.println("========================================");
                 
                 resultado = dao.crear(p);
-                
+
                 if (resultado) {
                     System.out.println(" PROFESOR CREADO EXITOSAMENTE");
-                    
-                // Verificar que el ID se haya establecido
+
+                    // ========== DEBUGGING: Verificar el ID ==========
+                    System.out.println(" Verificando ID del profesor...");
+                    System.out.println("   - ID del objeto p: " + p.getId());
+
                     if (p.getId() > 0) {
-                        System.out.println(" ID del profesor generado: " + p.getId());
-                        
+                        System.out.println(" ID del profesor generado correctamente: " + p.getId());
+
                         // ========== PROCESAR DISPONIBILIDADES (NUEVO PROFESOR) ==========
+                        System.out.println("Iniciando procesamiento de disponibilidades...");
                         procesarDisponibilidades(request, p.getId());
+
+                        session.setAttribute("mensaje", "Profesor creado correctamente");
                     } else {
-                        // ⚠️ Si el ID no se estableció, intentar recuperarlo de la BD
-                        System.out.println(" ADVERTENCIA: El ID del profesor no se estableció automáticamente");
-                        System.out.println(" Intentando recuperar el profesor recién creado...");
-                        
-                        // Buscar el profesor recién creado por correo
+                        //  Si el ID no se estableció, intentar recuperarlo de la BD
+                        System.out.println("ADVERTENCIA: El ID del profesor no se estableció automáticamente");
+                        System.out.println("Intentando recuperar el profesor recién creado...");
+
+                        // Buscar el profesor recién creado por correo (que es único)
                         Profesor profesorCreado = dao.obtenerPorCorreo(p.getCorreo());
+
                         if (profesorCreado != null && profesorCreado.getId() > 0) {
-                            System.out.println(" Profesor recuperado con ID: " + profesorCreado.getId());
+                            System.out.println("Profesor recuperado con ID: " + profesorCreado.getId());
                             procesarDisponibilidades(request, profesorCreado.getId());
+                            session.setAttribute("mensaje", "Profesor creado correctamente");
                         } else {
-                            System.out.println(" ERROR: No se pudo recuperar el ID del profesor");
+                            System.out.println("ERROR CRÍTICO: No se pudo recuperar el ID del profesor");
+                            System.out.println("   El profesor fue creado pero las disponibilidades NO se guardaron");
                             session.setAttribute("error", "Profesor creado pero no se pudieron guardar las disponibilidades. Por favor, edite el profesor para agregarlas.");
                         }
                     }
-                    
-                    session.setAttribute("mensaje", "Profesor creado correctamente");
                 } else {
-                    System.out.println(" ERROR AL CREAR PROFESOR");
+                    System.out.println("ERROR AL CREAR PROFESOR");
                     session.setAttribute("error", "Error al crear el profesor. Verifique que el correo o DNI no existan.");
                 }
             } else {
@@ -288,7 +295,6 @@ public class ProfesorServlet extends HttpServlet {
                     
                     session.setAttribute("mensaje", "Profesor actualizado correctamente");
                 } else {
-                    System.out.println(" Error al actualizar");
                     session.setAttribute("error", "Error al actualizar el profesor");
                 }
             }
@@ -310,7 +316,7 @@ public class ProfesorServlet extends HttpServlet {
      * ========================================
      * Extrae las disponibilidades del request y las guarda en la base de datos
      */
-    private void procesarDisponibilidades(HttpServletRequest request, int profesorId) {
+    private boolean procesarDisponibilidades(HttpServletRequest request, int profesorId) {
         System.out.println("========================================");
         System.out.println(" PROCESANDO DISPONIBILIDADES PARA PROFESOR ID: " + profesorId);
         System.out.println("========================================");
@@ -324,7 +330,7 @@ public class ProfesorServlet extends HttpServlet {
                 
                 if (totalDisp == 0) {
                     System.out.println(" No hay disponibilidades para guardar (total = 0)");
-                    return;
+                    return false;
                 }
                 
                 List<Disponibilidad> disponibilidades = new ArrayList<>();
@@ -388,17 +394,20 @@ public class ProfesorServlet extends HttpServlet {
                     }
                 } else {
                     System.out.println(" No hay disponibilidades válidas para guardar");
+                    return false;
                 }
-
             } catch (Exception e) {
                 System.err.println(" ERROR PROCESANDO DISPONIBILIDADES:");
                 e.printStackTrace();
+                return false; 
             }
         } else {
             System.out.println(" No se enviaron disponibilidades en el formulario (parámetro 'total_disponibilidades' no encontrado)");
         }
         
         System.out.println("========================================");
+        return false;
     }
+    
 
 }

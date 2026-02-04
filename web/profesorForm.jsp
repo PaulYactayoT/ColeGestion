@@ -8,6 +8,7 @@
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.time.LocalTime" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="modelo.Disponibilidad" %>
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response.setHeader("Pragma", "no-cache");
@@ -356,10 +357,10 @@
             <form action="ProfesorServlet" method="post" id="profesorForm">
                 <input type="hidden" name="id" value="<%= editar ? p.getId() : "" %>">
                 
-                <!-- SECCI?N: INFORMACI?N PERSONAL -->
+                <!-- SECCIÓN: INFORMACIÓN PERSONAL -->
                 <div class="section-title">
                     <i class="fas fa-user"></i>
-                    Informaci?n Personal
+                    Informacion Personal
                 </div>
                 
                 <div class="row">
@@ -388,7 +389,7 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Correo Electr?nico</label>
+                        <label class="form-label required-field">Correo Electrónico</label>
                         <div class="input-group-icon">
                             <i class="fas fa-envelope"></i>
                             <input type="email" class="form-control" name="correo" id="correo"
@@ -402,7 +403,7 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label">
                             DNI
-                            <i class="fas fa-info-circle tooltip-info" title="Opcional - 8 d?gitos num?ricos"></i>
+                            <i class="fas fa-info-circle tooltip-info" title="Opcional - 8 digitos numericos"></i>
                         </label>
                         <div class="input-group-icon">
                             <i class="fas fa-id-card"></i>
@@ -410,7 +411,7 @@
                                    value="<%= editar && p.getDni() != null ? p.getDni() : "" %>" 
                                    maxlength="8" placeholder="12345678">
                         </div>
-                        <small class="form-text">Opcional, 8 d?gitos num?ricos</small>
+                        <small class="form-text">Opcional, 8 digitos numericos</small>
                         <div class="invalid-feedback"></div>
                         <div class="valid-feedback"></div>
                     </div>
@@ -427,7 +428,7 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Tel?fono</label>
+                        <label class="form-label">Telefono</label>
                         <div class="input-group-icon">
                             <i class="fas fa-phone"></i>
                             <input type="tel" class="form-control" name="telefono" id="telefono"
@@ -438,7 +439,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Direcci?n</label>
+                    <label class="form-label">Direccion</label>
                     <div class="input-group-icon">
                         <i class="fas fa-map-marker-alt"></i>
                         <textarea class="form-control" name="direccion" id="direccion" rows="2" maxlength="255" 
@@ -448,15 +449,15 @@
 
                 <hr class="section-divider">
 
-                <!-- SECCI?N: INFORMACI?N PROFESIONAL -->
+                <!-- SECCION: INFORMACION PROFESIONAL -->
                 <div class="section-title">
                     <i class="fas fa-briefcase"></i>
-                    Informaci?n Profesional
+                    Informacion Profesional
                 </div>
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Nivel que Ense?a</label>
+                        <label class="form-label required-field">Nivel que Enseña</label>
                         <select class="form-select" name="nivel" id="nivel" required>
                             <option value="">Seleccione un nivel</option>
                             <option value="INICIAL" <%= (editar && "INICIAL".equals(p.getNivel())) ? "selected" : "" %>>Inicial</option>
@@ -468,14 +469,13 @@
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">?rea</label>
+                        <label class="form-label required-field">area</label>
                         <select class="form-select" name="area_id" id="area_id" required>
                             <option value="">Primero seleccione un nivel</option>
                             <% 
                                 if (areas != null && !areas.isEmpty()) {
                                     for (Area area : areas) {
                                         boolean selected = editar && p.getAreaId() == area.getId();
-                                        // ELIMINAMOS la concatenaci?n del nivel
                             %>
                                 <option value="<%= area.getId() %>" 
                                         data-nivel="<%= area.getNivel() %>"
@@ -487,12 +487,12 @@
                                     }
                                 } else {
                             %>
-                                <option value="" disabled>No hay ?reas disponibles</option>
+                                <option value="" disabled>No hay areas disponibles</option>
                             <% 
                                 }
                             %>
                         </select>
-                        <small class="form-text">Las ?reas se filtran seg?n el nivel seleccionado</small>
+                        <small class="form-text">Las áreas se filtran segun el nivel seleccionado</small>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -533,20 +533,20 @@
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">C?digo de Profesor</label>
+                        <label class="form-label">Codigo de Profesor</label>
                         <div class="input-group-icon">
                             <i class="fas fa-barcode"></i>
                             <input type="text" class="form-control" name="codigo_profesor"
                                    value="<%= editar && p.getCodigoProfesor() != null ? p.getCodigoProfesor() : "" %>" 
                                    maxlength="20" placeholder="PROF-001">
                         </div>
-                        <small class="form-text">Opcional, se generar? autom?ticamente</small>
+                        <small class="form-text">Opcional, se generar automaticamente</small>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Fecha de Contrataci?n</label>
+                        <label class="form-label">Fecha de Contratacion</label>
                         <div class="input-group-icon">
                             <i class="fas fa-calendar-check"></i>
                             <input type="date" class="form-control" name="fecha_contratacion" id="fecha_contratacion"
@@ -564,90 +564,91 @@
                         </select>
                     </div>
                 </div> 
+                
                 <!-- ========================================
-                        SECCI?N: DISPONIBILIDAD HORARIA
+                        SECCION: DISPONIBILIDAD HORARIA
                         ======================================== -->
-                    <hr class="section-divider">
-                    <div class="section-title">
-                        <i class="fas fa-calendar-alt"></i>
-                        Disponibilidad Horaria
-                    </div>
+                <hr class="section-divider">
+                <div class="section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Disponibilidad Horaria
+                </div>
 
-                    <div class="alert alert-info alert-modern">
-                        <i class="fas fa-info-circle"></i>
-                        Selecciona los dias y horarios en los que el profesor esta disponible para dictar clases.
-                    </div>
+                <div class="alert alert-info alert-modern">
+                    <i class="fas fa-info-circle"></i>
+                    Selecciona los dias y horarios en los que el profesor esta disponible para dictar clases.
+                </div>
 
-                    <div id="disponibilidad-container">
-                        <!-- Tabla para mostrar disponibilidades existentes -->
-                        <table class="table table-bordered" id="tabla-disponibilidades">
-                            <thead>
-                                <tr>
-                                    <th>Dia</th>
-                                    <th>Hora Inicio</th>
-                                    <th>Hora Fin</th>
-                                </tr>
-                            </thead>
-                            <tbody id="disponibilidades-body">
-                                <!-- Se llenar?n din?micamente -->
-                                <tr id="sin-disponibilidades">
-                                    <td colspan="3" class="text-center text-muted">
-                                        <i class="fas fa-info-circle"></i> No hay disponibilidades registradas
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <div id="disponibilidad-container">
+                    <!-- Tabla para mostrar disponibilidades existentes -->
+                    <table class="table table-bordered" id="tabla-disponibilidades">
+                        <thead>
+                            <tr>
+                                <th>Dia</th>
+                                <th>Hora Inicio</th>
+                                <th>Hora Fin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disponibilidades-body">
+                            <!-- Se llenaran dinamicamente -->
+                            <tr id="sin-disponibilidades">
+                                <td colspan="3" class="text-center text-muted">
+                                    <i class="fas fa-info-circle"></i> No hay disponibilidades registradas
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-                        <button type="button" class="btn btn-success-modern" id="btn-agregar-disponibilidad">
-                            <i class="fas fa-plus"></i> Agregar Horario Disponible
-                        </button>
-                    </div>
+                    <button type="button" class="btn btn-success-modern" id="btn-agregar-disponibilidad">
+                        <i class="fas fa-plus"></i> Agregar Horario Disponible
+                    </button>
+                </div>
 
-                    <!-- Modal para agregar disponibilidad - SIMPLIFICADO -->
-                    <div class="modal fade" id="modalDisponibilidad" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Agregar Horario Disponible</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <!-- Modal para agregar disponibilidad -->
+                <div class="modal fade" id="modalDisponibilidad" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Agregar Horario Disponible</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label required-field">Dia de la Semana</label>
+                                    <select class="form-select" id="modal-dia" required>
+                                        <option value="">Seleccione un dia</option>
+                                        <option value="LUNES">Lunes</option>
+                                        <option value="MARTES">Martes</option>
+                                        <option value="MIERCOLES">Miercoles</option>
+                                        <option value="JUEVES">Jueves</option>
+                                        <option value="VIERNES">Viernes</option>
+                                        <option value="SABADO">Sabado</option>
+                                    </select>
                                 </div>
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label required-field">Dia de la Semana</label>
-                                        <select class="form-select" id="modal-dia" required>
-                                            <option value="">Seleccione un dia</option>
-                                            <option value="LUNES">Lunes</option>
-                                            <option value="MARTES">Martes</option>
-                                            <option value="MIERCOLES">Miercoles</option>
-                                            <option value="JUEVES">Jueves</option>
-                                            <option value="VIERNES">Viernes</option>
-                                            <option value="SABADO">Sabado</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label required-field">Hora de Inicio</label>
-                                        <input type="time" class="form-control" id="modal-hora-inicio" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label required-field">Hora de Fin</label>
-                                        <input type="time" class="form-control" id="modal-hora-fin" required>
-                                    </div>
-                             
+                                <div class="mb-3">
+                                    <label class="form-label required-field">Hora de Inicio</label>
+                                    <input type="time" class="form-control" id="modal-hora-inicio" required>
                                 </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn-modern btn-secondary-modern" data-bs-dismiss="modal">
-                                        <i class="fas fa-times"></i> Cancelar
-                                    </button>
-                                    <button type="button" class="btn-modern btn-primary-modern" id="btn-guardar-disponibilidad">
-                                        <i class="fas fa-save"></i> Guardar Horario
-                                    </button>
+                                <div class="mb-3">
+                                    <label class="form-label required-field">Hora de Fin</label>
+                                    <input type="time" class="form-control" id="modal-hora-fin" required>
                                 </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn-modern btn-secondary-modern" data-bs-dismiss="modal">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </button>
+                                <button type="button" class="btn-modern btn-primary-modern" id="btn-guardar-disponibilidad">
+                                    <i class="fas fa-save"></i> Guardar Horario
+                                </button>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Campos ocultos para enviar disponibilidades al servidor -->
-                    <div id="disponibilidades-hidden"></div>            
+                <!-- Campos ocultos para enviar disponibilidades al servidor -->
+                <div id="disponibilidades-hidden"></div>
+                
                 <!-- BOTONES -->
                 <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid #e5e7eb;">
                     <div class="d-flex gap-2">
@@ -664,7 +665,7 @@
                     <% if (editar) { %>
                     <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId() %>" 
                        class="btn-modern btn-danger-modern"
-                       onclick="return confirm('?Est? seguro de eliminar este profesor?')">
+                       onclick="return confirm('¿Esta seguro de eliminar este profesor?')">
                         <i class="fas fa-trash"></i>
                         Eliminar
                     </a>
@@ -680,19 +681,19 @@
                 <div class="col-md-4 mb-3">
                     <div class="logo-container text-center">
                         <img src="assets/img/logosa.png" alt="Logo" class="img-fluid mb-2" width="80" height="auto">
-                        <p class="fs-6 mb-0">"L?deres en educaci?n de calidad al m?s alto nivel"</p>
+                        <p class="fs-6 mb-0">"Lideres en educacion de calidad al mas alto nivel"</p>
                     </div>
                 </div>
 
                 <div class="col-md-4 mb-3">
                     <h5 class="fs-6 fw-bold">Contacto:</h5>
-                    <p class="fs-6 mb-1">Direcci?n: Av. El Sol 461, San Juan de Lurigancho 15434</p>
-                    <p class="fs-6 mb-1">Tel?fono: 987654321</p>
+                    <p class="fs-6 mb-1">Direccion: Av. El Sol 461, San Juan de Lurigancho 15434</p>
+                    <p class="fs-6 mb-1">Telefono: 987654321</p>
                     <p class="fs-6 mb-1">Correo: colegiosanantonio@gmail.com</p>
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <h5 class="fs-6 fw-bold">S?guenos:</h5>
+                    <h5 class="fs-6 fw-bold">Siguenos:</h5>
                     <a href="https://www.facebook.com/" class="text-white d-block fs-6 mb-1">Facebook</a>
                     <a href="https://www.instagram.com/" class="text-white d-block fs-6 mb-1">Instagram</a>
                     <a href="https://twitter.com/" class="text-white d-block fs-6 mb-1">Twitter</a>
@@ -706,336 +707,91 @@
         </div>
     </footer>
 
-   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('profesorForm');
-            const dniInput = document.getElementById('dni');
-            const correoInput = document.getElementById('correo');
-            const usernameInput = document.getElementById('username');
-            const fechaNacInput = document.getElementById('fecha_nacimiento');
-            const fechaContInput = document.getElementById('fecha_contratacion');
-            const nivelSelect = document.getElementById('nivel');
-            const areaSelect = document.getElementById('area_id');
-            
-            // ============================================================
-            // FILTRADO DIN?MICO DE ?REAS SEG?N NIVEL SELECCIONADO
-            // ============================================================
-            function filtrarAreas() {
-            const nivelSeleccionado = nivelSelect.value;
-            const opciones = areaSelect.querySelectorAll('option');
-            let areasVisibles = 0;
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-            // Resetear el select de ?rea
-            areaSelect.value = '';
-
-            opciones.forEach(function(opcion) {
-                // Mantener siempre visible la primera opci?n (placeholder)
-                if (opcion.value === '') {
-                    opcion.style.display = '';
-                    if (nivelSeleccionado === '') {
-                        opcion.textContent = 'Primero seleccione un nivel';
-                    } else {
-                        opcion.textContent = 'Seleccione el ?rea';
-                    }
-                    return;
-                }
-
-                const nivelArea = opcion.getAttribute('data-nivel');
-
-                // ? L?GICA CORREGIDA:
-                if (nivelSeleccionado === 'TODOS') {
-                    // Solo mostrar ?reas con nivel "TODOS"
-                    if (nivelArea === 'TODOS') {
-                        opcion.style.display = '';
-                        areasVisibles++;
-                    } else {
-                        opcion.style.display = 'none';
-                    }
-                } else {
-                    // Mostrar ?reas del nivel seleccionado + ?reas "TODOS"
-                    if (nivelArea === 'TODOS' || nivelArea === nivelSeleccionado) {
-                        opcion.style.display = '';
-                        areasVisibles++;
-                    } else {
-                        opcion.style.display = 'none';
-                    }
-                }
-            });
-
-            // Si no hay ?reas visibles para el nivel seleccionado
-            if (areasVisibles === 0 && nivelSeleccionado !== '') {
-                const placeholder = areaSelect.querySelector('option[value=""]');
-                placeholder.textContent = 'No hay ?reas disponibles para este nivel';
-            }
-        }
-            
-            // Ejecutar filtrado cuando cambia el nivel
-            nivelSelect.addEventListener('change', filtrarAreas);
-            
-            // Ejecutar filtrado al cargar la p?gina (importante para modo edici?n)
-            filtrarAreas();
-            
-            // ============================================================
-            // ESTABLECER FECHAS POR DEFECTO
-            // ============================================================
-            if (!<%= editar %>) {
-                if (!fechaNacInput.value) {
-                    const hace30Anios = new Date();
-                    hace30Anios.setFullYear(hace30Anios.getFullYear() - 30);
-                    fechaNacInput.valueAsDate = hace30Anios;
-                }
-                
-                if (!fechaContInput.value) {
-                    fechaContInput.valueAsDate = new Date();
-                }
-            }
-            
-            // ============================================================
-            // VALIDACI?N DEL DNI
-            // ============================================================
-            if (dniInput) {
-                dniInput.addEventListener('input', function() {
-                    // Solo n?meros
-                    this.value = this.value.replace(/[^0-9]/g, '');
-                    if (this.value.length > 8) {
-                        this.value = this.value.slice(0, 8);
-                    }
-                });
-                
-                dniInput.addEventListener('blur', function() {
-                    const dni = this.value.trim();
-                    const feedback = this.parentElement.nextElementSibling.nextElementSibling;
-                    const validFeedback = feedback.nextElementSibling;
-                    
-                    if (dni.length === 0) {
-                        // DNI opcional - limpiar validaci?n
-                        this.classList.remove('is-invalid', 'is-valid');
-                        feedback.textContent = '';
-                        if (validFeedback) validFeedback.textContent = '';
-                        return;
-                    }
-                    
-                    if (dni.length !== 8) {
-                        this.classList.add('is-invalid');
-                        this.classList.remove('is-valid');
-                        feedback.textContent = '? El DNI debe tener exactamente 8 d?gitos';
-                    } else {
-                        this.classList.remove('is-invalid');
-                        this.classList.add('is-valid');
-                        feedback.textContent = '';
-                        if (validFeedback) validFeedback.textContent = '? DNI v?lido';
-                    }
-                });
-            }
-            
-            // ============================================================
-            // VALIDACI?N DEL CORREO ELECTR?NICO
-            // ============================================================
-            if (correoInput) {
-                correoInput.addEventListener('blur', function() {
-                    const correo = this.value.trim();
-                    const feedback = this.parentElement.nextElementSibling;
-                    const validFeedback = feedback.nextElementSibling;
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    
-                    if (correo.length === 0) {
-                        this.classList.add('is-invalid');
-                        feedback.textContent = '? El correo electr?nico es obligatorio';
-                        return;
-                    }
-                    
-                    if (!emailRegex.test(correo)) {
-                        this.classList.add('is-invalid');
-                        this.classList.remove('is-valid');
-                        feedback.textContent = '? Ingrese un correo electr?nico v?lido';
-                    } else {
-                        this.classList.remove('is-invalid');
-                        this.classList.add('is-valid');
-                        feedback.textContent = '';
-                        if (validFeedback) validFeedback.textContent = '? Correo v?lido';
-                    }
-                });
-            }
-            
-            // ============================================================
-            // VALIDACI?N DEL TEL?FONO (solo n?meros)
-            // ============================================================
-            const telefonoInput = document.getElementById('telefono');
-            if (telefonoInput) {
-                telefonoInput.addEventListener('input', function() {
-                    this.value = this.value.replace(/[^0-9]/g, '');
-                });
-            }
-            
-            // ============================================================
-            // VALIDACI?N ANTES DE ENVIAR EL FORMULARIO
-            // ============================================================
-            form.addEventListener('submit', function(event) {
-                let errores = [];
-                console.log("? FORMULARIO A PUNTO DE ENVIARSE");
-                console.log("? Disponibilidades en array:", disponibilidadesArray.length);
-                console.log("? Contenido del array:", disponibilidadesArray);
-                const container = document.getElementById("disponibilidades-hidden");
-                if (container) {
-                    console.log("? Campos ocultos HTML:", container.innerHTML);
-                    const inputs = container.querySelectorAll("input");
-                    console.log("? Total de inputs ocultos:", inputs.length);
-                    inputs.forEach(input => console.log(`   ${input.name} = ${input.value}`));
-                }
-                
-                
-                // Obtener valores
-                const nombres = document.getElementById('nombres').value.trim();
-                const apellidos = document.getElementById('apellidos').value.trim();
-                const correo = correoInput.value.trim();
-                const areaId = areaSelect.value;
-                const nivel = nivelSelect.value;
-                const turnoId = document.getElementById('turno_id').value;
-                const dni = dniInput.value.trim();
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                
-                // Validar campos obligatorios
-                if (!nombres) errores.push('Nombres es obligatorio');
-                if (!apellidos) errores.push('Apellidos es obligatorio');
-                
-                if (!correo) {
-                    errores.push('Correo electr?nico es obligatorio');
-                } else if (!emailRegex.test(correo)) {
-                    errores.push('Correo electr?nico no es v?lido');
-                }
-                
-                if (!nivel || nivel === '') {
-                    errores.push('Nivel es obligatorio');
-                }
-                
-                if (!areaId || areaId === '') {
-                    errores.push('?rea es obligatoria');
-                }
-                
-                if (!turnoId) errores.push('Turno es obligatorio');
-                
-                // Validar DNI si se proporciona
-                if (dni.length > 0) {
-                    if (dni.length !== 8) {
-                        errores.push('El DNI debe tener exactamente 8 d?gitos');
-                    } else if (!/^\d+$/.test(dni)) {
-                        errores.push('El DNI solo debe contener n?meros');
-                    }
-                }
-                
-                if (errores.length > 0) {
-                    event.preventDefault();
-                    
-                    // Mostrar errores
-                    const mensajeError = 'Por favor corrija los siguientes errores:\n\n? ' + errores.join('\n? ');
-                    alert(mensajeError);
-                    
-                    // Hacer scroll al primer error
-                    const primerCampoInvalido = form.querySelector('.is-invalid');
-                    if (primerCampoInvalido) {
-                        primerCampoInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        primerCampoInvalido.focus();
-                    }
-                    
-                    return false;
-                }
-                
-                return true;
-            });
-        });
+<script>
 // ============================================================
-// GESTIÓN DE DISPONIBILIDADES HORARIAS
+// VARIABLES GLOBALES - FUERA DE DOMContentLoaded
 // ============================================================
-
-// Variables globales para manejar las disponibilidades
 let disponibilidadesArray = [];
 let modalDisponibilidad;
 
-// Inicializar el modal de Bootstrap
-const modalElement = document.getElementById('modalDisponibilidad');
-if (modalElement) {
-    modalDisponibilidad = new bootstrap.Modal(modalElement);
-}
+// ============================================================
+// FUNCIONES GLOBALES - FUERA DE DOMContentLoaded
+// ============================================================
 
-// ===== ABRIR MODAL AL HACER CLIC EN "AGREGAR HORARIO DISPONIBLE" =====
-const btnAgregarDisponibilidad = document.getElementById('btn-agregar-disponibilidad');
-if (btnAgregarDisponibilidad) {
-    btnAgregarDisponibilidad.addEventListener('click', function() {
-        // Verificar que se haya seleccionado un turno ANTES de abrir el modal
-        const turnoId = document.getElementById('turno_id').value;
-        if (!turnoId) {
-            alert('?? Por favor seleccione un TURNO en el formulario principal antes de agregar disponibilidades');
-            // Hacer scroll al campo de turno
-            document.getElementById('turno_id').focus();
-            document.getElementById('turno_id').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
+function actualizarCamposOcultos() {
+    const container = document.getElementById('disponibilidades-hidden');
+    
+    if (!container) {
+        console.error('? ERROR: No se encontró el contenedor disponibilidades-hidden');
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    console.log('? Actualizando campos ocultos...');
+    console.log('   ? Total disponibilidades en array:', disponibilidadesArray.length);
+    console.log('   ? Array completo:', JSON.stringify(disponibilidadesArray, null, 2));
+    
+    const inputTotal = document.createElement('input');
+    inputTotal.type = 'hidden';
+    inputTotal.name = 'total_disponibilidades';
+    inputTotal.value = disponibilidadesArray.length;
+    container.appendChild(inputTotal);
+    console.log('? Campo total_disponibilidades creado:', inputTotal.value);
+    
+        DisponibilidadesArray.forEach((disp, index) => {
+            console.log(`? Disponibilidad ${index}:`, disp);
+            console.log(`   - dia: "${disp.dia}" (tipo: ${typeof disp.dia})`);
+            console.log(`   - turnoId: "${disp.turnoId}" (tipo: ${typeof disp.turnoId})`);
+            console.log(`   - horaInicio: "${disp.horaInicio}" (tipo: ${typeof disp.horaInicio})`);
+            console.log(`   - horaFin: "${disp.horaFin}" (tipo: ${typeof disp.horaFin})`);
+
+        const inputDia = document.createElement('input');
+        inputDia.type = 'hidden';
+        inputDia.name = `disp_dia_${index}`;
+        inputDia.value = disp.dia !== undefined && disp.dia !== null ? disp.dia : '';
+        container.appendChild(inputDia);
+        console.log(`   ? disp_dia_${index} = "${inputDia.value}"`);
         
-        // Limpiar campos del modal
-        document.getElementById('modal-dia').value = '';
-        document.getElementById('modal-hora-inicio').value = '';
-        document.getElementById('modal-hora-fin').value = '';
+        const inputTurno = document.createElement('input');
+        inputTurno.type = 'hidden';
+        inputTurno.name = `disp_turno_${index}`;
+        inputTurno.value = disp.turnoId !== undefined && disp.turnoId !== null ? disp.turnoId : '';
+        container.appendChild(inputTurno);
+        console.log(`   ? disp_turno_${index} = "${inputTurno.value}"`);
         
-        // Abrir el modal
-        modalDisponibilidad.show();
+        const inputHoraInicio = document.createElement('input');
+        inputHoraInicio.type = 'hidden';
+        inputHoraInicio.name = `disp_hora_inicio_${index}`;
+        inputHoraInicio.value = disp.horaInicio !== undefined && disp.horaInicio !== null ? disp.horaInicio : '';
+        container.appendChild(inputHoraInicio);
+        console.log(`   ? disp_hora_inicio_${index} = "${inputHoraInicio.value}"`);
+        
+        const inputHoraFin = document.createElement('input');
+        inputHoraFin.type = 'hidden';
+        inputHoraFin.name = `disp_hora_fin_${index}`;
+        inputHoraFin.value = disp.horaFin !== undefined && disp.horaFin !== null ? disp.horaFin : '';
+        container.appendChild(inputHoraFin);
+        console.log(`   ? disp_hora_fin_${index} = "${inputHoraFin.value}"`);
+        
+        const inputDisponible = document.createElement('input');
+        inputDisponible.type = 'hidden';
+        inputDisponible.name = `disp_disponible_${index}`;
+        inputDisponible.value = disp.disponible !== undefined && disp.disponible !== null ? disp.disponible : true;
+        container.appendChild(inputDisponible);
+        console.log(`   ? disp_disponible_${index} = "${inputDisponible.value}"`);
     });
+    
+    console.log(`? Campos ocultos actualizados: ${disponibilidadesArray.length} disponibilidades`);
+    console.log('? Contenedor HTML preview:', container.innerHTML.substring(0, 800));
 }
 
-// ===== GUARDAR DISPONIBILIDAD DESDE EL MODAL =====
-const btnGuardarDisponibilidad = document.getElementById('btn-guardar-disponibilidad');
-if (btnGuardarDisponibilidad) {
-    btnGuardarDisponibilidad.addEventListener('click', function() {
-        // Obtener valores del modal
-        const dia = document.getElementById('modal-dia').value;
-        const horaInicio = document.getElementById('modal-hora-inicio').value;
-        const horaFin = document.getElementById('modal-hora-fin').value;
-        
-        // Validar que todos los campos estén llenos
-        if (!dia || !horaInicio || !horaFin) {
-            alert('?? Por favor complete todos los campos');
-            return;
-        }
-        
-        // Validar que hora de inicio sea menor que hora de fin
-        if (horaInicio >= horaFin) {
-            alert('?? La hora de inicio debe ser menor que la hora de fin');
-            return;
-        }
-        
-        // Obtener el turno_id (ya fue validado al abrir el modal)
-        const turnoId = document.getElementById('turno_id').value;
-        
-        // Crear objeto de disponibilidad
-        const disponibilidad = {
-            dia: dia,
-            turnoId: turnoId,
-            horaInicio: horaInicio,
-            horaFin: horaFin,
-            disponible: true
-        };
-        
-        // Agregar a la lista
-        disponibilidadesArray.push(disponibilidad);
-        
-        // Actualizar la tabla
-        actualizarTablaDisponibilidades();
-        
-        // Cerrar el modal
-        modalDisponibilidad.hide();
-        
-        // Mostrar mensaje de éxito
-        console.log('? Disponibilidad agregada:', disponibilidad);
-    });
-}
-
-// ===== ACTUALIZAR LA TABLA DE DISPONIBILIDADES =====
 function actualizarTablaDisponibilidades() {
     const tbody = document.getElementById('disponibilidades-body');
     const filaSinDatos = document.getElementById('sin-disponibilidades');
     
-    // Si no hay disponibilidades, mostrar mensaje
     if (disponibilidadesArray.length === 0) {
         if (filaSinDatos) {
             filaSinDatos.style.display = '';
@@ -1044,19 +800,16 @@ function actualizarTablaDisponibilidades() {
         return;
     }
     
-    // Ocultar mensaje "sin disponibilidades"
     if (filaSinDatos) {
         filaSinDatos.style.display = 'none';
     }
     
-    // Limpiar tbody excepto la fila "sin-disponibilidades"
     Array.from(tbody.children).forEach(row => {
         if (row.id !== 'sin-disponibilidades') {
             row.remove();
         }
     });
     
-    // Agregar cada disponibilidad a la tabla
     disponibilidadesArray.forEach((disp, index) => {
         const fila = document.createElement('tr');
         fila.innerHTML = `
@@ -1067,90 +820,337 @@ function actualizarTablaDisponibilidades() {
         tbody.appendChild(fila);
     });
     
-    // Actualizar los campos ocultos
     actualizarCamposOcultos();
 }
 
-
-// ===== ACTUALIZAR CAMPOS OCULTOS PARA ENVIAR AL SERVIDOR =====
-function actualizarCamposOcultos() {
-    const container = document.getElementById('disponibilidades-hidden');
-    
-    if (!container) {
-        console.error('? ERROR: No se encontró el contenedor disponibilidades-hidden');
-        return;
-    }
-    
-    container.innerHTML = ''; // Limpiar
-    
-    console.log('? Actualizando campos ocultos...');
-    console.log('   Total disponibilidades en array:', disponibilidadesArray.length);
-    
-    // Agregar campo con el total de disponibilidades
-    const inputTotal = document.createElement('input');
-    inputTotal.type = 'hidden';
-    inputTotal.name = 'total_disponibilidades';
-    inputTotal.value = disponibilidadesArray.length;
-    container.appendChild(inputTotal);
-    console.log('   ? Campo total_disponibilidades creado:', inputTotal.value);
-    
-    // Agregar un input oculto por cada campo de cada disponibilidad
-    disponibilidadesArray.forEach((disp, index) => {
-        console.log(`   ? Disponibilidad ${index}:`, disp);
-        
-        // Día
-        const inputDia = document.createElement('input');
-        inputDia.type = 'hidden';
-        inputDia.name = `disp_dia_${index}`;
-        inputDia.value = disp.dia;
-        container.appendChild(inputDia);
-        console.log(`      ? disp_dia_${index} = ${disp.dia}`);
-        
-        // Turno ID
-        const inputTurno = document.createElement('input');
-        inputTurno.type = 'hidden';
-        inputTurno.name = `disp_turno_${index}`;
-        inputTurno.value = disp.turnoId;
-        container.appendChild(inputTurno);
-        console.log(`      ? disp_turno_${index} = ${disp.turnoId}`);
-        
-        // Hora Inicio
-        const inputHoraInicio = document.createElement('input');
-        inputHoraInicio.type = 'hidden';
-        inputHoraInicio.name = `disp_hora_inicio_${index}`;
-        inputHoraInicio.value = disp.horaInicio;
-        container.appendChild(inputHoraInicio);
-        console.log(`      ? disp_hora_inicio_${index} = ${disp.horaInicio}`);
-        
-        // Hora Fin
-        const inputHoraFin = document.createElement('input');
-        inputHoraFin.type = 'hidden';
-        inputHoraFin.name = `disp_hora_fin_${index}`;
-        inputHoraFin.value = disp.horaFin;
-        container.appendChild(inputHoraFin);
-        console.log(`      ? disp_hora_fin_${index} = ${disp.horaFin}`);
-        
-        // Disponible
-        const inputDisponible = document.createElement('input');
-        inputDisponible.type = 'hidden';
-        inputDisponible.name = `disp_disponible_${index}`;
-        inputDisponible.value = disp.disponible;
-        container.appendChild(inputDisponible);
-        console.log(`      ? disp_disponible_${index} = ${disp.disponible}`);
-    });
-    
-    console.log(`? Campos ocultos actualizados: ${disponibilidadesArray.length} disponibilidades`);
-    console.log('? Contenedor HTML:', container.innerHTML);
-}
-
-// ===== CARGAR DISPONIBILIDADES EXISTENTES (MODO EDICIÓN) =====
-// Esta función se debe llamar si estás editando un profesor
 function cargarDisponibilidadesExistentes(disponibilidades) {
     disponibilidadesArray = disponibilidades;
     actualizarTablaDisponibilidades();
 }
 
-console.log('?Sistema de disponibilidades inicializado');
-    </script>
+// ============================================================
+// CÓDIGO QUE SE EJECUTA AL CARGAR LA PÁGINA
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('profesorForm');
+    const dniInput = document.getElementById('dni');
+    const correoInput = document.getElementById('correo');
+    const fechaNacInput = document.getElementById('fecha_nacimiento');
+    const fechaContInput = document.getElementById('fecha_contratacion');
+    const nivelSelect = document.getElementById('nivel');
+    const areaSelect = document.getElementById('area_id');
+    
+    function filtrarAreas() {
+        const nivelSeleccionado = nivelSelect.value;
+        const opciones = areaSelect.querySelectorAll('option');
+        let areasVisibles = 0;
+
+        areaSelect.value = '';
+
+        opciones.forEach(function(opcion) {
+            if (opcion.value === '') {
+                opcion.style.display = '';
+                if (nivelSeleccionado === '') {
+                    opcion.textContent = 'Primero seleccione un nivel';
+                } else {
+                    opcion.textContent = 'Seleccione el area';
+                }
+                return;
+            }
+
+            const nivelArea = opcion.getAttribute('data-nivel');
+
+            if (nivelSeleccionado === 'TODOS') {
+                if (nivelArea === 'TODOS') {
+                    opcion.style.display = '';
+                    areasVisibles++;
+                } else {
+                    opcion.style.display = 'none';
+                }
+            } else {
+                if (nivelArea === 'TODOS' || nivelArea === nivelSeleccionado) {
+                    opcion.style.display = '';
+                    areasVisibles++;
+                } else {
+                    opcion.style.display = 'none';
+                }
+            }
+        });
+
+        if (areasVisibles === 0 && nivelSeleccionado !== '') {
+            const placeholder = areaSelect.querySelector('option[value=""]');
+            placeholder.textContent = 'No hay areas disponibles para este nivel';
+        }
+    }
+    
+    nivelSelect.addEventListener('change', filtrarAreas);
+    filtrarAreas();
+    
+    if (!<%= editar %>) {
+        if (!fechaNacInput.value) {
+            const hace30Anios = new Date();
+            hace30Anios.setFullYear(hace30Anios.getFullYear() - 30);
+            fechaNacInput.valueAsDate = hace30Anios;
+        }
+        
+        if (!fechaContInput.value) {
+            fechaContInput.valueAsDate = new Date();
+        }
+    }
+    
+    if (dniInput) {
+        dniInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 8) {
+                this.value = this.value.slice(0, 8);
+            }
+        });
+        
+        dniInput.addEventListener('blur', function() {
+            const dni = this.value.trim();
+            const feedback = this.parentElement.nextElementSibling.nextElementSibling;
+            const validFeedback = feedback.nextElementSibling;
+            
+            if (dni.length === 0) {
+                this.classList.remove('is-invalid', 'is-valid');
+                feedback.textContent = '';
+                if (validFeedback) validFeedback.textContent = '';
+                return;
+            }
+            
+            if (dni.length !== 8) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                feedback.textContent = 'El DNI debe tener exactamente 8 digitos';
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                feedback.textContent = '';
+                if (validFeedback) validFeedback.textContent = ' DNI valido';
+            }
+        });
+    }
+    
+    if (correoInput) {
+        correoInput.addEventListener('blur', function() {
+            const correo = this.value.trim();
+            const feedback = this.parentElement.nextElementSibling;
+            const validFeedback = feedback.nextElementSibling;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (correo.length === 0) {
+                this.classList.add('is-invalid');
+                feedback.textContent = 'El correo electronico es obligatorio';
+                return;
+            }
+            
+            if (!emailRegex.test(correo)) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                feedback.textContent = 'Ingrese un correo electrónico válido';
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                feedback.textContent = '';
+                if (validFeedback) validFeedback.textContent = ' Correo válido';
+            }
+        });
+    }
+    
+    const telefonoInput = document.getElementById('telefono');
+    if (telefonoInput) {
+        telefonoInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    }
+    
+    form.addEventListener('submit', function(event) {
+        console.log("? FORMULARIO A PUNTO DE ENVIARSE");
+        console.log("? Actualizando campos ocultos ANTES de validar...");
+        actualizarCamposOcultos();
+        console.log("? Campos ocultos actualizados");
+
+        let errores = [];
+        console.log("? Disponibilidades en array:", disponibilidadesArray.length);
+        console.log("? Contenido del array:", disponibilidadesArray);
+        
+        const container = document.getElementById("disponibilidades-hidden");
+        if (container) {
+            console.log("? Campos ocultos HTML:", container.innerHTML.substring(0, 500));
+            const inputs = container.querySelectorAll("input");
+            console.log("? Total de inputs ocultos:", inputs.length);
+            inputs.forEach(input => console.log(`   ${input.name} = ${input.value}`));
+        }
+
+        const nombres = document.getElementById('nombres').value.trim();
+        const apellidos = document.getElementById('apellidos').value.trim();
+        const correo = correoInput.value.trim();
+        const areaId = areaSelect.value;
+        const nivel = nivelSelect.value;
+        const turnoId = document.getElementById('turno_id').value;
+        const dni = dniInput.value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!nombres) errores.push('Nombres es obligatorio');
+        if (!apellidos) errores.push('Apellidos es obligatorio');
+
+        if (!correo) {
+            errores.push('Correo electrónico es obligatorio');
+        } else if (!emailRegex.test(correo)) {
+            errores.push('Correo electrónico no es válido');
+        }
+
+        if (!nivel || nivel === '') {
+            errores.push('Nivel es obligatorio');
+        }
+
+        if (!areaId || areaId === '') {
+            errores.push('Área es obligatoria');
+        }
+
+        if (!turnoId) errores.push('Turno es obligatorio');
+
+        if (dni.length > 0) {
+            if (dni.length !== 8) {
+                errores.push('El DNI debe tener exactamente 8 dígitos');
+            } else if (!/^\d+$/.test(dni)) {
+                errores.push('El DNI solo debe contener números');
+            }
+        }
+
+        if (errores.length > 0) {
+            event.preventDefault();
+            const mensajeError = 'Por favor corrija los siguientes errores:\n\n? ' + errores.join('\n? ');
+            alert(mensajeError);
+
+            const primerCampoInvalido = form.querySelector('.is-invalid');
+            if (primerCampoInvalido) {
+                primerCampoInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                primerCampoInvalido.focus();
+            }
+
+            return false;
+        }
+
+        return true;
+    });
+    
+    const modalElement = document.getElementById('modalDisponibilidad');
+    if (modalElement) {
+        modalDisponibilidad = new bootstrap.Modal(modalElement);
+        
+        modalElement.addEventListener('hide.bs.modal', function(event) {
+            const focusedElement = modalElement.querySelector(':focus');
+            if (focusedElement) {
+                focusedElement.blur();
+            }
+        });
+        
+        modalElement.addEventListener('hidden.bs.modal', function(event) {
+            const btnAgregar = document.getElementById('btn-agregar-disponibilidad');
+            if (btnAgregar) {
+                setTimeout(() => btnAgregar.focus(), 100);
+            }
+        });
+    }
+    
+    const btnAgregarDisponibilidad = document.getElementById('btn-agregar-disponibilidad');
+    if (btnAgregarDisponibilidad) {
+        btnAgregarDisponibilidad.addEventListener('click', function() {
+            const turnoId = document.getElementById('turno_id').value;
+            if (!turnoId) {
+                alert('?? Por favor seleccione un TURNO en el formulario principal antes de agregar disponibilidades');
+                document.getElementById('turno_id').focus();
+                document.getElementById('turno_id').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            
+            document.getElementById('modal-dia').value = '';
+            document.getElementById('modal-hora-inicio').value = '';
+            document.getElementById('modal-hora-fin').value = '';
+            
+            modalDisponibilidad.show();
+            
+            setTimeout(() => {
+                document.getElementById('modal-dia').focus();
+            }, 300);
+        });
+    }
+    
+    const btnGuardarDisponibilidad = document.getElementById('btn-guardar-disponibilidad');
+    if (btnGuardarDisponibilidad) {
+        btnGuardarDisponibilidad.addEventListener('click', function() {
+            const dia = document.getElementById('modal-dia').value;
+            const horaInicio = document.getElementById('modal-hora-inicio').value;
+            const horaFin = document.getElementById('modal-hora-fin').value;
+            
+            if (!dia || !horaInicio || !horaFin) {
+                alert('?? Por favor complete todos los campos');
+                return;
+            }
+            
+            if (horaInicio >= horaFin) {
+                alert('?? La hora de inicio debe ser menor que la hora de fin');
+                return;
+            }
+            
+            const turnoId = document.getElementById('turno_id').value;
+            
+            const disponibilidad = {
+                dia: dia,
+                turnoId: turnoId,
+                horaInicio: horaInicio,
+                horaFin: horaFin,
+                disponible: true
+            };
+            
+            disponibilidadesArray.push(disponibilidad);
+            actualizarTablaDisponibilidades();
+            
+            document.getElementById('modal-dia').blur();
+            document.getElementById('modal-hora-inicio').blur();
+            document.getElementById('modal-hora-fin').blur();
+            document.getElementById('btn-guardar-disponibilidad').blur();
+            
+            modalDisponibilidad.hide();
+            
+            console.log('? Disponibilidad agregada:', disponibilidad);
+        });
+    }
+    
+    console.log('? Sistema de disponibilidades inicializado');
+    
+    <% if (editar && p.getDisponibilidades() != null && !p.getDisponibilidades().isEmpty()) { %>
+        console.log('? Cargando disponibilidades existentes del profesor...');
+        
+        const disponibilidadesExistentes = [
+            <% 
+            java.util.List<modelo.Disponibilidad> disponibilidades = p.getDisponibilidades();
+            for (int i = 0; i < disponibilidades.size(); i++) {
+                modelo.Disponibilidad disp = disponibilidades.get(i);
+                
+                String horaInicio = disp.getHoraInicio() != null ? disp.getHoraInicio().toString().substring(0, 5) : "";
+                String horaFin = disp.getHoraFin() != null ? disp.getHoraFin().toString().substring(0, 5) : "";
+            %>
+            {
+                dia: '<%= disp.getDiaSemana() %>',
+                turnoId: <%= disp.getTurnoId() %>,
+                horaInicio: '<%= horaInicio %>',
+                horaFin: '<%= horaFin %>',
+                disponible: <%= disp.isDisponible() %>
+            }<%= (i < disponibilidades.size() - 1) ? "," : "" %>
+            <% } %>
+        ];
+        
+        console.log('? Disponibilidades cargadas:', disponibilidadesExistentes);
+        cargarDisponibilidadesExistentes(disponibilidadesExistentes);
+        console.log('? ' + disponibilidadesExistentes.length + ' disponibilidades cargadas en el formulario');
+    <% } else if (editar) { %>
+        console.log('?? Este profesor no tiene disponibilidades registradas');
+    <% } else { %>
+        console.log('?? Modo NUEVO profesor - Sin disponibilidades para cargar');
+    <% } %>
+});
+</script>
 </body>
 </html>
