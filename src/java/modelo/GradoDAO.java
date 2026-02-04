@@ -8,7 +8,6 @@
  * - Consultas estadísticas y reportes
  * - Validación de datos
  * 
- * @author Tu Nombre
  */
 package modelo;
 
@@ -26,33 +25,13 @@ public class GradoDAO {
      * @return Lista completa de grados disponibles
      */
     public List<Grado> listar() {
-    List<Grado> lista = new ArrayList<>();
-    // Cambia a consulta directa en lugar de stored procedure
-    String sql = "SELECT * FROM grado WHERE activo = 1 ORDER BY nivel, orden";
-    
-    try (Connection con = Conexion.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        while (rs.next()) {
-            Grado g = mapearResultSet(rs);
-            lista.add(g);
-        }
-        
-    } catch (SQLException e) {
-        System.err.println("Error al listar grados: " + e.getMessage());
-        e.printStackTrace();
-    }
-    
-    return lista;
-}
-   /* public List<Grado> listar() {
         List<Grado> lista = new ArrayList<>();
-        String sql = "{CALL obtener_grados()}";
+        // Cambia a consulta directa en lugar de stored procedure
+        String sql = "SELECT * FROM grado WHERE activo = 1 ORDER BY nivel, orden";
         
         try (Connection con = Conexion.getConnection();
-             CallableStatement cs = con.prepareCall(sql);
-             ResultSet rs = cs.executeQuery()) {
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             
             while (rs.next()) {
                 Grado g = mapearResultSet(rs);
@@ -66,7 +45,7 @@ public class GradoDAO {
         
         return lista;
     }
-/*
+
     /**
      * LISTAR SOLO GRADOS ACTIVOS
      * 
@@ -95,31 +74,78 @@ public class GradoDAO {
 
     /**
      * AGREGAR NUEVO GRADO ACADÉMICO
-     * Utiliza el stored procedure: crear_grado
+     * RECOMENDADO: Usa query directo
      * 
      * @param g Objeto Grado con datos del nuevo grado
      * @return ID del grado creado, o -1 si falla
      */
     public int agregar(Grado g) {
-        String sql = "{CALL crear_grado(?, ?)}";
+        String sql = "INSERT INTO grado (nombre, nivel, orden, activo, eliminado, fecha_registro) " +
+                     "VALUES (?, ?, ?, 1, 0, NOW())";
         
         try (Connection con = Conexion.getConnection();
-             CallableStatement cs = con.prepareCall(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
-            cs.setString(1, g.getNombre());
-            cs.setString(2, g.getNivel());
+            // Obtener el siguiente orden para este nivel específico
+            int siguienteOrden = obtenerSiguienteOrdenParaNivel(g.getNivel());
             
-            ResultSet rs = cs.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("id");
+            System.out.println("DEBUG: Insertando grado:");
+            System.out.println("  Nombre: " + g.getNombre());
+            System.out.println("  Nivel: " + g.getNivel());
+            System.out.println("  Orden: " + siguienteOrden);
+            System.out.println("  SQL: " + sql);
+            
+            ps.setString(1, g.getNombre());
+            ps.setString(2, g.getNivel().toUpperCase());
+            ps.setInt(3, siguienteOrden);
+            
+            int filasAfectadas = ps.executeUpdate();
+            System.out.println("DEBUG: Filas afectadas: " + filasAfectadas);
+            
+            if (filasAfectadas > 0) {
+                ResultSet rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    int idGenerado = rs.getInt(1);
+                    System.out.println("DEBUG: ID generado: " + idGenerado);
+                    return idGenerado;
+                }
             }
             
         } catch (SQLException e) {
-            System.err.println("Error al agregar grado: " + e.getMessage());
+            System.err.println("ERROR SQL: " + e.getMessage());
             e.printStackTrace();
         }
         
         return -1;
+    }
+    
+    /**
+     * OBTENER SIGUIENTE ORDEN PARA NIVEL ESPECÍFICO
+     * Método auxiliar para el método agregar()
+     * 
+     * @param nivel Nivel educativo (INICIAL, PRIMARIA, SECUNDARIA)
+     * @return Siguiente número de orden para ese nivel
+     */
+    private int obtenerSiguienteOrdenParaNivel(String nivel) {
+        String sql = "SELECT COALESCE(MAX(orden), 0) + 1 as siguiente " +
+                     "FROM grado WHERE nivel = ?";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setString(1, nivel.toUpperCase());
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt("siguiente");
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error al obtener siguiente orden para nivel " + nivel + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return 1;
     }
 
     /**
@@ -159,19 +185,19 @@ public class GradoDAO {
 
     /**
      * OBTENER GRADO POR ID
-     * Utiliza el stored procedure: obtener_grado_por_id
+     * MODIFICADO: Usa query directo en lugar de stored procedure
      * 
      * @param id Identificador único del grado
      * @return Objeto Grado o null si no existe
      */
     public Grado obtenerPorId(int id) {
-        String sql = "{CALL obtener_grado_por_id(?)}";
+        String sql = "SELECT * FROM grado WHERE id = ? AND activo = 1 AND eliminado = 0";
         
         try (Connection con = Conexion.getConnection();
-             CallableStatement cs = con.prepareCall(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             
-            cs.setInt(1, id);
-            ResultSet rs = cs.executeQuery();
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
             
             if (rs.next()) {
                 return mapearResultSet(rs);
@@ -187,23 +213,22 @@ public class GradoDAO {
 
     /**
      * ACTUALIZAR DATOS DE GRADO EXISTENTE
-     * Utiliza el stored procedure: actualizar_grado
+     * MODIFICADO: Usa query directo en lugar de stored procedure
      * 
      * @param g Objeto Grado con datos actualizados
      * @return true si la actualización fue exitosa
      */
     public boolean actualizar(Grado g) {
-        String sql = "{CALL actualizar_grado(?, ?, ?)}";
+        String sql = "UPDATE grado SET nombre = ?, nivel = ? WHERE id = ? AND activo = 1";
         
         try (Connection con = Conexion.getConnection();
-             CallableStatement cs = con.prepareCall(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql)) {
             
-            cs.setInt(1, g.getId());
-            cs.setString(2, g.getNombre());
-            cs.setString(3, g.getNivel());
+            ps.setString(1, g.getNombre());
+            ps.setString(2, g.getNivel().toUpperCase());
+            ps.setInt(3, g.getId());
             
-            cs.executeUpdate();
-            return true;
+            return ps.executeUpdate() > 0;
             
         } catch (SQLException e) {
             System.err.println("Error al actualizar grado: " + e.getMessage());
@@ -241,26 +266,14 @@ public class GradoDAO {
 
     /**
      * ELIMINAR GRADO POR ID
-     * Utiliza el stored procedure: eliminar_grado
+     * MODIFICADO: Usa soft delete (desactivar)
      * 
      * @param id Identificador del grado a eliminar
      * @return true si la eliminación fue exitosa
      */
     public boolean eliminar(int id) {
-        String sql = "{CALL eliminar_grado(?)}";
-        
-        try (Connection con = Conexion.getConnection();
-             CallableStatement cs = con.prepareCall(sql)) {
-            
-            cs.setInt(1, id);
-            cs.executeUpdate();
-            return true;
-            
-        } catch (SQLException e) {
-            System.err.println("Error al eliminar grado: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+        // En lugar de eliminar físicamente, desactivamos
+        return desactivar(id);
     }
 
     /**

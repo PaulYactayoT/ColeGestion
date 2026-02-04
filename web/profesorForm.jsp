@@ -7,7 +7,6 @@
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.time.LocalTime" %>
-<%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="modelo.Disponibilidad" %>
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -19,13 +18,12 @@
         return;
     }
 
-   Profesor p = (Profesor) request.getAttribute("profesor");
+    Profesor p = (Profesor) request.getAttribute("profesor");
     List<Turno> turnos = (List<Turno>) request.getAttribute("turnos");
     List<Area> areas = (List<Area>) request.getAttribute("areas");
     boolean editar = (p != null);
     
     String fechaNacimientoStr = "";
-   
     String fechaContratacionStr = "";
     
     if (editar) {
@@ -40,194 +38,215 @@
 %>
 
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= editar ? "Editar Profesor" : "Registrar Profesor"%></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/estilos.css?v=1.5">
+    <title><%= editar ? "Editar Profesor" : "Registrar Profesor" %> - San Antonio</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "primary-dark": "#0d47a1",
+                        "success": "#10b981",
+                        "danger": "#ef4444",
+                        "warning": "#f59e0b",
+                        "info": "#3b82f6",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "card-light": "#ffffff",
+                        "card-dark": "#1a2233",
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#374151",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    
     <style>
-        :root {
-            --primary-color: #4f46e5;
-            --primary-dark: #4338ca;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --info-color: #3b82f6;
-            --dark-color: #1f2937;
-            --light-bg: #f9fafb;
-            --border-color: #e5e7eb;
-        }
-
         body {
-            background: #ffffff;
-            min-height: 100vh;
-            padding: 0;
-            margin: 0;
+            font-family: 'Lexend', sans-serif;
         }
-
-        .form-wrapper {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 1.5rem 15px;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-
-        .form-header {
-            background: #1f2937;
-            border-radius: 15px 15px 0 0;
-            padding: 1.5rem 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-bottom: 3px solid var(--primary-color);
-            margin-top: 1rem;
+        
+        /* Mejoras de accesibilidad */
+        .reduce-motion * { 
+            animation-duration: 0.01ms !important; 
+            animation-iteration-count: 1 !important; 
+            transition-duration: 0.01ms !important; 
         }
-
-        .form-header h2 {
-            color: #ffffff;
-            font-weight: 700;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        .high-contrast-invert { 
+            filter: invert(1) hue-rotate(180deg); 
         }
-
-        .form-header .icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .high-contrast-yellow { 
+            background-color: #000000 !important; 
+            color: #ffff00 !important; 
+        }
+        .beige-background { 
+            background-color: #f5f5dc !important; 
+        }
+        
+        /* Tamaños de texto - Afectar a toda la página */
+        .large-text { 
+            font-size: 18px !important; 
+        }
+        .large-text .form-label,
+        .large-text .form-control,
+        .large-text .form-select,
+        .large-text .text-sm {
+            font-size: 16px !important;
+        }
+        
+        .larger-text { 
+            font-size: 20px !important; 
+        }
+        .larger-text .form-label,
+        .larger-text .form-control,
+        .larger-text .form-select,
+        .larger-text .text-sm {
+            font-size: 18px !important;
+        }
+        
+        .largest-text { 
+            font-size: 22px !important; 
+        }
+        .largest-text .form-label,
+        .largest-text .form-control,
+        .largest-text .form-select,
+        .largest-text .text-sm {
+            font-size: 20px !important;
+        }
+        
+        .dyslexia-font { 
+            font-family: Arial !important; 
+            font-size: 1.1em !important; 
+            line-height: 1.6 !important; 
+            letter-spacing: 0.5px !important; 
+        }
+        
+        /* Ocultar elementos de accesibilidad inicialmente */
+        .accessibility-panel {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .accessibility-panel.open {
+            transform: translateX(0);
+        }
+        
+        /* Skip to content link */
+        .skip-to-content {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #135bec;
             color: white;
-            font-size: 1.5rem;
+            padding: 8px;
+            z-index: 100;
         }
-
-        .form-card {
-            background: white;
-            border-radius: 0 0 15px 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            padding: 2.5rem;
+        .skip-to-content:focus {
+            top: 0;
         }
-
-        .section-divider {
-            border: none;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary-color), transparent);
-            margin: 2rem 0 1.5rem 0;
+        
+        /* Focus styles */
+        :focus {
+            outline: 3px solid #135bec !important;
+            outline-offset: 2px;
         }
-
-        .section-title {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.2rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        
+        /* Estilos específicos para formularios */
+        .input-group-icon {
+            position: relative;
         }
-
-        .section-title i {
-            font-size: 1.4rem;
+        
+        .input-group-icon i,
+        .input-group-icon .material-symbols-outlined {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            z-index: 10;
         }
-
-        .form-label {
-            font-weight: 600;
-            color: var(--dark-color);
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
+        
+        .input-group-icon .form-control,
+        .input-group-icon .form-select {
+            padding-left: 40px;
         }
-
+        
         .required-field::after {
             content: " *";
-            color: var(--danger-color);
+            color: #ef4444;
             font-weight: bold;
         }
-
-        .form-control, .form-select {
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
-        }
-
-        .form-control.is-invalid {
-            border-color: var(--danger-color);
-            padding-right: calc(1.5em + 0.75rem);
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-        }
-
-        .form-control.is-valid {
-            border-color: var(--success-color);
-            padding-right: calc(1.5em + 0.75rem);
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2310b981' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-        }
-
-        .invalid-feedback {
-            display: block;
-            color: var(--danger-color);
-            font-size: 0.85rem;
-            margin-top: 0.25rem;
-            font-weight: 500;
-        }
-
-        .valid-feedback {
-            display: block;
-            color: var(--success-color);
-            font-size: 0.85rem;
-            margin-top: 0.25rem;
-            font-weight: 500;
-        }
-
+        
+        /* Alertas */
         .alert-modern {
-            border: none;
-            border-radius: 10px;
+            border-radius: 0.5rem;
             padding: 1rem 1.25rem;
             margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
             gap: 1rem;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
         }
-
-        .alert-modern i {
-            font-size: 1.5rem;
-        }
-
+        
         .alert-danger {
             background: linear-gradient(135deg, #fee2e2, #fecaca);
             color: #991b1b;
-            border-left: 4px solid var(--danger-color);
+            border-left-color: #ef4444;
         }
-
+        
         .alert-success {
             background: linear-gradient(135deg, #d1fae5, #a7f3d0);
             color: #065f46;
-            border-left: 4px solid var(--success-color);
+            border-left-color: #10b981;
         }
-
-        .alert-warning {
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            color: #92400e;
-            border-left: 4px solid var(--warning-color);
+        
+        .alert-info {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+            border-left-color: #3b82f6;
         }
-
+        
+        /* Badge */
+        .badge {
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        /* Botones */
         .btn-modern {
-            padding: 0.75rem 2rem;
-            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
             font-weight: 600;
             font-size: 0.95rem;
             border: none;
@@ -235,866 +254,849 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            cursor: pointer;
             text-decoration: none;
         }
-
+        
         .btn-primary-modern {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            background: linear-gradient(135deg, #135bec, #0d47a1);
             color: white;
         }
-
+        
         .btn-primary-modern:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.3);
-            color: white;
+            box-shadow: 0 8px 15px rgba(19, 91, 236, 0.3);
         }
-
+        
         .btn-success-modern {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
         }
-
+        
         .btn-success-modern:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 15px rgba(16, 185, 129, 0.3);
-            color: white;
         }
-
+        
         .btn-secondary-modern {
             background: #6b7280;
             color: white;
         }
-
+        
         .btn-secondary-modern:hover {
             background: #4b5563;
             transform: translateY(-2px);
-            color: white;
         }
-
+        
         .btn-danger-modern {
-            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
         }
-
+        
         .btn-danger-modern:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 15px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* Table styles */
+        .custom-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            background: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dark .custom-table {
+            background: #1a2233;
+        }
+        
+        .custom-table thead {
+            background: linear-gradient(135deg, #135bec 0%, #0d47a1 100%);
+        }
+        
+        .custom-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
             color: white;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-
-        .form-text {
-            color: #6b7280;
-            font-size: 0.8rem;
-            margin-top: 0.25rem;
+        
+        .custom-table tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s;
         }
-
-        .input-group-icon {
-            position: relative;
+        
+        .dark .custom-table tbody tr {
+            border-bottom: 1px solid #374151;
         }
-
-        .input-group-icon i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-            z-index: 10;
+        
+        .custom-table td {
+            padding: 1rem;
+            color: #374151;
+            font-size: 0.95rem;
         }
-
-        .input-group-icon .form-control {
-            padding-left: 2.75rem;
+        
+        .dark .custom-table td {
+            color: #d1d5db;
         }
-
+        
+        /* Section styles */
+        .section-divider {
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, #135bec, transparent);
+            margin: 2rem 0 1.5rem 0;
+        }
+        
+        .section-title {
+            color: #135bec;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .dark .section-title {
+            color: #60a5fa;
+        }
+        
+        /* Tooltip */
         .tooltip-info {
             cursor: help;
-            color: var(--info-color);
+            color: #3b82f6;
             margin-left: 0.25rem;
         }
-
-        @media (max-width: 768px) {
-            .form-card {
-                padding: 1.5rem;
-            }
-            
-            .form-header {
-                padding: 1.5rem;
-            }
+        
+        /* Accessibility Toggle Button */
+        .accessibility-toggle {
+            transition: all 0.3s ease;
         }
-
-        /* Animaciones */
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .form-wrapper {
-            animation: slideIn 0.5s ease;
+        
+        .accessibility-toggle:hover {
+            transform: scale(1.1);
         }
     </style>
 </head>
-<body>
-    <jsp:include page="header.jsp" />
-
-    <div class="form-wrapper">
-        <!-- Header del Formulario -->
-        <div class="form-header">
-            <h2>
-                <div class="icon">
-                    <i class="fas <%= editar ? "fa-user-edit" : "fa-user-plus" %>"></i>
-                </div>
-                <%= editar ? "Editar Profesor" : "Registrar Nuevo Profesor"%>
-            </h2>
+<body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen" id="main-content">
+    <!-- Skip to content link -->
+    <a href="#main-content" class="skip-to-content focus:top-0">Saltar al contenido principal</a>
+    
+    <!-- Accessibility Panel -->
+    <div class="fixed top-20 right-0 z-50 accessibility-panel bg-white dark:bg-gray-800 shadow-xl rounded-l-lg p-4 w-80">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg">Opciones de Accesibilidad</h3>
+            <button onclick="toggleAccessibilityPanel()" class="text-gray-500 hover:text-gray-700">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
-
-        <!-- Formulario -->
-        <div class="form-card">
-            <form action="ProfesorServlet" method="post" id="profesorForm">
-                <input type="hidden" name="id" value="<%= editar ? p.getId() : "" %>">
-                
-                <!-- SECCIÓN: INFORMACIÓN PERSONAL -->
-                <div class="section-title">
-                    <i class="fas fa-user"></i>
-                    Informacion Personal
+        
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h4 class="font-medium">Tamaño de texto</h4>
+                <div class="flex gap-2">
+                    <button onclick="setTextSize('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
+                    <button onclick="setTextSize('large')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Grande</button>
+                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Más Grande</button>
                 </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Nombres</label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-user"></i>
-                            <input type="text" class="form-control" name="nombres" id="nombres"
-                                   value="<%= editar && p.getNombres() != null ? p.getNombres() : "" %>" 
-                                   required maxlength="100" placeholder="Ingrese los nombres">
-                        </div>
-                        <div class="invalid-feedback"></div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Apellidos</label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-user"></i>
-                            <input type="text" class="form-control" name="apellidos" id="apellidos"
-                                   value="<%= editar && p.getApellidos() != null ? p.getApellidos() : "" %>" 
-                                   required maxlength="100" placeholder="Ingrese los apellidos">
-                        </div>
-                        <div class="invalid-feedback"></div>
-                    </div>
+            </div>
+            
+            <div class="space-y-2">
+                <h4 class="font-medium">Contraste</h4>
+                <div class="flex gap-2">
+                    <button onclick="setContrast('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
+                    <button onclick="setContrast('high')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Alto Contraste</button>
+                    <button onclick="setContrast('yellow')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Amarillo/Negro</button>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Correo Electrónico</label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" class="form-control" name="correo" id="correo"
-                                   value="<%= editar && p.getCorreo() != null ? p.getCorreo() : "" %>" 
-                                   required maxlength="100" placeholder="ejemplo@email.com">
-                        </div>
-                        <div class="invalid-feedback"></div>
-                        <div class="valid-feedback"></div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">
-                            DNI
-                            <i class="fas fa-info-circle tooltip-info" title="Opcional - 8 digitos numericos"></i>
-                        </label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-id-card"></i>
-                            <input type="text" class="form-control" name="dni" id="dni"
-                                   value="<%= editar && p.getDni() != null ? p.getDni() : "" %>" 
-                                   maxlength="8" placeholder="12345678">
-                        </div>
-                        <small class="form-text">Opcional, 8 digitos numericos</small>
-                        <div class="invalid-feedback"></div>
-                        <div class="valid-feedback"></div>
-                    </div>
+            </div>
+            
+            <div class="space-y-2">
+                <h4 class="font-medium">Otros ajustes</h4>
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="reduceMotion" onchange="toggleMotion()">
+                        <span>Reducir movimiento</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="dyslexiaFont" onchange="toggleDyslexiaFont()">
+                        <span>Fuente para dislexia</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="beigeBackground" onchange="toggleBeigeBackground()">
+                        <span>Fondo beige</span>
+                    </label>
                 </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Fecha de Nacimiento</label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-calendar"></i>
-                            <input type="date" class="form-control" name="fecha_nacimiento" id="fecha_nacimiento"
-                                   value="<%= fechaNacimientoStr %>">
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Telefono</label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-phone"></i>
-                            <input type="tel" class="form-control" name="telefono" id="telefono"
-                                   value="<%= editar && p.getTelefono() != null ? p.getTelefono() : "" %>" 
-                                   maxlength="20" placeholder="987654321">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Direccion</label>
-                    <div class="input-group-icon">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <textarea class="form-control" name="direccion" id="direccion" rows="2" maxlength="255" 
-                                  placeholder="Av. Principal 123, Distrito, Ciudad"><%= editar && p.getDireccion() != null ? p.getDireccion() : "" %></textarea>
-                    </div>
-                </div>
-
-                <hr class="section-divider">
-
-                <!-- SECCION: INFORMACION PROFESIONAL -->
-                <div class="section-title">
-                    <i class="fas fa-briefcase"></i>
-                    Informacion Profesional
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Nivel que Enseña</label>
-                        <select class="form-select" name="nivel" id="nivel" required>
-                            <option value="">Seleccione un nivel</option>
-                            <option value="INICIAL" <%= (editar && "INICIAL".equals(p.getNivel())) ? "selected" : "" %>>Inicial</option>
-                            <option value="PRIMARIA" <%= (editar && "PRIMARIA".equals(p.getNivel())) ? "selected" : "" %>>Primaria</option>
-                            <option value="SECUNDARIA" <%= (editar && "SECUNDARIA".equals(p.getNivel())) ? "selected" : "" %>>Secundaria</option>
-                            <option value="TODOS" <%= (editar && "TODOS".equals(p.getNivel())) ? "selected" : "" %>>Todos los Niveles</option>
-                        </select>
-                        <div class="invalid-feedback"></div>
-                    </div>
-                    
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">area</label>
-                        <select class="form-select" name="area_id" id="area_id" required>
-                            <option value="">Primero seleccione un nivel</option>
-                            <% 
-                                if (areas != null && !areas.isEmpty()) {
-                                    for (Area area : areas) {
-                                        boolean selected = editar && p.getAreaId() == area.getId();
-                            %>
-                                <option value="<%= area.getId() %>" 
-                                        data-nivel="<%= area.getNivel() %>"
-                                        <%= selected ? "selected" : "" %>
-                                        style="display: none;">
-                                    <%= area.getNombre() %>
-                                </option>
-                            <% 
-                                    }
-                                } else {
-                            %>
-                                <option value="" disabled>No hay areas disponibles</option>
-                            <% 
-                                }
-                            %>
-                        </select>
-                        <small class="form-text">Las áreas se filtran segun el nivel seleccionado</small>
-                        <div class="invalid-feedback"></div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Turno</label>
-                        <select class="form-select" name="turno_id" id="turno_id" required>
-                            <option value="">Seleccione un turno</option>
-                            <% 
-                                if (turnos != null && !turnos.isEmpty()) {
-                                    for (Turno turno : turnos) {
-                                        boolean selected = editar && p.getTurnoId() == turno.getId();
-                                        
-                                        // Formatear las horas usando LocalTime directamente
-                                        String horaInicio = "";
-                                        String horaFin = "";
-                                        if (turno.getHoraInicio() != null) {
-                                            horaInicio = turno.getHoraInicio().format(DateTimeFormatter.ofPattern("HH:mm"));
-                                        }
-                                        if (turno.getHoraFin() != null) {
-                                            horaFin = turno.getHoraFin().format(DateTimeFormatter.ofPattern("HH:mm"));
-                                        }
-                            %>
-                                <option value="<%= turno.getId() %>" <%= selected ? "selected" : "" %>>
-                                    <%= turno.getNombre() %> (<%= horaInicio %> - <%= horaFin %>)
-                                </option>
-                            <% 
-                                    }
-                                } else {
-                            %>
-                                <option value="" disabled>No hay turnos disponibles</option>
-                            <%
-                                }
-                            %>
-                        </select>
-                        <div class="invalid-feedback"></div>
-                    </div>
-                    
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Codigo de Profesor</label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-barcode"></i>
-                            <input type="text" class="form-control" name="codigo_profesor"
-                                   value="<%= editar && p.getCodigoProfesor() != null ? p.getCodigoProfesor() : "" %>" 
-                                   maxlength="20" placeholder="PROF-001">
-                        </div>
-                        <small class="form-text">Opcional, se generar automaticamente</small>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Fecha de Contratacion</label>
-                        <div class="input-group-icon">
-                            <i class="fas fa-calendar-check"></i>
-                            <input type="date" class="form-control" name="fecha_contratacion" id="fecha_contratacion"
-                                   value="<%= fechaContratacionStr %>">
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Estado</label>
-                        <select name="estado" class="form-select">
-                            <option value="ACTIVO" <%= (editar && "ACTIVO".equals(p.getEstado())) ? "selected" : "" %>>ACTIVO</option>
-                            <option value="INACTIVO" <%= (editar && "INACTIVO".equals(p.getEstado())) ? "selected" : "" %>>INACTIVO</option>
-                            <option value="LICENCIA" <%= (editar && "LICENCIA".equals(p.getEstado())) ? "selected" : "" %>>LICENCIA</option>
-                            <option value="JUBILADO" <%= (editar && "JUBILADO".equals(p.getEstado())) ? "selected" : "" %>>JUBILADO</option>
-                        </select>
-                    </div>
-                </div> 
-                
-                <!-- ========================================
-                        SECCION: DISPONIBILIDAD HORARIA
-                        ======================================== -->
-                <hr class="section-divider">
-                <div class="section-title">
-                    <i class="fas fa-calendar-alt"></i>
-                    Disponibilidad Horaria
-                </div>
-
-                <div class="alert alert-info alert-modern">
-                    <i class="fas fa-info-circle"></i>
-                    Selecciona los dias y horarios en los que el profesor esta disponible para dictar clases.
-                </div>
-
-                <div id="disponibilidad-container">
-                    <!-- Tabla para mostrar disponibilidades existentes -->
-                    <table class="table table-bordered" id="tabla-disponibilidades">
-                        <thead>
-                            <tr>
-                                <th>Dia</th>
-                                <th>Hora Inicio</th>
-                                <th>Hora Fin</th>
-                            </tr>
-                        </thead>
-                        <tbody id="disponibilidades-body">
-                            <!-- Se llenaran dinamicamente -->
-                            <tr id="sin-disponibilidades">
-                                <td colspan="3" class="text-center text-muted">
-                                    <i class="fas fa-info-circle"></i> No hay disponibilidades registradas
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <button type="button" class="btn btn-success-modern" id="btn-agregar-disponibilidad">
-                        <i class="fas fa-plus"></i> Agregar Horario Disponible
-                    </button>
-                </div>
-
-                <!-- Modal para agregar disponibilidad -->
-                <div class="modal fade" id="modalDisponibilidad" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Agregar Horario Disponible</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label class="form-label required-field">Dia de la Semana</label>
-                                    <select class="form-select" id="modal-dia" required>
-                                        <option value="">Seleccione un dia</option>
-                                        <option value="LUNES">Lunes</option>
-                                        <option value="MARTES">Martes</option>
-                                        <option value="MIERCOLES">Miercoles</option>
-                                        <option value="JUEVES">Jueves</option>
-                                        <option value="VIERNES">Viernes</option>
-                                        <option value="SABADO">Sabado</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label required-field">Hora de Inicio</label>
-                                    <input type="time" class="form-control" id="modal-hora-inicio" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label required-field">Hora de Fin</label>
-                                    <input type="time" class="form-control" id="modal-hora-fin" required>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn-modern btn-secondary-modern" data-bs-dismiss="modal">
-                                    <i class="fas fa-times"></i> Cancelar
-                                </button>
-                                <button type="button" class="btn-modern btn-primary-modern" id="btn-guardar-disponibilidad">
-                                    <i class="fas fa-save"></i> Guardar Horario
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Campos ocultos para enviar disponibilidades al servidor -->
-                <div id="disponibilidades-hidden"></div>
-                
-                <!-- BOTONES -->
-                <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid #e5e7eb;">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn-modern <%= editar ? "btn-primary-modern" : "btn-success-modern" %>">
-                            <i class="fas <%= editar ? "fa-save" : "fa-check" %>"></i>
-                            <%= editar ? "Actualizar Profesor" : "Registrar Profesor" %>
-                        </button>
-                        <a href="ProfesorServlet" class="btn-modern btn-secondary-modern">
-                            <i class="fas fa-times"></i>
-                            Cancelar
-                        </a>
-                    </div>
-                    
-                    <% if (editar) { %>
-                    <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId() %>" 
-                       class="btn-modern btn-danger-modern"
-                       onclick="return confirm('¿Esta seguro de eliminar este profesor?')">
-                        <i class="fas fa-trash"></i>
-                        Eliminar
-                    </a>
-                    <% } %>
-                </div>
-            </form>
+            </div>
+            
+            <button onclick="resetAccessibility()" class="w-full py-2 bg-gray-800 text-white rounded hover:bg-gray-900">
+                Restablecer ajustes
+            </button>
         </div>
     </div>
-
-    <footer class="bg-dark text-white py-4 mt-5">
-        <div class="container text-center text-md-start">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="logo-container text-center">
-                        <img src="assets/img/logosa.png" alt="Logo" class="img-fluid mb-2" width="80" height="auto">
-                        <p class="fs-6 mb-0">"Lideres en educacion de calidad al mas alto nivel"</p>
+    
+    <!-- Accessibility Toggle Button -->
+    <button onclick="toggleAccessibilityPanel()" 
+            class="fixed top-20 right-0 z-40 bg-primary text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors accessibility-toggle"
+            aria-label="Abrir panel de accesibilidad">
+        <span class="material-symbols-outlined">accessibility_new</span>
+    </button>
+    
+    <div class="flex h-screen overflow-hidden">
+        <!-- Left SideNavBar -->
+        <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
+            <div class="flex flex-col gap-8 p-6">
+                <!-- Brand -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
+                        <span class="material-symbols-outlined">school</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
+                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Gestión Académica</p>
                     </div>
                 </div>
-
-                <div class="col-md-4 mb-3">
-                    <h5 class="fs-6 fw-bold">Contacto:</h5>
-                    <p class="fs-6 mb-1">Direccion: Av. El Sol 461, San Juan de Lurigancho 15434</p>
-                    <p class="fs-6 mb-1">Telefono: 987654321</p>
-                    <p class="fs-6 mb-1">Correo: colegiosanantonio@gmail.com</p>
+                
+                <!-- Navigation -->
+                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="dashboard.jsp">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="text-sm">Dashboard</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="AlumnoServlet">
+                        <i class="fas fa-user-graduate" aria-hidden="true"></i>
+                        <span class="text-sm">Estudiantes</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
+                       href="ProfesorServlet"
+                       aria-current="page">
+                        <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
+                        <span class="text-sm">Profesores</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="CursoServlet">
+                        <i class="fas fa-book" aria-hidden="true"></i>
+                        <span class="text-sm">Cursos</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="GradoServlet">
+                        <i class="fas fa-layer-group" aria-hidden="true"></i>
+                        <span class="text-sm">Grados</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="UsuarioServlet">
+                        <i class="fas fa-users-cog" aria-hidden="true"></i>
+                        <span class="text-sm">Usuarios</span>
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Footer Sidebar -->
+            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
+                <form action="LogoutServlet" method="post" class="w-full">
+                    <button type="submit" 
+                            class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
+                        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <!-- TopNavBar -->
+            <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-xl font-bold text-[#111318] dark:text-white">
+                            <%= editar ? "Editar Profesor" : "Registrar Nuevo Profesor" %>
+                        </h1>
+                    </div>
                 </div>
+                
+                <div class="flex items-center gap-4 ml-8">
+                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
+                            aria-label="Notificaciones">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    
+                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                            aria-label="Configuración">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
+                    
+                    <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
+                    
+                    <div class="flex items-center gap-3">
+                        <p class="text-sm font-medium hidden md:block">
+                            <%= session.getAttribute("usuario") != null ? session.getAttribute("usuario") : "Administrador" %>
+                        </p>
+                        <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
+                             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCO64ytW7WFj5YJ0XxtUSKDLHtMumvYdpNUpuyZfiJ1u2v-o-ZSRqiNGLyx6pmhB7nZDuPBYTD_VLKKCEUg0atLHJC4hTrMG5QjAfNlLQdzKId6L3tl2-QhmWJUVQVRr4hk7ODNpJ2OomnFQx_u6WT5QgxJRWLtvZ2I5ecv8WfcR1-MoMfF485fYSxo5s9ErvyApFtN9ro0oew7DMrNHFDQJp1zE9Dtyls43R9C7cnQa5HNlhDoiFBsEBf8CYKzebhaA6Yfuad3vcM');"
+                             aria-label="Foto de perfil del administrador">
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Main Content -->
+            <div class="p-8">
+                <!-- Header con título -->
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-[#111318] dark:text-white">Gestión de Profesores</h2>
+                    <p class="text-[#616f89] dark:text-gray-400 mt-1"><%= editar ? "Edita la información del profesor" : "Completa el formulario para registrar un nuevo profesor" %></p>
+                </div>
+                
+                <!-- Alertas -->
+                <% 
+                    String error = (String) session.getAttribute("error");
+                    String mensaje = (String) session.getAttribute("mensaje");
+                    
+                    if (error != null) { 
+                        session.removeAttribute("error");
+                %>
+                <div class="alert-modern alert-danger mb-6" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div>
+                        <strong>Error:</strong> <%= error %>
+                    </div>
+                </div>
+                <% } %>
+                
+                <% if (mensaje != null) { 
+                    session.removeAttribute("mensaje");
+                %>
+                <div class="alert-modern alert-success mb-6" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>Éxito:</strong> <%= mensaje %>
+                    </div>
+                </div>
+                <% } %>
+                
+                <!-- Formulario -->
+                <div class="bg-white dark:bg-card-dark rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div class="p-6">
+                        <form action="ProfesorServlet" method="post" id="profesorForm" novalidate>
+                            <input type="hidden" name="id" value="<%= editar ? p.getId() : "" %>">
+                            <input type="hidden" name="accion" value="<%= editar ? "actualizar" : "guardar" %>">
+                            
+                            <!-- SECCIÓN: INFORMACIÓN PERSONAL -->
+                            <div class="section-title">
+                                <i class="fas fa-user"></i>
+                                Información Personal
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label for="nombres" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
+                                        Nombres
+                                    </label>
+                                    <div class="input-group-icon">
+                                        <i class="fas fa-user"></i>
+                                        <input type="text" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               name="nombres" id="nombres"
+                                               value="<%= editar && p.getNombres() != null ? p.getNombres() : "" %>" 
+                                               required maxlength="100" placeholder="Ingrese los nombres">
+                                    </div>
+                                    <div class="text-sm text-red-600 mt-1" id="nombres-error"></div>
+                                </div>
 
-                <div class="col-md-4 mb-3">
-                    <h5 class="fs-6 fw-bold">Siguenos:</h5>
-                    <a href="https://www.facebook.com/" class="text-white d-block fs-6 mb-1">Facebook</a>
-                    <a href="https://www.instagram.com/" class="text-white d-block fs-6 mb-1">Instagram</a>
-                    <a href="https://twitter.com/" class="text-white d-block fs-6 mb-1">Twitter</a>
-                    <a href="https://www.youtube.com/" class="text-white d-block fs-6 mb-1">YouTube</a>
+                                <div>
+                                    <label for="apellidos" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
+                                        Apellidos
+                                    </label>
+                                    <div class="input-group-icon">
+                                        <i class="fas fa-user"></i>
+                                        <input type="text" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               name="apellidos" id="apellidos"
+                                               value="<%= editar && p.getApellidos() != null ? p.getApellidos() : "" %>" 
+                                               required maxlength="100" placeholder="Ingrese los apellidos">
+                                    </div>
+                                    <div class="text-sm text-red-600 mt-1" id="apellidos-error"></div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label for="correo" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
+                                        Correo Electrónico
+                                    </label>
+                                    <div class="input-group-icon">
+                                        <i class="fas fa-envelope"></i>
+                                        <input type="email" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               name="correo" id="correo"
+                                               value="<%= editar && p.getCorreo() != null ? p.getCorreo() : "" %>" 
+                                               required maxlength="100" placeholder="ejemplo@email.com">
+                                    </div>
+                                    <div class="text-sm text-red-600 mt-1" id="correo-error"></div>
+                                </div>
+
+                                <div>
+                                    <label for="dni" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
+                                        DNI
+                                        <i class="fas fa-info-circle tooltip-info" title="Opcional - 8 dígitos numéricos"></i>
+                                    </label>
+                                    <div class="input-group-icon">
+                                        <i class="fas fa-id-card"></i>
+                                        <input type="text" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               name="dni" id="dni"
+                                               value="<%= editar && p.getDni() != null ? p.getDni() : "" %>" 
+                                               maxlength="8" placeholder="12345678">
+                                    </div>
+                                    <div class="text-sm text-gray-500 mt-1">Opcional, 8 dígitos numéricos</div>
+                                    <div class="text-sm text-red-600 mt-1" id="dni-error"></div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label for="fecha_nacimiento" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
+                                        Fecha de Nacimiento
+                                    </label>
+                                    <div class="input-group-icon">
+                                        <i class="fas fa-calendar"></i>
+                                        <input type="date" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               name="fecha_nacimiento" id="fecha_nacimiento"
+                                               value="<%= fechaNacimientoStr %>">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="telefono" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
+                                        Teléfono
+                                    </label>
+                                    <div class="input-group-icon">
+                                        <i class="fas fa-phone"></i>
+                                        <input type="tel" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               name="telefono" id="telefono"
+                                               value="<%= editar && p.getTelefono() != null ? p.getTelefono() : "" %>" 
+                                               maxlength="20" placeholder="987654321">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-6">
+                                <label for="direccion" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
+                                    Dirección
+                                </label>
+                                <div class="input-group-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <textarea class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                              name="direccion" id="direccion" rows="2" maxlength="255" 
+                                              placeholder="Av. Principal 123, Distrito, Ciudad"><%= editar && p.getDireccion() != null ? p.getDireccion() : "" %></textarea>
+                                </div>
+                            </div>
+
+                            <hr class="section-divider">
+
+                            <!-- SECCIÓN: INFORMACIÓN PROFESIONAL -->
+                            <div class="section-title">
+                                <i class="fas fa-briefcase"></i>
+                                Información Profesional
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label for="nivel" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
+                                        Nivel que Enseña
+                                    </label>
+                                    <select class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                            name="nivel" id="nivel" required>
+                                        <option value="">Seleccione un nivel</option>
+                                        <option value="INICIAL" <%= (editar && "INICIAL".equals(p.getNivel())) ? "selected" : "" %>>Inicial</option>
+                                        <option value="PRIMARIA" <%= (editar && "PRIMARIA".equals(p.getNivel())) ? "selected" : "" %>>Primaria</option>
+                                        <option value="SECUNDARIA" <%= (editar && "SECUNDARIA".equals(p.getNivel())) ? "selected" : "" %>>Secundaria</option>
+                                        <option value="TODOS" <%= (editar && "TODOS".equals(p.getNivel())) ? "selected" : "" %>>Todos los Niveles</option>
+                                    </select>
+                                    <div class="text-sm text-red-600 mt-1" id="nivel-error"></div>
+                                </div>
+                                
+                                <div>
+                                    <label for="area_id" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
+                                        Área
+                                    </label>
+                                    <select class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                            name="area_id" id="area_id" required>
+                                        <option value="">Primero seleccione un nivel</option>
+                                        <% 
+                                            if (areas != null && !areas.isEmpty()) {
+                                                for (Area area : areas) {
+                                                    boolean selected = editar && p.getAreaId() == area.getId();
+                                        %>
+                                            <option value="<%= area.getId() %>" 
+                                                    data-nivel="<%= area.getNivel() %>"
+                                                    <%= selected ? "selected" : "" %>
+                                                    style="display: none;">
+                                                <%= area.getNombre() %>
+                                            </option>
+                                        <% 
+                                                }
+                                            } else {
+                                        %>
+                                            <option value="" disabled>No hay áreas disponibles</option>
+                                        <% 
+                                            }
+                                        %>
+                                    </select>
+                                    <div class="text-sm text-gray-500 mt-1">Las áreas se filtran según el nivel seleccionado</div>
+                                    <div class="text-sm text-red-600 mt-1" id="area-error"></div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label for="turno_id" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
+                                        Turno
+                                    </label>
+                                    <select class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                            name="turno_id" id="turno_id" required>
+                                        <option value="">Seleccione un turno</option>
+                                        <% 
+                                            if (turnos != null && !turnos.isEmpty()) {
+                                                for (Turno turno : turnos) {
+                                                    boolean selected = editar && p.getTurnoId() == turno.getId();
+                                                    
+                                                    String horaInicio = "";
+                                                    String horaFin = "";
+                                                    if (turno.getHoraInicio() != null) {
+                                                        horaInicio = turno.getHoraInicio().format(DateTimeFormatter.ofPattern("HH:mm"));
+                                                    }
+                                                    if (turno.getHoraFin() != null) {
+                                                        horaFin = turno.getHoraFin().format(DateTimeFormatter.ofPattern("HH:mm"));
+                                                    }
+                                        %>
+                                            <option value="<%= turno.getId() %>" <%= selected ? "selected" : "" %>>
+                                                <%= turno.getNombre() %> (<%= horaInicio %> - <%= horaFin %>)
+                                            </option>
+                                        <% 
+                                                }
+                                            } else {
+                                        %>
+                                            <option value="" disabled>No hay turnos disponibles</option>
+                                        <%
+                                            }
+                                        %>
+                                    </select>
+                                    <div class="text-sm text-red-600 mt-1" id="turno-error"></div>
+                                </div>
+                                
+                                <div>
+                                    <input type="hidden" name="codigo_profesor" value="">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label for="fecha_contratacion" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
+                                        Fecha de Contratación
+                                    </label>
+                                    <div class="input-group-icon">
+                                        <i class="fas fa-calendar-check"></i>
+                                        <input type="date" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               name="fecha_contratacion" id="fecha_contratacion"
+                                               value="<%= fechaContratacionStr %>">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="estado" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
+                                        Estado
+                                    </label>
+                                    <select name="estado" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option value="ACTIVO" <%= (editar && "ACTIVO".equals(p.getEstado())) ? "selected" : "" %>>ACTIVO</option>
+                                        <option value="INACTIVO" <%= (editar && "INACTIVO".equals(p.getEstado())) ? "selected" : "" %>>INACTIVO</option>
+                                        <option value="LICENCIA" <%= (editar && "LICENCIA".equals(p.getEstado())) ? "selected" : "" %>>LICENCIA</option>
+                                        <option value="JUBILADO" <%= (editar && "JUBILADO".equals(p.getEstado())) ? "selected" : "" %>>JUBILADO</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- ========================================
+                                    SECCIÓN: DISPONIBILIDAD HORARIA
+                                    ======================================== -->
+                            <hr class="section-divider">
+                            <div class="section-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Disponibilidad Horaria
+                            </div>
+
+                            <div class="alert-modern alert-info mb-6">
+                                <i class="fas fa-info-circle"></i>
+                                <div>
+                                    Selecciona los días y horarios en los que el profesor está disponible para dictar clases.
+                                </div>
+                            </div>
+
+                            <div id="disponibilidad-container" class="mb-6">
+                                <!-- Tabla para mostrar disponibilidades existentes -->
+                                <div class="overflow-x-auto">
+                                    <table class="custom-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Día</th>
+                                                <th>Hora Inicio</th>
+                                                <th>Hora Fin</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="disponibilidades-body">
+                                            <!-- Se llenarán dinámicamente -->
+                                            <tr id="sin-disponibilidades">
+                                                <td colspan="4" class="text-center py-4 text-gray-400">
+                                                    <i class="fas fa-info-circle"></i> No hay disponibilidades registradas
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <button type="button" class="btn-modern btn-success-modern mt-4" id="btn-agregar-disponibilidad">
+                                    <i class="fas fa-plus"></i> Agregar Horario Disponible
+                                </button>
+                            </div>
+
+                            <!-- Modal para agregar disponibilidad -->
+                            <div class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden" id="modalDisponibilidad">
+                                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-bold">Agregar Horario Disponible</h3>
+                                        <button type="button" onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
+                                            Día de la Semana
+                                        </label>
+                                        <select class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                                id="modal-dia" required>
+                                            <option value="">Seleccione un día</option>
+                                            <option value="LUNES">Lunes</option>
+                                            <option value="MARTES">Martes</option>
+                                            <option value="MIÉRCOLES">Miércoles</option>
+                                            <option value="JUEVES">Jueves</option>
+                                            <option value="VIERNES">Viernes</option>
+                                            <option value="SÁBADO">Sábado</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
+                                            Hora de Inicio
+                                        </label>
+                                        <input type="time" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               id="modal-hora-inicio" required>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
+                                            Hora de Fin
+                                        </label>
+                                        <input type="time" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               id="modal-hora-fin" required>
+                                    </div>
+                                    <div class="flex justify-end gap-3">
+                                        <button type="button" onclick="closeModal()" 
+                                                class="btn-modern btn-secondary-modern">
+                                            <i class="fas fa-times"></i> Cancelar
+                                        </button>
+                                        <button type="button" onclick="guardarDisponibilidad()" 
+                                                class="btn-modern btn-primary-modern">
+                                            <i class="fas fa-save"></i> Guardar Horario
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Campos ocultos para disponibilidades -->
+                            <div id="disponibilidades-hidden"></div>
+                            
+                            <!-- BOTONES -->
+                            <div class="flex justify-between items-center mt-8 pt-6 border-t border-[#e5e7eb] dark:border-gray-700">
+                                <div class="flex gap-3">
+                                    <button type="submit" class="btn-modern <%= editar ? "btn-primary-modern" : "btn-success-modern" %>">
+                                        <i class="fas <%= editar ? "fa-save" : "fa-check" %>"></i>
+                                        <%= editar ? "Actualizar Profesor" : "Registrar Profesor" %>
+                                    </button>
+                                    <a href="ProfesorServlet" class="btn-modern btn-secondary-modern">
+                                        <i class="fas fa-times"></i>
+                                        Cancelar
+                                    </a>
+                                </div>
+                                
+                                <% if (editar) { %>
+                                <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId() %>" 
+                                   class="btn-modern btn-danger-modern"
+                                   onclick="return confirm('¿Está seguro de eliminar este profesor?')">
+                                    <i class="fas fa-trash"></i>
+                                    Eliminar
+                                </a>
+                                <% } %>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
+        </main>
+    </div>
 
-            <div class="text-center mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.1);">
-                <p class="fs-6 mb-0">&copy; 2025 Colegio SA - Todos los derechos reservados</p>
-            </div>
-        </div>
-    </footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-// ============================================================
-// VARIABLES GLOBALES - FUERA DE DOMContentLoaded
-// ============================================================
-let disponibilidadesArray = [];
-let modalDisponibilidad;
-
-// ============================================================
-// FUNCIONES GLOBALES - FUERA DE DOMContentLoaded
-// ============================================================
-
-function actualizarCamposOcultos() {
-    const container = document.getElementById('disponibilidades-hidden');
-    
-    if (!container) {
-        console.error('? ERROR: No se encontró el contenedor disponibilidades-hidden');
-        return;
-    }
-    
-    container.innerHTML = '';
-    
-    console.log('? Actualizando campos ocultos...');
-    console.log('   ? Total disponibilidades en array:', disponibilidadesArray.length);
-    console.log('   ? Array completo:', JSON.stringify(disponibilidadesArray, null, 2));
-    
-    const inputTotal = document.createElement('input');
-    inputTotal.type = 'hidden';
-    inputTotal.name = 'total_disponibilidades';
-    inputTotal.value = disponibilidadesArray.length;
-    container.appendChild(inputTotal);
-    console.log('? Campo total_disponibilidades creado:', inputTotal.value);
-    
-        DisponibilidadesArray.forEach((disp, index) => {
-            console.log(`? Disponibilidad ${index}:`, disp);
-            console.log(`   - dia: "${disp.dia}" (tipo: ${typeof disp.dia})`);
-            console.log(`   - turnoId: "${disp.turnoId}" (tipo: ${typeof disp.turnoId})`);
-            console.log(`   - horaInicio: "${disp.horaInicio}" (tipo: ${typeof disp.horaInicio})`);
-            console.log(`   - horaFin: "${disp.horaFin}" (tipo: ${typeof disp.horaFin})`);
-
-        const inputDia = document.createElement('input');
-        inputDia.type = 'hidden';
-        inputDia.name = `disp_dia_${index}`;
-        inputDia.value = disp.dia !== undefined && disp.dia !== null ? disp.dia : '';
-        container.appendChild(inputDia);
-        console.log(`   ? disp_dia_${index} = "${inputDia.value}"`);
-        
-        const inputTurno = document.createElement('input');
-        inputTurno.type = 'hidden';
-        inputTurno.name = `disp_turno_${index}`;
-        inputTurno.value = disp.turnoId !== undefined && disp.turnoId !== null ? disp.turnoId : '';
-        container.appendChild(inputTurno);
-        console.log(`   ? disp_turno_${index} = "${inputTurno.value}"`);
-        
-        const inputHoraInicio = document.createElement('input');
-        inputHoraInicio.type = 'hidden';
-        inputHoraInicio.name = `disp_hora_inicio_${index}`;
-        inputHoraInicio.value = disp.horaInicio !== undefined && disp.horaInicio !== null ? disp.horaInicio : '';
-        container.appendChild(inputHoraInicio);
-        console.log(`   ? disp_hora_inicio_${index} = "${inputHoraInicio.value}"`);
-        
-        const inputHoraFin = document.createElement('input');
-        inputHoraFin.type = 'hidden';
-        inputHoraFin.name = `disp_hora_fin_${index}`;
-        inputHoraFin.value = disp.horaFin !== undefined && disp.horaFin !== null ? disp.horaFin : '';
-        container.appendChild(inputHoraFin);
-        console.log(`   ? disp_hora_fin_${index} = "${inputHoraFin.value}"`);
-        
-        const inputDisponible = document.createElement('input');
-        inputDisponible.type = 'hidden';
-        inputDisponible.name = `disp_disponible_${index}`;
-        inputDisponible.value = disp.disponible !== undefined && disp.disponible !== null ? disp.disponible : true;
-        container.appendChild(inputDisponible);
-        console.log(`   ? disp_disponible_${index} = "${inputDisponible.value}"`);
-    });
-    
-    console.log(`? Campos ocultos actualizados: ${disponibilidadesArray.length} disponibilidades`);
-    console.log('? Contenedor HTML preview:', container.innerHTML.substring(0, 800));
-}
-
-function actualizarTablaDisponibilidades() {
-    const tbody = document.getElementById('disponibilidades-body');
-    const filaSinDatos = document.getElementById('sin-disponibilidades');
-    
-    if (disponibilidadesArray.length === 0) {
-        if (filaSinDatos) {
-            filaSinDatos.style.display = '';
+    <script>
+        // ==================== FUNCIONES DE ACCESIBILIDAD ====================
+        function toggleAccessibilityPanel() {
+            const panel = document.querySelector('.accessibility-panel');
+            panel.classList.toggle('open');
         }
-        actualizarCamposOcultos();
-        return;
-    }
-    
-    if (filaSinDatos) {
-        filaSinDatos.style.display = 'none';
-    }
-    
-    Array.from(tbody.children).forEach(row => {
-        if (row.id !== 'sin-disponibilidades') {
-            row.remove();
-        }
-    });
-    
-    disponibilidadesArray.forEach((disp, index) => {
-        const fila = document.createElement('tr');
-        fila.innerHTML = `
-            <td>${disp.dia}</td>
-            <td>${disp.horaInicio}</td>
-            <td>${disp.horaFin}</td>
-        `;
-        tbody.appendChild(fila);
-    });
-    
-    actualizarCamposOcultos();
-}
-
-function cargarDisponibilidadesExistentes(disponibilidades) {
-    disponibilidadesArray = disponibilidades;
-    actualizarTablaDisponibilidades();
-}
-
-// ============================================================
-// CÓDIGO QUE SE EJECUTA AL CARGAR LA PÁGINA
-// ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('profesorForm');
-    const dniInput = document.getElementById('dni');
-    const correoInput = document.getElementById('correo');
-    const fechaNacInput = document.getElementById('fecha_nacimiento');
-    const fechaContInput = document.getElementById('fecha_contratacion');
-    const nivelSelect = document.getElementById('nivel');
-    const areaSelect = document.getElementById('area_id');
-    
-    function filtrarAreas() {
-        const nivelSeleccionado = nivelSelect.value;
-        const opciones = areaSelect.querySelectorAll('option');
-        let areasVisibles = 0;
-
-        areaSelect.value = '';
-
-        opciones.forEach(function(opcion) {
-            if (opcion.value === '') {
-                opcion.style.display = '';
-                if (nivelSeleccionado === '') {
-                    opcion.textContent = 'Primero seleccione un nivel';
-                } else {
-                    opcion.textContent = 'Seleccione el area';
-                }
-                return;
+        
+        function setTextSize(size) {
+            document.body.classList.remove('large-text', 'larger-text', 'largest-text');
+            if (size === 'large') {
+                document.body.classList.add('large-text');
+            } else if (size === 'larger') {
+                document.body.classList.add('larger-text');
+            } else if (size === 'largest') {
+                document.body.classList.add('largest-text');
             }
-
-            const nivelArea = opcion.getAttribute('data-nivel');
-
-            if (nivelSeleccionado === 'TODOS') {
-                if (nivelArea === 'TODOS') {
+            document.body.offsetHeight; // Forzar reflow
+        }
+        
+        function setContrast(mode) {
+            document.body.classList.remove('high-contrast-invert', 'high-contrast-yellow');
+            if (mode === 'high') {
+                document.body.classList.add('high-contrast-invert');
+            } else if (mode === 'yellow') {
+                document.body.classList.add('high-contrast-yellow');
+            }
+        }
+        
+        function toggleMotion() {
+            const checkbox = document.getElementById('reduceMotion');
+            if (checkbox.checked) {
+                document.body.classList.add('reduce-motion');
+            } else {
+                document.body.classList.remove('reduce-motion');
+            }
+        }
+        
+        function toggleDyslexiaFont() {
+            const checkbox = document.getElementById('dyslexiaFont');
+            if (checkbox.checked) {
+                document.body.classList.add('dyslexia-font');
+            } else {
+                document.body.classList.remove('dyslexia-font');
+            }
+        }
+        
+        function toggleBeigeBackground() {
+            const checkbox = document.getElementById('beigeBackground');
+            if (checkbox.checked) {
+                document.body.classList.add('beige-background');
+            } else {
+                document.body.classList.remove('beige-background');
+            }
+        }
+        
+        function resetAccessibility() {
+            document.body.classList.remove(
+                'large-text', 'larger-text', 'largest-text',
+                'high-contrast-invert', 'high-contrast-yellow',
+                'reduce-motion', 'dyslexia-font', 'beige-background'
+            );
+            
+            document.getElementById('reduceMotion').checked = false;
+            document.getElementById('dyslexiaFont').checked = false;
+            document.getElementById('beigeBackground').checked = false;
+        }
+        
+        // ==================== FUNCIONES DEL FORMULARIO ====================
+        
+        let disponibilidadesArray = [];
+        
+        // Filtrar áreas según nivel seleccionado
+        const nivelSelect = document.getElementById('nivel');
+        const areaSelect = document.getElementById('area_id');
+        
+        function filtrarAreas() {
+            const nivelSeleccionado = nivelSelect.value;
+            const opciones = areaSelect.querySelectorAll('option');
+            
+            areaSelect.value = '';
+            
+            opciones.forEach(function(opcion) {
+                if (opcion.value === '') {
                     opcion.style.display = '';
-                    areasVisibles++;
-                } else {
-                    opcion.style.display = 'none';
+                    if (nivelSeleccionado === '') {
+                        opcion.textContent = 'Primero seleccione un nivel';
+                    } else {
+                        opcion.textContent = 'Seleccione el área';
+                    }
+                    return;
                 }
-            } else {
-                if (nivelArea === 'TODOS' || nivelArea === nivelSeleccionado) {
-                    opcion.style.display = '';
-                    areasVisibles++;
+                
+                const nivelArea = opcion.getAttribute('data-nivel');
+                
+                if (nivelSeleccionado === 'TODOS') {
+                    if (nivelArea === 'TODOS') {
+                        opcion.style.display = '';
+                    } else {
+                        opcion.style.display = 'none';
+                    }
                 } else {
-                    opcion.style.display = 'none';
+                    if (nivelArea === 'TODOS' || nivelArea === nivelSeleccionado) {
+                        opcion.style.display = '';
+                    } else {
+                        opcion.style.display = 'none';
+                    }
                 }
-            }
-        });
-
-        if (areasVisibles === 0 && nivelSeleccionado !== '') {
-            const placeholder = areaSelect.querySelector('option[value=""]');
-            placeholder.textContent = 'No hay areas disponibles para este nivel';
-        }
-    }
-    
-    nivelSelect.addEventListener('change', filtrarAreas);
-    filtrarAreas();
-    
-    if (!<%= editar %>) {
-        if (!fechaNacInput.value) {
-            const hace30Anios = new Date();
-            hace30Anios.setFullYear(hace30Anios.getFullYear() - 30);
-            fechaNacInput.valueAsDate = hace30Anios;
+            });
         }
         
-        if (!fechaContInput.value) {
-            fechaContInput.valueAsDate = new Date();
+        if (nivelSelect && areaSelect) {
+            nivelSelect.addEventListener('change', filtrarAreas);
+            filtrarAreas();
         }
-    }
-    
-    if (dniInput) {
-        dniInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            if (this.value.length > 8) {
-                this.value = this.value.slice(0, 8);
-            }
-        });
         
-        dniInput.addEventListener('blur', function() {
-            const dni = this.value.trim();
-            const feedback = this.parentElement.nextElementSibling.nextElementSibling;
-            const validFeedback = feedback.nextElementSibling;
-            
-            if (dni.length === 0) {
-                this.classList.remove('is-invalid', 'is-valid');
-                feedback.textContent = '';
-                if (validFeedback) validFeedback.textContent = '';
-                return;
-            }
-            
-            if (dni.length !== 8) {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-                feedback.textContent = 'El DNI debe tener exactamente 8 digitos';
-            } else {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-                feedback.textContent = '';
-                if (validFeedback) validFeedback.textContent = ' DNI valido';
-            }
-        });
-    }
-    
-    if (correoInput) {
-        correoInput.addEventListener('blur', function() {
-            const correo = this.value.trim();
-            const feedback = this.parentElement.nextElementSibling;
-            const validFeedback = feedback.nextElementSibling;
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
-            if (correo.length === 0) {
-                this.classList.add('is-invalid');
-                feedback.textContent = 'El correo electronico es obligatorio';
-                return;
-            }
-            
-            if (!emailRegex.test(correo)) {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-                feedback.textContent = 'Ingrese un correo electrónico válido';
-            } else {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-                feedback.textContent = '';
-                if (validFeedback) validFeedback.textContent = ' Correo válido';
-            }
-        });
-    }
-    
-    const telefonoInput = document.getElementById('telefono');
-    if (telefonoInput) {
-        telefonoInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-    }
-    
-    form.addEventListener('submit', function(event) {
-        console.log("? FORMULARIO A PUNTO DE ENVIARSE");
-        console.log("? Actualizando campos ocultos ANTES de validar...");
-        actualizarCamposOcultos();
-        console.log("? Campos ocultos actualizados");
-
-        let errores = [];
-        console.log("? Disponibilidades en array:", disponibilidadesArray.length);
-        console.log("? Contenido del array:", disponibilidadesArray);
+        // Modal functions
+        function openModal() {
+            document.getElementById('modalDisponibilidad').classList.remove('hidden');
+            document.getElementById('modal-dia').focus();
+        }
         
-        const container = document.getElementById("disponibilidades-hidden");
-        if (container) {
-            console.log("? Campos ocultos HTML:", container.innerHTML.substring(0, 500));
-            const inputs = container.querySelectorAll("input");
-            console.log("? Total de inputs ocultos:", inputs.length);
-            inputs.forEach(input => console.log(`   ${input.name} = ${input.value}`));
-        }
-
-        const nombres = document.getElementById('nombres').value.trim();
-        const apellidos = document.getElementById('apellidos').value.trim();
-        const correo = correoInput.value.trim();
-        const areaId = areaSelect.value;
-        const nivel = nivelSelect.value;
-        const turnoId = document.getElementById('turno_id').value;
-        const dni = dniInput.value.trim();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!nombres) errores.push('Nombres es obligatorio');
-        if (!apellidos) errores.push('Apellidos es obligatorio');
-
-        if (!correo) {
-            errores.push('Correo electrónico es obligatorio');
-        } else if (!emailRegex.test(correo)) {
-            errores.push('Correo electrónico no es válido');
-        }
-
-        if (!nivel || nivel === '') {
-            errores.push('Nivel es obligatorio');
-        }
-
-        if (!areaId || areaId === '') {
-            errores.push('Área es obligatoria');
-        }
-
-        if (!turnoId) errores.push('Turno es obligatorio');
-
-        if (dni.length > 0) {
-            if (dni.length !== 8) {
-                errores.push('El DNI debe tener exactamente 8 dígitos');
-            } else if (!/^\d+$/.test(dni)) {
-                errores.push('El DNI solo debe contener números');
-            }
-        }
-
-        if (errores.length > 0) {
-            event.preventDefault();
-            const mensajeError = 'Por favor corrija los siguientes errores:\n\n? ' + errores.join('\n? ');
-            alert(mensajeError);
-
-            const primerCampoInvalido = form.querySelector('.is-invalid');
-            if (primerCampoInvalido) {
-                primerCampoInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                primerCampoInvalido.focus();
-            }
-
-            return false;
-        }
-
-        return true;
-    });
-    
-    const modalElement = document.getElementById('modalDisponibilidad');
-    if (modalElement) {
-        modalDisponibilidad = new bootstrap.Modal(modalElement);
-        
-        modalElement.addEventListener('hide.bs.modal', function(event) {
-            const focusedElement = modalElement.querySelector(':focus');
-            if (focusedElement) {
-                focusedElement.blur();
-            }
-        });
-        
-        modalElement.addEventListener('hidden.bs.modal', function(event) {
-            const btnAgregar = document.getElementById('btn-agregar-disponibilidad');
-            if (btnAgregar) {
-                setTimeout(() => btnAgregar.focus(), 100);
-            }
-        });
-    }
-    
-    const btnAgregarDisponibilidad = document.getElementById('btn-agregar-disponibilidad');
-    if (btnAgregarDisponibilidad) {
-        btnAgregarDisponibilidad.addEventListener('click', function() {
-            const turnoId = document.getElementById('turno_id').value;
-            if (!turnoId) {
-                alert('?? Por favor seleccione un TURNO en el formulario principal antes de agregar disponibilidades');
-                document.getElementById('turno_id').focus();
-                document.getElementById('turno_id').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return;
-            }
-            
+        function closeModal() {
+            document.getElementById('modalDisponibilidad').classList.add('hidden');
             document.getElementById('modal-dia').value = '';
             document.getElementById('modal-hora-inicio').value = '';
             document.getElementById('modal-hora-fin').value = '';
-            
-            modalDisponibilidad.show();
-            
-            setTimeout(() => {
-                document.getElementById('modal-dia').focus();
-            }, 300);
-        });
-    }
-    
-    const btnGuardarDisponibilidad = document.getElementById('btn-guardar-disponibilidad');
-    if (btnGuardarDisponibilidad) {
-        btnGuardarDisponibilidad.addEventListener('click', function() {
+        }
+        
+        function guardarDisponibilidad() {
             const dia = document.getElementById('modal-dia').value;
             const horaInicio = document.getElementById('modal-hora-inicio').value;
             const horaFin = document.getElementById('modal-hora-fin').value;
+            const turnoId = document.getElementById('turno_id').value;
             
             if (!dia || !horaInicio || !horaFin) {
-                alert('?? Por favor complete todos los campos');
+                alert('? Por favor complete todos los campos');
                 return;
             }
             
             if (horaInicio >= horaFin) {
-                alert('?? La hora de inicio debe ser menor que la hora de fin');
+                alert('? La hora de inicio debe ser menor que la hora de fin');
                 return;
             }
             
-            const turnoId = document.getElementById('turno_id').value;
+            if (!turnoId) {
+                alert('? No se encontró el ID del turno. Por favor seleccione un turno en el formulario principal.');
+                return;
+            }
             
             const disponibilidad = {
                 dia: dia,
@@ -1106,51 +1108,247 @@ document.addEventListener('DOMContentLoaded', function() {
             
             disponibilidadesArray.push(disponibilidad);
             actualizarTablaDisponibilidades();
+            closeModal();
             
-            document.getElementById('modal-dia').blur();
-            document.getElementById('modal-hora-inicio').blur();
-            document.getElementById('modal-hora-fin').blur();
-            document.getElementById('btn-guardar-disponibilidad').blur();
-            
-            modalDisponibilidad.hide();
-            
-            console.log('? Disponibilidad agregada:', disponibilidad);
-        });
-    }
-    
-    console.log('? Sistema de disponibilidades inicializado');
-    
-    <% if (editar && p.getDisponibilidades() != null && !p.getDisponibilidades().isEmpty()) { %>
-        console.log('? Cargando disponibilidades existentes del profesor...');
+            // Feedback visual
+            showToast('? Disponibilidad agregada correctamente', 'success');
+        }
         
-        const disponibilidadesExistentes = [
-            <% 
-            java.util.List<modelo.Disponibilidad> disponibilidades = p.getDisponibilidades();
-            for (int i = 0; i < disponibilidades.size(); i++) {
-                modelo.Disponibilidad disp = disponibilidades.get(i);
+        function actualizarTablaDisponibilidades() {
+            const tbody = document.getElementById('disponibilidades-body');
+            const filaSinDatos = document.getElementById('sin-disponibilidades');
+            
+            // Limpiar tabla (excepto la fila de "sin datos")
+            Array.from(tbody.children).forEach(row => {
+                if (row.id !== 'sin-disponibilidades') {
+                    row.remove();
+                }
+            });
+            
+            if (disponibilidadesArray.length === 0) {
+                if (filaSinDatos) {
+                    filaSinDatos.style.display = '';
+                }
+                actualizarCamposOcultos();
+                return;
+            }
+            
+            if (filaSinDatos) {
+                filaSinDatos.style.display = 'none';
+            }
+            
+            // Agregar cada disponibilidad a la tabla
+            disponibilidadesArray.forEach((disp, index) => {
+                const fila = document.createElement('tr');
                 
-                String horaInicio = disp.getHoraInicio() != null ? disp.getHoraInicio().toString().substring(0, 5) : "";
-                String horaFin = disp.getHoraFin() != null ? disp.getHoraFin().toString().substring(0, 5) : "";
-            %>
-            {
-                dia: '<%= disp.getDiaSemana() %>',
-                turnoId: <%= disp.getTurnoId() %>,
-                horaInicio: '<%= horaInicio %>',
-                horaFin: '<%= horaFin %>',
-                disponible: <%= disp.isDisponible() %>
-            }<%= (i < disponibilidades.size() - 1) ? "," : "" %>
-            <% } %>
-        ];
+                let horaInicioMostrar = disp.horaInicio || '';
+                let horaFinMostrar = disp.horaFin || '';
+                
+                if (horaInicioMostrar.includes(':')) {
+                    horaInicioMostrar = horaInicioMostrar.substring(0, 5);
+                }
+                if (horaFinMostrar.includes(':')) {
+                    horaFinMostrar = horaFinMostrar.substring(0, 5);
+                }
+                
+                fila.innerHTML = `
+                    <td>${disp.dia || ''}</td>
+                    <td>${horaInicioMostrar}</td>
+                    <td>${horaFinMostrar}</td>
+                    <td>
+                        <button type="button" class="p-2 text-red-600 hover:bg-red-100 rounded" onclick="eliminarDisponibilidad(${index})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+            
+            actualizarCamposOcultos();
+        }
         
-        console.log('? Disponibilidades cargadas:', disponibilidadesExistentes);
-        cargarDisponibilidadesExistentes(disponibilidadesExistentes);
-        console.log('? ' + disponibilidadesExistentes.length + ' disponibilidades cargadas en el formulario');
-    <% } else if (editar) { %>
-        console.log('?? Este profesor no tiene disponibilidades registradas');
-    <% } else { %>
-        console.log('?? Modo NUEVO profesor - Sin disponibilidades para cargar');
-    <% } %>
-});
-</script>
+        function eliminarDisponibilidad(index) {
+            if (confirm('¿Está seguro de eliminar esta disponibilidad?')) {
+                disponibilidadesArray.splice(index, 1);
+                actualizarTablaDisponibilidades();
+            }
+        }
+        
+        function actualizarCamposOcultos() {
+            const container = document.getElementById('disponibilidades-hidden');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (disponibilidadesArray.length === 0) {
+                const totalInput = document.createElement('input');
+                totalInput.type = 'hidden';
+                totalInput.name = 'total_disponibilidades';
+                totalInput.value = '0';
+                container.appendChild(totalInput);
+                return;
+            }
+            
+            const totalInput = document.createElement('input');
+            totalInput.type = 'hidden';
+            totalInput.name = 'total_disponibilidades';
+            totalInput.value = disponibilidadesArray.length;
+            container.appendChild(totalInput);
+            
+            disponibilidadesArray.forEach((disp, index) => {
+                if (!disp.dia || !disp.horaInicio || !disp.horaFin) return;
+                
+                const campos = [
+                    { name: `disp_dia_${index}`, value: disp.dia || '' },
+                    { name: `disp_turno_${index}`, value: disp.turnoId || '' },
+                    { name: `disp_hora_inicio_${index}`, value: disp.horaInicio || '' },
+                    { name: `disp_hora_fin_${index}`, value: disp.horaFin || '' },
+                    { name: `disp_disponible_${index}`, value: 'true' }
+                ];
+                
+                campos.forEach(campo => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = campo.name;
+                    input.value = campo.value;
+                    container.appendChild(input);
+                });
+            });
+        }
+        
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            
+            // Determinar la clase CSS basada en el tipo
+            let bgClass = 'bg-blue-600'; // Por defecto info
+            if (type === 'success') {
+                bgClass = 'bg-green-600';
+            } else if (type === 'error') {
+                bgClass = 'bg-red-600';
+            }
+            
+            // Determinar el ícono basado en el tipo
+            let iconClass = 'fa-info-circle'; // Por defecto info
+            if (type === 'success') {
+                iconClass = 'fa-check-circle';
+            } else if (type === 'error') {
+                iconClass = 'fa-exclamation-circle';
+            }
+            
+            toast.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white ' + bgClass;
+            toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fas ${iconClass}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+        
+        // Cargar disponibilidades existentes si estamos editando
+        <% if (editar && p.getDisponibilidades() != null && !p.getDisponibilidades().isEmpty()) { %>
+            const disponibilidadesExistentes = [
+                <% 
+                java.util.List<modelo.Disponibilidad> disponibilidades = p.getDisponibilidades();
+                for (int i = 0; i < disponibilidades.size(); i++) {
+                    modelo.Disponibilidad disp = disponibilidades.get(i);
+                    
+                    String horaInicio = disp.getHoraInicio() != null ? disp.getHoraInicio().toString() : "";
+                    String horaFin = disp.getHoraFin() != null ? disp.getHoraFin().toString() : "";
+                    if (horaInicio.length() > 8) horaInicio = horaInicio.substring(0, 5);
+                    if (horaFin.length() > 8) horaFin = horaFin.substring(0, 5);
+                %>
+                {
+                    dia: '<%= disp.getDiaSemana() %>',
+                    turnoId: <%= disp.getTurnoId() %>,
+                    horaInicio: '<%= horaInicio %>',
+                    horaFin: '<%= horaFin %>',
+                    disponible: <%= disp.isDisponible() %>
+                }<%= (i < disponibilidades.size() - 1) ? "," : "" %>
+                <% } %>
+            ];
+            
+            disponibilidadesArray = disponibilidadesExistentes;
+            actualizarTablaDisponibilidades();
+        <% } %>
+        
+        // Validación del formulario
+        function validarFormulario() {
+            let errores = [];
+            
+            if (!document.getElementById('nombres').value.trim()) {
+                errores.push("El campo Nombres es obligatorio");
+            }
+            
+            if (!document.getElementById('apellidos').value.trim()) {
+                errores.push("El campo Apellidos es obligatorio");
+            }
+            
+            if (!document.getElementById('correo').value.trim()) {
+                errores.push("El campo Correo es obligatorio");
+            }
+            
+            if (!document.getElementById('nivel').value) {
+                errores.push("Debe seleccionar un Nivel");
+            }
+            
+            if (!document.getElementById('area_id').value) {
+                errores.push("Debe seleccionar un Área");
+            }
+            
+            if (!document.getElementById('turno_id').value) {
+                errores.push("Debe seleccionar un Turno");
+            }
+            
+            // Validar DNI si está presente
+            const dni = document.getElementById('dni').value.trim();
+            if (dni && (!/^\d{8}$/.test(dni))) {
+                errores.push("El DNI debe tener 8 dígitos numéricos");
+            }
+            
+            return errores;
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Agregar disponibilidad
+            document.getElementById('btn-agregar-disponibilidad').addEventListener('click', openModal);
+            
+            // Validar formulario al enviar
+            document.getElementById('profesorForm').addEventListener('submit', function(e) {
+                const errores = validarFormulario();
+                
+                if (errores.length > 0) {
+                    e.preventDefault();
+                    showToast('? Errores en el formulario:\n' + errores.join('\n'), 'error');
+                } else {
+                    actualizarCamposOcultos();
+                    showToast('? Enviando formulario...', 'info');
+                }
+            });
+            
+            // Navegación por teclado
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const panel = document.querySelector('.accessibility-panel');
+                    if (panel.classList.contains('open')) {
+                        panel.classList.remove('open');
+                    }
+                    closeModal();
+                }
+            });
+            
+            // Auto-focus en primer campo
+            setTimeout(() => {
+                document.getElementById('nombres').focus();
+            }, 100);
+        });
+    </script>
 </body>
 </html>

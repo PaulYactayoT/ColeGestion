@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
+<%@ page import="java.util.*" %>
 
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -10,600 +11,586 @@
         response.sendRedirect("index.jsp");
         return;
     }
+    
+    // Datos de ejemplo para grados
+    List<Map<String, String>> grados = new ArrayList<>();
+    Map<String, String> g1 = new HashMap<>();
+    g1.put("nombre", "Primer Grado");
+    g1.put("seccion", "A");
+    g1.put("estudiantes", "30");
+    grados.add(g1);
+    
+    Map<String, String> g2 = new HashMap<>();
+    g2.put("nombre", "Segundo Grado");
+    g2.put("seccion", "B");
+    g2.put("estudiantes", "28");
+    grados.add(g2);
+    
+    Map<String, String> g3 = new HashMap<>();
+    g3.put("nombre", "Tercer Grado");
+    g3.put("seccion", "C");
+    g3.put("estudiantes", "32");
+    grados.add(g3);
+    
+    Map<String, String> g4 = new HashMap<>();
+    g4.put("nombre", "Cuarto Grado");
+    g4.put("seccion", "A");
+    g4.put("estudiantes", "25");
+    grados.add(g4);
+    
+    Map<String, String> g5 = new HashMap<>();
+    g5.put("nombre", "Quinto Grado");
+    g5.put("seccion", "B");
+    g5.put("estudiantes", "29");
+    grados.add(g5);
+    
+    // Obtener parámetro de búsqueda
+    String busqueda = request.getParameter("busqueda");
+    List<Map<String, String>> resultados = new ArrayList<>();
+    
+    if (busqueda != null && !busqueda.trim().isEmpty()) {
+        String busquedaLower = busqueda.toLowerCase();
+        for (Map<String, String> grado : grados) {
+            if (grado.get("nombre").toLowerCase().contains(busquedaLower) || 
+                grado.get("seccion").toLowerCase().contains(busquedaLower)) {
+                resultados.add(grado);
+            }
+        }
+    }
 %>
 
 <!DOCTYPE html>
-<html>
+<html class="light" lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - Administración</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>San Antonio Admin Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    
     <style>
-        :root {
-            --primary-color: #2c5aa0;
-            --primary-dark: #1e3d72;
-            --success-color: #20c997;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --gray-color: #6c757d;
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
         
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        /* Mejoras de accesibilidad del primer dashboard */
+        .reduce-motion * { 
+            animation-duration: 0.01ms !important; 
+            animation-iteration-count: 1 !important; 
+            transition-duration: 0.01ms !important; 
         }
-
-        .reduce-motion * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
-        .high-contrast-invert { filter: invert(1) hue-rotate(180deg); }
-        .high-contrast-yellow { background-color: #000000 !important; color: #ffff00 !important; }
-        .beige-background { background-color: #f5f5dc !important; }
-        .large-text { font-size: 20px !important; }
-        .larger-text { font-size: 24px !important; }
-        .largest-text { font-size: 28px !important; }
-        .dyslexia-font { font-family: Arial !important; font-size: 1.1em !important; line-height: 1.6 !important; letter-spacing: 0.5px !important; }
-
-        .main-content {
-            flex: 1;
-            padding: 50px 20px;
+        .high-contrast-invert { 
+            filter: invert(1) hue-rotate(180deg); 
         }
-
-        .panel-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 30px;
-            padding: 50px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        .high-contrast-yellow { 
+            background-color: #000000 !important; 
+            color: #ffff00 !important; 
         }
-
-        /* Header mejorado */
-        .panel-header {
-            text-align: center;
-            margin-bottom: 45px;
-            animation: fadeInDown 0.6s ease;
+        .beige-background { 
+            background-color: #f5f5dc !important; 
         }
-
-        .panel-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: #2c3e50;
-            margin-bottom: 12px;
-            font-family: 'Montserrat', sans-serif;
-            letter-spacing: -1px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
+        .large-text { 
+            font-size: 20px !important; 
         }
-
-        .title-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #2c5aa0, #1e3d72);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 20px rgba(44, 90, 160, 0.3);
-            animation: pulse 2s infinite;
+        .larger-text { 
+            font-size: 24px !important; 
         }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .largest-text { 
+            font-size: 28px !important; 
         }
-
-        .divider {
-            width: 80px;
-            height: 4px;
-            background: linear-gradient(90deg, #2c5aa0, #1e3d72);
-            margin: 0 auto;
-            border-radius: 10px;
+        .dyslexia-font { 
+            font-family: Arial !important; 
+            font-size: 1.1em !important; 
+            line-height: 1.6 !important; 
+            letter-spacing: 0.5px !important; 
         }
-
-        /* Resumen mejorado */
-        .resumen-sistema {
-            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
-            border-radius: 25px;
-            padding: 35px;
-            margin-bottom: 45px;
-            box-shadow: 0 15px 40px rgba(44, 90, 160, 0.25);
-            position: relative;
-            overflow: hidden;
-            animation: fadeIn 0.8s ease;
+        
+        /* Ocultar elementos de accesibilidad inicialmente */
+        .accessibility-panel {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
         }
-
-        .resumen-sistema::before {
-            content: '';
+        .accessibility-panel.open {
+            transform: translateX(0);
+        }
+        
+        /* Skip to content link */
+        .skip-to-content {
             position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .resumen-header {
-            color: white;
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .resumen-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .stat-item {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            border-radius: 18px;
-            padding: 25px;
-            text-align: center;
-            transition: all 0.3s;
-        }
-
-        .stat-item:hover {
-            transform: translateY(-8px) scale(1.03);
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        .stat-icon {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-        }
-
-        .stat-number {
-            font-size: 3rem;
-            font-weight: 800;
-            color: white;
-            margin-bottom: 5px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        .stat-label {
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        /* Grid mejorado */
-        .gestion-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 30px;
-        }
-
-        /* Cards mejoradas */
-        .gestion-card {
-            background: white;
-            border-radius: 22px;
-            padding: 35px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            border: 2px solid #f8f9fa;
-            animation: fadeInUp 0.6s ease;
-            animation-fill-mode: both;
-        }
-
-        .gestion-card:nth-child(1) { animation-delay: 0.1s; }
-        .gestion-card:nth-child(2) { animation-delay: 0.2s; }
-        .gestion-card:nth-child(3) { animation-delay: 0.3s; }
-        .gestion-card:nth-child(4) { animation-delay: 0.4s; }
-        .gestion-card:nth-child(5) { animation-delay: 0.5s; }
-
-        .gestion-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
+            top: -40px;
             left: 0;
-            width: 100%;
-            height: 5px;
-        }
-
-        .card-alumnos::before { background: linear-gradient(90deg, #2c5aa0, #1e3d72); }
-        .card-profesores::before { background: linear-gradient(90deg, #20c997, #17a882); }
-        .card-cursos::before { background: linear-gradient(90deg, #ffc107, #ffb300); }
-        .card-grados::before { background: linear-gradient(90deg, #dc3545, #c82333); }
-        .card-usuarios::before { background: linear-gradient(90deg, #6c757d, #545b62); }
-
-        .gestion-card:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-            border-color: #e9ecef;
-        }
-
-        /* Iconos grandes mejorados */
-        .card-icon-wrapper {
-            width: 85px;
-            height: 85px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            position: relative;
-        }
-
-        .card-icon-wrapper::after {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            right: -3px;
-            bottom: -3px;
-            background: inherit;
-            border-radius: 20px;
-            filter: blur(15px);
-            opacity: 0.6;
-            z-index: -1;
-        }
-
-        .card-alumnos .card-icon-wrapper { background: linear-gradient(135deg, #2c5aa0, #1e3d72); }
-        .card-profesores .card-icon-wrapper { background: linear-gradient(135deg, #20c997, #17a882); }
-        .card-cursos .card-icon-wrapper { background: linear-gradient(135deg, #ffc107, #ffb300); }
-        .card-grados .card-icon-wrapper { background: linear-gradient(135deg, #dc3545, #c82333); }
-        .card-usuarios .card-icon-wrapper { background: linear-gradient(135deg, #6c757d, #545b62); }
-
-        .card-icon-wrapper i {
-            font-size: 2.5rem;
+            background: #135bec;
             color: white;
+            padding: 8px;
+            z-index: 100;
         }
-
-        .card-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-family: 'Montserrat', sans-serif;
+        .skip-to-content:focus {
+            top: 0;
         }
-
-        .card-description {
-            color: #6c757d;
-            font-size: 0.95rem;
-            line-height: 1.7;
-            margin-bottom: 28px;
-        }
-
-        /* Botones mejorados */
-        .btn-gestionar {
-            width: 100%;
-            padding: 15px 25px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.05rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: white;
-            font-family: 'Montserrat', sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            text-decoration: none;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-gestionar::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn-gestionar:hover::before {
-            width: 350px;
-            height: 350px;
-        }
-
-        .btn-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .card-alumnos .btn-gestionar {
-            background: #2c5aa0;
-            box-shadow: 0 6px 20px rgba(44, 90, 160, 0.35);
-        }
-
-        .card-alumnos .btn-gestionar:hover {
-            background: #1e3d72;
-            box-shadow: 0 8px 25px rgba(44, 90, 160, 0.45);
-            transform: translateY(-3px);
-            color: white;
-        }
-
-        .card-profesores .btn-gestionar {
-            background: #20c997;
-            box-shadow: 0 6px 20px rgba(32, 201, 151, 0.35);
-        }
-
-        .card-profesores .btn-gestionar:hover {
-            background: #17a882;
-            box-shadow: 0 8px 25px rgba(32, 201, 151, 0.45);
-            transform: translateY(-3px);
-            color: white;
-        }
-
-        .card-cursos .btn-gestionar {
-            background: #ffc107;
-            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.35);
-        }
-
-        .card-cursos .btn-gestionar:hover {
-            background: #ffb300;
-            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.45);
-            transform: translateY(-3px);
-            color: white;
-        }
-
-        .card-grados .btn-gestionar {
-            background: #dc3545;
-            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.35);
-        }
-
-        .card-grados .btn-gestionar:hover {
-            background: #c82333;
-            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.45);
-            transform: translateY(-3px);
-            color: white;
-        }
-
-        .card-usuarios .btn-gestionar {
-            background: #6c757d;
-            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.35);
-        }
-
-        .card-usuarios .btn-gestionar:hover {
-            background: #545b62;
-            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.45);
-            transform: translateY(-3px);
-            color: white;
-        }
-
-        /* Animaciones */
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .panel-container {
-                padding: 30px 25px;
-                border-radius: 20px;
-            }
-
-            .panel-title {
-                font-size: 2rem;
-            }
-
-            .gestion-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .resumen-stats {
-                grid-template-columns: 1fr 1fr;
-            }
+        
+        /* Focus styles */
+        :focus {
+            outline: 3px solid #135bec !important;
+            outline-offset: 2px;
         }
     </style>
 </head>
-<body>
-    <jsp:include page="header.jsp" />
-
-    <div class="main-content">
-        <div class="panel-container">
+<body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen" id="main-content">
+    <!-- Skip to content link -->
+    <a href="#main-content" class="skip-to-content focus:top-0">Saltar al contenido principal</a>
+    
+    <!-- Accessibility Panel -->
+    <div class="fixed top-20 right-0 z-50 accessibility-panel bg-white dark:bg-gray-800 shadow-xl rounded-l-lg p-4 w-80">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg">Opciones de Accesibilidad</h3>
+            <button onclick="toggleAccessibilityPanel()" class="text-gray-500 hover:text-gray-700">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h4 class="font-medium">Tamaño de texto</h4>
+                <div class="flex gap-2">
+                    <button onclick="setTextSize('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
+                    <button onclick="setTextSize('large')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Grande</button>
+                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Más Grande</button>
+                </div>
+            </div>
             
-            <div class="panel-header">
-                <h1 class="panel-title">
-                    <span class="title-icon">
-                        <i class="bi bi-speedometer2" style="color: white; font-size: 1.5rem;"></i>
-                    </span>
-                    Panel de Administración
-                </h1>
-                <div class="divider"></div>
-            </div>
-
-            <div class="resumen-sistema">
-                <div class="resumen-header">
-                    <i class="bi bi-graph-up"></i> Resumen del Sistema
-                </div>
-                <div class="resumen-stats">
-                    <div class="stat-item">
-                        <div class="stat-icon">👥</div>
-                        <div class="stat-number">250</div>
-                        <div class="stat-label">Alumnos</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-icon">👨‍🏫</div>
-                        <div class="stat-number">25</div>
-                        <div class="stat-label">Profesores</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-icon">📚</div>
-                        <div class="stat-number">15</div>
-                        <div class="stat-label">Cursos</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-icon">🎓</div>
-                        <div class="stat-number">8</div>
-                        <div class="stat-label">Grados</div>
-                    </div>
+            <div class="space-y-2">
+                <h4 class="font-medium">Contraste</h4>
+                <div class="flex gap-2">
+                    <button onclick="setContrast('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
+                    <button onclick="setContrast('high')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Alto Contraste</button>
+                    <button onclick="setContrast('yellow')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Amarillo/Negro</button>
                 </div>
             </div>
-
-            <div class="gestion-grid">
-                
-                <div class="gestion-card card-alumnos">
-                    <div class="card-icon-wrapper">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <h3 class="card-title">Gestión de Alumnos</h3>
-                    <p class="card-description">
-                        Administra la información académica y personal de todos los alumnos del colegio.
-                    </p>
-                    <a href="AlumnoServlet" class="btn-gestionar">
-                        <span class="btn-content">
-                            Gestionar Alumnos <i class="bi bi-arrow-right"></i>
-                        </span>
-                    </a>
+            
+            <div class="space-y-2">
+                <h4 class="font-medium">Otros ajustes</h4>
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="reduceMotion" onchange="toggleMotion()">
+                        <span>Reducir movimiento</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="dyslexiaFont" onchange="toggleDyslexiaFont()">
+                        <span>Fuente para dislexia</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="beigeBackground" onchange="toggleBeigeBackground()">
+                        <span>Fondo beige</span>
+                    </label>
                 </div>
-
-                <div class="gestion-card card-profesores">
-                    <div class="card-icon-wrapper">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                    </div>
-                    <h3 class="card-title">Gestión de Profesores</h3>
-                    <p class="card-description">
-                        Administra el personal docente, asignación de cursos y información profesional.
-                    </p>
-                    <a href="ProfesorServlet" class="btn-gestionar">
-                        <span class="btn-content">
-                            Gestionar Profesores <i class="bi bi-arrow-right"></i>
-                        </span>
-                    </a>
-                </div>
-
-                <div class="gestion-card card-cursos">
-                    <div class="card-icon-wrapper">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <h3 class="card-title">Gestión de Cursos</h3>
-                    <p class="card-description">
-                        Configura y administra los cursos académicos, materias y asignaciones.
-                    </p>
-                    <a href="CursoServlet" class="btn-gestionar">
-                        <span class="btn-content">
-                            Gestionar Cursos <i class="bi bi-arrow-right"></i>
-                        </span>
-                    </a>
-                </div>
-
-                <div class="gestion-card card-grados">
-                    <div class="card-icon-wrapper">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                    <h3 class="card-title">Gestión de Grados</h3>
-                    <p class="card-description">
-                        Administra los grados académicos, secciones y niveles del sistema educativo.
-                    </p>
-                    <a href="GradoServlet" class="btn-gestionar">
-                        <span class="btn-content">
-                            Gestionar Grados <i class="bi bi-arrow-right"></i>
-                        </span>
-                    </a>
-                </div>
-
-                <div class="gestion-card card-usuarios">
-                    <div class="card-icon-wrapper">
-                        <i class="fas fa-users-cog"></i>
-                    </div>
-                    <h3 class="card-title">Gestión de Usuarios</h3>
-                    <p class="card-description">
-                        Administra los usuarios del sistema, permisos y roles de acceso.
-                    </p>
-                    <a href="UsuarioServlet" class="btn-gestionar">
-                        <span class="btn-content">
-                            Gestionar Usuarios <i class="bi bi-arrow-right"></i>
-                        </span>
-                    </a>
-                </div>
-
             </div>
-
+            
+            <button onclick="resetAccessibility()" class="w-full py-2 bg-gray-800 text-white rounded hover:bg-gray-900">
+                Restablecer ajustes
+            </button>
         </div>
     </div>
-
-    <footer class="bg-dark text-white py-4 mt-5">
-        <div class="container text-center text-md-start">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="logo-container text-center">
-                        <img src="assets/img/logosa.png" alt="Logo" class="img-fluid mb-2" width="80" height="auto">
-                        <p class="fs-6 mb-0">"Líderes en educación de calidad al más alto nivel"</p>
+    
+    <!-- Accessibility Toggle Button -->
+    <button onclick="toggleAccessibilityPanel()" 
+            class="fixed top-20 right-0 z-40 bg-primary text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors"
+            aria-label="Abrir panel de accesibilidad">
+        <span class="material-symbols-outlined">accessibility_new</span>
+    </button>
+    
+    <div class="flex h-screen overflow-hidden">
+        <!-- Left SideNavBar -->
+        <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
+            <div class="flex flex-col gap-8 p-6">
+                <!-- Brand -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
+                        <span class="material-symbols-outlined">school</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
+                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Panel de Control</p>
                     </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <h5 class="fs-6 fw-bold">Contacto:</h5>
-                    <p class="fs-6 mb-1">Dirección: Av. El Sol 461, San Juan de Lurigancho 15434</p>
-                    <p class="fs-6 mb-1">Teléfono: 987654321</p>
-                    <p class="fs-6 mb-0">Correo: colegiosanantonio@gmail.com</p>
+                
+                <!-- Navigation -->
+                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
+                       href="#" 
+                       aria-current="page">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="text-sm">Dashboard</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="AlumnoServlet">
+                        <i class="fas fa-user-graduate" aria-hidden="true"></i>
+                        <span class="text-sm">Estudiantes</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="ProfesorServlet">
+                        <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
+                        <span class="text-sm">Profesores</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="CursoServlet">
+                        <i class="fas fa-book" aria-hidden="true"></i>
+                        <span class="text-sm">Cursos</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="GradoServlet">
+                        <i class="fas fa-layer-group" aria-hidden="true"></i>
+                        <span class="text-sm">Grados</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="UsuarioServlet">
+                        <i class="fas fa-users-cog" aria-hidden="true"></i>
+                        <span class="text-sm">Usuarios</span>
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Footer Sidebar -->
+            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
+                <form action="LogoutServlet" method="post" class="w-full">
+                    <button type="submit" 
+                            class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
+                        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <!-- TopNavBar -->
+            <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
+                <div class="flex items-center gap-4 flex-1">
+                    <form action="dashboard.jsp" method="get" class="w-full max-w-md">
+                        <label for="search-input" class="sr-only">Buscar</label>
+                        <div class="flex items-center bg-[#f0f2f4] dark:bg-gray-800 rounded-lg px-3 py-1.5 w-full">
+                            <span class="material-symbols-outlined text-[#616f89]" aria-hidden="true">search</span>
+                            <input id="search-input"
+                                   name="busqueda"
+                                   class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-[#616f89] dark:text-white" 
+                                   placeholder="Buscar grados, estudiantes, cursos..." 
+                                   type="text"
+                                   value="<%= busqueda != null ? busqueda : "" %>"
+                                   aria-label="Campo de búsqueda"/>
+                        </div>
+                    </form>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <h5 class="fs-6 fw-bold">Síguenos:</h5>
-                    <div class="d-flex flex-column">
-                        <a href="https://www.facebook.com/" class="text-white fs-6 mb-1 text-decoration-none"><i class="fab fa-facebook me-2"></i>Facebook</a>
-                        <a href="https://www.instagram.com/" class="text-white fs-6 mb-1 text-decoration-none"><i class="fab fa-instagram me-2"></i>Instagram</a>
-                        <a href="https://twitter.com/" class="text-white fs-6 mb-1 text-decoration-none"><i class="fab fa-twitter me-2"></i>Twitter</a>
-                        <a href="https://www.youtube.com/" class="text-white fs-6 mb-0 text-decoration-none"><i class="fab fa-youtube me-2"></i>YouTube</a>
+                
+                <div class="flex items-center gap-4 ml-8">
+                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
+                            aria-label="Notificaciones">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    
+                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                            aria-label="Configuración">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
+                    
+                    <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
+                    
+                    <div class="flex items-center gap-3">
+                        <p class="text-sm font-medium hidden md:block">
+                            <%= session.getAttribute("usuario") != null ? session.getAttribute("usuario") : "Administrador" %>
+                        </p>
+                        <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
+                             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCO64ytW7WFj5YJ0XxtUSKDLHtMumvYdpNUpuyZfiJ1u2v-o-ZSRqiNGLyx6pmhB7nZDuPBYTD_VLKKCEUg0atLHJC4hTrMG5QjAfNlLQdzKId6L3tl2-QhmWJUVQVRr4hk7ODNpJ2OomnFQx_u6WT5QgxJRWLtvZ2I5ecv8WfcR1-MoMfF485fYSxo5s9ErvyApFtN9ro0oew7DMrNHFDQJp1zE9Dtyls43R9C7cnQa5HNlhDoiFBsEBf8CYKzebhaA6Yfuad3vcM');"
+                             aria-label="Foto de perfil del administrador">
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Dashboard Content -->
+            <div class="p-8 space-y-8 max-w-[1200px] mx-auto w-full">
+                <!-- Welcome Banner -->
+                <div class="relative rounded-xl overflow-hidden min-h-[180px] bg-primary flex flex-col justify-center px-8 shadow-lg shadow-primary/20" 
+                     style="background-image: linear-gradient(90deg, rgba(19, 91, 236, 0.95) 0%, rgba(19, 91, 236, 0.6) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuB_3LXerE1vpUAm_1-q-D4EMXN-i8c-idTTZtPpQ58USnatUubEWaEA7NNTJhGtxA9glVNSU_OMWawnGSq4XX5HQvmUwfenKc6i66zaj2YSDXBn3IKNZQ4rkpfpv8Dvq_7FB1vCbkRfa3B33h-wF109oSVddHtKvBQS_mmEBKEorF9YbpZ5S1_tjrrkkRqaIgmrorMQiVIBf6m59RTKJhwF44UqJ3IBTkBBl-ch6fp8z52Qm823GZAMO-ZKdgXwLhe_q9AMTD-k4rs'); background-size: cover; background-position: center;">
+                    <h2 class="text-white text-3xl font-bold tracking-tight">Bienvenido de nuevo, Administrador</h2>
+                    <p class="text-blue-100 mt-2 max-w-md">Aquí tienes el resumen de lo que está sucediendo hoy en el Instituto San Antonio.</p>
+                </div>
+                
+                <!-- Results Section for Search -->
+                <% if (busqueda != null && !busqueda.trim().isEmpty()) { %>
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold">Resultados de búsqueda para "<%= busqueda %>"</h3>
+                            <a href="dashboard.jsp" class="text-primary hover:underline">Limpiar búsqueda</a>
+                        </div>
+                        
+                        <% if (resultados.isEmpty()) { %>
+                            <p class="text-gray-500">No se encontraron grados que coincidan con tu búsqueda.</p>
+                        <% } else { %>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <% for (Map<String, String> grado : resultados) { %>
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <h4 class="font-bold text-lg"><%= grado.get("nombre") %></h4>
+                                        <p class="text-gray-600 dark:text-gray-400">Sección: <%= grado.get("seccion") %></p>
+                                        <p class="text-gray-600 dark:text-gray-400">Estudiantes: <%= grado.get("estudiantes") %></p>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    </div>
+                <% } %>
+                
+                <!-- KPI Cards (Stats) -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
+                        <div class="flex justify-between items-start">
+                            <p class="text-[#616f89] text-sm font-medium">Total Estudiantes</p>
+                            <span class="material-symbols-outlined text-primary" aria-hidden="true">groups</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white">250</h3>
+                        <div class="flex items-center gap-1 mt-2">
+                            <span class="text-[#07883b] text-sm font-semibold">+5%</span>
+                            <p class="text-[#616f89] text-xs">desde el mes pasado</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
+                        <div class="flex justify-between items-start">
+                            <p class="text-[#616f89] text-sm font-medium">Profesores Activos</p>
+                            <span class="material-symbols-outlined text-primary" aria-hidden="true">school</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white">25</h3>
+                        <div class="flex items-center gap-1 mt-2">
+                            <span class="text-[#07883b] text-sm font-semibold">+2%</span>
+                            <p class="text-[#616f89] text-xs">nuevas incorporaciones</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
+                        <div class="flex justify-between items-start">
+                            <p class="text-[#616f89] text-sm font-medium">Total Cursos</p>
+                            <span class="material-symbols-outlined text-orange-500" aria-hidden="true">book</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white">15</h3>
+                        <div class="flex items-center gap-1 mt-2">
+                            <span class="text-[#07883b] text-sm font-semibold">+8%</span>
+                            <p class="text-[#616f89] text-xs">este semestre</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
+                        <div class="flex justify-between items-start">
+                            <p class="text-[#616f89] text-sm font-medium">Grados Activos</p>
+                            <span class="material-symbols-outlined text-purple-500" aria-hidden="true">layers</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white">8</h3>
+                        <div class="flex items-center gap-1 mt-2">
+                            <span class="text-[#07883b] text-sm font-semibold">+0%</span>
+                            <p class="text-[#616f89] text-xs">estable</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Access Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Alumnos Card -->
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center" aria-hidden="true">
+                                <i class="fas fa-user-graduate text-blue-600 dark:text-blue-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Alumnos</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar información académica</p>
+                            </div>
+                        </div>
+                        <a href="AlumnoServlet" class="block w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-blue-500">
+                            Gestionar Alumnos
+                        </a>
+                    </div>
+                    
+                    <!-- Profesores Card -->
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center" aria-hidden="true">
+                                <i class="fas fa-chalkboard-teacher text-green-600 dark:text-green-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Profesores</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Personal docente y asignaciones</p>
+                            </div>
+                        </div>
+                        <a href="ProfesorServlet" class="block w-full py-3 bg-green-600 hover:bg-green-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-green-500">
+                            Gestionar Profesores
+                        </a>
+                    </div>
+                    
+                    <!-- Cursos Card -->
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center" aria-hidden="true">
+                                <i class="fas fa-book text-orange-600 dark:text-orange-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Cursos</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Configurar cursos académicos</p>
+                            </div>
+                        </div>
+                        <a href="CursoServlet" class="block w-full py-3 bg-orange-600 hover:bg-orange-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-orange-500">
+                            Gestionar Cursos
+                        </a>
+                    </div>
+                    
+                    <!-- Grados Card -->
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center" aria-hidden="true">
+                                <i class="fas fa-layer-group text-red-600 dark:text-red-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Grados</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar grados académicos</p>
+                            </div>
+                        </div>
+                        <a href="GradoServlet" class="block w-full py-3 bg-red-600 hover:bg-red-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-red-500">
+                            Gestionar Grados
+                        </a>
+                    </div>
+                    
+                    <!-- Usuarios Card -->
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center" aria-hidden="true">
+                                <i class="fas fa-users-cog text-gray-600 dark:text-gray-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Usuarios</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Permisos y roles de acceso</p>
+                            </div>
+                        </div>
+                        <a href="UsuarioServlet" class="block w-full py-3 bg-gray-600 hover:bg-gray-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-gray-500">
+                            Gestionar Usuarios
+                        </a>
                     </div>
                 </div>
             </div>
-            <div class="text-center mt-3 pt-3 border-top border-secondary">
-                <p class="fs-6 mb-0">&copy; 2025 Colegio SA - Todos los derechos reservados</p>
-            </div>
-        </div>
-    </footer>
+        </main>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Accessibility Functions
+        function toggleAccessibilityPanel() {
+            const panel = document.querySelector('.accessibility-panel');
+            panel.classList.toggle('open');
+        }
+        
+        function setTextSize(size) {
+            document.body.classList.remove('large-text', 'larger-text', 'largest-text');
+            if (size === 'large') {
+                document.body.classList.add('large-text');
+            } else if (size === 'larger') {
+                document.body.classList.add('larger-text');
+            } else if (size === 'largest') {
+                document.body.classList.add('largest-text');
+            }
+        }
+        
+        function setContrast(mode) {
+            document.body.classList.remove('high-contrast-invert', 'high-contrast-yellow');
+            if (mode === 'high') {
+                document.body.classList.add('high-contrast-invert');
+            } else if (mode === 'yellow') {
+                document.body.classList.add('high-contrast-yellow');
+            }
+        }
+        
+        function toggleMotion() {
+            const checkbox = document.getElementById('reduceMotion');
+            if (checkbox.checked) {
+                document.body.classList.add('reduce-motion');
+            } else {
+                document.body.classList.remove('reduce-motion');
+            }
+        }
+        
+        function toggleDyslexiaFont() {
+            const checkbox = document.getElementById('dyslexiaFont');
+            if (checkbox.checked) {
+                document.body.classList.add('dyslexia-font');
+            } else {
+                document.body.classList.remove('dyslexia-font');
+            }
+        }
+        
+        function toggleBeigeBackground() {
+            const checkbox = document.getElementById('beigeBackground');
+            if (checkbox.checked) {
+                document.body.classList.add('beige-background');
+            } else {
+                document.body.classList.remove('beige-background');
+            }
+        }
+        
+        function resetAccessibility() {
+            document.body.classList.remove(
+                'large-text', 'larger-text', 'largest-text',
+                'high-contrast-invert', 'high-contrast-yellow',
+                'reduce-motion', 'dyslexia-font', 'beige-background'
+            );
+            
+            document.getElementById('reduceMotion').checked = false;
+            document.getElementById('dyslexiaFont').checked = false;
+            document.getElementById('beigeBackground').checked = false;
+        }
+        
+        // Focus management for accessibility
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const panel = document.querySelector('.accessibility-panel');
+                if (panel.classList.contains('open')) {
+                    panel.classList.remove('open');
+                }
+            }
+        });
+        
+        // Auto-focus search input when search results are shown
+        <% if (busqueda != null && !busqueda.trim().isEmpty()) { %>
+            window.addEventListener('load', function() {
+                document.getElementById('search-input').focus();
+            });
+        <% } %>
+    </script>
 </body>
 </html>

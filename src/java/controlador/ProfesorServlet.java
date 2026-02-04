@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Enumeration;
 
 import modelo.Disponibilidad;
 import modelo.Profesor;
@@ -115,6 +116,51 @@ public class ProfesorServlet extends HttpServlet {
         }
 
         try {
+            
+            // ========== DEBUGGING COMPLETO DE PARÁMETROS ==========
+            System.out.println("========================================");
+            System.out.println(" PARÁMETROS RECIBIDOS EN doPost:");
+            System.out.println("========================================");
+            System.out.println("ID: " + request.getParameter("id"));
+            System.out.println("nombres: " + request.getParameter("nombres"));
+            System.out.println("apellidos: " + request.getParameter("apellidos"));
+            System.out.println("correo: " + request.getParameter("correo"));
+            System.out.println("dni: " + request.getParameter("dni"));
+            System.out.println("telefono: " + request.getParameter("telefono"));
+            System.out.println("direccion: " + request.getParameter("direccion"));
+            System.out.println("fecha_nacimiento: " + request.getParameter("fecha_nacimiento"));
+            System.out.println("----------------------------------------");
+            System.out.println("INFORMACIÓN PROFESIONAL:");
+            System.out.println("nivel: " + request.getParameter("nivel"));
+            System.out.println("area_id: " + request.getParameter("area_id"));
+            System.out.println("turno_id: " + request.getParameter("turno_id"));
+            System.out.println("codigo_profesor: " + request.getParameter("codigo_profesor"));
+            System.out.println("fecha_contratacion: " + request.getParameter("fecha_contratacion"));
+            System.out.println("estado: " + request.getParameter("estado"));
+            System.out.println("username: " + request.getParameter("username"));
+            System.out.println("----------------------------------------");
+            System.out.println("DISPONIBILIDADES:");
+            System.out.println("total_disponibilidades: " + request.getParameter("total_disponibilidades"));
+
+            // Listar todas las disponibilidades si existen
+            String totalDispStr = request.getParameter("total_disponibilidades");
+            if (totalDispStr != null && !totalDispStr.isEmpty()) {
+                try {
+                    int totalDisp = Integer.parseInt(totalDispStr);
+                    for (int i = 0; i < totalDisp; i++) {
+                        System.out.println("  Disponibilidad " + i + ":");
+                        System.out.println("    - dia: " + request.getParameter("disp_dia_" + i));
+                        System.out.println("    - turno: " + request.getParameter("disp_turno_" + i));
+                        System.out.println("    - hora_inicio: " + request.getParameter("disp_hora_inicio_" + i));
+                        System.out.println("    - hora_fin: " + request.getParameter("disp_hora_fin_" + i));
+                        System.out.println("    - disponible: " + request.getParameter("disp_disponible_" + i));
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("  ⚠️ Error al parsear total_disponibilidades");
+                }
+            }
+            System.out.println("========================================");
+            System.out.println();
             // Determinar si es creación (id=0) o actualización (id>0)
             int id = request.getParameter("id") != null && !request.getParameter("id").isEmpty()
                     ? Integer.parseInt(request.getParameter("id")) : 0;
@@ -129,44 +175,39 @@ public class ProfesorServlet extends HttpServlet {
             p.setDireccion(request.getParameter("direccion"));
             
             // Capturar area_id
-            String areaIdStr = request.getParameter("area_id");
-            if (areaIdStr != null && !areaIdStr.isEmpty()) {
+           String areaIdStr = request.getParameter("area_id");
+            if (areaIdStr != null && !areaIdStr.isEmpty() && !areaIdStr.equals("0")) {
                 try {
                     int areaId = Integer.parseInt(areaIdStr);
                     p.setAreaId(areaId);
-                    System.out.println("Área ID capturada: " + areaId);
+                    System.out.println(" Área ID capturada: " + areaId);
                 } catch (NumberFormatException e) {
-                    System.out.println("Error al parsear area_id: " + areaIdStr);
+                    System.out.println("️ Error al parsear area_id: " + areaIdStr);
+                    p.setAreaId(0); // Valor por defecto
                 }
             } else {
-                System.out.println("Área no seleccionada");
+                System.out.println("ℹ️ Área no seleccionada (opcional)");
+                p.setAreaId(0); 
             }
             
             p.setNivel(request.getParameter("nivel")); 
             p.setCodigoProfesor(request.getParameter("codigo_profesor"));
             p.setUsername(request.getParameter("username"));
-            
-            // CAPTURAR PASSWORD
-            String password = request.getParameter("password");
-            if (password != null && !password.trim().isEmpty()) {
-                p.setPassword(password);
-                System.out.println("Password capturado del formulario");
-            } else {
-                System.out.println("Password vacío o nulo");
-            }
-            
+                    
             // ========== TURNO ==========
             String turnoIdStr = request.getParameter("turno_id");
-            if (turnoIdStr != null && !turnoIdStr.isEmpty()) {
+            if (turnoIdStr != null && !turnoIdStr.isEmpty() && !turnoIdStr.equals("0")) {
                 try {
                     int turnoId = Integer.parseInt(turnoIdStr);
                     p.setTurnoId(turnoId);
-                    System.out.println("Turno ID capturado: " + turnoId);
+                    System.out.println(" Turno ID capturado: " + turnoId);
                 } catch (NumberFormatException e) {
-                    System.out.println("Error al parsear turno_id: " + turnoIdStr);
+                    System.out.println("️ Error al parsear turno_id: " + turnoIdStr);
+                    p.setTurnoId(0); // Valor por defecto
                 }
             } else {
-                System.out.println("Turno no seleccionado");
+                System.out.println("ℹ️ Turno no seleccionado (opcional)");
+                p.setTurnoId(0); 
             }
             
             // ========== FECHA DE NACIMIENTO ==========
@@ -310,104 +351,126 @@ public class ProfesorServlet extends HttpServlet {
         }
     }
     
-    /**
-     * ========================================
-     * MÉTODO AUXILIAR: PROCESAR DISPONIBILIDADES
-     * ========================================
-     * Extrae las disponibilidades del request y las guarda en la base de datos
-     */
+        /**
+         * ========================================
+         * MÉTODO AUXILIAR: PROCESAR DISPONIBILIDADES
+         * ========================================
+         * Extrae las disponibilidades del request y las guarda en la base de datos
+         */
     private boolean procesarDisponibilidades(HttpServletRequest request, int profesorId) {
-        System.out.println("========================================");
-        System.out.println(" PROCESANDO DISPONIBILIDADES PARA PROFESOR ID: " + profesorId);
-        System.out.println("========================================");
-        
+        System.out.println("🔍 === PROCESANDO DISPONIBILIDADES - INICIO ===");
+
+        // Imprimir TODOS los parámetros para debugging
+        Enumeration<String> paramNames = request.getParameterNames();
+        while (paramNames.hasMoreElements()) {
+            String paramName = paramNames.nextElement();
+            if (paramName.startsWith("disp_") || paramName.equals("total_disponibilidades")) {
+                System.out.println("📋 " + paramName + " = " + request.getParameter(paramName));
+            }
+        }
         String totalDispStr = request.getParameter("total_disponibilidades");
-        
-        if (totalDispStr != null && !totalDispStr.isEmpty()) {
-            try {
-                int totalDisp = Integer.parseInt(totalDispStr);
-                System.out.println(" Total de disponibilidades a procesar: " + totalDisp);
-                
-                if (totalDisp == 0) {
-                    System.out.println(" No hay disponibilidades para guardar (total = 0)");
-                    return false;
-                }
-                
-                List<Disponibilidad> disponibilidades = new ArrayList<>();
 
-                for (int i = 0; i < totalDisp; i++) {
-                    String dia = request.getParameter("disp_dia_" + i);
-                    String turnoIdStr = request.getParameter("disp_turno_" + i);
-                    String horaInicioStr = request.getParameter("disp_hora_inicio_" + i);
-                    String horaFinStr = request.getParameter("disp_hora_fin_" + i);
-                    String disponibleStr = request.getParameter("disp_disponible_" + i);
-                    String observaciones = request.getParameter("disp_observaciones_" + i);
+    if (totalDispStr != null && !totalDispStr.isEmpty()) {
+        try {
+            int totalDisp = Integer.parseInt(totalDispStr);
+            System.out.println("📊 Total de disponibilidades a procesar: " + totalDisp);
 
-                    System.out.println("   Disponibilidad " + (i+1) + ":");
-                    System.out.println("     - Día: " + dia);
-                    System.out.println("     - Turno ID: " + turnoIdStr);
-                    System.out.println("     - Hora inicio: " + horaInicioStr);
-                    System.out.println("     - Hora fin: " + horaFinStr);
-                    System.out.println("     - Disponible: " + disponibleStr);
+            if (totalDisp == 0) {
+                System.out.println("ℹ️ No hay disponibilidades para guardar (total = 0)");
+                return true;
+            }
 
-                    if (dia != null && !dia.isEmpty() && 
-                        turnoIdStr != null && !turnoIdStr.isEmpty() && 
-                        horaInicioStr != null && !horaInicioStr.isEmpty() && 
-                        horaFinStr != null && !horaFinStr.isEmpty()) {
+            List<Disponibilidad> disponibilidades = new ArrayList<>();
+
+            for (int i = 0; i < totalDisp; i++) {
+                String dia = request.getParameter("disp_dia_" + i);
+                String turnoIdStr = request.getParameter("disp_turno_" + i);
+                String horaInicioStr = request.getParameter("disp_hora_inicio_" + i);
+                String horaFinStr = request.getParameter("disp_hora_fin_" + i);
+                String disponibleStr = request.getParameter("disp_disponible_" + i);
+
+                System.out.println("   📝 Disponibilidad " + (i+1) + ":");
+                System.out.println("     - Día: " + dia);
+                System.out.println("     - Turno ID: " + turnoIdStr);
+                System.out.println("     - Hora inicio: " + horaInicioStr);
+                System.out.println("     - Hora fin: " + horaFinStr);
+                System.out.println("     - Disponible: " + disponibleStr);
+
+                // Verificar que todos los campos obligatorios tengan valor
+                if (dia != null && !dia.trim().isEmpty() && 
+                    turnoIdStr != null && !turnoIdStr.trim().isEmpty() && 
+                    horaInicioStr != null && !horaInicioStr.trim().isEmpty() && 
+                    horaFinStr != null && !horaFinStr.trim().isEmpty()) {
+
+                    try {
+                        Disponibilidad disp = new Disponibilidad();
+                        disp.setProfesorId(profesorId);
                         
-                        try {
-                            Disponibilidad disp = new Disponibilidad();
-                            disp.setProfesorId(profesorId);
-                            disp.setTurnoId(Integer.parseInt(turnoIdStr));
-                            disp.setDiaSemana(dia);
-                            
-                            String horaInicioCompleta = horaInicioStr.contains(":") ? 
-                                (horaInicioStr.split(":").length == 2 ? horaInicioStr + ":00" : horaInicioStr) : 
-                                horaInicioStr + ":00:00";
-                            String horaFinCompleta = horaFinStr.contains(":") ? 
-                                (horaFinStr.split(":").length == 2 ? horaFinStr + ":00" : horaFinStr) : 
-                                horaFinStr + ":00:00";
-                            
-                            disp.setHoraInicio(Time.valueOf(horaInicioCompleta));
-                            disp.setHoraFin(Time.valueOf(horaFinCompleta));
-                            disp.setDisponible(disponibleStr != null ? Boolean.parseBoolean(disponibleStr) : true);
-                            disp.setObservaciones(observaciones);
-
-                            disponibilidades.add(disp);
-                            System.out.println("      Disponibilidad agregada a la lista");
-                        } catch (Exception ex) {
-                            System.out.println("      Error al parsear disponibilidad " + (i+1) + ": " + ex.getMessage());
+                        // Parsear turno ID (usar valor del formulario si está vacío)
+                        int turnoId;
+                        if (turnoIdStr.trim().isEmpty()) {
+                            // Si no viene en la disponibilidad, usar el del formulario principal
+                            String turnoPrincipal = request.getParameter("turno_id");
+                            turnoId = turnoPrincipal != null ? Integer.parseInt(turnoPrincipal) : 0;
+                        } else {
+                            turnoId = Integer.parseInt(turnoIdStr.trim());
                         }
-                    } else {
-                        System.out.println("    Disponibilidad " + (i+1) + " tiene campos vacíos, se omite");
-                    }
-                }
+                        disp.setTurnoId(turnoId);
+                        
+                        disp.setDiaSemana(dia.trim());
 
-                // Guardar todas las disponibilidades
-                if (!disponibilidades.isEmpty()) {
-                    System.out.println(" Guardando " + disponibilidades.size() + " disponibilidades en la base de datos...");
-                    boolean dispGuardadas = dao.guardarDisponibilidades(profesorId, disponibilidades);
-                    if (dispGuardadas) {
-                        System.out.println(" " + disponibilidades.size() + " disponibilidades guardadas correctamente");
-                    } else {
-                        System.out.println(" ERROR: No se pudieron guardar las disponibilidades");
+                        // Asegurar formato HH:mm:ss para Time.valueOf()
+                        String horaInicioCompleta = horaInicioStr.trim();
+                        String horaFinCompleta = horaFinStr.trim();
+                        
+                        // Si no tiene segundos, agregar :00
+                        if (horaInicioCompleta.split(":").length == 2) {
+                            horaInicioCompleta += ":00";
+                        }
+                        if (horaFinCompleta.split(":").length == 2) {
+                            horaFinCompleta += ":00";
+                        }
+                        
+                        disp.setHoraInicio(Time.valueOf(horaInicioCompleta));
+                        disp.setHoraFin(Time.valueOf(horaFinCompleta));
+                        disp.setDisponible(disponibleStr != null ? Boolean.parseBoolean(disponibleStr) : true);
+                        disp.setObservaciones("");
+
+                        disponibilidades.add(disp);
+                        System.out.println("      ✅ Disponibilidad agregada a la lista");
+                    } catch (Exception ex) {
+                        System.out.println("      ❌ Error al parsear disponibilidad " + (i+1) + ": " + ex.getMessage());
+                        ex.printStackTrace();
                     }
                 } else {
-                    System.out.println(" No hay disponibilidades válidas para guardar");
+                    System.out.println("    ⚠️ Disponibilidad " + (i+1) + " tiene campos vacíos, se omite");
+                }
+            }
+
+            // Guardar todas las disponibilidades
+            if (!disponibilidades.isEmpty()) {
+                System.out.println("💾 Guardando " + disponibilidades.size() + " disponibilidades en la base de datos...");
+                boolean dispGuardadas = dao.guardarDisponibilidades(profesorId, disponibilidades);
+                if (dispGuardadas) {
+                    System.out.println("✅ " + disponibilidades.size() + " disponibilidades guardadas correctamente");
+                    return true;
+                } else {
+                    System.out.println("❌ ERROR: No se pudieron guardar las disponibilidades");
                     return false;
                 }
-            } catch (Exception e) {
-                System.err.println(" ERROR PROCESANDO DISPONIBILIDADES:");
-                e.printStackTrace();
-                return false; 
+            } else {
+                System.out.println("ℹ️ No hay disponibilidades válidas para guardar");
+                return true;
             }
-        } else {
-            System.out.println(" No se enviaron disponibilidades en el formulario (parámetro 'total_disponibilidades' no encontrado)");
+        } catch (Exception e) {
+            System.err.println("❌ ERROR PROCESANDO DISPONIBILIDADES:");
+            e.printStackTrace();
+            return false;
         }
-        
-        System.out.println("========================================");
-        return false;
+    } else {
+        System.out.println("ℹ️ No se enviaron disponibilidades en el formulario");
+        return true;
     }
-    
+}    
 
 }
