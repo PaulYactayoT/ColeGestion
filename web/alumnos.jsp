@@ -393,16 +393,14 @@
                 </nav>
             </div>
             
-            <!-- Footer Sidebar -->
-            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
-                <form action="LogoutServlet" method="post" class="w-full">
-                    <button type="submit" 
-                            class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
+                       <!-- Footer Sidebar -->
+                <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
+                    <a href="LogoutServlet" 
+                       class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
                         <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
                         <span>Cerrar Sesión</span>
-                    </button>
-                </form>
-            </div>
+                    </a>
+                </div>
         </aside>
         
         <!-- Main Content -->

@@ -207,203 +207,257 @@ public class ProfesorDAO {
     }
 
     /**
-     * CREAR NUEVO PROFESOR
-     */
-    public boolean crear(Profesor profesor) {
-        Connection conn = null;
-        PreparedStatement psPersona = null;
-        PreparedStatement psProfesor = null;
-        PreparedStatement psUsuario = null;
-        ResultSet rs = null;
+    * CREAR NUEVO PROFESOR (VERSIÓN ACTUALIZADA CON DISPONIBILIDADES)
+    * 
+    * Este método crea un profesor y sus disponibilidades en una sola transacción.
+    * Si algo falla, se hace rollback completo.
+    */
+   public boolean crear(Profesor profesor) {
+       Connection conn = null;
+       PreparedStatement psPersona = null;
+       PreparedStatement psProfesor = null;
+       PreparedStatement psUsuario = null;
+       PreparedStatement psDisponibilidad = null;
+       ResultSet rs = null;
 
-        try {
-            conn = Conexion.getConnection();
-            conn.setAutoCommit(false);
+       try {
+           conn = Conexion.getConnection();
+           conn.setAutoCommit(false);
 
-            System.out.println("Iniciando creación de profesor: " + profesor.getNombres() + " " + profesor.getApellidos());
+           System.out.println("Iniciando creación de profesor: " + profesor.getNombres() + " " + profesor.getApellidos());
 
-            // ========== 1. INSERTAR EN PERSONA ==========
-            String sqlPersona = "INSERT INTO persona (nombres, apellidos, correo, telefono, dni, " +
-                               "fecha_nacimiento, direccion, tipo, activo) " +
-                               "VALUES (?, ?, ?, ?, ?, ?, ?, 'PROFESOR', 1)";
-            
-            psPersona = conn.prepareStatement(sqlPersona, Statement.RETURN_GENERATED_KEYS);
-            psPersona.setString(1, profesor.getNombres());
-            psPersona.setString(2, profesor.getApellidos());
-            psPersona.setString(3, profesor.getCorreo());
-            psPersona.setString(4, profesor.getTelefono());
-            psPersona.setString(5, profesor.getDni());
-            
-            if (profesor.getFechaNacimiento() != null) {
-                psPersona.setDate(6, new java.sql.Date(profesor.getFechaNacimiento().getTime()));
-            } else {
-                psPersona.setNull(6, Types.DATE);
-            }
-            
-            psPersona.setString(7, profesor.getDireccion());
-            
-            int filasPersona = psPersona.executeUpdate();
-            System.out.println("Filas insertadas en persona: " + filasPersona);
-            
-            if (filasPersona == 0) {
-                throw new SQLException("No se pudo insertar en persona");
-            }
-            
-            int personaId;
-            rs = psPersona.getGeneratedKeys();
-            if (rs.next()) {
-                personaId = rs.getInt(1);
-                profesor.setPersonaId(personaId);
-                System.out.println("Persona ID generado: " + personaId);
-            } else {
-                throw new SQLException("No se pudo obtener el ID de persona");
-            }
-            rs.close();
-            
-            // ========== 2. INSERTAR EN PROFESOR ==========
-            String sqlProfesor = "INSERT INTO profesor (persona_id, area_id, nivel, turno_id, codigo_profesor, " +
-                        "fecha_contratacion, estado, activo) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
-            
-            psProfesor = conn.prepareStatement(sqlProfesor, Statement.RETURN_GENERATED_KEYS);
-            psProfesor.setInt(1, personaId);
-            
-            // AREA
-            if (profesor.getAreaId() > 0) {
-                psProfesor.setInt(2, profesor.getAreaId());
-                System.out.println("Asignando área ID: " + profesor.getAreaId());
-            } else {
-                psProfesor.setNull(2, Types.INTEGER);
-                System.out.println("Sin área asignada");
-            }
+           // ========== 1. INSERTAR EN PERSONA ==========
+           String sqlPersona = "INSERT INTO persona (nombres, apellidos, correo, telefono, dni, " +
+                              "fecha_nacimiento, direccion, tipo, activo) " +
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, 'PROFESOR', 1)";
 
-            // NIVEL
-            if (profesor.getNivel() != null && !profesor.getNivel().isEmpty()) {
-                psProfesor.setString(3, profesor.getNivel());
-            } else {
-                psProfesor.setNull(3, Types.VARCHAR);
-            }
-            
-            // TURNO
-            if (profesor.getTurnoId() > 0) {
-                psProfesor.setInt(4, profesor.getTurnoId());
-                System.out.println("Asignando turno ID: " + profesor.getTurnoId());
-            } else {
-                psProfesor.setNull(4, Types.INTEGER);
-                System.out.println("Sin turno asignado");
-            }
-            
-            // CODIGO DE PROFESOR
-            String codigoProfesor = profesor.getCodigoProfesor();
-            if (codigoProfesor == null || codigoProfesor.trim().isEmpty()) {
-                codigoProfesor = generarCodigoProfesor();
-                profesor.setCodigoProfesor(codigoProfesor);
-            }
-            psProfesor.setString(5, codigoProfesor);
-            System.out.println("Código profesor: " + codigoProfesor);
-            
-            // FECHA DE CONTRATACIÓN
-            if (profesor.getFechaContratacion() != null) {
-                psProfesor.setDate(6, new java.sql.Date(profesor.getFechaContratacion().getTime()));
-            } else {
-                psProfesor.setDate(6, new java.sql.Date(System.currentTimeMillis()));
-            }
+           psPersona = conn.prepareStatement(sqlPersona, Statement.RETURN_GENERATED_KEYS);
+           psPersona.setString(1, profesor.getNombres());
+           psPersona.setString(2, profesor.getApellidos());
+           psPersona.setString(3, profesor.getCorreo());
+           psPersona.setString(4, profesor.getTelefono());
+           psPersona.setString(5, profesor.getDni());
 
-            // ESTADO
-            String estado = profesor.getEstado();
-            if (estado == null || estado.trim().isEmpty()) {
-                estado = "ACTIVO";
-                profesor.setEstado(estado);
-            }
-            psProfesor.setString(7, estado);
-            
-            int filasProfesor = psProfesor.executeUpdate();
-            System.out.println("Filas insertadas en profesor: " + filasProfesor);
-            
-            if (filasProfesor == 0) {
-                throw new SQLException("No se pudo insertar en profesor");
-            }
-            
-            rs = psProfesor.getGeneratedKeys();
-            if (rs.next()) {
-                profesor.setId(rs.getInt(1));
-                System.out.println("Profesor ID generado: " + profesor.getId());
-            }
-            rs.close();
-            
-            // ========== 3. INSERTAR EN USUARIO ==========
-            String sqlUsuario = "INSERT INTO usuario (persona_id, username, password, rol, activo) " +
-                               "VALUES (?, ?, ?, 'docente', 1)";
-            
-            psUsuario = conn.prepareStatement(sqlUsuario);
-            psUsuario.setInt(1, personaId);
-            
-            // USERNAME
-            String username = profesor.getUsername();
-            if (username == null || username.trim().isEmpty()) {
-                if (profesor.getCorreo() != null && !profesor.getCorreo().isEmpty()) {
-                    username = profesor.getCorreo().split("@")[0];
-                } else {
-                    username = (profesor.getNombres().charAt(0) + profesor.getApellidos().split(" ")[0]).toLowerCase();
-                    username = username.replaceAll("[^a-z0-9]", "");
+           if (profesor.getFechaNacimiento() != null) {
+               psPersona.setDate(6, new java.sql.Date(profesor.getFechaNacimiento().getTime()));
+           } else {
+               psPersona.setNull(6, Types.DATE);
+           }
+
+           psPersona.setString(7, profesor.getDireccion());
+
+           int filasPersona = psPersona.executeUpdate();
+           System.out.println("Filas insertadas en persona: " + filasPersona);
+
+           if (filasPersona == 0) {
+               throw new SQLException("No se pudo insertar en persona");
+           }
+
+           int personaId;
+           rs = psPersona.getGeneratedKeys();
+           if (rs.next()) {
+               personaId = rs.getInt(1);
+               profesor.setPersonaId(personaId);
+               System.out.println("Persona ID generado: " + personaId);
+           } else {
+               throw new SQLException("No se pudo obtener el ID de persona");
+           }
+           rs.close();
+
+           // ========== 2. INSERTAR EN PROFESOR ==========
+           String sqlProfesor = "INSERT INTO profesor (persona_id, area_id, nivel, turno_id, codigo_profesor, " +
+                       "fecha_contratacion, estado, activo) " +
+                       "VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
+
+           psProfesor = conn.prepareStatement(sqlProfesor, Statement.RETURN_GENERATED_KEYS);
+           psProfesor.setInt(1, personaId);
+
+           // AREA
+           if (profesor.getAreaId() > 0) {
+               psProfesor.setInt(2, profesor.getAreaId());
+               System.out.println("Asignando área ID: " + profesor.getAreaId());
+           } else {
+               psProfesor.setNull(2, Types.INTEGER);
+               System.out.println("Sin área asignada");
+           }
+
+           // NIVEL
+           if (profesor.getNivel() != null && !profesor.getNivel().isEmpty()) {
+               psProfesor.setString(3, profesor.getNivel());
+           } else {
+               psProfesor.setNull(3, Types.VARCHAR);
+           }
+
+           // TURNO
+           if (profesor.getTurnoId() > 0) {
+               psProfesor.setInt(4, profesor.getTurnoId());
+               System.out.println("Asignando turno ID: " + profesor.getTurnoId());
+           } else {
+               psProfesor.setNull(4, Types.INTEGER);
+               System.out.println("Sin turno asignado");
+           }
+
+           // CODIGO DE PROFESOR
+           String codigoProfesor = profesor.getCodigoProfesor();
+           if (codigoProfesor == null || codigoProfesor.trim().isEmpty()) {
+               codigoProfesor = generarCodigoProfesor();
+               profesor.setCodigoProfesor(codigoProfesor);
+           }
+           psProfesor.setString(5, codigoProfesor);
+           System.out.println("Código profesor: " + codigoProfesor);
+
+           // FECHA DE CONTRATACIÓN
+           if (profesor.getFechaContratacion() != null) {
+               psProfesor.setDate(6, new java.sql.Date(profesor.getFechaContratacion().getTime()));
+           } else {
+               psProfesor.setDate(6, new java.sql.Date(System.currentTimeMillis()));
+           }
+
+           // ESTADO
+           String estado = profesor.getEstado();
+           if (estado == null || estado.trim().isEmpty()) {
+               estado = "ACTIVO";
+               profesor.setEstado(estado);
+           }
+           psProfesor.setString(7, estado);
+
+           int filasProfesor = psProfesor.executeUpdate();
+           System.out.println("Filas insertadas en profesor: " + filasProfesor);
+
+           if (filasProfesor == 0) {
+               throw new SQLException("No se pudo insertar en profesor");
+           }
+
+           int profesorId;
+           rs = psProfesor.getGeneratedKeys();
+           if (rs.next()) {
+               profesorId = rs.getInt(1);
+               profesor.setId(profesorId);
+               System.out.println("Profesor ID generado: " + profesorId);
+           } else {
+               throw new SQLException("No se pudo obtener el ID de profesor");
+           }
+           rs.close();
+
+           // ========== 3. INSERTAR EN USUARIO ==========
+           String sqlUsuario = "INSERT INTO usuario (persona_id, username, password, rol, activo) " +
+                              "VALUES (?, ?, ?, 'docente', 1)";
+
+           psUsuario = conn.prepareStatement(sqlUsuario);
+           psUsuario.setInt(1, personaId);
+
+           // USERNAME
+           String username = profesor.getUsername();
+           if (username == null || username.trim().isEmpty()) {
+               if (profesor.getCorreo() != null && !profesor.getCorreo().isEmpty()) {
+                   username = profesor.getCorreo().split("@")[0];
+               } else {
+                   username = (profesor.getNombres().charAt(0) + profesor.getApellidos().split(" ")[0]).toLowerCase();
+                   username = username.replaceAll("[^a-z0-9]", "");
+               }
+               profesor.setUsername(username);
+           }
+           psUsuario.setString(2, username);
+           System.out.println("Username: " + username);
+
+           // PASSWORD
+           String password;
+           if (profesor.getPassword() != null && !profesor.getPassword().trim().isEmpty()) {
+               password = profesor.getPassword();
+           } else {
+               password = profesor.getDni() != null && !profesor.getDni().trim().isEmpty() ? profesor.getDni() : "123456";
+           }
+           psUsuario.setString(3, encriptarSHA256(password));
+           System.out.println("Contraseña encriptada");
+
+           int filasUsuario = psUsuario.executeUpdate();
+           System.out.println("Filas insertadas en usuario: " + filasUsuario);
+
+           if (filasUsuario == 0) {
+               throw new SQLException("No se pudo insertar en usuario");
+           }
+
+            // ========== 4. INSERTAR DISPONIBILIDADES (CORREGIDO) ==========
+            List<Disponibilidad> disponibilidades = profesor.getDisponibilidades();
+            if (disponibilidades != null && !disponibilidades.isEmpty()) {
+                System.out.println("\n📅 Guardando " + disponibilidades.size() + " disponibilidades...");
+
+                String sqlDisponibilidad = "INSERT INTO disponibilidad_profesor " +
+                                        "(profesor_id, turno_id, dia_semana, hora_inicio, hora_fin, " +
+                                        "disponible, observaciones, activo, eliminado) " +
+                                        "VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0)";
+
+                psDisponibilidad = conn.prepareStatement(sqlDisponibilidad);
+
+                for (Disponibilidad disp : disponibilidades) {
+                    // Configurar parámetros
+                    psDisponibilidad.setInt(1, profesorId);
+                    psDisponibilidad.setInt(2, disp.getTurnoId());
+                    psDisponibilidad.setString(3, disp.getDiaSemana());
+                    psDisponibilidad.setTime(4, disp.getHoraInicio());
+                    psDisponibilidad.setTime(5, disp.getHoraFin());
+                    psDisponibilidad.setBoolean(6, disp.isDisponible());
+
+                    // Manejo seguro de nulos para observaciones
+                    String obs = disp.getObservaciones();
+                    psDisponibilidad.setString(7, obs != null ? obs : "");
+
+                    // EJECUTAR SIN TRY-CATCH INTERNO
+                    // Si esto falla, saltará al catch principal y hará ROLLBACK de todo
+                    psDisponibilidad.executeUpdate(); 
+
+                    System.out.println("  ✅ Disponibilidad guardada: " + disp.getDiaSemana());
                 }
-                profesor.setUsername(username);
-            }
-            psUsuario.setString(2, username);
-            System.out.println("Username: " + username);
-            
-            // PASSWORD
-            String password;
-            if (profesor.getPassword() != null && !profesor.getPassword().trim().isEmpty()) {
-                password = profesor.getPassword();
             } else {
-                password = profesor.getDni() != null && !profesor.getDni().trim().isEmpty() ? profesor.getDni() : "123456";
+                System.out.println("ℹ️ No hay disponibilidades para guardar");
             }
-            psUsuario.setString(3, encriptarSHA256(password));
-            System.out.println("Contraseña encriptada");
-            
-            int filasUsuario = psUsuario.executeUpdate();
-            System.out.println("Filas insertadas en usuario: " + filasUsuario);
-            
-            if (filasUsuario == 0) {
-                throw new SQLException("No se pudo insertar en usuario");
-            }
-            
-            conn.commit();
-            System.out.println("✅ Profesor creado exitosamente: " + profesor.getNombreCompleto());
-            return true;
-            
-        } catch (SQLException e) {
-            System.err.println("ERROR SQL al crear profesor: " + e.getMessage());
-            e.printStackTrace();
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                    System.err.println("Transacción revertida");
-                } catch (SQLException ex) {
-                    System.err.println("Error al revertir transacción: " + ex.getMessage());
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            System.err.println("ERROR general: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } finally {
-            try {
-                if (rs != null) rs.close();
-                if (psPersona != null) psPersona.close();
-                if (psProfesor != null) psProfesor.close();
-                if (psUsuario != null) psUsuario.close();
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                System.err.println("Error cerrando recursos: " + e.getMessage());
-            }
-        }
-    }
+
+           // ========== COMMIT FINAL ==========
+           conn.commit();
+           System.out.println("✅ Profesor creado exitosamente: " + profesor.getNombreCompleto());
+           System.out.println("✅ Transacción completada con éxito");
+           return true;
+
+       } catch (SQLException e) {
+           System.err.println("❌ ERROR SQL al crear profesor: " + e.getMessage());
+           e.printStackTrace();
+           if (conn != null) {
+               try {
+                   conn.rollback();
+                   System.err.println("🔄 Transacción revertida");
+               } catch (SQLException ex) {
+                   System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
+               }
+           }
+           return false;
+       } catch (Exception e) {
+           System.err.println("❌ ERROR general: " + e.getMessage());
+           e.printStackTrace();
+           if (conn != null) {
+               try {
+                   conn.rollback();
+                   System.err.println("🔄 Transacción revertida");
+               } catch (SQLException ex) {
+                   System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
+               }
+           }
+           return false;
+       } finally {
+           try {
+               if (rs != null) rs.close();
+               if (psPersona != null) psPersona.close();
+               if (psProfesor != null) psProfesor.close();
+               if (psUsuario != null) psUsuario.close();
+               if (psDisponibilidad != null) psDisponibilidad.close(); // NUEVO
+               if (conn != null) {
+                   conn.setAutoCommit(true);
+                   conn.close();
+               }
+           } catch (SQLException e) {
+               System.err.println("❌ Error cerrando recursos: " + e.getMessage());
+           }
+       }
+   }
 
     /**
      * GENERAR CÓDIGO DE PROFESOR ÚNICO

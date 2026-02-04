@@ -1,4 +1,3 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*, java.sql.*, modelo.Curso, modelo.Grado, conexion.Conexion" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%
@@ -20,13 +19,10 @@
     
     String mensaje = (String) session.getAttribute("mensaje");
     String error = (String) session.getAttribute("error");
-    session.removeAttribute("mensaje");
-    session.removeAttribute("error");
 %>
 
-
 <%!
-    // MÃ©todo para obtener horarios de un curso
+    // Método para obtener horarios de un curso
     private String obtenerHorarios(int cursoId) {
         StringBuilder resultado = new StringBuilder();
         try (Connection conn = conexion.Conexion.getConnection()) {
@@ -48,7 +44,7 @@
         return resultado.toString();
     }
     
-    // MÃ©todo para obtener nivel de un grado
+    // Método para obtener nivel de un grado
     private String obtenerNivel(int gradoId) {
         try (Connection conn = conexion.Conexion.getConnection()) {
             String sql = "SELECT nivel FROM grado WHERE id = ?";
@@ -62,7 +58,7 @@
         return "-";
     }
     
-    // MÃ©todo para obtener grado_id de un curso
+    // Método para obtener grado_id de un curso
     private int obtenerGradoId(int cursoId) {
         try (Connection conn = conexion.Conexion.getConnection()) {
             String sql = "SELECT grado_id FROM curso WHERE id = ?";
@@ -78,358 +74,451 @@
 %>
 
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listado de Cursos - Sistema Escolar</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/css/estilos.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Listado de Cursos - San Antonio</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "primary-dark": "#0d47a1",
+                        "success": "#10b981",
+                        "danger": "#ef4444",
+                        "warning": "#f59e0b",
+                        "info": "#3b82f6",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "card-light": "#ffffff",
+                        "card-dark": "#1a2233",
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#374151",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
     
     <style>
-        :root {
-            /* PALETA DE COLORES PROFESIONAL */
-            --color-fondo-principal: #E8E9EB;
-            --color-fondo-secundario: #F5F5F6;
-            --color-celeste-bebe: #D4E9F7;
-            --color-celeste-claro: #B8DAF0;
-            --color-celeste-medio: #A0CEE8;
-            --color-celeste-acento: #7FC3E3;
-            --color-texto-principal: #2B2D30;
-            --color-texto-secundario: #5A5C5F;
-            --color-borde: #D1D3D5;
-            --color-sombra: rgba(0, 0, 0, 0.06);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--color-fondo-principal) 0%, #E0E2E4 100%);
-            color: var(--color-texto-principal);
-            min-height: 100vh;
+            font-family: 'Lexend', sans-serif;
         }
-
-        .container {
-            max-width: 1400px;
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-
-        /* ========== ENCABEZADO ========== */
-        .page-header {
-            background: #2B2D30;  
-            border-radius: 20px;
-            padding: 30px 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px var(--color-sombra);
-            border-left: 5px solid var(--color-celeste-acento);
+        
+        /* Mejoras de accesibilidad */
+        .reduce-motion * { 
+            animation-duration: 0.01ms !important; 
+            animation-iteration-count: 1 !important; 
+            transition-duration: 0.01ms !important; 
         }
-
-        .page-header h2 {
-            font-size: 2rem;
-            font-weight: 700;
+        .high-contrast-invert { 
+            filter: invert(1) hue-rotate(180deg); 
+        }
+        .high-contrast-yellow { 
+            background-color: #000000 !important; 
+            color: #ffff00 !important; 
+        }
+        .beige-background { 
+            background-color: #f5f5dc !important; 
+        }
+        
+        /* Tamaños de texto - Afectar a toda la página */
+        .large-text { 
+            font-size: 18px !important; 
+        }
+        .large-text .form-label,
+        .large-text .form-control,
+        .large-text .form-select,
+        .large-text .text-sm {
+            font-size: 16px !important;
+        }
+        
+        .larger-text { 
+            font-size: 20px !important; 
+        }
+        .larger-text .form-label,
+        .larger-text .form-control,
+        .larger-text .form-select,
+        .larger-text .text-sm {
+            font-size: 18px !important;
+        }
+        
+        .largest-text { 
+            font-size: 22px !important; 
+        }
+        .largest-text .form-label,
+        .largest-text .form-control,
+        .largest-text .form-select,
+        .largest-text .text-sm {
+            font-size: 20px !important;
+        }
+        
+        .dyslexia-font { 
+            font-family: Arial !important; 
+            font-size: 1.1em !important; 
+            line-height: 1.6 !important; 
+            letter-spacing: 0.5px !important; 
+        }
+        
+        /* Ocultar elementos de accesibilidad inicialmente */
+        .accessibility-panel {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .accessibility-panel.open {
+            transform: translateX(0);
+        }
+        
+        /* Skip to content link */
+        .skip-to-content {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #135bec;
             color: white;
+            padding: 8px;
+            z-index: 100;
+        }
+        .skip-to-content:focus {
+            top: 0;
+        }
+        
+        /* Focus styles */
+        :focus {
+            outline: 3px solid #135bec !important;
+            outline-offset: 2px;
+        }
+        
+        /* Input groups */
+        .input-group-icon {
+            position: relative;
+        }
+        
+        .input-group-icon i,
+        .input-group-icon .material-symbols-outlined {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            z-index: 10;
+        }
+        
+        .input-group-icon .form-control,
+        .input-group-icon .form-select {
+            padding-left: 40px;
+        }
+        
+        /* Alertas */
+        .alert-modern {
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin: 0;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
         }
-
-        .page-header h2 i {
-            color: var(--color-celeste-acento);
-            font-size: 2.2rem;
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #991b1b;
+            border-left-color: #ef4444;
         }
-
-        /* ========== SECCIÃ“N DE FILTROS ========== */
-        .filter-section {
-            background: var(--color-fondo-secundario);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 15px var(--color-sombra);
-            border: 1px solid var(--color-borde);
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+            border-left-color: #10b981;
         }
-
-        .filter-section h5 {
-            color: var(--color-texto-principal);
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        
+        .alert-info {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+            border-left-color: #3b82f6;
         }
-
-        .filter-section h5 i {
-            color: var(--color-celeste-acento);
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: var(--color-texto-principal);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
-
-        .form-label i {
-            color: var(--color-celeste-acento);
-        }
-
-        .form-select {
-            border: 2px solid var(--color-borde);
-            border-radius: 12px;
-            padding: 10px 14px;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background: white;
-            color: var(--color-texto-principal);
-        }
-
-        .form-select:focus {
-            border-color: var(--color-celeste-medio);
-            box-shadow: 0 0 0 0.2rem rgba(160, 206, 232, 0.25);
-            outline: none;
-        }
-
-        /* ========== BOTONES ========== */
-        .btn {
-            border-radius: 12px;
-            padding: 10px 20px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: #0d6efd;
-            border: none;
-            color: white;
-            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
-            background: #0b5ed7;
-            color: white;
-        }
-
-        .btn-success {
-            background: #198754;
-            border: none;
-            color: white;
-        }
-
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(25, 135, 84, 0.4);
-            background: #157347;
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
+        
+        /* Badge */
+        .badge {
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
             font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
         }
-
-        .btn-danger {
-            background: #dc3545;
+        
+        /* Botones */
+        .btn-modern {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
             border: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .btn-primary-modern {
+            background: linear-gradient(135deg, #135bec, #0d47a1);
             color: white;
         }
-
-        .btn-danger:hover {
+        
+        .btn-primary-modern:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
-            background: #bb2d3b;
+            box-shadow: 0 8px 15px rgba(19, 91, 236, 0.3);
+        }
+        
+        .btn-success-modern {
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
         }
-
-        /* ========== CARDS DE CURSOS ========== */
-        .card-curso {
-            background: var(--color-fondo-secundario);
-            border: 2px solid var(--color-borde);
-            border-radius: 20px;
+        
+        .btn-success-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-secondary-modern {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary-modern:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger-modern {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .btn-danger-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* Table styles */
+        .custom-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            background: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dark .custom-table {
+            background: #1a2233;
+        }
+        
+        .custom-table thead {
+            background: linear-gradient(135deg, #135bec 0%, #0d47a1 100%);
+        }
+        
+        .custom-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: white;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .custom-table tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s;
+        }
+        
+        .dark .custom-table tbody tr {
+            border-bottom: 1px solid #374151;
+        }
+        
+        .custom-table td {
+            padding: 1rem;
+            color: #374151;
+            font-size: 0.95rem;
+        }
+        
+        .dark .custom-table td {
+            color: #d1d5db;
+        }
+        
+        /* Section styles */
+        .section-divider {
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, #135bec, transparent);
+            margin: 2rem 0 1.5rem 0;
+        }
+        
+        .section-title {
+            color: #135bec;
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .dark .section-title {
+            color: #60a5fa;
+        }
+        
+        /* Tooltip */
+        .tooltip-info {
+            cursor: help;
+            color: #3b82f6;
+            margin-left: 0.25rem;
+        }
+        
+        /* Accessibility Toggle Button */
+        .accessibility-toggle {
+            transition: all 0.3s ease;
+        }
+        
+        .accessibility-toggle:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Cards de cursos */
+        .card-curso-modern {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 1rem;
             overflow: hidden;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 15px var(--color-sombra);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
             height: 100%;
         }
-
-        .card-curso:hover {
+        
+        .dark .card-curso-modern {
+            background: #1a2233;
+            border-color: #374151;
+        }
+        
+        .card-curso-modern:hover {
             transform: translateY(-8px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-            border-color: var(--color-celeste-medio);
+            box-shadow: 0 8px 30px rgba(19, 91, 236, 0.15);
+            border-color: #135bec;
         }
-
-        .card-curso .card-header {
-            background: var(--color-celeste-bebe);
-            border-bottom: 2px solid var(--color-celeste-claro);
-            padding: 18px 20px;
+        
+        .card-curso-modern .card-header-modern {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border-bottom: 2px solid #d1d5db;
+            padding: 1.25rem 1.5rem;
         }
-
-        .card-curso .card-header h5 {
-            color: var(--color-texto-principal);
+        
+        .dark .card-curso-modern .card-header-modern {
+            background: linear-gradient(135deg, #1e3a8a, #1e40af);
+            border-bottom-color: #374151;
+        }
+        
+        .card-curso-modern .card-header-modern h5 {
+            color: #1e40af;
             font-weight: 700;
             font-size: 1.1rem;
             margin: 0;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.75rem;
         }
-
-        .card-curso .card-header h5 i {
-            color: var(--color-celeste-acento);
+        
+        .dark .card-curso-modern .card-header-modern h5 {
+            color: #93c5fd;
         }
-
-        .card-curso .card-body {
-            padding: 20px;
-            background: var(--color-fondo-secundario);
+        
+        .card-curso-modern .card-body-modern {
+            padding: 1.5rem;
+            background: white;
         }
-
-        .card-curso .card-text {
-            color: var(--color-texto-principal);
+        
+        .dark .card-curso-modern .card-body-modern {
+            background: #1a2233;
+        }
+        
+        .card-curso-modern .card-text {
+            color: #374151;
             font-size: 0.9rem;
-            margin-bottom: 12px;
+            margin-bottom: 1rem;
             line-height: 1.6;
         }
-
-        .card-curso .card-text strong {
-            color: var(--color-texto-secundario);
+        
+        .dark .card-curso-modern .card-text {
+            color: #d1d5db;
+        }
+        
+        .card-curso-modern .card-text strong {
+            color: #111827;
             font-weight: 600;
         }
-
-        .card-curso .card-footer {
-            background: var(--color-celeste-bebe);
-            border-top: 2px solid var(--color-celeste-claro);
-            padding: 15px 20px;
+        
+        .dark .card-curso-modern .card-text strong {
+            color: #f9fafb;
         }
-
-        /* ========== BADGES ========== */
-        .badge {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.8rem;
+        
+        .card-curso-modern .card-footer-modern {
+            background: #f9fafb;
+            border-top: 2px solid #e5e7eb;
+            padding: 1rem 1.5rem;
+            text-align: center;
         }
-
+        
+        .dark .card-curso-modern .card-footer-modern {
+            background: #111827;
+            border-top-color: #374151;
+        }
+        
+        /* Badges personalizados */
         .badge-horario {
             display: inline-block;
-            margin: 3px;
+            margin: 0.25rem;
             font-size: 0.75rem;
-            padding: 5px 10px;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
         }
-
-        .nivel-badge {
+        
+        .nivel-badge-modern {
             font-size: 0.85rem;
-            padding: 7px 14px;
-        }
-
-        /* Colores de badges - Bootstrap normal */
-        .bg-info {
-            background: #0dcaf0 !important;
-            color: #000 !important;
-        }
-
-        .bg-primary {
-            background: #0d6efd !important;
-            color: white !important;
-        }
-
-        .bg-success {
-            background: #198754 !important;
-            color: white !important;
-        }
-
-        .bg-secondary {
-            background: #6c757d !important;
-            color: white !important;
-        }
-
-        .bg-warning {
-            background: #ffc107 !important;
-            color: #000 !important;
-        }
-
-        .bg-danger {
-            background: #dc3545 !important;
-            color: white !important;
-        }
-
-        .bg-dark {
-            background: #212529 !important;
-            color: white !important;
-        }
-
-        /* ========== ALERTAS ========== */
-        .alert {
-            border-radius: 15px;
-            padding: 18px 25px;
-            border: none;
-            box-shadow: 0 2px 10px var(--color-sombra);
-            font-weight: 500;
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
-            color: #2E7D32;
-        }
-
-        .alert-danger {
-            background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
-            color: #C62828;
-        }
-
-        .alert-info {
-            background: linear-gradient(135deg, var(--color-celeste-bebe), var(--color-celeste-claro));
-            color: var(--color-texto-principal);
-        }
-
-        /* ========== FOOTER ========== */
-        footer {
-            margin-top: 60px;
-            background: #2B2D30 !important;
-        }
-
-        footer h5 {
-            color: var(--color-celeste-claro);
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
             font-weight: 600;
         }
-
-        footer p, footer a {
-            color: #E8E9EB;
-        }
-
-        footer a:hover {
-            color: var(--color-celeste-acento);
-        }
-
-        /* ========== RESPONSIVE ========== */
-        @media (max-width: 768px) {
-            .page-header {
-                padding: 20px;
-            }
-
-            .page-header h2 {
-                font-size: 1.5rem;
-            }
-
-            .filter-section {
-                padding: 20px;
-            }
-
-            .card-curso .card-body {
-                padding: 15px;
-            }
-        }
-
-        /* ========== ANIMACIONES ========== */
+        
+        /* Animaciones */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -440,249 +529,525 @@
                 transform: translateY(0);
             }
         }
-
-        .card-curso {
+        
+        .card-curso-modern {
             animation: fadeIn 0.5s ease;
         }
     </style>
 </head>
-<body class="dashboard-page">
-
-    <jsp:include page="header.jsp" />
+<body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen" id="main-content">
+    <!-- Skip to content link -->
+    <a href="#main-content" class="skip-to-content focus:top-0">Saltar al contenido principal</a>
     
-    <!-- ========== MENSAJES ========== -->
-    <div class="container mt-4">
-        <% if (mensaje != null) { %>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle"></i> <%= mensaje %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- Accessibility Panel -->
+    <div class="fixed top-20 right-0 z-50 accessibility-panel bg-white dark:bg-gray-800 shadow-xl rounded-l-lg p-4 w-80">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg">Opciones de Accesibilidad</h3>
+            <button onclick="toggleAccessibilityPanel()" class="text-gray-500 hover:text-gray-700">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
-        <% } %>
         
-        <% if (error != null) { %>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle"></i> <%= error %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        <% } %>
-    </div>
-
-    <div class="container mt-5 mb-5">
-        <!-- ========== ENCABEZADO ========== -->
-        <div class="page-header">
-            <h2>
-                <i class="fas fa-book"></i>
-                Listado de Cursos
-            </h2>
-        </div>
-
-        <!-- ========== SECCIÃ“N DE FILTROS ========== -->
-        <div class="filter-section">
-            <h5>
-                <i class="fas fa-filter"></i>
-                Filtrar Cursos
-            </h5>
-            <form action="CursoServlet" method="get">
-                <input type="hidden" name="accion" value="filtrar">
-                
-                <div class="row g-3 align-items-end">
-                    <!-- Filtro Nivel -->
-                    <div class="col-md-3">
-                        <label for="nivel" class="form-label">
-                            <i class="fas fa-layer-group"></i>
-                            Nivel
-                        </label>
-                        <select name="nivel" id="nivel" class="form-select">
-                        <option value="">-- Todos los niveles --</option>
-                        <option value="INICIAL" <%= "INICIAL".equals(nivelSeleccionado) ? "selected" : "" %>>INICIAL</option>
-                        <option value="PRIMARIA" <%= "PRIMARIA".equals(nivelSeleccionado) ? "selected" : "" %>>PRIMARIA</option>
-                        <option value="SECUNDARIA" <%= "SECUNDARIA".equals(nivelSeleccionado) ? "selected" : "" %>>SECUNDARIA</option>
-                    </select>
-                    </div>
-
-                    <!-- Filtro Turno -->
-                    <div class="col-md-3">
-                        <label for="turno" class="form-label">
-                            <i class="fas fa-clock"></i>
-                            Turno
-                        </label>
-                        <select name="turno" id="turno" class="form-select">
-                            <option value="">-- Todos los turnos --</option>
-                            <option value="MAÃ‘ANA" <%= "MAÃ‘ANA".equals(turnoSeleccionado) ? "selected" : "" %>>MAÃ‘ANA</option>
-                            <option value="TARDE" <%= "TARDE".equals(turnoSeleccionado) ? "selected" : "" %>>TARDE</option>
-                        </select>
-                      </div>
-
-                    <!-- Filtro Grado -->
-                    <div class="col-md-4">
-                        <label for="grado_id" class="form-label">
-                            <i class="fas fa-graduation-cap"></i>
-                            Grado
-                        </label>
-                        <select name="grado_id" id="grado_id" class="form-select">
-                            <option value="">-- Todos los grados --</option>
-                            <% if (grados != null) {
-                                for (Grado g : grados) {%>
-                            <option value="<%= g.getId()%>" <%= (gradoSeleccionado != null && gradoSeleccionado == g.getId()) ? "selected" : ""%>>
-                                <%= g.getNombre()%> - <%= g.getNivel()%>
-                            </option>
-                            <% }
-                            } %>
-                        </select>
-                    </div>
-
-                    <!-- Botones -->
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search"></i> Filtrar
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <!-- ========== BOTÃ“N REGISTRAR ========== -->
-        <div class="text-end mb-4">
-            <a href="RegistroCursoServlet?accion=cargarFormulario" class="btn btn-success btn-lg">
-                <i class="fas fa-plus"></i> Registrar Curso
-            </a>
-        </div>
-
-        <!-- ========== GRID DE CARDS ========== -->
-        <div class="row">
-            <%
-                List<Curso> lista = (List<Curso>) request.getAttribute("lista");
-
-                if (lista != null && !lista.isEmpty()) {
-                    for (Curso c : lista) {
-                        // Obtener datos adicionales
-                        int gradoId = obtenerGradoId(c.getId());
-                        String nivel = obtenerNivel(gradoId);
-                        String horarios = obtenerHorarios(c.getId());
-                        
-                        // Colores para badges de nivel
-                        String badgeColor = "secondary";
-                        if ("INICIAL".equals(nivel)) badgeColor = "info";
-                        else if ("PRIMARIA".equals(nivel)) badgeColor = "primary";
-                        else if ("SECUNDARIA".equals(nivel)) badgeColor = "success";
-            %>
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card card-curso">
-                    <div class="card-header">
-                        <h5>
-                            <i class="fas fa-graduation-cap"></i>
-                            <%= c.getNombre()%>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <!-- NIVEL -->
-                        <p class="card-text">
-                            <strong>Nivel:</strong> 
-                            <span class="badge bg-<%= badgeColor%> nivel-badge"><%= nivel%></span>
-                        </p>
-                        
-                        <!-- GRADO -->
-                        <p class="card-text">
-                            <strong>Grado:</strong> <%= c.getGradoNombre() != null ? c.getGradoNombre() : "-" %>
-                        </p>
-                        
-                        <!-- PROFESOR -->
-                        <p class="card-text">
-                            <strong>Profesor:</strong> <%= c.getProfesorNombre() != null ? c.getProfesorNombre() : "-" %>
-                        </p>
-                        
-                        <!-- HORARIOS -->
-                        <p class="card-text">
-                            <strong>Horarios:</strong><br>
-                            <% if (horarios != null && !horarios.isEmpty()) {
-                                String[] horariosArray = horarios.split("; ");
-                                for (String h : horariosArray) {
-                                    String[] partes = h.split(" ");
-                                    if (partes.length >= 2) {
-                                        String dia = partes[0];
-                                        String hora = partes[1];
-                                        String colorDia = "secondary";
-                                        switch(dia) {
-                                            case "LUNES": colorDia = "primary"; break;
-                                            case "MARTES": colorDia = "success"; break;
-                                            case "MIERCOLES": colorDia = "info"; break;
-                                            case "JUEVES": colorDia = "warning"; break;
-                                            case "VIERNES": colorDia = "danger"; break;
-                                            case "SABADO": colorDia = "dark"; break;
-                                        }
-                            %>
-                            <span class="badge bg-<%= colorDia%> badge-horario">
-                                <%= dia%> <%= hora%>
-                            </span>
-                            <% 
-                                    }
-                                }
-                            } else { 
-                            %>
-                            <span class="text-muted">Sin horarios</span>
-                            <% } %>
-                        </p>
-                    </div>
-                    <div class="card-footer text-center">
-                        <!-- ACCIONES -->
-                        <a href="CursoServlet?accion=editar&id=<%= c.getId()%>" class="btn btn-primary btn-sm me-2">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
-                        <a href="CursoServlet?accion=eliminar&id=<%= c.getId()%>" class="btn btn-danger btn-sm"
-                           onclick="return confirm('Â¿Eliminar este curso?')">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </a>
-                    </div>
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h4 class="font-medium">Tamaño de texto</h4>
+                <div class="flex gap-2">
+                    <button onclick="setTextSize('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
+                    <button onclick="setTextSize('large')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Grande</button>
+                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Más Grande</button>
                 </div>
             </div>
-            <%
-                }
-            } else {
-            %>
-            <div class="col-12">
-                <div class="alert alert-info text-center">
-                    <i class="fas fa-info-circle"></i> No hay cursos registrados.
+            
+            <div class="space-y-2">
+                <h4 class="font-medium">Contraste</h4>
+                <div class="flex gap-2">
+                    <button onclick="setContrast('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
+                    <button onclick="setContrast('high')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Alto Contraste</button>
+                    <button onclick="setContrast('yellow')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Amarillo/Negro</button>
                 </div>
             </div>
-            <%
-                }
-            %>
+            
+            <div class="space-y-2">
+                <h4 class="font-medium">Otros ajustes</h4>
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="reduceMotion" onchange="toggleMotion()">
+                        <span>Reducir movimiento</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="dyslexiaFont" onchange="toggleDyslexiaFont()">
+                        <span>Fuente para dislexia</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="beigeBackground" onchange="toggleBeigeBackground()">
+                        <span>Fondo beige</span>
+                    </label>
+                </div>
+            </div>
+            
+            <button onclick="resetAccessibility()" class="w-full py-2 bg-gray-800 text-white rounded hover:bg-gray-900">
+                Restablecer ajustes
+            </button>
         </div>
     </div>
     
-    <!-- ========== FOOTER ========== -->
-    <footer class="bg-dark text-white py-4">
-        <div class="container text-center text-md-start">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="logo-container text-center">
-                        <img src="assets/img/logosa.png" alt="Logo" class="img-fluid mb-2" width="80" height="auto">
-                        <p class="fs-6">"LÃ­deres en educaciÃ³n de calidad al mÃ¡s alto nivel"</p>
+    <!-- Accessibility Toggle Button -->
+    <button onclick="toggleAccessibilityPanel()" 
+            class="fixed top-20 right-0 z-40 bg-primary text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors accessibility-toggle"
+            aria-label="Abrir panel de accesibilidad">
+        <span class="material-symbols-outlined">accessibility_new</span>
+    </button>
+    
+    <div class="flex h-screen overflow-hidden">
+        <!-- Left SideNavBar -->
+        <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
+            <div class="flex flex-col gap-8 p-6">
+                <!-- Brand -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
+                        <span class="material-symbols-outlined">school</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
+                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Gestión Académica</p>
                     </div>
                 </div>
-
-                <div class="col-md-4 mb-3">
-                    <h5 class="fs-6">Contacto:</h5>
-                    <p class="fs-6 mb-1">DirecciÃ³n: Av. El Sol 461, San Juan de Lurigancho 15434</p>
-                    <p class="fs-6 mb-1">TelÃ©fono: 987654321</p>
-                    <p class="fs-6 mb-1">Correo: colegiosanantonio@gmail.com</p>
+                
+                <!-- Navigation -->
+                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="dashboard.jsp">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="text-sm">Dashboard</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="AlumnoServlet">
+                        <i class="fas fa-user-graduate" aria-hidden="true"></i>
+                        <span class="text-sm">Estudiantes</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="ProfesorServlet">
+                        <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
+                        <span class="text-sm">Profesores</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
+                       href="CursoServlet"
+                       aria-current="page">
+                        <i class="fas fa-book" aria-hidden="true"></i>
+                        <span class="text-sm">Cursos</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="GradoServlet">
+                        <i class="fas fa-layer-group" aria-hidden="true"></i>
+                        <span class="text-sm">Grados</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="UsuarioServlet">
+                        <i class="fas fa-users-cog" aria-hidden="true"></i>
+                        <span class="text-sm">Usuarios</span>
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Footer Sidebar -->
+            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
+                <a href="LogoutServlet" 
+                   class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
+                    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <!-- TopNavBar -->
+            <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-xl font-bold text-[#111318] dark:text-white">
+                            Gestión de Cursos
+                        </h1>
+                    </div>
                 </div>
+                
+                <div class="flex items-center gap-4 ml-8">
+                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
+                            aria-label="Notificaciones">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    
+                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                            aria-label="Configuración">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
+                    
+                    <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
+                    
+                    <div class="flex items-center gap-3">
+                        <p class="text-sm font-medium hidden md:block">
+                            <%= session.getAttribute("usuario") != null ? session.getAttribute("usuario") : "Administrador" %>
+                        </p>
+                        <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
+                             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCO64ytW7WFj5YJ0XxtUSKDLHtMumvYdpNUpuyZfiJ1u2v-o-ZSRqiNGLyx6pmhB7nZDuPBYTD_VLKKCEUg0atLHJC4hTrMG5QjAfNlLQdzKId6L3tl2-QhmWJUVQVRr4hk7ODNpJ2OomnFQx_u6WT5QgxJRWLtvZ2I5ecv8WfcR1-MoMfF485fYSxo5s9ErvyApFtN9ro0oew7DMrNHFDQJp1zE9Dtyls43R9C7cnQa5HNlhDoiFBsEBf8CYKzebhaA6Yfuad3vcM');"
+                             aria-label="Foto de perfil del administrador">
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Main Content -->
+            <div class="p-8">
+                <!-- Header con título -->
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-[#111318] dark:text-white">Listado de Cursos</h2>
+                    <p class="text-[#616f89] dark:text-gray-400 mt-1">Consulta y gestiona los cursos académicos</p>
+                </div>
+                
+                <!-- Alertas -->
+                <% if (error != null) { 
+                    session.removeAttribute("error");
+                %>
+                <div class="alert-modern alert-danger mb-6" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <div>
+                        <strong>Error:</strong> <%= error %>
+                    </div>
+                </div>
+                <% } %>
+                
+                <% if (mensaje != null) { 
+                    session.removeAttribute("mensaje");
+                %>
+                <div class="alert-modern alert-success mb-6" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>Éxito:</strong> <%= mensaje %>
+                    </div>
+                </div>
+                <% } %>
+                
+                <!-- SECCIÓN: FILTROS -->
+                <div class="bg-white dark:bg-card-dark rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm overflow-hidden mb-8">
+                    <div class="border-b border-[#f0f2f4] dark:border-gray-700 p-6" style="background: linear-gradient(135deg, #135bec, #0d47a1);">
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fas fa-filter"></i>
+                            Filtros de Búsqueda
+                        </h3>
+                    </div>
+                    
+                    <div class="p-6">
+                        <form action="CursoServlet" method="get">
+                            <input type="hidden" name="accion" value="filtrar">
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <!-- Filtro Nivel -->
+                                <div>
+                                    <label for="nivel" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
+                                        <i class="fas fa-layer-group mr-2"></i>Nivel
+                                    </label>
+                                    <div class="input-group-icon">
+    
+                                        <select name="nivel" id="nivel" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            <option value="">Todos los niveles</option>
+                                            <option value="INICIAL" <%= "INICIAL".equals(nivelSeleccionado) ? "selected" : "" %>>INICIAL</option>
+                                            <option value="PRIMARIA" <%= "PRIMARIA".equals(nivelSeleccionado) ? "selected" : "" %>>PRIMARIA</option>
+                                            <option value="SECUNDARIA" <%= "SECUNDARIA".equals(nivelSeleccionado) ? "selected" : "" %>>SECUNDARIA</option>
+                                        </select>
+                                    </div>
+                                </div>
 
-                <div class="col-md-4 mb-3">
-                    <h5 class="fs-6">SÃ­guenos:</h5>
-                    <a href="https://www.facebook.com/" class="text-white d-block fs-6 mb-1">Facebook</a>
-                    <a href="https://www.instagram.com/" class="text-white d-block fs-6 mb-1">Instagram</a>
-                    <a href="https://twitter.com/" class="text-white d-block fs-6 mb-1">Twitter</a>
-                    <a href="https://www.youtube.com/" class="text-white d-block fs-6 mb-1">YouTube</a>
+                                <!-- Filtro Turno -->
+                                <div>
+                                    <label for="turno" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
+                                        <i class="fas fa-clock mr-2"></i>Turno
+                                    </label>
+                                    <div class="input-group-icon">
+     
+                                        <select name="turno" id="turno" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            <option value="">Todos los turnos</option>
+                                            <option value="MAÑANA" <%= "MAÑANA".equals(turnoSeleccionado) ? "selected" : "" %>>MAÑANA</option>
+                                            <option value="TARDE" <%= "TARDE".equals(turnoSeleccionado) ? "selected" : "" %>>TARDE</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Filtro Grado -->
+                                <div>
+                                    <label for="grado_id" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
+                                        <i class="fas fa-graduation-cap mr-2"></i>Grado
+                                    </label>
+                                    <div class="input-group-icon">
+                                        <select name="grado_id" id="grado_id" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            <option value="">Todos los grados</option>
+                                            <% if (grados != null) {
+                                                for (Grado g : grados) { %>
+                                            <option value="<%= g.getId()%>" <%= (gradoSeleccionado != null && gradoSeleccionado == g.getId()) ? "selected" : ""%>>
+                                                <%= g.getNombre()%> - <%= g.getNivel()%>
+                                            </option>
+                                            <% }
+                                            } %>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Botón Filtrar -->
+                                <div class="flex items-end">
+                                    <button type="submit" class="btn-modern btn-primary-modern w-full">
+                                        <i class="fas fa-search"></i> Filtrar Cursos
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- BOTÓN REGISTRAR -->
+                <div class="flex justify-between items-center mb-8">
+                    <div></div>
+                    <a href="RegistroCursoServlet?accion=cargarFormulario" class="btn-modern btn-success-modern">
+                        <i class="fas fa-plus"></i> Registrar Nuevo Curso
+                    </a>
+                </div>
+                
+                <!-- GRID DE CARDS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <%
+                        List<Curso> lista = (List<Curso>) request.getAttribute("lista");
+
+                        if (lista != null && !lista.isEmpty()) {
+                            for (Curso c : lista) {
+                                // Obtener datos adicionales
+                                int gradoId = obtenerGradoId(c.getId());
+                                String nivel = obtenerNivel(gradoId);
+                                String horarios = obtenerHorarios(c.getId());
+                                
+                                // Colores para badges de nivel
+                                String badgeColor = "bg-gray-200 text-gray-800";
+                                if ("INICIAL".equals(nivel)) badgeColor = "bg-blue-100 text-blue-800";
+                                else if ("PRIMARIA".equals(nivel)) badgeColor = "bg-primary text-white";
+                                else if ("SECUNDARIA".equals(nivel)) badgeColor = "bg-green-100 text-green-800";
+                    %>
+                    <div class="card-curso-modern">
+                        <div class="card-header-modern">
+                            <h5>
+                                <i class="fas fa-graduation-cap"></i>
+                                <%= c.getNombre()%>
+                            </h5>
+                        </div>
+                        <div class="card-body-modern">
+                            <!-- NIVEL -->
+                            <p class="card-text">
+                                <strong>Nivel:</strong><br>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium <%= badgeColor %> nivel-badge-modern">
+                                    <i class="fas fa-layer-group mr-1"></i>
+                                    <%= nivel%>
+                                </span>
+                            </p>
+                            
+                            <!-- GRADO -->
+                            <p class="card-text">
+                                <strong>Grado:</strong><br>
+                                <span class="text-[#111318] dark:text-white"><%= c.getGradoNombre() != null ? c.getGradoNombre() : "-" %></span>
+                            </p>
+                            
+                            <!-- PROFESOR -->
+                            <p class="card-text">
+                                <strong>Profesor:</strong><br>
+                                <span class="text-[#111318] dark:text-white"><%= c.getProfesorNombre() != null ? c.getProfesorNombre() : "-" %></span>
+                            </p>
+                            
+                            <!-- HORARIOS -->
+                            <p class="card-text">
+                                <strong>Horarios:</strong><br>
+                                <div class="mt-2">
+                                    <% if (horarios != null && !horarios.isEmpty()) {
+                                        String[] horariosArray = horarios.split("; ");
+                                        for (String h : horariosArray) {
+                                            String[] partes = h.split(" ");
+                                            if (partes.length >= 2) {
+                                                String dia = partes[0];
+                                                String hora = partes[1];
+                                                String colorDia = "bg-gray-100 text-gray-800";
+                                                switch(dia) {
+                                                    case "LUNES": colorDia = "bg-blue-100 text-blue-800"; break;
+                                                    case "MARTES": colorDia = "bg-green-100 text-green-800"; break;
+                                                    case "MIERCOLES": colorDia = "bg-purple-100 text-purple-800"; break;
+                                                    case "JUEVES": colorDia = "bg-yellow-100 text-yellow-800"; break;
+                                                    case "VIERNES": colorDia = "bg-red-100 text-red-800"; break;
+                                                    case "SABADO": colorDia = "bg-indigo-100 text-indigo-800"; break;
+                                                }
+                                    %>
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium <%= colorDia %> badge-horario mr-1 mb-1">
+                                        <i class="fas fa-clock mr-1 text-xs"></i>
+                                        <%= dia%> <%= hora%>
+                                    </span>
+                                    <% 
+                                            }
+                                        }
+                                    } else { 
+                                    %>
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">Sin horarios asignados</span>
+                                    <% } %>
+                                </div>
+                            </p>
+                        </div>
+                        <div class="card-footer-modern">
+                            <!-- ACCIONES -->
+                            <div class="flex justify-center gap-2">
+                                <a href="CursoServlet?accion=editar&id=<%= c.getId()%>" class="btn-modern btn-primary-modern btn-sm">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <a href="CursoServlet?accion=eliminar&id=<%= c.getId()%>" 
+                                   class="btn-modern btn-danger-modern btn-sm"
+                                   onclick="return confirm('¿Está seguro de eliminar este curso?')">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <%
+                        }
+                    } else {
+                    %>
+                    <div class="col-span-full">
+                        <div class="alert-modern alert-info text-center">
+                            <i class="fas fa-info-circle"></i>
+                            <div>
+                                <strong>No hay cursos registrados</strong><br>
+                                <span class="text-sm">Comienza registrando un nuevo curso</span>
+                            </div>
+                        </div>
+                    </div>
+                    <%
+                        }
+                    %>
                 </div>
             </div>
+        </main>
+    </div>
 
-            <div class="text-center mt-3">
-                <p class="fs-6 mb-0">&copy; 2025 Colegio SA - Todos los derechos reservados</p>
-            </div>
-        </div>
-    </footer>
+    <script>
+        // ==================== FUNCIONES DE ACCESIBILIDAD ====================
+        function toggleAccessibilityPanel() {
+            const panel = document.querySelector('.accessibility-panel');
+            panel.classList.toggle('open');
+        }
+        
+        function setTextSize(size) {
+            document.body.classList.remove('large-text', 'larger-text', 'largest-text');
+            if (size === 'large') {
+                document.body.classList.add('large-text');
+            } else if (size === 'larger') {
+                document.body.classList.add('larger-text');
+            } else if (size === 'largest') {
+                document.body.classList.add('largest-text');
+            }
+            document.body.offsetHeight; // Forzar reflow
+        }
+        
+        function setContrast(mode) {
+            document.body.classList.remove('high-contrast-invert', 'high-contrast-yellow');
+            if (mode === 'high') {
+                document.body.classList.add('high-contrast-invert');
+            } else if (mode === 'yellow') {
+                document.body.classList.add('high-contrast-yellow');
+            }
+        }
+        
+        function toggleMotion() {
+            const checkbox = document.getElementById('reduceMotion');
+            if (checkbox.checked) {
+                document.body.classList.add('reduce-motion');
+            } else {
+                document.body.classList.remove('reduce-motion');
+            }
+        }
+        
+        function toggleDyslexiaFont() {
+            const checkbox = document.getElementById('dyslexiaFont');
+            if (checkbox.checked) {
+                document.body.classList.add('dyslexia-font');
+            } else {
+                document.body.classList.remove('dyslexia-font');
+            }
+        }
+        
+        function toggleBeigeBackground() {
+            const checkbox = document.getElementById('beigeBackground');
+            if (checkbox.checked) {
+                document.body.classList.add('beige-background');
+            } else {
+                document.body.classList.remove('beige-background');
+            }
+        }
+        
+        function resetAccessibility() {
+            document.body.classList.remove(
+                'large-text', 'larger-text', 'largest-text',
+                'high-contrast-invert', 'high-contrast-yellow',
+                'reduce-motion', 'dyslexia-font', 'beige-background'
+            );
+            
+            document.getElementById('reduceMotion').checked = false;
+            document.getElementById('dyslexiaFont').checked = false;
+            document.getElementById('beigeBackground').checked = false;
+        }
+        
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+            // Determinar estilo según tipo
+            let bgClass = 'bg-blue-600';
+            let iconClass = 'fa-info-circle';
+
+            if (type === 'success') {
+                bgClass = 'bg-green-600';
+                iconClass = 'fa-check-circle';
+            } else if (type === 'error') {
+                bgClass = 'bg-red-600';
+                iconClass = 'fa-exclamation-circle';
+            }
+
+            toast.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white ' + bgClass;
+            toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fas ${iconClass}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('? Listado de cursos cargado');
+            
+            // Navegación por teclado
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    const panel = document.querySelector('.accessibility-panel');
+                    if (panel && panel.classList.contains('open')) {
+                        panel.classList.remove('open');
+                    }
+                }
+            });
+            
+            // Auto-focus en primer campo de filtro
+            setTimeout(() => {
+                const nivelField = document.getElementById('nivel');
+                if (nivelField) {
+                    nivelField.focus();
+                }
+            }, 100);
+        });
+    </script>
 </body>
 </html>
