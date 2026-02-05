@@ -10,7 +10,7 @@ public class Conexion {
     // URL con parámetros UTF-8
     private static final String URL = "jdbc:mysql://localhost:3306/escugestion?useUnicode=true&characterEncoding=UTF-8&serverTimezone=America/Lima";
     private static final String USER = "root";
-    private static final String PASSWORD = "admin123";
+    private static final String PASSWORD = "onepiece123";
     
     public static Connection getConnection() {
         Connection conn = null;

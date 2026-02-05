@@ -41,425 +41,576 @@
 %>
 
 <!DOCTYPE html>
-<html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <title>Panel del Docente</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-        <link rel="stylesheet" href="assets/css/estilos.css">
-
-        <style>
-            :root {
-                --primary-color: #2c5aa0;
-                --primary-dark: #1e3d72;
-                --primary-light: #4a7bc8;
-                --accent-color: #28a745;
-                --warning-color: #ffc107;
-                --danger-color: #dc3545;
-                --success-color: #20c997;
-                --dark-color: #2d3748;
-                --light-color: #f8f9fa;
-                --gray-color: #6c757d;
-            }
-            
-            body {
-                background-image: url('assets/img/fondo_dashboard_docente.jpg');
-                background-size: 100% 100%;
-                background-position: center;
-                background-attachment: fixed;
-                height: 100vh;
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            }
-            
-            .header-bar {
-                background-color: #1a1a1a;
-                color: white;
-                padding: 12px 30px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            }
-            
-            .header-left {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-            
-            .logo-img {
-                width: 40px;
-                height: 40px;
-                object-fit: contain;
-            }
-            
-            .header-title {
-                font-size: 20px;
-                font-weight: 600;
-                color: #ffffff;
-            }
-            
-            .header-right {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-            }
-            
-            .header-user {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                font-size: 14px;
-                color: #ffffff;
-            }
-            
-            .btn-logout-header {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                background-color: transparent;
-                border: 1px solid #ffffff;
-                color: #ffffff;
-                padding: 6px 16px;
-                border-radius: 6px;
-                font-size: 13px;
-                text-decoration: none;
-                transition: all 0.3s ease;
-            }
-            
-            .btn-logout-header:hover {
-                background-color: #ffffff;
-                color: #1a1a1a;
-            }
-            
-            .card-box {
-                background-color: #fff8ed;
-                border-radius: 15px;
-                padding: 20px;
-                text-align: center;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                transition: transform 0.2s;
-                border: 1px solid #e9ecef;
-                height: 100%;
-            }
-            
-            .card-box:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            }
-            
-            .asistencia-badge {
-                font-size: 0.8rem;
-                padding: 4px 8px;
-                border-radius: 10px;
-            }
-            
-            .btn-dashboard {
-                padding: 0.6rem 1rem;
-                border: none;
-                border-radius: 10px;
-                font-weight: 600;
-                font-size: 0.9rem;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                width: 100%;
-                margin-bottom: 10px;
-            }
-            
-            .btn-dashboard:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            }
-            
-            .btn-primary-dashboard {
-                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-                color: white;
-            }
-            
-            .btn-primary-dashboard:hover {
-                background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
-                color: white;
-            }
-            
-            .btn-secondary-dashboard {
-                background: linear-gradient(135deg, #6c757d, #5a6268);
-                color: white;
-            }
-            
-            .btn-secondary-dashboard:hover {
-                background: linear-gradient(135deg, #5a6268, #6c757d);
-                color: white;
-            }
-            
-            .btn-success-dashboard {
-                background: linear-gradient(135deg, var(--success-color), #1ba87e);
-                color: white;
-            }
-            
-            .btn-success-dashboard:hover {
-                background: linear-gradient(135deg, #1ba87e, var(--success-color));
-                color: white;
-            }
-            
-            .btn-info-dashboard {
-                background: linear-gradient(135deg, #17a2b8, #138496);
-                color: white;
-            }
-            
-            .btn-info-dashboard:hover {
-                background: linear-gradient(135deg, #138496, #17a2b8);
-                color: white;
-            }
-            
-            .btn-warning-dashboard {
-                background: linear-gradient(135deg, var(--warning-color), #e0a800);
-                color: #212529;
-            }
-            
-            .btn-warning-dashboard:hover {
-                background: linear-gradient(135deg, #e0a800, var(--warning-color));
-                color: #212529;
-            }
-            
-            .btn-light-dashboard {
-                background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-                color: #212529;
-                border: 1px solid #dee2e6;
-            }
-            
-            .btn-light-dashboard:hover {
-                background: linear-gradient(135deg, #e9ecef, #f8f9fa);
-                color: #212529;
-            }
-            
-            .btn-purple-dashboard {
-                background: linear-gradient(135deg, #6f42c1, #563d7c);
-                color: white;
-            }
-            
-            .btn-purple-dashboard:hover {
-                background: linear-gradient(135deg, #563d7c, #6f42c1);
-                color: white;
-            }
-            
-            .stats-card {
-                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-                color: white;
-                border: none;
-                border-radius: 15px;
-                box-shadow: 0 6px 15px rgba(44, 90, 160, 0.3);
-            }
-            
-            .stats-card .btn {
-                border-radius: 10px;
-                font-weight: 600;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            }
-            
-            .stats-card .btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            }
-            
-            .curso-title {
-                color: var(--primary-dark);
-                font-weight: 700;
-                border-bottom: 2px solid var(--primary-light);
-                padding-bottom: 10px;
-                margin-bottom: 15px;
-            }
-            
-            .stats-container {
-                background: rgba(255, 255, 255, 0.9);
-                border-radius: 10px;
-                padding: 15px;
-                margin-bottom: 15px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            }
-            
-            footer {
-                margin-top: 50px;
-            }
-        </style>
-    </head>
-    <body>
-
-        <div class="header-bar">
-            <div class="header-left">
-                <img src="assets/img/logosa.png" alt="Logo" class="logo-img">
-                <span class="header-title">Colegio SA</span>
-            </div>
-            <div class="header-right">
-                <div class="header-user">
-                    <i class="bi bi-person-circle"></i>
-                    <span><%= docente.getNombres()%> <%= docente.getApellidos()%></span>
+<html class="light" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Docente - San Antonio</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Mejoras de accesibilidad */
+        .reduce-motion * { 
+            animation-duration: 0.01ms !important; 
+            animation-iteration-count: 1 !important; 
+            transition-duration: 0.01ms !important; 
+        }
+        .high-contrast-invert { 
+            filter: invert(1) hue-rotate(180deg); 
+        }
+        .high-contrast-yellow { 
+            background-color: #000000 !important; 
+            color: #ffff00 !important; 
+        }
+        .beige-background { 
+            background-color: #f5f5dc !important; 
+        }
+        
+        /* Tamaños de texto */
+        .large-text { font-size: 18px !important; }
+        .larger-text { font-size: 20px !important; }
+        .largest-text { font-size: 22px !important; }
+        
+        .dyslexia-font { 
+            font-family: Arial !important; 
+            font-size: 1.1em !important; 
+            line-height: 1.6 !important; 
+            letter-spacing: 0.5px !important; 
+        }
+        
+        /* Panel de accesibilidad */
+        .accessibility-panel {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .accessibility-panel.open {
+            transform: translateX(0);
+        }
+        
+        /* Skip to content */
+        .skip-to-content {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #135bec;
+            color: white;
+            padding: 8px;
+            z-index: 100;
+        }
+        .skip-to-content:focus {
+            top: 0;
+        }
+        
+        /* Focus styles */
+        :focus {
+            outline: 3px solid #135bec !important;
+            outline-offset: 2px;
+        }
+        
+        /* Badge con tamaño base más grande */
+        .status-badge {
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        /* Botón de accesibilidad */
+        .accessibility-toggle {
+            transition: all 0.3s ease;
+        }
+        
+        .accessibility-toggle:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Alertas */
+        .alert {
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+        }
+        
+        .alert-danger {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+        
+        .dark .alert-danger {
+            background-color: #450a0a;
+            border-color: #7f1d1d;
+            color: #fca5a5;
+        }
+        
+        .alert-success {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #16a34a;
+        }
+        
+        .dark .alert-success {
+            background-color: #052e16;
+            border-color: #166534;
+            color: #86efac;
+        }
+        
+        /* Cards de cursos */
+        .curso-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .curso-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .dark .curso-card {
+            background: #1a2233;
+            border-color: #374151;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen" id="main-content">
+    <a href="#main-content" class="skip-to-content focus:top-0">Saltar al contenido principal</a>
+    
+    <div class="fixed top-20 right-0 z-50 accessibility-panel bg-white dark:bg-gray-800 shadow-xl rounded-l-lg p-4 w-80">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg">Opciones de Accesibilidad</h3>
+            <button onclick="toggleAccessibilityPanel()" class="text-gray-500 hover:text-gray-700">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h4 class="font-medium">Tamaño de texto</h4>
+                <div class="flex gap-2">
+                    <button onclick="setTextSize('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
+                    <button onclick="setTextSize('large')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Grande</button>
+                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Más Grande</button>
                 </div>
-                <a href="LogoutServlet" class="btn-logout-header">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Cerrar sesión</span>
+            </div>
+            
+            <div class="space-y-2">
+                <h4 class="font-medium">Contraste</h4>
+                <div class="flex gap-2">
+                    <button onclick="setContrast('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
+                    <button onclick="setContrast('high')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Alto Contraste</button>
+                    <button onclick="setContrast('yellow')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Amarillo/Negro</button>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <h4 class="font-medium">Otros ajustes</h4>
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="reduceMotion" onchange="toggleMotion()">
+                        <span>Reducir movimiento</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="dyslexiaFont" onchange="toggleDyslexiaFont()">
+                        <span>Fuente para dislexia</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="beigeBackground" onchange="toggleBeigeBackground()">
+                        <span>Fondo beige</span>
+                    </label>
+                </div>
+            </div>
+            
+            <button onclick="resetAccessibility()" class="w-full py-2 bg-gray-800 text-white rounded hover:bg-gray-900">
+                Restablecer ajustes
+            </button>
+        </div>
+    </div>
+    
+    <button onclick="toggleAccessibilityPanel()" 
+            class="fixed top-20 right-0 z-40 bg-primary text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors accessibility-toggle"
+            aria-label="Abrir panel de accesibilidad">
+        <span class="material-symbols-outlined">accessibility_new</span>
+    </button>
+    
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
+            <div class="flex flex-col gap-8 p-6">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
+                        <span class="material-symbols-outlined">school</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
+                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Panel del Docente</p>
+                    </div>
+                </div>
+                
+                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
+                       href="DocenteDashboardServlet"
+                       aria-current="page">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="text-sm">Dashboard</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="AsistenciaServlet?accion=registrar">
+                        <i class="fas fa-clipboard-check" aria-hidden="true"></i>
+                        <span class="text-sm">Asistencias</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="JustificacionServlet?accion=pending">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span class="text-sm">Justificaciones</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="MaterialServlet?accion=seleccionarCurso">
+                        <i class="fas fa-folder" aria-hidden="true"></i>
+                        <span class="text-sm">Material de Apoyo</span>
+                    </a>
+                    
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                       href="DisponibilidadServlet">
+                        <span class="material-symbols-outlined text-[20px]">event_available</span>
+                        <span class="text-sm">Mi Disponibilidad</span>
+                    </a>
+                </nav>
+            </div>
+            
+            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
+                <a href="LogoutServlet" 
+                   class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
+                    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
+                    <span>Cerrar Sesión</span>
                 </a>
             </div>
-        </div>
-
-        <div class="container mt-5">
-
-            <!-- Mostrar mensajes -->
-            <% if (mensaje != null) {%>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle"></i> <%= mensaje%>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            <% } %>
-
-            <% if (error != null) {%>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle"></i> <%= error%>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            <% } %>
-
-            <h2 class="text-center fw-bold mb-5">
-                <i class="bi bi-speedometer2"></i> Panel del Docente
-            </h2>
-
-            <div class="card mb-4 stats-card">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
-                        <i class="bi bi-clipboard-check"></i> Módulo de Asistencias
-                    </h5>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <a href="AsistenciaServlet?accion=registrar" class="btn btn-light-dashboard">
-                                <i class="bi bi-plus-circle"></i> Tomar Asistencia
-                            </a>
-                        </div>
-                        <div class="col-md-4">
-                            <a href="JustificacionServlet?accion=pending" class="btn btn-warning-dashboard">
-                                <i class="bi bi-clock-history"></i> Justificaciones Pendientes
-                            </a>
-                        </div>
-                        <div class="col-md-4">
-                            <a href="MaterialServlet?accion=seleccionarCurso" class="btn btn-purple-dashboard">
-                                <i class="bi bi-folder-fill"></i> Material de Apoyo
-                            </a>
+        </aside>
+        
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-xl font-bold text-[#111318] dark:text-white">
+                            <span class="material-symbols-outlined align-middle mr-2">speed</span>
+                            Panel del Docente
+                        </h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4 ml-8">
+                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
+                            aria-label="Notificaciones">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    
+                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                            aria-label="Configuración">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
+                    
+                    <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
+                    
+                    <div class="flex items-center gap-3">
+                        <p class="text-sm font-medium hidden md:block">
+                            <%= docente.getNombres()%> <%= docente.getApellidos()%>
+                        </p>
+                        <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
+                             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCO64ytW7WFj5YJ0XxtUSKDLHtMumvYdpNUpuyZfiJ1u2v-o-ZSRqiNGLyx6pmhB7nZDuPBYTD_VLKKCEUg0atLHJC4hTrMG5QjAfNlLQdzKId6L3tl2-QhmWJUVQVRr4hk7ODNpJ2OomnFQx_u6WT5QgxJRWLtvZ2I5ecv8WfcR1-MoMfF485fYSxo5s9ErvyApFtN9ro0oew7DMrNHFDQJp1zE9Dtyls43R9C7cnQa5HNlhDoiFBsEBf8CYKzebhaA6Yfuad3vcM');"
+                             aria-label="Foto de perfil del docente">
                         </div>
                     </div>
                 </div>
-            </div>
+            </header>
+            
+            <div class="p-8">
+                <% if (error != null) { %>
+                <div class="alert alert-danger mb-6" role="alert">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Error:</strong> <%= error %>
+                    </div>
+                </div>
+                <% } %>
+                
+                <% if (mensaje != null) { %>
+                <div class="alert alert-success mb-6" role="alert">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>Éxito:</strong> <%= mensaje %>
+                    </div>
+                </div>
+                <% } %>
+                
+                <div class="bg-gradient-to-r from-primary to-blue-600 rounded-xl p-6 mb-6 shadow-lg">
+                    <h3 class="text-white text-xl font-bold mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined">fact_check</span>
+                        Módulo de Gestión Académica
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        
+                        <a href="AsistenciaServlet?accion=registrar" 
+                           class="flex items-center justify-center gap-2 px-4 py-3 bg-white text-primary font-medium rounded-lg hover:bg-gray-50 transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-white">
+                            <span class="material-symbols-outlined">add_circle</span>
+                            <span>Tomar Asistencia</span>
+                        </a>
+                        
+                        <a href="JustificacionServlet?accion=pending" 
+                           class="flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 text-gray-900 font-medium rounded-lg hover:bg-yellow-300 transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-white">
+                            <span class="material-symbols-outlined">schedule</span>
+                            <span>Justificaciones</span>
+                        </a>
+                        
+                        <a href="MaterialServlet?accion=seleccionarCurso" 
+                           class="flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-white">
+                            <span class="material-symbols-outlined">folder</span>
+                            <span>Material Apoyo</span>
+                        </a>
 
-            <div class="row g-4">
+                        <a href="DisponibilidadServlet" 
+                           class="flex items-center justify-center gap-2 px-4 py-3 bg-teal-500 text-white font-medium rounded-lg hover:bg-teal-600 transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-white">
+                            <span class="material-symbols-outlined">event_available</span>
+                            <span>Mi Disponibilidad</span>
+                        </a>
+
+                    </div>
+                </div>
+                
                 <%
                     if (cursos != null && !cursos.isEmpty()) {
+                %>
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-[#111318] dark:text-white mb-4">Mis Cursos Asignados</h2>
+                    <p class="text-[#616f89] dark:text-gray-400 mb-6">Gestiona tus cursos y realiza seguimiento de tus estudiantes</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <%
                         for (Curso c : cursos) {
                             Map<String, Object> stats = estadisticasCursos.get(c.getId());
-                %>
-                <div class="col-md-4">
-                    <div class="card-box">
-                        <h5 class="curso-title">
-                            <i class="bi bi-book"></i> <%= c.getNombre()%>
-                        </h5>
-                        <p class="mb-2">
-                            <strong>Grado:</strong> <%= c.getGradoNombre()%>
-                        </p>
-                        <p class="mb-3 text-muted small">
-                            <strong>Profesor:</strong> <%= c.getProfesorNombre() != null ? c.getProfesorNombre() : "No asignado"%>
-                        </p>
-
-                        <!-- Información de Asistencia -->
-                        <% if (stats != null) {%>
-                        <div class="stats-container">
-                            <small class="text-muted d-block mb-2">
-                                <i class="bi bi-calendar-check"></i> Asistencia Hoy
-                            </small>
-                            <div class="d-flex justify-content-center gap-2 mb-2">
-                                <span class="badge bg-success">
-                                    <i class="bi bi-check-circle"></i> <%= stats.get("presentesHoy")%> Presentes
-                                </span>
-                                <span class="badge bg-danger">
-                                    <i class="bi bi-x-circle"></i> <%= stats.get("ausentesHoy")%> Ausentes
-                                </span>
+                    %>
+                    <div class="curso-card">
+                        <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                            <div class="size-12 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-blue-600 dark:text-blue-300 text-2xl">book</span>
                             </div>
-                            <div class="mt-2">
-                                <small class="fw-bold text-primary">
-                                    <i class="bi bi-percent"></i> <%= stats.get("porcentajeAsistencia")%>% de asistencia
-                                </small>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white"><%= c.getNombre()%></h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400"><%= c.getGradoNombre()%></p>
                             </div>
                         </div>
-                        <% }%>
-
-                        <div class="d-grid gap-2 mt-3">
-                            <a href="TareaServlet?accion=ver&curso_id=<%= c.getId()%>" class="btn btn-secondary-dashboard">
-                                <i class="bi bi-journal-check"></i> Gestionar Tareas
+                        
+                        <% if (stats != null) { %>
+                        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mb-4">
+                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">calendar_today</span>
+                                Asistencia Hoy
+                            </p>
+                            <div class="flex gap-2 mb-2">
+                                <span class="status-badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    <i class="fas fa-check-circle"></i> <%= stats.get("presentesHoy")%> Presentes
+                                </span>
+                                <span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                    <i class="fas fa-times-circle"></i> <%= stats.get("ausentesHoy")%> Ausentes
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: <%= stats.get("porcentajeAsistencia")%>%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-blue-600 dark:text-blue-400"><%= stats.get("porcentajeAsistencia")%>%</span>
+                            </div>
+                        </div>
+                        <% } %>
+                        
+                        <div class="space-y-2">
+                            <a href="TareaServlet?accion=ver&curso_id=<%= c.getId()%>" 
+                               class="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-all w-full">
+                                <i class="fas fa-tasks"></i>
+                                <span class="text-sm">Gestionar Tareas</span>
                             </a>
-                            <a href="NotaServlet?curso_id=<%= c.getId()%>" class="btn btn-primary-dashboard">
-                                <i class="bi bi-pencil-square"></i> Gestionar Notas
+                            <a href="NotaServlet?curso_id=<%= c.getId()%>" 
+                               class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-medium rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-all w-full">
+                                <i class="fas fa-pen"></i>
+                                <span class="text-sm">Gestionar Notas</span>
                             </a>
-                            <a href="ObservacionServlet?accion=listar&curso_id=<%= c.getId()%>" class="btn btn-success-dashboard">
-                                <i class="bi bi-chat-left-text"></i> Gestionar Observaciones
+                            <a href="ObservacionServlet?accion=listar&curso_id=<%= c.getId()%>" 
+                               class="flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 font-medium rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition-all w-full">
+                                <i class="fas fa-comment"></i>
+                                <span class="text-sm">Gestionar Observaciones</span>
                             </a>
-                            <a href="AsistenciaServlet?accion=registrar&curso_id=<%= c.getId()%>" class="btn btn-info-dashboard">
-                                <i class="bi bi-clipboard-data"></i> Gestionar Asistencias
+                            <a href="AsistenciaServlet?accion=registrar&curso_id=<%= c.getId()%>" 
+                               class="flex items-center justify-center gap-2 px-4 py-2 bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200 font-medium rounded-lg hover:bg-cyan-200 dark:hover:bg-cyan-800 transition-all w-full">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span class="text-sm">Gestionar Asistencias</span>
                             </a>
                         </div>
                     </div>
+                    <%
+                        }
+                    %>
                 </div>
                 <%
-                    }
-                } else {
+                    } else {
                 %>
-                <div class="col-12">
-                    <div class="alert alert-info text-center">
-                        <h5><i class="bi bi-info-circle"></i> No tienes cursos asignados</h5>
-                        <p class="mb-0">Contacta con administración para asignarte cursos.</p>
-                        <a href="DocenteDashboardServlet" class="btn btn-primary mt-2">
-                            <i class="bi bi-arrow-clockwise"></i> Recargar
+                <div class="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-xl p-8 text-center">
+                    <div class="flex flex-col items-center justify-center">
+                        <span class="material-symbols-outlined text-cyan-600 dark:text-cyan-400 text-6xl mb-4">
+                            info
+                        </span>
+                        <h3 class="text-xl font-bold text-cyan-800 dark:text-cyan-300 mb-2">No tienes cursos asignados</h3>
+                        <p class="text-cyan-700 dark:text-cyan-400 mb-4">Contacta con administración para asignarte cursos.</p>
+                        <a href="DocenteDashboardServlet" 
+                           class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-primary">
+                            <span class="material-symbols-outlined">refresh</span>
+                            <span>Recargar</span>
                         </a>
                     </div>
                 </div>
                 <%
                     }
                 %>
-            </div>
-        </div>
-
-        <footer class="bg-dark text-white py-2 mt-5">
-            <div class="container text-center text-md-start">
-                <div class="row">
-                    <div class="col-md-4 mb-0">
-                        <div class="logo-container text-center">
-                            <img src="assets/img/logosa.png" alt="Logo" class="img-fluid mb-1" width="80" height="auto">
-                            <p class="fs-6">"Líderes en educación de calidad al más alto nivel"</p>
+                
+                <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 mt-0.5">
+                            info
+                        </span>
+                        <div>
+                            <h4 class="font-medium text-blue-800 dark:text-blue-300">Información importante:</h4>
+                            <ul class="mt-2 text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                                <li>• Para registrar un nuevo profesor, haz clic en "Registrar Profesor"</li>
+                                <li>• Los colores de los badges indican el nivel y estado del profesor</li>
+                                <li>• Para editar la información de un profesor, utiliza el botón de editar</li>
+                                <li>• Ten cuidado al eliminar profesores, esta acción no se puede deshacer</li>
+                                <li>• Puedes ver los detalles completos de un profesor usando el botón de "Ver detalles"</li>
+                            </ul>
                         </div>
                     </div>
-
-                    <div class="col-md-4 mb-0">
-                        <h5 class="fs-8">Contacto:</h5>
-                        <p class="fs-6">Dirección: Av. El Sol 461, San Juan de Lurigancho 15434</p>
-                        <p class="fs-6">Teléfono: 987654321</p>
-                        <p class="fs-6">Correo: colegiosanantonio@gmail.com</p>
-                    </div>
-
-                    <div class="col-md-4 mb-0">
-                        <h5 class="fs-8">Síguenos:</h5>
-                        <a href="https://www.facebook.com/" class="text-white d-block fs-6">Facebook</a>
-                        <a href="https://www.instagram.com/" class="text-white d-block fs-6">Instagram</a>
-                        <a href="https://twitter.com/" class="text-white d-block fs-6">Twitter</a>
-                        <a href="https://www.youtube.com/" class="text-white d-block fs-6">YouTube</a>
-                    </div>
-                </div>
-
-                <div class="text-center mt-0">
-                    <p class="fs-6">&copy; 2026 Colegio SA - Todos los derechos reservados</p>
                 </div>
             </div>
-        </footer>
+        </main>
+    </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    </body>
+    <script>
+        // Accessibility Functions
+        function toggleAccessibilityPanel() {
+            const panel = document.querySelector('.accessibility-panel');
+            panel.classList.toggle('open');
+        }
+        
+        function setTextSize(size) {
+            document.body.classList.remove('large-text', 'larger-text', 'largest-text');
+            if (size === 'large') {
+                document.body.classList.add('large-text');
+            } else if (size === 'larger') {
+                document.body.classList.add('larger-text');
+            } else if (size === 'largest') {
+                document.body.classList.add('largest-text');
+            }
+            document.body.offsetHeight;
+        }
+        
+        function setContrast(mode) {
+            document.body.classList.remove('high-contrast-invert', 'high-contrast-yellow');
+            if (mode === 'high') {
+                document.body.classList.add('high-contrast-invert');
+            } else if (mode === 'yellow') {
+                document.body.classList.add('high-contrast-yellow');
+            }
+        }
+        
+        function toggleMotion() {
+            const checkbox = document.getElementById('reduceMotion');
+            if (checkbox.checked) {
+                document.body.classList.add('reduce-motion');
+            } else {
+                document.body.classList.remove('reduce-motion');
+            }
+        }
+        
+        function toggleDyslexiaFont() {
+            const checkbox = document.getElementById('dyslexiaFont');
+            if (checkbox.checked) {
+                document.body.classList.add('dyslexia-font');
+            } else {
+                document.body.classList.remove('dyslexia-font');
+            }
+        }
+        
+        function toggleBeigeBackground() {
+            const checkbox = document.getElementById('beigeBackground');
+            if (checkbox.checked) {
+                document.body.classList.add('beige-background');
+            } else {
+                document.body.classList.remove('beige-background');
+            }
+        }
+        
+        function resetAccessibility() {
+            document.body.classList.remove(
+                'large-text', 'larger-text', 'largest-text',
+                'high-contrast-invert', 'high-contrast-yellow',
+                'reduce-motion', 'dyslexia-font', 'beige-background'
+            );
+            
+            document.getElementById('reduceMotion').checked = false;
+            document.getElementById('dyslexiaFont').checked = false;
+            document.getElementById('beigeBackground').checked = false;
+        }
+        
+        // Focus management for accessibility
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const panel = document.querySelector('.accessibility-panel');
+                if (panel.classList.contains('open')) {
+                    panel.classList.remove('open');
+                }
+            }
+        });
+        
+        // Toggle dark mode
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+    </script>
+</body>
 </html>
