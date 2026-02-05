@@ -1319,4 +1319,146 @@ public class AsistenciaDAO {
 
        return lista;
    }
+   // Agrega estos métodos a tu AsistenciaDAO existente:
+
+/**
+ * ACTUALIZAR ASISTENCIA CON VALIDACIÓN DE TIEMPO LÍMITE
+ */
+public boolean actualizarAsistenciaConValidacion(Asistencia asistencia) {
+    // Validar si se puede editar
+    ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
+    boolean puedeEditar = configDAO.puedeEditarAsistencia(
+        asistencia.getCursoId(),
+        asistencia.getTurnoId(),
+        asistencia.getFecha(),
+        asistencia.getHoraClase()
+    );
+
+    if (!puedeEditar) {
+        System.out.println("❌ NO se puede editar. Tiempo límite excedido.");
+        return false;
+    }
+
+    // Continuar con la actualización
+    return actualizarAsistenciaIndividual(asistencia);
+}
+
+/**
+ * ACTUALIZAR ASISTENCIA INDIVIDUAL (método auxiliar)
+ */
+private boolean actualizarAsistenciaIndividual(Asistencia asistencia) {
+    String sql = "UPDATE asistencia SET estado = ?, observaciones = ?, " +
+                "fecha_actualizacion = ?, registrado_por = ? " +
+                "WHERE id = ? AND activo = 1 AND eliminado = 0";
+    
+    try (Connection con = Conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        
+        ps.setString(1, asistencia.getEstadoString());
+        ps.setString(2, asistencia.getObservaciones());
+        ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+        ps.setInt(4, asistencia.getRegistradoPor());
+        ps.setInt(5, asistencia.getId());
+        
+        int filas = ps.executeUpdate();
+        
+        if (filas > 0) {
+            System.out.println("✅ Asistencia actualizada: ID " + asistencia.getId());
+            return true;
+        }
+        
+    } catch (SQLException e) {
+        System.out.println("❌ Error al actualizar asistencia: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return false;
+}
+
+/**
+ * VERIFICAR ESTADO DE EDICIÓN PARA UNA ASISTENCIA
+ */
+public Map<String, Object> verificarEstadoEdicion(int asistenciaId) {
+    Map<String, Object> resultado = new HashMap<>();
+    
+    // Obtener la asistencia
+    Asistencia asistencia = obtenerAsistenciaPorId(asistenciaId);
+    
+    if (asistencia == null) {
+        resultado.put("puede_editar", false);
+        resultado.put("mensaje", "Asistencia no encontrada");
+        return resultado;
+    }
+    
+    // Verificar con ConfiguracionAsistenciaDAO
+    ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
+    
+    Map<String, Object> estado = configDAO.obtenerEstadoEdicionDetallado(
+        asistencia.getCursoId(),
+        asistencia.getTurnoId(),
+        asistencia.getFecha(),
+        asistencia.getHoraClase()
+    );
+    
+    resultado.putAll(estado);
+    resultado.put("asistencia", asistencia);
+    
+    return resultado;
+}
+
+/**
+ * ACTUALIZAR ASISTENCIAS EN LOTE CON VALIDACIÓN
+ */
+public Map<String, Object> actualizarAsistenciasEnLote(List<Asistencia> asistencias) {
+    Map<String, Object> resultado = new HashMap<>();
+    int exitosas = 0;
+    int fallidas = 0;
+    int tiempoExcedido = 0;
+    List<String> errores = new ArrayList<>();
+    
+    ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
+    
+    for (Asistencia asistencia : asistencias) {
+        try {
+            // Verificar tiempo límite para cada asistencia
+            boolean puedeEditar = configDAO.puedeEditarAsistencia(
+                asistencia.getCursoId(),
+                asistencia.getTurnoId(),
+                asistencia.getFecha(),
+                asistencia.getHoraClase()
+            );
+            
+            if (!puedeEditar) {
+                tiempoExcedido++;
+                errores.add("Asistencia ID " + asistencia.getId() + ": Tiempo límite excedido");
+                continue;
+            }
+            
+            // Actualizar
+            if (actualizarAsistenciaIndividual(asistencia)) {
+                exitosas++;
+            } else {
+                fallidas++;
+                errores.add("Asistencia ID " + asistencia.getId() + ": Error al actualizar");
+            }
+            
+        } catch (Exception e) {
+            fallidas++;
+            errores.add("Asistencia ID " + asistencia.getId() + ": " + e.getMessage());
+        }
+    }
+    
+    resultado.put("exitosas", exitosas);
+    resultado.put("fallidas", fallidas);
+    resultado.put("tiempo_excedido", tiempoExcedido);
+    resultado.put("total", asistencias.size());
+    resultado.put("errores", errores);
+    
+    System.out.println("📊 Resultado actualización en lote:");
+    System.out.println("   Exitosas: " + exitosas);
+    System.out.println("   Fallidas: " + fallidas);
+    System.out.println("   Tiempo excedido: " + tiempoExcedido);
+    
+    return resultado;
+}
 }

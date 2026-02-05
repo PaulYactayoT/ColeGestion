@@ -109,10 +109,8 @@
             background-color: #f5f5dc !important; 
         }
         
-        /* Tamaños de texto - Afectar a toda la página */
-        .large-text { 
-            font-size: 18px !important; 
-        }
+        /* Tamaños de texto */
+        .large-text { font-size: 18px !important; }
         .large-text .form-label,
         .large-text .form-control,
         .large-text .form-select,
@@ -120,9 +118,7 @@
             font-size: 16px !important;
         }
         
-        .larger-text { 
-            font-size: 20px !important; 
-        }
+        .larger-text { font-size: 20px !important; }
         .larger-text .form-label,
         .larger-text .form-control,
         .larger-text .form-select,
@@ -130,9 +126,7 @@
             font-size: 18px !important;
         }
         
-        .largest-text { 
-            font-size: 22px !important; 
-        }
+        .largest-text { font-size: 22px !important; }
         .largest-text .form-label,
         .largest-text .form-control,
         .largest-text .form-select,
@@ -147,7 +141,7 @@
             letter-spacing: 0.5px !important; 
         }
         
-        /* Ocultar elementos de accesibilidad inicialmente */
+        /* Accessibility panel */
         .accessibility-panel {
             transform: translateX(100%);
             transition: transform 0.3s ease;
@@ -156,7 +150,6 @@
             transform: translateX(0);
         }
         
-        /* Skip to content link */
         .skip-to-content {
             position: absolute;
             top: -40px;
@@ -170,13 +163,11 @@
             top: 0;
         }
         
-        /* Focus styles */
         :focus {
             outline: 3px solid #135bec !important;
             outline-offset: 2px;
         }
         
-        /* Estilos específicos para formularios */
         .input-group-icon {
             position: relative;
         }
@@ -368,14 +359,12 @@
             color: #60a5fa;
         }
         
-        /* Tooltip */
         .tooltip-info {
             cursor: help;
             color: #3b82f6;
             margin-left: 0.25rem;
         }
         
-        /* Accessibility Toggle Button */
         .accessibility-toggle {
             transition: all 0.3s ease;
         }
@@ -499,7 +488,7 @@
                 </nav>
             </div>
             
-                     <!-- Footer Sidebar -->
+            <!-- Footer Sidebar -->
             <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
                 <a href="LogoutServlet" 
                    class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
@@ -591,6 +580,7 @@
                             
                             <!-- SECCIÓN: INFORMACIÓN PERSONAL -->
                             <div class="section-title">
+                                <i class="fas fa-user"></i>
                                 Información Personal
                             </div>
                             
@@ -811,9 +801,7 @@
                                 </div>
                             </div>
                             
-                            <!-- ========================================
-                                    SECCIÓN: DISPONIBILIDAD HORARIA
-                                    ======================================== -->
+                            <!-- SECCIÓN: DISPONIBILIDAD HORARIA -->
                             <hr class="section-divider">
                             <div class="section-title">
                                 <i class="fas fa-calendar-alt"></i>
@@ -828,7 +816,7 @@
                             </div>
 
                             <div id="disponibilidad-container" class="mb-6">
-                                <!-- Tabla para mostrar disponibilidades existentes -->
+                                <!-- Tabla corregida -->
                                 <div class="overflow-x-auto">
                                     <table class="custom-table">
                                         <thead>
@@ -836,10 +824,10 @@
                                                 <th>Día</th>
                                                 <th>Hora Inicio</th>
                                                 <th>Hora Fin</th>
+                                                <th>Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody id="disponibilidades-body">
-                                            <!-- Se llenarán dinámicamente -->
                                             <tr id="sin-disponibilidades">
                                                 <td colspan="4" class="text-center py-4 text-gray-400">
                                                     <i class="fas fa-info-circle"></i> No hay disponibilidades registradas
@@ -872,7 +860,7 @@
                                             <option value="">Seleccione un día</option>
                                             <option value="LUNES">Lunes</option>
                                             <option value="MARTES">Martes</option>
-                                            <option value="MIERCOLES">Miércoles</option>      
+                                            <option value="MIERCOLES">Miércoles</option>
                                             <option value="JUEVES">Jueves</option>
                                             <option value="VIERNES">Viernes</option>
                                             <option value="SABADO">Sábado</option>
@@ -882,15 +870,19 @@
                                         <label class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
                                             Hora de Inicio
                                         </label>
-                                        <input type="time" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                               id="modal-hora-inicio" required>
+                                        <input type="time" 
+                                               class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               id="modal-hora-inicio" 
+                                               required>
                                     </div>
                                     <div class="mb-4">
                                         <label class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
                                             Hora de Fin
                                         </label>
-                                        <input type="time" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                               id="modal-hora-fin" required>
+                                        <input type="time" 
+                                               class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                               id="modal-hora-fin" 
+                                               required>
                                     </div>
                                     <div class="flex justify-end gap-3">
                                         <button type="button" onclick="closeModal()" 
@@ -946,59 +938,35 @@
         
         function setTextSize(size) {
             document.body.classList.remove('large-text', 'larger-text', 'largest-text');
-            if (size === 'large') {
-                document.body.classList.add('large-text');
-            } else if (size === 'larger') {
-                document.body.classList.add('larger-text');
-            } else if (size === 'largest') {
-                document.body.classList.add('largest-text');
-            }
-            document.body.offsetHeight; // Forzar reflow
+            if (size === 'large') document.body.classList.add('large-text');
+            else if (size === 'larger') document.body.classList.add('larger-text');
+            else if (size === 'largest') document.body.classList.add('largest-text');
+            document.body.offsetHeight;
         }
         
         function setContrast(mode) {
             document.body.classList.remove('high-contrast-invert', 'high-contrast-yellow');
-            if (mode === 'high') {
-                document.body.classList.add('high-contrast-invert');
-            } else if (mode === 'yellow') {
-                document.body.classList.add('high-contrast-yellow');
-            }
+            if (mode === 'high') document.body.classList.add('high-contrast-invert');
+            else if (mode === 'yellow') document.body.classList.add('high-contrast-yellow');
         }
         
         function toggleMotion() {
             const checkbox = document.getElementById('reduceMotion');
-            if (checkbox.checked) {
-                document.body.classList.add('reduce-motion');
-            } else {
-                document.body.classList.remove('reduce-motion');
-            }
+            document.body.classList.toggle('reduce-motion', checkbox.checked);
         }
         
         function toggleDyslexiaFont() {
             const checkbox = document.getElementById('dyslexiaFont');
-            if (checkbox.checked) {
-                document.body.classList.add('dyslexia-font');
-            } else {
-                document.body.classList.remove('dyslexia-font');
-            }
+            document.body.classList.toggle('dyslexia-font', checkbox.checked);
         }
         
         function toggleBeigeBackground() {
             const checkbox = document.getElementById('beigeBackground');
-            if (checkbox.checked) {
-                document.body.classList.add('beige-background');
-            } else {
-                document.body.classList.remove('beige-background');
-            }
+            document.body.classList.toggle('beige-background', checkbox.checked);
         }
         
         function resetAccessibility() {
-            document.body.classList.remove(
-                'large-text', 'larger-text', 'largest-text',
-                'high-contrast-invert', 'high-contrast-yellow',
-                'reduce-motion', 'dyslexia-font', 'beige-background'
-            );
-            
+            document.body.classList.remove('large-text', 'larger-text', 'largest-text', 'high-contrast-invert', 'high-contrast-yellow', 'reduce-motion', 'dyslexia-font', 'beige-background');
             document.getElementById('reduceMotion').checked = false;
             document.getElementById('dyslexiaFont').checked = false;
             document.getElementById('beigeBackground').checked = false;
@@ -1021,28 +989,16 @@
             opciones.forEach(function(opcion) {
                 if (opcion.value === '') {
                     opcion.style.display = '';
-                    if (nivelSeleccionado === '') {
-                        opcion.textContent = 'Primero seleccione un nivel';
-                    } else {
-                        opcion.textContent = 'Seleccione el área';
-                    }
+                    opcion.textContent = nivelSeleccionado === '' ? 'Primero seleccione un nivel' : 'Seleccione el área';
                     return;
                 }
                 
                 const nivelArea = opcion.getAttribute('data-nivel');
                 
                 if (nivelSeleccionado === 'TODOS') {
-                    if (nivelArea === 'TODOS') {
-                        opcion.style.display = '';
-                    } else {
-                        opcion.style.display = 'none';
-                    }
+                    opcion.style.display = (nivelArea === 'TODOS') ? '' : 'none';
                 } else {
-                    if (nivelArea === 'TODOS' || nivelArea === nivelSeleccionado) {
-                        opcion.style.display = '';
-                    } else {
-                        opcion.style.display = 'none';
-                    }
+                    opcion.style.display = (nivelArea === 'TODOS' || nivelArea === nivelSeleccionado) ? '' : 'none';
                 }
             });
         }
@@ -1052,307 +1008,302 @@
             filtrarAreas();
         }
         
-        // Modal functions
+        // ==================== MODAL FUNCTIONS ====================
         function openModal() {
-            // Verificar que se haya seleccionado un turno primero
             const turnoId = document.getElementById('turno_id').value;
             if (!turnoId || turnoId === '') {
-                alert(' IMPORTANTE: Primero debe seleccionar un TURNO en el formulario principal antes de agregar disponibilidades.\n\n' +
-                      'Por favor:\n' +
-                      '1. Seleccione un Turno en la sección "Información Profesional"\n' +
-                      '2. Luego haga clic en "Agregar Horario Disponible"');
+                alert('?? IMPORTANTE: Primero debe seleccionar un TURNO en el formulario principal antes de agregar disponibilidades.\n\n' +
+                      'Por favor:\n1. Seleccione un Turno en la sección "Información Profesional"\n2. Luego haga clic en "Agregar Horario Disponible"');
                 return;
             }
-
             document.getElementById('modalDisponibilidad').classList.remove('hidden');
             document.getElementById('modal-dia').focus();
         }
+        
         function closeModal() {
-        document.getElementById('modalDisponibilidad').classList.add('hidden');
-        document.getElementById('modal-dia').value = '';
-        document.getElementById('modal-hora-inicio').value = '';
-        document.getElementById('modal-hora-fin').value = '';
-    }
+            document.getElementById('modalDisponibilidad').classList.add('hidden');
+            document.getElementById('modal-dia').value = '';
+            document.getElementById('modal-hora-inicio').value = '';
+            document.getElementById('modal-hora-fin').value = '';
+        }
 
+        function validarFormulario() {
+            let errores = [];
+            
+            if (!document.getElementById('nombres').value.trim()) errores.push("El campo Nombres es obligatorio");
+            if (!document.getElementById('apellidos').value.trim()) errores.push("El campo Apellidos es obligatorio");
+            if (!document.getElementById('correo').value.trim()) errores.push("El campo Correo es obligatorio");
+            if (!document.getElementById('nivel').value) errores.push("Debe seleccionar un Nivel");
+            if (!document.getElementById('area_id').value) errores.push("Debe seleccionar un Área");
+            if (!document.getElementById('turno_id').value) errores.push("Debe seleccionar un Turno");
+            
+            const dni = document.getElementById('dni').value.trim();
+            if (dni && (!/^\d{8}$/.test(dni))) errores.push("El DNI debe tener 8 dígitos numéricos");
+            
+            return errores;
+        }
+
+        // ? FUNCIÓN CORREGIDA - guardarDisponibilidad
         function guardarDisponibilidad() {
-        console.log('=== INICIANDO guardarDisponibilidad() ===');
+            console.log('=== INICIANDO guardarDisponibilidad() ===');
 
-        // Obtener valores del modal
-        const dia = document.getElementById('modal-dia').value;
-        const horaInicio = document.getElementById('modal-hora-inicio').value;
-        const horaFin = document.getElementById('modal-hora-fin').value;
-        const turnoId = document.getElementById('turno_id').value;
+            const diaElement = document.getElementById('modal-dia');
+            const horaInicioElement = document.getElementById('modal-hora-inicio');
+            const horaFinElement = document.getElementById('modal-hora-fin');
+            const turnoElement = document.getElementById('turno_id');
 
-        console.log('Valores obtenidos:', { dia, horaInicio, horaFin, turnoId });
+            const dia = diaElement.value;
+            const horaInicio = horaInicioElement.value;
+            const horaFin = horaFinElement.value;
+            const turnoId = turnoElement.value;
 
-        // ? VALIDACIÓN 1: Campos completos
-        if (!dia || !horaInicio || !horaFin) {
-            alert('?? Por favor complete todos los campos obligatorios:\n- Día de la semana\n- Hora de inicio\n- Hora de fin');
-            return;
-        }
+            console.log('? Valores obtenidos:', { dia, horaInicio, horaFin, turnoId });
 
-        // ? VALIDACIÓN 2: Hora de inicio menor que hora de fin
-        if (horaInicio >= horaFin) {
-            alert('?? La hora de inicio debe ser ANTERIOR a la hora de fin');
-            return;
-        }
-
-        // ? VALIDACIÓN 3: Turno seleccionado (CRÍTICA)
-        if (!turnoId || turnoId === '' || turnoId === null) {
-            alert('?? ERROR CRÍTICO: Debe seleccionar un TURNO en el formulario principal ANTES de agregar disponibilidades.\n\n' +
-                  'Pasos a seguir:\n' +
-                  '1. Cierre este modal\n' +
-                  '2. Seleccione un Turno en la sección "Información Profesional"\n' +
-                  '3. Vuelva a hacer clic en "Agregar Horario Disponible"');
-            return;
-        }
-
-        console.log('? Validaciones pasadas correctamente');
-        console.log('? Creando disponibilidad con turnoId:', turnoId);
-
-        // ? Crear objeto disponibilidad
-        const disponibilidad = {
-            dia: dia,
-            turnoId: turnoId.toString(), // ? Asegurar que sea string
-            horaInicio: horaInicio,
-            horaFin: horaFin,
-            disponible: true
-        };
-
-        console.log('Objeto disponibilidad creado:', disponibilidad);
-
-        disponibilidadesArray.push(disponibilidad);
-        console.log('Disponibilidad agregada al array. Total:', disponibilidadesArray.length);
-
-        // ? IMPORTANTE: Actualizar tabla Y campos ocultos inmediatamente
-        actualizarTablaDisponibilidades();
-        actualizarCamposOcultos(); 
-
-        closeModal();
-
-        // Feedback visual
-        showToast('? Disponibilidad agregada correctamente', 'success');
-        console.log('=== FIN guardarDisponibilidad() ===');
-    }
-        
-        function actualizarTablaDisponibilidades() {
-        const tbody = document.getElementById('disponibilidades-body');
-        const filaSinDatos = document.getElementById('sin-disponibilidades');
-
-        // Limpiar tabla (excepto la fila de "sin datos")
-        Array.from(tbody.children).forEach(row => {
-            if (row.id !== 'sin-disponibilidades') {
-                row.remove();
-            }
-        });
-
-        if (disponibilidadesArray.length === 0) {
-            if (filaSinDatos) {
-                filaSinDatos.style.display = '';
-            }
-            return;
-        }
-
-        if (filaSinDatos) {
-            filaSinDatos.style.display = 'none';
-        }
-
-        // Agregar cada disponibilidad a la tabla
-        disponibilidadesArray.forEach((disp, index) => {
-            const fila = document.createElement('tr');
-
-            let horaInicioMostrar = disp.horaInicio || '';
-            let horaFinMostrar = disp.horaFin || '';
-
-            // Formatear horas para mostrar (solo HH:mm)
-            if (horaInicioMostrar.includes(':')) {
-                horaInicioMostrar = horaInicioMostrar.substring(0, 5);
-            }
-            if (horaFinMostrar.includes(':')) {
-                horaFinMostrar = horaFinMostrar.substring(0, 5);
+            // Validaciones
+            if (!dia || dia === '') {
+                alert('?? Por favor seleccione el DÍA DE LA SEMANA');
+                diaElement.focus();
+                return;
             }
 
-            fila.innerHTML = `
-                <td>${disp.dia || ''}</td>
-                <td>${horaInicioMostrar}</td>
-                <td>${horaFinMostrar}</td>
-                <td>
-                    <button type="button" class="p-2 text-red-600 hover:bg-red-100 rounded" 
-                            onclick="eliminarDisponibilidad(${index})" title="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(fila);
-        });
-    }
-        
-        function eliminarDisponibilidad(index) {
-        if (confirm('¿Está seguro de eliminar esta disponibilidad?')) {
-            disponibilidadesArray.splice(index, 1);
+            if (!horaInicio || horaInicio === '') {
+                alert('?? Por favor ingrese la HORA DE INICIO');
+                horaInicioElement.focus();
+                return;
+            }
+
+            if (!horaFin || horaFin === '') {
+                alert('?? Por favor ingrese la HORA DE FIN');
+                horaFinElement.focus();
+                return;
+            }
+
+            if (horaInicio >= horaFin) {
+                alert(`?? La hora de inicio debe ser ANTERIOR a la hora de fin\n\nHora inicio: ${horaInicio}\nHora fin: ${horaFin}`);
+                horaInicioElement.focus();
+                return;
+            }
+
+            if (!turnoId || turnoId === '') {
+                alert('?? ERROR: Debe seleccionar un TURNO en el formulario principal ANTES de agregar disponibilidades.');
+                closeModal();
+                turnoElement.focus();
+                return;
+            }
+
+            console.log('? Validaciones pasadas');
+
+            const disponibilidad = {
+                diaSemana: dia,
+                turnoId: parseInt(turnoId),
+                horaInicio: horaInicio,
+                horaFin: horaFin,
+                disponible: true
+            };
+
+            console.log('? Objeto creado:', disponibilidad);
+
+            if (!disponibilidad.diaSemana || disponibilidad.diaSemana === '') {
+                console.error('? ERROR: diaSemana está vacío');
+                alert('Error interno: No se pudo capturar el día correctamente');
+                return;
+            }
+
+            disponibilidadesArray.push(disponibilidad);
+            console.log('? Agregada al array. Total:', disponibilidadesArray.length);
+
             actualizarTablaDisponibilidades();
-            actualizarCamposOcultos();
-            showToast('? Disponibilidad eliminada', 'info');
-        }
-    }
-        
-        function actualizarCamposOcultos() {
-        console.log('\n? === INICIANDO actualizarCamposOcultos() ===');
+            actualizarCamposOcultos(); 
 
-        const container = document.getElementById('disponibilidades-hidden');
-        if (!container) {
-            console.error('? ERROR CRÍTICO: No se encontró el contenedor disponibilidades-hidden');
-            console.error('? Verifique que existe: <div id="disponibilidades-hidden"></div>');
-            console.error('? Y que está DENTRO del <form>');
-            return;
+            closeModal();
+            showToast(`? Disponibilidad agregada: ${dia} de ${horaInicio} a ${horaFin}`, 'success');
+            console.log('=== FIN guardarDisponibilidad() ===');
         }
 
-        console.log('? Contenedor encontrado:', container);
+        // ? FUNCIÓN CORREGIDA - actualizarTablaDisponibilidades (PROBLEMA PRINCIPAL ARREGLADO)
+        function actualizarTablaDisponibilidades() {
+            console.log('\n? === ACTUALIZANDO TABLA ===');
+            
+            const tbody = document.getElementById('disponibilidades-body');
+            const filaSinDatos = document.getElementById('sin-disponibilidades');
 
-        // ? Limpiar completamente el contenedor
-        container.innerHTML = '';
-        console.log('? Contenedor limpiado');
-
-        console.log('? Total de disponibilidades a procesar:', disponibilidadesArray.length);
-
-        // ? SIEMPRE enviar el total, incluso si es 0
-        const totalInput = document.createElement('input');
-        totalInput.type = 'hidden';
-        totalInput.name = 'total_disponibilidades';
-        totalInput.value = disponibilidadesArray.length.toString();
-        container.appendChild(totalInput);
-        console.log('? Campo total_disponibilidades creado:', totalInput.value);
-
-        if (disponibilidadesArray.length === 0) {
-            console.log('?? No hay disponibilidades para enviar (total = 0)');
-            console.log('? === FIN actualizarCamposOcultos() ===\n');
-            return;
-        }
-
-        // ? Procesar cada disponibilidad
-        let camposCreados = 0;
-        disponibilidadesArray.forEach((disp, index) => {
-            console.log(`\n--- Procesando disponibilidad ${index} ---`);
-            console.log('Datos:', disp);
-
-            // ? VALIDACIÓN ESTRICTA: Verificar campos obligatorios
-            if (!disp.dia || disp.dia === '') {
-                console.warn(`?? Disponibilidad ${index}: campo 'dia' vacío`);
-                return;
-            }
-            if (!disp.horaInicio || disp.horaInicio === '') {
-                console.warn(`?? Disponibilidad ${index}: campo 'horaInicio' vacío`);
-                return;
-            }
-            if (!disp.horaFin || disp.horaFin === '') {
-                console.warn(`?? Disponibilidad ${index}: campo 'horaFin' vacío`);
+            if (!tbody) {
+                console.error('? No se encontró tbody');
                 return;
             }
 
-            // ? VALIDACIÓN CRÍTICA: Verificar turnoId
-            if (!disp.turnoId || disp.turnoId === '' || disp.turnoId === null || disp.turnoId === undefined) {
-                console.error(`? ERROR CRÍTICO en disponibilidad ${index}: turnoId inválido:`, disp.turnoId);
-                console.error(`? Esta disponibilidad NO se enviará al servidor`);
-                return;
-            }
+            console.log('? Tbody encontrado');
+            console.log('? Disponibilidades:', disponibilidadesArray.length);
 
-            console.log(`? Todos los campos validados para disponibilidad ${index}`);
-
-            // ? CREAR LOS 5 CAMPOS OCULTOS
-            const campos = [
-                { name: `disp_dia_${index}`, value: disp.dia },
-                { name: `disp_turno_${index}`, value: disp.turnoId },
-                { name: `disp_hora_inicio_${index}`, value: disp.horaInicio },
-                { name: `disp_hora_fin_${index}`, value: disp.horaFin },
-                { name: `disp_disponible_${index}`, value: 'true' }
-            ];
-
-            campos.forEach(campo => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = campo.name;
-                input.value = campo.value;
-                container.appendChild(input);
-                console.log(`  ? Campo creado: ${campo.name} = ${campo.value}`);
-                camposCreados++;
+            // Limpiar tabla (excepto la fila de "sin datos")
+            const filasExistentes = Array.from(tbody.querySelectorAll('tr'));
+            filasExistentes.forEach(row => {
+                if (row.id !== 'sin-disponibilidades') {
+                    tbody.removeChild(row);
+                }
             });
 
-            console.log(`? Disponibilidad ${index} procesada correctamente`);
-        });
+            if (disponibilidadesArray.length === 0) {
+                if (filaSinDatos) filaSinDatos.style.display = '';
+                console.log('?? No hay disponibilidades');
+                return;
+            }
 
-        console.log(`\n? RESUMEN:`);
-        console.log(`  - Disponibilidades en array: ${disponibilidadesArray.length}`);
-        console.log(`  - Campos ocultos creados: ${camposCreados}`);
-        console.log(`  - Total de inputs en contenedor: ${container.querySelectorAll('input').length}`);
-        console.log('? Campos ocultos actualizados correctamente');
-        console.log('? === FIN actualizarCamposOcultos() ===\n');
-    }
-      
-    function validarFormulario() {
-        let errores = [];
+            if (filaSinDatos) filaSinDatos.style.display = 'none';
 
-        if (!document.getElementById('nombres').value.trim()) {
-            errores.push("El campo Nombres es obligatorio");
+            // Agregar filas CORREGIDO
+            disponibilidadesArray.forEach((disp, index) => {
+                console.log(`? Procesando ${index}:`, disp);
+                
+                const fila = document.createElement('tr');
+                fila.className = 'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors';
+
+                // Asegurarse de que los valores existan
+                const diaMostrar = disp.diaSemana || 'Sin día';
+                let horaInicioMostrar = disp.horaInicio || '';
+                let horaFinMostrar = disp.horaFin || '';
+
+                // Formatear horas si es necesario
+                if (horaInicioMostrar && horaInicioMostrar.length > 5) {
+                    horaInicioMostrar = horaInicioMostrar.substring(0, 5);
+                }
+                if (horaFinMostrar && horaFinMostrar.length > 5) {
+                    horaFinMostrar = horaFinMostrar.substring(0, 5);
+                }
+
+                console.log(`  ? Fila: ${diaMostrar} | ${horaInicioMostrar} | ${horaFinMostrar}`);
+
+                // Crear celdas individualmente para mejor control
+                const celdaDia = document.createElement('td');
+                celdaDia.className = 'px-4 py-3';
+                celdaDia.textContent = diaMostrar;
+                fila.appendChild(celdaDia);
+
+                const celdaHoraInicio = document.createElement('td');
+                celdaHoraInicio.className = 'px-4 py-3';
+                celdaHoraInicio.textContent = horaInicioMostrar;
+                fila.appendChild(celdaHoraInicio);
+
+                const celdaHoraFin = document.createElement('td');
+                celdaHoraFin.className = 'px-4 py-3';
+                celdaHoraFin.textContent = horaFinMostrar;
+                fila.appendChild(celdaHoraFin);
+
+                const celdaAcciones = document.createElement('td');
+                celdaAcciones.className = 'px-4 py-3';
+                celdaAcciones.innerHTML = `
+                    <button type="button" 
+                            class="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors" 
+                            onclick="eliminarDisponibilidad(${index})" 
+                            title="Eliminar disponibilidad">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                fila.appendChild(celdaAcciones);
+                
+                tbody.appendChild(fila);
+                console.log(`  ? Fila agregada`);
+            });
+            
+            console.log(`? Tabla actualizada con ${disponibilidadesArray.length} filas`);
+            console.log('=== FIN ACTUALIZACIÓN TABLA ===\n');
         }
 
-        if (!document.getElementById('apellidos').value.trim()) {
-            errores.push("El campo Apellidos es obligatorio");
+        function eliminarDisponibilidad(index) {
+            if (confirm('¿Está seguro de eliminar esta disponibilidad?')) {
+                console.log(`?? Eliminando disponibilidad ${index}`);
+                disponibilidadesArray.splice(index, 1);
+                actualizarTablaDisponibilidades();
+                actualizarCamposOcultos();
+                showToast('?? Disponibilidad eliminada', 'info');
+            }
+        }
+        
+        // ? FUNCIÓN CORREGIDA - actualizarCamposOcultos
+        function actualizarCamposOcultos() {
+            console.log('\n? === ACTUALIZANDO CAMPOS OCULTOS ===');
+
+            const container = document.getElementById('disponibilidades-hidden');
+            if (!container) {
+                console.error('? No se encontró contenedor disponibilidades-hidden');
+                return;
+            }
+
+            container.innerHTML = '';
+            console.log('? Contenedor limpiado');
+
+            const totalInput = document.createElement('input');
+            totalInput.type = 'hidden';
+            totalInput.name = 'total_disponibilidades';
+            totalInput.value = disponibilidadesArray.length.toString();
+            container.appendChild(totalInput);
+            console.log('? total_disponibilidades:', totalInput.value);
+
+            if (disponibilidadesArray.length === 0) {
+                console.log('?? No hay disponibilidades');
+                console.log('? === FIN ===\n');
+                return;
+            }
+
+            let camposCreados = 0;
+            disponibilidadesArray.forEach((disp, index) => {
+                console.log(`\n--- Disponibilidad ${index} ---`);
+                console.log('  Datos:', disp);
+
+                if (!disp.diaSemana || !disp.horaInicio || !disp.horaFin) {
+                    console.error(`? Datos incompletos en ${index}`);
+                    return;
+                }
+
+                console.log(`  ? Validada`);
+
+                const campos = [
+                    { name: `disp_dia_semana_${index}`, value: disp.diaSemana },
+                    { name: `disp_turno_${index}`, value: disp.turnoId ? disp.turnoId.toString() : '' },
+                    { name: `disp_hora_inicio_${index}`, value: disp.horaInicio },
+                    { name: `disp_hora_fin_${index}`, value: disp.horaFin },
+                    { name: `disp_disponible_${index}`, value: 'true' }
+                ];
+
+                campos.forEach(campo => {
+                    if (campo.value) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = campo.name;
+                        input.value = campo.value;
+                        container.appendChild(input);
+                        console.log(`    ? ${campo.name} = "${campo.value}"`);
+                        camposCreados++;
+                    }
+                });
+            });
+
+            console.log(`\n? RESUMEN:`);
+            console.log(`  - Disponibilidades: ${disponibilidadesArray.length}`);
+            console.log(`  - Campos creados: ${camposCreados}`);
+            console.log(`  - Total inputs: ${container.querySelectorAll('input').length}`);
+            console.log('? === FIN ===\n');
         }
 
-        if (!document.getElementById('correo').value.trim()) {
-            errores.push("El campo Correo es obligatorio");
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            let bgClass = 'bg-blue-600';
+            let iconClass = 'fa-info-circle';
+
+            if (type === 'success') {
+                bgClass = 'bg-green-600';
+                iconClass = 'fa-check-circle';
+            } else if (type === 'error') {
+                bgClass = 'bg-red-600';
+                iconClass = 'fa-exclamation-circle';
+            }
+
+            toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white ${bgClass}`;
+            toast.innerHTML = `<div class="flex items-center gap-2"><i class="fas ${iconClass}"></i><span>${message}</span></div>`;
+
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
         }
-
-        if (!document.getElementById('nivel').value) {
-            errores.push("Debe seleccionar un Nivel");
-        }
-
-        if (!document.getElementById('area_id').value) {
-            errores.push("Debe seleccionar un Área");
-        }
-
-        if (!document.getElementById('turno_id').value) {
-            errores.push("Debe seleccionar un Turno");
-        }
-
-        // Validar DNI si está presente
-        const dni = document.getElementById('dni').value.trim();
-        if (dni && (!/^\d{8}$/.test(dni))) {
-            errores.push("El DNI debe tener 8 dígitos numéricos");
-        }
-
-        return errores;
-    }
-        // Toast notifications
-       function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-
-        // Determinar estilo según tipo
-        let bgClass = 'bg-blue-600';
-        let iconClass = 'fa-info-circle';
-
-        if (type === 'success') {
-            bgClass = 'bg-green-600';
-            iconClass = 'fa-check-circle';
-        } else if (type === 'error') {
-            bgClass = 'bg-red-600';
-            iconClass = 'fa-exclamation-circle';
-        }
-
-        toast.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white ' + bgClass;
-        toast.innerHTML = `
-            <div class="flex items-center gap-2">
-                <i class="fas ${iconClass}"></i>
-                <span>${message}</span>
-            </div>
-        `;
-
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.remove();
-        }, 5000);
-    }
         
         // Cargar disponibilidades existentes si estamos editando
         <% if (editar && p.getDisponibilidades() != null && !p.getDisponibilidades().isEmpty()) { %>
@@ -1361,14 +1312,13 @@
                 java.util.List<modelo.Disponibilidad> disponibilidades = p.getDisponibilidades();
                 for (int i = 0; i < disponibilidades.size(); i++) {
                     modelo.Disponibilidad disp = disponibilidades.get(i);
-
                     String horaInicio = disp.getHoraInicio() != null ? disp.getHoraInicio().toString() : "";
                     String horaFin = disp.getHoraFin() != null ? disp.getHoraFin().toString() : "";
                     if (horaInicio.length() > 8) horaInicio = horaInicio.substring(0, 5);
                     if (horaFin.length() > 8) horaFin = horaFin.substring(0, 5);
                 %>
                 {
-                    dia: '<%= disp.getDiaSemana() %>',
+                    diaSemana: '<%= disp.getDiaSemana() %>',
                     turnoId: <%= disp.getTurnoId() %>,
                     horaInicio: '<%= horaInicio %>',
                     horaFin: '<%= horaFin %>',
@@ -1380,135 +1330,74 @@
             console.log('? Cargando disponibilidades existentes:', disponibilidadesExistentes.length);
             disponibilidadesArray = disponibilidadesExistentes;
             actualizarTablaDisponibilidades();
-            actualizarCamposOcultos();  // ? AGREGAR ESTA LÍNEA
-            console.log('? Disponibilidades cargadas y campos ocultos generados');
+            actualizarCamposOcultos();
+            console.log('? Disponibilidades cargadas');
         <% } %>
         
-        // Validación del formulario
-        function validarFormulario() {
-            let errores = [];
-            
-            if (!document.getElementById('nombres').value.trim()) {
-                errores.push("El campo Nombres es obligatorio");
-            }
-            
-            if (!document.getElementById('apellidos').value.trim()) {
-                errores.push("El campo Apellidos es obligatorio");
-            }
-            
-            if (!document.getElementById('correo').value.trim()) {
-                errores.push("El campo Correo es obligatorio");
-            }
-            
-            if (!document.getElementById('nivel').value) {
-                errores.push("Debe seleccionar un Nivel");
-            }
-            
-            if (!document.getElementById('area_id').value) {
-                errores.push("Debe seleccionar un Área");
-            }
-            
-            if (!document.getElementById('turno_id').value) {
-                errores.push("Debe seleccionar un Turno");
-            }
-            
-            // Validar DNI si está presente
-            const dni = document.getElementById('dni').value.trim();
-            if (dni && (!/^\d{8}$/.test(dni))) {
-                errores.push("El DNI debe tener 8 dígitos numéricos");
-            }
-            
-            return errores;
-        }
-        
-       // Event listeners
+        // ==================== EVENT LISTENERS ====================
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('? Inicializando formulario de profesor...');
+            console.log('? Inicializando...');
 
-            // Botón agregar disponibilidad
             const btnAgregar = document.getElementById('btn-agregar-disponibilidad');
             if (btnAgregar) {
                 btnAgregar.addEventListener('click', openModal);
-                console.log('? Event listener agregado a btn-agregar-disponibilidad');
+                console.log('? Botón agregar configurado');
             }
 
-            // ? CRÍTICO: Submit del formulario
             const form = document.getElementById('profesorForm');
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    console.log('\n? === INICIANDO ENVÍO DEL FORMULARIO ===');
-                    console.log('Timestamp:', new Date().toISOString());
+                    console.log('\n? === ENVIANDO FORMULARIO ===');
 
-                    // Validación básica del formulario
                     const errores = validarFormulario();
 
                     if (errores.length > 0) {
                         e.preventDefault();
-                        console.error('? Errores de validación:', errores);
-                        alert('? Errores en el formulario:\n\n' + errores.join('\n'));
+                        console.error('? Errores:', errores);
+                        alert('?? Errores:\n\n' + errores.join('\n'));
                         return false;
                     }
 
-                    console.log('? Validación básica pasada');
-
-                    // ? PASO CRÍTICO: Actualizar campos ocultos JUSTO ANTES de enviar
-                    console.log('? Actualizando campos ocultos antes del envío...');
+                    console.log('? Validación OK');
+                    console.log('? Actualizando campos ocultos...');
                     actualizarCamposOcultos();
 
-                    // ? VERIFICACIÓN: Confirmar que los campos se crearon
                     const container = document.getElementById('disponibilidades-hidden');
                     const totalInputs = container ? container.querySelectorAll('input').length : 0;
 
-                    console.log('? Estado antes del envío:');
-                    console.log('  - Disponibilidades en array:', disponibilidadesArray.length);
-                    console.log('  - Campos ocultos creados:', totalInputs);
+                    console.log('? Estado:');
+                    console.log('  - Disponibilidades:', disponibilidadesArray.length);
+                    console.log('  - Campos ocultos:', totalInputs);
 
-                    // ? Si hay disponibilidades pero no hay campos, ERROR CRÍTICO
                     if (disponibilidadesArray.length > 0 && totalInputs === 0) {
                         e.preventDefault();
-                        console.error('? ERROR CRÍTICO: Hay disponibilidades pero no se crearon los campos ocultos');
-                        alert('? ERROR CRÍTICO:\n\n' +
-                              'Las disponibilidades no se generaron correctamente.\n' +
-                              'Por favor, contacte al administrador del sistema.\n\n' +
-                              'Detalles técnicos:\n' +
-                              `- Disponibilidades en memoria: ${disponibilidadesArray.length}\n` +
-                              `- Campos ocultos creados: ${totalInputs}`);
+                        console.error('? ERROR CRÍTICO: Sin campos ocultos');
+                        alert('? ERROR:\nLas disponibilidades no se generaron correctamente.');
                         return false;
                     }
 
-                    // ? Si llegamos aquí, todo está correcto
-                    console.log('? Todos los checks pasados');
-                    console.log('? Formulario validado correctamente');
-                    console.log('? Enviando formulario al servidor...');
-                    console.log('? === FIN VALIDACIÓN - PERMITIENDO ENVÍO ===\n');
-
+                    console.log('? Enviando formulario...');
                     showToast('? Enviando formulario...', 'info');
-
                     return true;
                 }); 
 
-                console.log('? Event listener agregado al submit del formulario');
+                console.log('? Form submit configurado');
             } 
-            // Navegación por teclado (DEBE ESTAR AQUÍ, DENTRO DEL DOMContentLoaded)
+            
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     const panel = document.querySelector('.accessibility-panel');
-                    if (panel && panel.classList.contains('open')) {
-                        panel.classList.remove('open');
-                    }
+                    if (panel && panel.classList.contains('open')) panel.classList.remove('open');
                     closeModal();
                 }
             });
 
-            // Auto-focus en primer campo
             setTimeout(() => {
                 const nombresField = document.getElementById('nombres');
-                if (nombresField) {
-                    nombresField.focus();
-                }
+                if (nombresField) nombresField.focus();
             }, 100);
 
-            console.log('? Formulario inicializado correctamente');
+            console.log('? Inicialización completa');
         }); 
     </script>
 </body>

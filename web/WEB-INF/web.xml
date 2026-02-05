@@ -1,13 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee 
+                             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
     
     <!-- ========================================= -->
-    <!-- NOTA: LoginServlet usa @WebServlet en su clase Java -->
-    <!-- Por eso NO está aquí -->
+    <!-- NOTA: LoginServlet usa @WebServlet -->
     <!-- ========================================= -->
-   
+
+    <!-- ========================================= -->
+    <!-- ASISTENCIA -->
+    <!-- AsistenciaServlet utiliza:
+         - AsistenciaDAO
+         - ConfiguracionAsistenciaDAO
+         para validar límites de tiempo de edición
+         y exponer atributos como:
+         - puedeEditar
+         - mensajeLimite
+         usados en los JSP (modo solo lectura)
+    -->
+    <!-- ========================================= -->
+
     <servlet>
         <servlet-name>AsistenciaServlet</servlet-name>
         <servlet-class>controlador.AsistenciaServlet</servlet-class>
@@ -78,13 +91,11 @@
     </filter>
     <filter-mapping>
         <filter-name>SecurityFilter</filter-name>
-        
-        <!-- Directorios protegidos -->
+
         <url-pattern>/admin/*</url-pattern>
         <url-pattern>/padre/*</url-pattern>
         <url-pattern>/docente/*</url-pattern>
-        
-        <!-- Páginas protegidas -->
+
         <url-pattern>/dashboard.jsp</url-pattern>
         <url-pattern>/usuarios.jsp</url-pattern>
         <url-pattern>/cursos.jsp</url-pattern>
@@ -111,8 +122,7 @@
         <url-pattern>/notaForm.jsp</url-pattern>
         <url-pattern>/tareaForm.jsp</url-pattern>
         <url-pattern>/uploadImage.jsp</url-pattern>
-        
-        <!-- Servlets protegidos -->
+
         <url-pattern>/AlumnoServlet</url-pattern>
         <url-pattern>/ProfesorServlet</url-pattern>
         <url-pattern>/AsistenciaServlet</url-pattern>
@@ -124,8 +134,8 @@
         <url-pattern>/TareasPadreServlet</url-pattern>
     </filter-mapping>
     
-    <!-- Página de inicio -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
+
 </web-app>
