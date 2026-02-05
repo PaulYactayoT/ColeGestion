@@ -1319,4 +1319,206 @@ public class AsistenciaDAO {
 
        return lista;
    }
+   
+   /**
+    * ACTUALIZAR ASISTENCIA CON VALIDACIÓN DE TIEMPO LÍMITE
+    */
+   public boolean actualizarAsistenciaConValidacion(Asistencia asistencia) {
+       // Validar si se puede editar
+       ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
+       boolean puedeEditar = configDAO.puedeEditarAsistencia(
+           asistencia.getCursoId(),
+           asistencia.getTurnoId(),
+           asistencia.getFecha(),
+           asistencia.getHoraClase()
+       );
+
+       if (!puedeEditar) {
+           System.out.println("NO se puede editar. Tiempo límite excedido.");
+           return false;
+       }
+
+       // Continuar con la actualización
+       return actualizarAsistenciaIndividual(asistencia);
+   }
+
+   /**
+    * ACTUALIZAR ASISTENCIA INDIVIDUAL (método auxiliar)
+    */
+   private boolean actualizarAsistenciaIndividual(Asistencia asistencia) {
+       String sql = "UPDATE asistencia SET estado = ?, observaciones = ?, " +
+                   "fecha_actualizacion = ?, registrado_por = ? " +
+                   "WHERE id = ? AND activo = 1 AND eliminado = 0";
+
+       try (Connection con = Conexion.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql)) {
+
+           ps.setString(1, asistencia.getEstadoString());
+           ps.setString(2, asistencia.getObservaciones());
+           ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+           ps.setInt(4, asistencia.getRegistradoPor());
+           ps.setInt(5, asistencia.getId());
+
+           int filas = ps.executeUpdate();
+
+           if (filas > 0) {
+               System.out.println("Asistencia actualizada: ID " + asistencia.getId());
+               return true;
+           }
+
+       } catch (SQLException e) {
+           System.out.println("Error al actualizar asistencia: " + e.getMessage());
+           e.printStackTrace();
+       }
+
+       return false;
+   }
+
+   /**
+    * VERIFICAR ESTADO DE EDICIÓN PARA UNA ASISTENCIA
+    */
+   public Map<String, Object> verificarEstadoEdicion(int asistenciaId) {
+       Map<String, Object> resultado = new HashMap<>();
+
+       // Obtener la asistencia
+       Asistencia asistencia = obtenerAsistenciaPorId(asistenciaId);
+
+       if (asistencia == null) {
+           resultado.put("puede_editar", false);
+           resultado.put("mensaje", "Asistencia no encontrada");
+           return resultado;
+       }
+
+       // Verificar con ConfiguracionAsistenciaDAO
+       ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
+
+       Map<String, Object> estado = configDAO.obtenerEstadoEdicionDetallado(
+           asistencia.getCursoId(),
+           asistencia.getTurnoId(),
+           asistencia.getFecha(),
+           asistencia.getHoraClase()
+       );
+
+       resultado.putAll(estado);
+       resultado.put("asistencia", asistencia);
+
+       return resultado;
+   }
+
+   /**
+    * ACTUALIZAR ASISTENCIAS EN LOTE CON VALIDACIÓN
+    */
+   public Map<String, Object> actualizarAsistenciasEnLote(List<Asistencia> asistencias) {
+       Map<String, Object> resultado = new HashMap<>();
+       int exitosas = 0;
+       int fallidas = 0;
+       int tiempoExcedido = 0;
+       List<String> errores = new ArrayList<>();
+
+       ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
+
+       for (Asistencia asistencia : asistencias) {
+           try {
+               // Verificar tiempo límite para cada asistencia
+               boolean puedeEditar = configDAO.puedeEditarAsistencia(
+                   asistencia.getCursoId(),
+                   asistencia.getTurnoId(),
+                   asistencia.getFecha(),
+                   asistencia.getHoraClase()
+               );
+
+               if (!puedeEditar) {
+                   tiempoExcedido++;
+                   errores.add("Asistencia ID " + asistencia.getId() + ": Tiempo límite excedido");
+                   continue;
+               }
+
+               // Actualizar
+               if (actualizarAsistenciaIndividual(asistencia)) {
+                   exitosas++;
+               } else {
+                   fallidas++;
+                   errores.add("Asistencia ID " + asistencia.getId() + ": Error al actualizar");
+               }
+
+           } catch (Exception e) {
+               fallidas++;
+               errores.add("Asistencia ID " + asistencia.getId() + ": " + e.getMessage());
+           }
+       }
+
+       resultado.put("exitosas", exitosas);
+       resultado.put("fallidas", fallidas);
+       resultado.put("tiempo_excedido", tiempoExcedido);
+       resultado.put("total", asistencias.size());
+       resultado.put("errores", errores);
+
+       System.out.println("   Resultado actualización en lote:");
+       System.out.println("   Exitosas: " + exitosas);
+       System.out.println("   Fallidas: " + fallidas);
+       System.out.println("   Tiempo excedido: " + tiempoExcedido);
+
+       return resultado;
+   }
+   
+   /**
+     * OBTENER ASISTENCIAS POR ALUMNO (Alias para obtenerAusenciasSinJustificar)
+     * Este método es llamado desde justificarAusencia.jsp
+     * 
+     * @param alumnoId ID del alumno
+     * @return Lista de asistencias del alumno (incluyendo todas, no solo ausencias)
+     */
+    public List<Asistencia> obtenerAsistenciasPorAlumno(int alumnoId) {
+        List<Asistencia> lista = new ArrayList<>();
+        
+        String sql = "SELECT a.*, " +
+                     "c.nombre as curso_nombre, " +
+                     "t.nombre as turno_nombre, " +
+                     "CONCAT(p.nombres, ' ', p.apellidos) as alumno_nombre " +
+                     "FROM asistencia a " +
+                     "INNER JOIN curso c ON a.curso_id = c.id " +
+                     "INNER JOIN turno t ON a.turno_id = t.id " +
+                     "INNER JOIN alumno al ON a.alumno_id = al.id " +
+                     "INNER JOIN persona p ON al.persona_id = p.id " +
+                     "WHERE a.alumno_id = ? " +
+                     "AND a.activo = 1 " +
+                     "AND a.eliminado = 0 " +
+                     "AND a.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
+                     "ORDER BY a.fecha DESC, a.hora_clase DESC " +
+                     "LIMIT 100";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, alumnoId);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Asistencia asist = new Asistencia();
+                asist.setId(rs.getInt("id"));
+                asist.setAlumnoId(rs.getInt("alumno_id"));
+                asist.setCursoId(rs.getInt("curso_id"));
+                asist.setTurnoId(rs.getInt("turno_id"));
+                asist.setFecha(rs.getDate("fecha").toLocalDate());
+                asist.setHoraClase(rs.getTime("hora_clase").toLocalTime());
+                asist.setEstadoFromString(rs.getString("estado"));
+                asist.setObservaciones(rs.getString("observaciones"));
+                asist.setRegistradoPor(rs.getInt("registrado_por"));
+                asist.setCursoNombre(rs.getString("curso_nombre"));
+                asist.setTurnoNombre(rs.getString("turno_nombre"));
+                asist.setAlumnoNombre(rs.getString("alumno_nombre"));
+                
+                lista.add(asist);
+            }
+            
+            System.out.println(" Asistencias encontradas para alumno " + alumnoId + ": " + lista.size());
+            
+        } catch (SQLException e) {
+            System.err.println(" Error al obtener asistencias por alumno: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return lista;
+    }
+   
 }

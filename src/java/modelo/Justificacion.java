@@ -1,6 +1,7 @@
 package modelo;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Representa una justificación de asistencia
@@ -9,10 +10,20 @@ public class Justificacion {
     
     // Enum para tipo de justificación
     public enum TipoJustificacion {
-        ENFERMEDAD,
-        EMERGENCIA_FAMILIAR,
-        CITA_MEDICA,
-        OTRO
+        ENFERMEDAD("Enfermedad"),
+        EMERGENCIA_FAMILIAR("Emergencia Familiar"),
+        CITA_MEDICA("Cita Médica"),
+        OTRO("Otro");
+        
+        private final String descripcion;
+        
+        TipoJustificacion(String descripcion) {
+            this.descripcion = descripcion;
+        }
+        
+        public String getDescripcion() {
+            return descripcion;
+        }
     }
     
     // Enum para estado
@@ -87,6 +98,15 @@ public class Justificacion {
         this.fechaJustificacion = fechaJustificacion; 
     }
     
+    /**
+     * Obtiene la fecha de justificación formateada
+     */
+    public String getFechaJustificacionFormateada() {
+        if (fechaJustificacion == null) return "";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        return fechaJustificacion.format(formatter);
+    }
+    
     public EstadoJustificacion getEstado() { return estado; }
     public void setEstado(EstadoJustificacion estado) { this.estado = estado; }
     
@@ -157,6 +177,15 @@ public class Justificacion {
      */
     public boolean tieneDocumento() {
         return documentoAdjunto != null && !documentoAdjunto.isEmpty();
+    }
+    
+    /**
+     * Obtiene el nombre del archivo sin la ruta
+     */
+    public String getNombreArchivo() {
+        if (documentoAdjunto == null || documentoAdjunto.isEmpty()) return "";
+        String[] partes = documentoAdjunto.split("/");
+        return partes[partes.length - 1];
     }
     
     /**

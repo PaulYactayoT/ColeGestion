@@ -7,9 +7,11 @@ import javax.servlet.annotation.*;
 import java.io.*;
 import java.time.LocalDateTime;
 import java.nio.file.*;
+import java.util.List;
 
 /**
  * Servlet para gestionar justificaciones de asistencia
+ * VERSIÓN CORREGIDA - Con acción 'form' para cargar ausencias
  */
 @WebServlet("/JustificacionServlet")
 @MultipartConfig(
@@ -21,10 +23,14 @@ import java.nio.file.*;
 public class JustificacionServlet extends HttpServlet {
     
     private JustificacionDAO justificacionDAO;
+    private AsistenciaDAO asistenciaDAO;
+    private AlumnoDAO alumnoDAO;
     
     @Override
     public void init() throws ServletException {
         justificacionDAO = new JustificacionDAO();
+        asistenciaDAO = new AsistenciaDAO();
+        alumnoDAO = new AlumnoDAO();
     }
     
     @Override
@@ -37,6 +43,9 @@ public class JustificacionServlet extends HttpServlet {
         }
         
         switch (accion) {
+            case "form":
+                mostrarFormulario(request, response);
+                break;
             case "listar":
                 listarJustificaciones(request, response);
                 break;
@@ -75,6 +84,60 @@ public class JustificacionServlet extends HttpServlet {
     }
     
     /**
+     * MOSTRAR FORMULARIO DE JUSTIFICACIÓN (acción form)
+     * Carga las ausencias pendientes del hijo del padre
+     */
+    private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            HttpSession session = request.getSession();
+            Integer personaId = (Integer) session.getAttribute("personaId");
+            
+            if (personaId == null) {
+                response.sendRedirect("index.jsp");
+                return;
+            }
+            
+            System.out.println("🔍 Cargando formulario de justificación para personaId: " + personaId);
+            
+            // Obtener el alumno asociado al padre
+            Alumno alumno = alumnoDAO.obtenerAlumnoPorPadreId(personaId);
+            
+            if (alumno == null) {
+                System.out.println("❌ No se encontró alumno para el padre: " + personaId);
+                request.setAttribute("error", "No se encontró información del estudiante");
+                request.setAttribute("ausencias", new java.util.ArrayList<>());
+                request.getRequestDispatcher("justificarAusencia.jsp").forward(request, response);
+                return;
+            }
+            
+            int alumnoId = alumno.getId();
+            System.out.println("✅ Alumno encontrado: " + alumnoId + " - " + alumno.getNombreCompleto());
+            
+            // Obtener ausencias sin justificar
+            List<Asistencia> ausencias = asistenciaDAO.obtenerAusenciasSinJustificar(alumnoId);
+            
+            System.out.println("📋 Ausencias sin justificar encontradas: " + ausencias.size());
+            for (Asistencia a : ausencias) {
+                System.out.println("   - Fecha: " + a.getFecha() + ", Curso: " + a.getCursoNombre() + ", Estado: " + a.getEstadoString());
+            }
+            
+            // Pasar datos al JSP
+            request.setAttribute("ausencias", ausencias);
+            request.setAttribute("alumnoId", alumnoId);
+            
+            request.getRequestDispatcher("justificarAusencia.jsp").forward(request, response);
+            
+        } catch (Exception e) {
+            System.out.println("❌ Error al cargar formulario de justificación: " + e.getMessage());
+            e.printStackTrace();
+            request.setAttribute("error", "Error al cargar el formulario: " + e.getMessage());
+            request.setAttribute("ausencias", new java.util.ArrayList<>());
+            request.getRequestDispatcher("justificarAusencia.jsp").forward(request, response);
+        }
+    }
+    
+    /**
      * CREAR NUEVA JUSTIFICACIÓN (desde padre)
      */
     private void crearJustificacion(HttpServletRequest request, HttpServletResponse response)
@@ -84,7 +147,7 @@ public class JustificacionServlet extends HttpServlet {
             Integer personaId = (Integer) session.getAttribute("personaId");
             
             if (personaId == null) {
-                response.sendRedirect("login.jsp");
+                response.sendRedirect("index.jsp");
                 return;
             }
             
@@ -93,6 +156,11 @@ public class JustificacionServlet extends HttpServlet {
             int alumnoId = Integer.parseInt(request.getParameter("alumnoId"));
             String tipoStr = request.getParameter("tipoJustificacion");
             String descripcion = request.getParameter("descripcion");
+            
+            System.out.println("📝 Creando justificación:");
+            System.out.println("   - AsistenciaId: " + asistenciaId);
+            System.out.println("   - AlumnoId: " + alumnoId);
+            System.out.println("   - Tipo: " + tipoStr);
             
             // Crear objeto Justificacion
             Justificacion justificacion = new Justificacion();
@@ -128,25 +196,28 @@ public class JustificacionServlet extends HttpServlet {
                 String relativePath = "uploads/justificaciones/" + newFileName;
                 justificacion.setDocumentoAdjunto(relativePath);
                 
-                System.out.println(" Archivo guardado: " + filePath);
+                System.out.println("✅ Archivo guardado: " + filePath);
             }
             
             // Guardar en base de datos
             int justificacionId = justificacionDAO.crearJustificacion(justificacion);
             
             if (justificacionId > 0) {
-                response.sendRedirect("justificarAusencia.jsp?alumnoId=" + alumnoId + 
-                                    "&mensaje=Justificación enviada exitosamente&tipo=success");
+                System.out.println("✅ Justificación creada exitosamente: ID " + justificacionId);
+                session.setAttribute("mensaje", "Justificación enviada exitosamente");
+                response.sendRedirect("AsistenciaServlet?accion=verPadre");
             } else {
-                response.sendRedirect("justificarAusencia.jsp?alumnoId=" + alumnoId + 
-                                    "&mensaje=Error al enviar justificación&tipo=error");
+                System.out.println("❌ Error al crear justificación");
+                session.setAttribute("error", "Error al enviar justificación");
+                response.sendRedirect("JustificacionServlet?accion=form");
             }
             
         } catch (Exception e) {
-            System.out.println(" Error al crear justificación: " + e.getMessage());
+            System.out.println("❌ Error al crear justificación: " + e.getMessage());
             e.printStackTrace();
-            response.sendRedirect("justificarAusencia.jsp?mensaje=Error: " + 
-                                e.getMessage() + "&tipo=error");
+            HttpSession session = request.getSession();
+            session.setAttribute("error", "Error: " + e.getMessage());
+            response.sendRedirect("JustificacionServlet?accion=form");
         }
     }
     
@@ -160,7 +231,7 @@ public class JustificacionServlet extends HttpServlet {
             Integer personaId = (Integer) session.getAttribute("personaId");
             
             if (personaId == null) {
-                response.sendRedirect("login.jsp");
+                response.sendRedirect("index.jsp");
                 return;
             }
             
@@ -174,20 +245,19 @@ public class JustificacionServlet extends HttpServlet {
             );
             
             if (resultado) {
-                response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + 
-                                    "&turnoId=" + turnoId + 
-                                    "&mensaje=Justificación aprobada exitosamente&tipo=success");
+                session.setAttribute("mensaje", "Justificación aprobada exitosamente");
             } else {
-                response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + 
-                                    "&turnoId=" + turnoId + 
-                                    "&mensaje=Error al aprobar justificación&tipo=error");
+                session.setAttribute("error", "Error al aprobar justificación");
             }
             
+            response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId);
+            
         } catch (Exception e) {
-            System.out.println(" Error al aprobar justificación: " + e.getMessage());
+            System.out.println("❌ Error al aprobar justificación: " + e.getMessage());
             e.printStackTrace();
-            response.sendRedirect("revisarJustificaciones.jsp?mensaje=Error: " + 
-                                e.getMessage() + "&tipo=error");
+            HttpSession session = request.getSession();
+            session.setAttribute("error", "Error: " + e.getMessage());
+            response.sendRedirect("revisarJustificaciones.jsp");
         }
     }
     
@@ -201,7 +271,7 @@ public class JustificacionServlet extends HttpServlet {
             Integer personaId = (Integer) session.getAttribute("personaId");
             
             if (personaId == null) {
-                response.sendRedirect("login.jsp");
+                response.sendRedirect("index.jsp");
                 return;
             }
             
@@ -211,9 +281,8 @@ public class JustificacionServlet extends HttpServlet {
             int turnoId = Integer.parseInt(request.getParameter("turnoId"));
             
             if (observaciones == null || observaciones.trim().isEmpty()) {
-                response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + 
-                                    "&turnoId=" + turnoId + 
-                                    "&mensaje=Debe especificar el motivo del rechazo&tipo=error");
+                session.setAttribute("error", "Debe especificar el motivo del rechazo");
+                response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId);
                 return;
             }
             
@@ -222,20 +291,19 @@ public class JustificacionServlet extends HttpServlet {
             );
             
             if (resultado) {
-                response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + 
-                                    "&turnoId=" + turnoId + 
-                                    "&mensaje=Justificación rechazada&tipo=success");
+                session.setAttribute("mensaje", "Justificación rechazada");
             } else {
-                response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + 
-                                    "&turnoId=" + turnoId + 
-                                    "&mensaje=Error al rechazar justificación&tipo=error");
+                session.setAttribute("error", "Error al rechazar justificación");
             }
             
+            response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId);
+            
         } catch (Exception e) {
-            System.out.println(" Error al rechazar justificación: " + e.getMessage());
+            System.out.println("❌ Error al rechazar justificación: " + e.getMessage());
             e.printStackTrace();
-            response.sendRedirect("revisarJustificaciones.jsp?mensaje=Error: " + 
-                                e.getMessage() + "&tipo=error");
+            HttpSession session = request.getSession();
+            session.setAttribute("error", "Error: " + e.getMessage());
+            response.sendRedirect("revisarJustificaciones.jsp");
         }
     }
     
@@ -260,7 +328,7 @@ public class JustificacionServlet extends HttpServlet {
             request.getRequestDispatcher("detalleJustificacion.jsp").forward(request, response);
             
         } catch (Exception e) {
-            System.out.println(" Error al ver justificación: " + e.getMessage());
+            System.out.println("❌ Error al ver justificación: " + e.getMessage());
             e.printStackTrace();
             response.sendRedirect("revisarJustificaciones.jsp");
         }

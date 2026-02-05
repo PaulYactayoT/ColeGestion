@@ -987,4 +987,62 @@ public List<Curso> listarPorAlumno(int alumnoId) {
 
             return lista;
         }
+            
+            /**
+            * OBTENER CURSOS POR DOCENTE
+            * Retorna todos los cursos asignados a un docente específico
+            * 
+            * @param personaId ID de la persona (docente)
+            * @return Lista de cursos del docente
+            */
+           public List<Curso> obtenerCursosPorDocente(Integer personaId) {
+            List<Curso> lista = new ArrayList<>();
+
+            String sql = "SELECT DISTINCT c.*, " +
+                         "g.nombre as grado_nombre, " +
+                         "g.nivel as grado_nivel, " +
+                         "a.nombre as area_nombre, " +
+                         "CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre " +
+                         "FROM curso c " +
+                         "INNER JOIN grado g ON c.grado_id = g.id " +
+                         "LEFT JOIN area a ON c.area_id = a.id " +
+                         "INNER JOIN profesor prof ON c.profesor_id = prof.id " +
+                         "INNER JOIN persona p ON prof.persona_id = p.id " +
+                         "WHERE p.id = ? AND c.activo = 1 AND c.eliminado = 0 " +
+                         "ORDER BY g.nombre, c.nombre";
+
+            try (Connection con = Conexion.getConnection();
+                 PreparedStatement ps = con.prepareStatement(sql)) {
+
+                ps.setInt(1, personaId);
+                ResultSet rs = ps.executeQuery();
+
+                while (rs.next()) {
+                    Curso curso = new Curso();
+                    curso.setId(rs.getInt("id"));
+                    curso.setNombre(rs.getString("nombre"));
+                    curso.setGradoId(rs.getInt("grado_id"));
+                    curso.setGradoNombre(rs.getString("grado_nombre"));
+                    curso.setNivel(rs.getString("grado_nivel"));
+                    curso.setProfesorId(rs.getInt("profesor_id"));
+                    curso.setProfesorNombre(rs.getString("profesor_nombre"));
+                    curso.setCreditos(rs.getInt("creditos"));
+                    curso.setHorasSemanales(rs.getInt("horas_semanales"));
+                    curso.setArea(rs.getString("area_nombre"));
+                    curso.setDescripcion(rs.getString("descripcion"));
+                    curso.setFechaInicio(rs.getDate("fecha_inicio"));
+                    curso.setFechaFin(rs.getDate("fecha_fin"));
+
+                    lista.add(curso);
+                }
+
+                System.out.println("Cursos encontrados para docente " + personaId + ": " + lista.size());
+
+            } catch (SQLException e) {
+                System.out.println("Error al obtener cursos por docente: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            return lista;
+        }
 }

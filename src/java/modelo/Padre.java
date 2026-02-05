@@ -33,7 +33,10 @@ public class Padre {
     // Getters y Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-    
+
+    public Integer getPersonaId() { 
+        return this.id; 
+    }
     public String getNombres() { return nombres; }
     public void setNombres(String nombres) { this.nombres = nombres; }
     

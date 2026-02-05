@@ -36,6 +36,11 @@ public class Curso {
         this.turnoId = null;   
     }
     
+    public String getSeccion() {
+    // Retorna vacío temporalmente
+        return "";
+    }
+    
     // Getters y Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }

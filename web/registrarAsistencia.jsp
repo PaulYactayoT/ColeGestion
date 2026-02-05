@@ -604,18 +604,16 @@
             </div>
         <% } %>
         
-        <!-- Informacion de Limite de Tiempo -->
-        <% if (cursoSeleccionado != null && mensajeLimite != null && !mensajeLimite.isEmpty()) { %>
-            <div class="info-box">
-                <p><strong><i class="bi bi-clock"></i> Estado de Edicion:</strong> <%= mensajeLimite %></p>
-                <% if (!puedeEditar) { %>
-                    <p><strong><i class="bi bi-exclamation-triangle"></i> IMPORTANTE:</strong> Ya no puedes modificar esta asistencia porque el tiempo limite ha vencido.</p>
-                <% } %>
+        <!-- Nuevas funcionalidades: Mensaje de límite de tiempo -->
+        <% if (!puedeEditar) { %>
+            <div class="alert alert-warning">
+                <i class="bi bi-clock-history"></i> ${mensajeLimite}
+                <small>El formulario está en modo solo lectura.</small>
             </div>
         <% } %>
         
-        <!-- Mensaje de Bloqueo -->
-        <% if (cursoSeleccionado != null && !puedeEditar) { %>
+        <!-- Mensaje de Bloqueo (solo si está completamente bloqueado) -->
+        <% if (cursoSeleccionado != null && !puedeEditar && mensajeLimite != null && mensajeLimite.contains("vencido")) { %>
             <div class="locked-message">
                 <div class="icon"><i class="bi bi-lock" style="font-size: 64px;"></i></div>
                 <h3>Edicion Bloqueada</h3>

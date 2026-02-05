@@ -4,7 +4,7 @@
     // Validar sesión
     String rol = (String) session.getAttribute("rol");
     if (rol == null || (!rol.equals("admin") && !rol.equals("docente"))) {
-        response.sendRedirect("login.jsp");
+        response.sendRedirect("index.jsp");
         return;
     }
     

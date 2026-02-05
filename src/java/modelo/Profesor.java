@@ -33,7 +33,7 @@ public class Profesor {
     
     // Constructor
     public Profesor() {
-        // ✅ Inicializar la lista de disponibilidades vacía
+        // Inicializar la lista de disponibilidades vacía
         this.disponibilidades = new ArrayList<>();
     }
 

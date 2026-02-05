@@ -360,4 +360,8 @@ public class TurnoDAO {
         
         return turno;
     }
+    
+    public List<Turno> listarTurnos() {
+        return obtenerTurnosActivos();
+    }
 }

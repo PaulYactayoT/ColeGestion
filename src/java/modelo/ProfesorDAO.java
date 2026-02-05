@@ -4,6 +4,7 @@ import conexion.Conexion;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 
 public class ProfesorDAO {
 
@@ -287,16 +288,6 @@ public class ProfesorDAO {
            } else {
                psProfesor.setNull(3, Types.VARCHAR);
            }
-
-           // TURNO
-           if (profesor.getTurnoId() > 0) {
-               psProfesor.setInt(4, profesor.getTurnoId());
-               System.out.println("Asignando turno ID: " + profesor.getTurnoId());
-           } else {
-               psProfesor.setNull(4, Types.INTEGER);
-               System.out.println("Sin turno asignado");
-           }
-
            // CODIGO DE PROFESOR
            String codigoProfesor = profesor.getCodigoProfesor();
            if (codigoProfesor == null || codigoProfesor.trim().isEmpty()) {
@@ -340,31 +331,31 @@ public class ProfesorDAO {
            rs.close();
            // ========== COMMIT FINAL ==========
            conn.commit();
-           System.out.println("✅ Profesor creado exitosamente: " + profesor.getNombreCompleto());
-           System.out.println("✅ Transacción completada con éxito");
+           System.out.println(" Profesor creado exitosamente: " + profesor.getNombreCompleto());
+           System.out.println(" Transacción completada con éxito");
            return true;
 
        } catch (SQLException e) {
-           System.err.println("❌ ERROR SQL al crear profesor: " + e.getMessage());
+           System.err.println(" ERROR SQL al crear profesor: " + e.getMessage());
            e.printStackTrace();
            if (conn != null) {
                try {
                    conn.rollback();
-                   System.err.println("🔄 Transacción revertida");
+                   System.err.println(" Transacción revertida");
                } catch (SQLException ex) {
-                   System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
+                   System.err.println(" Error al revertir transacción: " + ex.getMessage());
                }
            }
            return false;
        } catch (Exception e) {
-           System.err.println("❌ ERROR general: " + e.getMessage());
+           System.err.println(" ERROR general: " + e.getMessage());
            e.printStackTrace();
            if (conn != null) {
                try {
                    conn.rollback();
-                   System.err.println("🔄 Transacción revertida");
+                   System.err.println(" Transacción revertida");
                } catch (SQLException ex) {
-                   System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
+                   System.err.println(" Error al revertir transacción: " + ex.getMessage());
                }
            }
            return false;
@@ -380,10 +371,132 @@ public class ProfesorDAO {
                    conn.close();
                }
            } catch (SQLException e) {
-               System.err.println("❌ Error cerrando recursos: " + e.getMessage());
+               System.err.println(" Error cerrando recursos: " + e.getMessage());
            }
        }
    }
+
+    /**
+     * MÉTODO NORMALIZAR DÍA - FALTA IMPLEMENTAR
+     * Convierte un día de la semana a formato estandarizado (MAYÚSCULAS, sin tildes)
+     */
+    private String normalizarDia(String dia) {
+        if (dia == null || dia.trim().isEmpty()) {
+            return dia;
+        }
+
+        String diaNormalizado = dia.trim().toUpperCase();
+
+        // Quitar tildes y caracteres especiales
+        diaNormalizado = diaNormalizado
+                .replace("Á", "A")
+                .replace("É", "E")
+                .replace("Í", "I")
+                .replace("Ó", "O")
+                .replace("Ú", "U");
+
+        // Normalizar nombres de días
+        switch (diaNormalizado) {
+            case "LUNES":
+                return "LUNES";
+            case "MARTES":
+                return "MARTES";
+            case "MIERCOLES":
+            case "MIÉRCOLES":
+                return "MIERCOLES";
+            case "JUEVES":
+                return "JUEVES";
+            case "VIERNES":
+                return "VIERNES";
+            case "SABADO":
+            case "SÁBADO":
+                return "SABADO";
+            case "DOMINGO":
+                return "DOMINGO";
+            default:
+                // Si no coincide, devolver el original normalizado
+                return diaNormalizado;
+        }
+    }
+
+     /**
+      * CAPTURAR DISPONIBILIDADES DEL REQUEST
+      * (Refactorización del método guardarDisponibilidades para reutilizar lógica)
+      */
+     public List<Disponibilidad> capturarDisponibilidades(HttpServletRequest request, int profesorId) {
+         List<Disponibilidad> disponibilidades = new ArrayList<>();
+         String totalDispStr = request.getParameter("total_disponibilidades");
+
+         if (totalDispStr != null && !totalDispStr.isEmpty()) {
+             try {
+                 int totalDisp = Integer.parseInt(totalDispStr);
+                 System.out.println("Total de disponibilidades a procesar: " + totalDisp);
+
+                 for (int i = 0; i < totalDisp; i++) {
+                     String dia = request.getParameter("disp_dia_semana_" + i);
+                     String turnoIdStr = request.getParameter("disp_turno_" + i);
+                     String horaInicioStr = request.getParameter("disp_hora_inicio_" + i);
+                     String horaFinStr = request.getParameter("disp_hora_fin_" + i);
+                     String disponibleStr = request.getParameter("disp_disponible_" + i);
+
+                     // CORREGIDO: Verificar que todos los campos obligatorios tengan valor
+                     if (dia != null && !dia.trim().isEmpty() && 
+                         horaInicioStr != null && !horaInicioStr.trim().isEmpty() && 
+                         horaFinStr != null && !horaFinStr.trim().isEmpty()) {
+
+                         try {
+                             Disponibilidad disp = new Disponibilidad();
+                             disp.setProfesorId(profesorId);
+
+                             // Parsear turno ID (si no viene, usar el turno principal del formulario)
+                             int turnoId;
+                             if (turnoIdStr != null && !turnoIdStr.trim().isEmpty()) {
+                                 turnoId = Integer.parseInt(turnoIdStr.trim());
+                             } else {
+                                 String turnoPrincipal = request.getParameter("turno_id");
+                                 turnoId = turnoPrincipal != null ? Integer.parseInt(turnoPrincipal) : 0;
+                             }
+                             disp.setTurnoId(turnoId);
+
+                             // NORMALIZAR DÍA
+                             String diaNormalizado = normalizarDia(dia.trim());
+                             disp.setDiaSemana(diaNormalizado);
+
+                             // Asegurar formato HH:mm:ss para Time.valueOf()
+                             String horaInicioCompleta = horaInicioStr.trim();
+                             String horaFinCompleta = horaFinStr.trim();
+
+                             if (horaInicioCompleta.split(":").length == 2) {
+                                 horaInicioCompleta += ":00";
+                             }
+                             if (horaFinCompleta.split(":").length == 2) {
+                                 horaFinCompleta += ":00";
+                             }
+
+                             disp.setHoraInicio(Time.valueOf(horaInicioCompleta));
+                             disp.setHoraFin(Time.valueOf(horaFinCompleta));
+                             disp.setDisponible(disponibleStr != null ? Boolean.parseBoolean(disponibleStr) : true);
+                             disp.setObservaciones("Disponibilidad registrada el " + new java.util.Date());
+
+                             disponibilidades.add(disp);
+                             System.out.println("Disponibilidad capturada: " + diaNormalizado + " " + horaInicioCompleta + "-" + horaFinCompleta);
+                         } catch (Exception ex) {
+                             System.err.println("Error al parsear disponibilidad " + (i+1) + ": " + ex.getMessage());
+                             ex.printStackTrace();
+                         }
+                     } else {
+                         System.err.println("Disponibilidad " + (i+1) + " incompleta, omitiendo");
+                     }
+                 }
+             } catch (Exception e) {
+                 System.err.println("Error procesando disponibilidades: " + e.getMessage());
+                 e.printStackTrace();
+             }
+         }
+
+         System.out.println("Total disponibilidades capturadas: " + disponibilidades.size());
+         return disponibilidades;
+     }
 
     /**
      * GENERAR CÓDIGO DE PROFESOR ÚNICO
@@ -841,153 +954,129 @@ public class ProfesorDAO {
                 disponibilidades.add(disp);
             }
 
-            System.out.println("✅ Se encontraron " + disponibilidades.size() + 
+            System.out.println("Se encontraron " + disponibilidades.size() + 
                              " disponibilidades para el profesor ID: " + profesorId);
 
         } catch (SQLException e) {
-            System.err.println("❌ ERROR al obtener disponibilidades del profesor: " + e.getMessage());
+            System.err.println("ERROR al obtener disponibilidades del profesor: " + e.getMessage());
             e.printStackTrace();
         }
 
         return disponibilidades;
     }
-    /**
- * GUARDAR DISPONIBILIDADES DE UN PROFESOR
- */
-public boolean guardarDisponibilidades(int profesorId, List<Disponibilidad> disponibilidades) {
-    System.out.println("🔍 === INICIO guardarDisponibilidades ===");
-    System.out.println("Profesor ID: " + profesorId);
-    System.out.println("Número de disponibilidades recibidas: " + 
+    
+    /*
+    * GUARDAR DISPONIBILIDADES DE UN PROFESOR
+    */
+    public boolean guardarDisponibilidades(int profesorId, List<Disponibilidad> disponibilidades) {
+        System.out.println("=== INICIO guardarDisponibilidades ===");
+        System.out.println("Profesor ID: " + profesorId);
+        System.out.println("Número de disponibilidades recibidas: " + 
                        (disponibilidades != null ? disponibilidades.size() : 0));
-    
-    if (disponibilidades != null) {
-        for (int i = 0; i < disponibilidades.size(); i++) {
-            Disponibilidad d = disponibilidades.get(i);
-            System.out.println("📋 Disponibilidad " + (i+1) + ":");
-            System.out.println("   - Profesor ID: " + d.getProfesorId());
-            System.out.println("   - Turno ID: " + d.getTurnoId());
-            System.out.println("   - Día: " + d.getDiaSemana());
-            System.out.println("   - Hora inicio: " + d.getHoraInicio());
-            System.out.println("   - Hora fin: " + d.getHoraFin());
-            System.out.println("   - Disponible: " + d.isDisponible());
-        }
-    }
-    
-    // DECLARAR LAS VARIABLES AQUÍ (faltaban)
-    Connection conn = null;
-    PreparedStatement psEliminar = null;
-    PreparedStatement psInsertar = null;
-    
-    try {
-        conn = Conexion.getConnection();
 
-        if (conn == null) {
-            System.err.println("❌ ERROR: No se pudo establecer conexión con la base de datos");
-            return false;
-        }
-
-        conn.setAutoCommit(false);
-
-        System.out.println("💾 Guardando disponibilidades para profesor ID: " + profesorId);
-
-        // PASO 1: ELIMINAR DISPONIBILIDADES ANTERIORES
-        String sqlEliminar = "UPDATE disponibilidad_profesor " +
-                           "SET eliminado = 1, activo = 0 " +
-                           "WHERE profesor_id = ?";
-
-        psEliminar = conn.prepareStatement(sqlEliminar);
-        psEliminar.setInt(1, profesorId);
-        int eliminados = psEliminar.executeUpdate();
-        System.out.println("🗑️ Disponibilidades anteriores marcadas como eliminadas: " + eliminados);
-
-        // PASO 2: INSERTAR NUEVAS DISPONIBILIDADES
-        if (disponibilidades != null && !disponibilidades.isEmpty()) {
-            String sqlInsertar = "INSERT INTO disponibilidad_profesor " +
-                               "(profesor_id, turno_id, dia_semana, hora_inicio, hora_fin, " +
-                               "disponible, observaciones, activo, eliminado) " +
-                               "VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0)";
-
-            psInsertar = conn.prepareStatement(sqlInsertar);
-
-            for (Disponibilidad disp : disponibilidades) {
-                psInsertar.setInt(1, profesorId);
-                psInsertar.setInt(2, disp.getTurnoId());
-                psInsertar.setString(3, disp.getDiaSemana());
-                psInsertar.setTime(4, disp.getHoraInicio());
-                psInsertar.setTime(5, disp.getHoraFin());
-                psInsertar.setBoolean(6, disp.isDisponible());
-                psInsertar.setString(7, disp.getObservaciones());
-
-                psInsertar.addBatch();
+        if (disponibilidades != null) {
+            for (int i = 0; i < disponibilidades.size(); i++) {
+                Disponibilidad d = disponibilidades.get(i);
+                System.out.println("  Disponibilidad " + (i+1) + ":");
+                System.out.println("   - Profesor ID: " + d.getProfesorId());
+                System.out.println("   - Turno ID: " + d.getTurnoId());
+                System.out.println("   - Día: " + d.getDiaSemana());
+                System.out.println("   - Hora inicio: " + d.getHoraInicio());
+                System.out.println("   - Hora fin: " + d.getHoraFin());
+                System.out.println("   - Disponible: " + d.isDisponible());
             }
+        } 
 
-            int[] resultados = psInsertar.executeBatch();
-            System.out.println("✅ Se insertaron " + resultados.length + " nuevas disponibilidades");
-        } else {
-            System.out.println("⚠️ No hay disponibilidades para insertar");
-        }
+        // DECLARAR LAS VARIABLES AQUÍ
+        Connection conn = null;
+        PreparedStatement psEliminar = null;
+        PreparedStatement psInsertar = null;
 
-        conn.commit();
-        System.out.println("✅ Disponibilidades guardadas exitosamente");
-        return true;
-
-    } catch (SQLException e) {
-        System.err.println("❌ ERROR al guardar disponibilidades: " + e.getMessage());
-        e.printStackTrace();
-
-        if (conn != null) {
-            try {
-                conn.rollback();
-                System.err.println("🔄 Transacción revertida");
-            } catch (SQLException ex) {
-                System.err.println("❌ Error al revertir transacción: " + ex.getMessage());
-            }
-        }
-        return false;
-
-    } finally {
         try {
-            if (psEliminar != null) psEliminar.close();
-            if (psInsertar != null) psInsertar.close();
-            if (conn != null) {
-                conn.setAutoCommit(true);
-                conn.close();
-            }
-        } catch (SQLException e) {
-            System.err.println("❌ Error cerrando recursos: " + e.getMessage());
-        }
-    }
-}
-    
-    
-    /**
-     * ELIMINAR UNA DISPONIBILIDAD ESPECÍFICA
-     */
-    public boolean eliminarDisponibilidad(int disponibilidadId) {
-        String sql = "UPDATE disponibilidad_profesor " +
-                   "SET eliminado = 1, activo = 0 " +
-                   "WHERE id = ?";
+            conn = Conexion.getConnection();
 
-        try (Connection con = Conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, disponibilidadId);
-            int filas = ps.executeUpdate();
-
-            if (filas > 0) {
-                System.out.println("✅ Disponibilidad ID " + disponibilidadId + " eliminada correctamente");
-                return true;
-            } else {
-                System.out.println("⚠️ No se encontró la disponibilidad ID: " + disponibilidadId);
+            if (conn == null) {
+                System.err.println("ERROR: No se pudo establecer conexión con la base de datos");
                 return false;
             }
 
-        } catch (SQLException e) {
-            System.err.println("❌ ERROR al eliminar disponibilidad: " + e.getMessage());
-            return false;
-        }
-    }
+            conn.setAutoCommit(false);
 
+            System.out.println("Guardando disponibilidades para profesor ID: " + profesorId);
+
+            // PASO 1: ELIMINAR DISPONIBILIDADES ANTERIORES
+            String sqlEliminar = "UPDATE disponibilidad_profesor " +
+                               "SET eliminado = 1, activo = 0 " +
+                               "WHERE profesor_id = ?";
+
+            psEliminar = conn.prepareStatement(sqlEliminar);
+            psEliminar.setInt(1, profesorId);
+            int eliminados = psEliminar.executeUpdate();
+            System.out.println("🗑️ Disponibilidades anteriores marcadas como eliminadas: " + eliminados);
+
+            // PASO 2: INSERTAR NUEVAS DISPONIBILIDADES
+            if (disponibilidades != null && !disponibilidades.isEmpty()) {
+                String sqlInsertar = "INSERT INTO disponibilidad_profesor " +
+                               "(profesor_id, turno_id, dia_semana, hora_inicio, hora_fin, " +
+                               "disponible, observaciones, activo, eliminado) " +
+                               "VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0)";
+                psInsertar = conn.prepareStatement(sqlInsertar);
+
+                for (Disponibilidad disp : disponibilidades) {
+                    // Si el profesorId en la disponibilidad es 0, usar el ID del parámetro
+                    int profId = (disp.getProfesorId() == 0) ? profesorId : disp.getProfesorId();
+
+                    psInsertar.setInt(1, profId);
+                    psInsertar.setInt(2, disp.getTurnoId());
+                    psInsertar.setString(3, disp.getDiaSemana());
+                    psInsertar.setTime(4, disp.getHoraInicio());
+                    psInsertar.setTime(5, disp.getHoraFin());
+                    psInsertar.setBoolean(6, disp.isDisponible());
+
+                    // Manejo seguro de nulos para observaciones
+                    String obs = disp.getObservaciones();
+                    psInsertar.setString(7, obs != null ? obs : "");
+
+                    psInsertar.addBatch();
+                }
+
+                int[] resultados = psInsertar.executeBatch();
+                System.out.println("Se insertaron " + resultados.length + " nuevas disponibilidades");
+            } else {
+                System.out.println("ℹ️ No hay disponibilidades para insertar");
+            }
+
+            conn.commit();
+            System.out.println(" Disponibilidades guardadas exitosamente");
+            return true;
+
+        } catch (SQLException e) {
+            System.err.println(" ERROR al guardar disponibilidades: " + e.getMessage());
+            e.printStackTrace();
+
+            if (conn != null) { 
+                try {
+                    conn.rollback();
+                    System.err.println("Transacción revertida");
+                } catch (SQLException ex) {
+                    System.err.println("Error al revertir transacción: " + ex.getMessage());
+                }
+            }
+            return false;
+
+        } finally {
+            try {
+                if (psEliminar != null) psEliminar.close();
+                if (psInsertar != null) psInsertar.close();
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                System.err.println("Error cerrando recursos: " + e.getMessage());
+            }
+        }
+    } 
     /**
      * AGREGAR UNA DISPONIBILIDAD INDIVIDUAL
      */
@@ -1014,13 +1103,13 @@ public boolean guardarDisponibilidades(int profesorId, List<Disponibilidad> disp
                 ResultSet rs = ps.getGeneratedKeys();
                 if (rs.next()) {
                     int idGenerado = rs.getInt(1);
-                    System.out.println("✅ Disponibilidad agregada con ID: " + idGenerado);
+                    System.out.println("Disponibilidad agregada con ID: " + idGenerado);
                     return idGenerado;
                 }
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ ERROR al agregar disponibilidad: " + e.getMessage());
+            System.err.println("ERROR al agregar disponibilidad: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -1063,13 +1152,13 @@ public boolean guardarDisponibilidades(int profesorId, List<Disponibilidad> disp
             if (rs.next()) {
                 int total = rs.getInt("total");
                 if (total > 0) {
-                    System.out.println("⚠️ Se detectó conflicto de horario: " + total + " registros");
+                    System.out.println("Se detectó conflicto de horario: " + total + " registros");
                     return true;
                 }
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ ERROR al verificar conflicto de horario: " + e.getMessage());
+            System.err.println("ERROR al verificar conflicto de horario: " + e.getMessage());
         }
         
         return false;

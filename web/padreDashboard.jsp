@@ -447,7 +447,7 @@
                                 <a href="AsistenciaServlet?accion=verPadre&alumno_id=<%= alumnoId%>" class="btn btn-light btn-dashboard me-2 mb-2">
                                     <i class="bi bi-graph-up me-1"></i>Ver Detalles
                                 </a>
-                                <a href="JustificacionServlet?accion=form" class="btn btn-warning-dashboard mb-2">
+                                <a href="justificarAusencia.jsp?alumnoId=<%= alumnoId%>" class="btn btn-warning-dashboard mb-2">
                                     <i class="bi bi-pencil-square me-1"></i>Justificar
                                 </a>
                             <% } else { %>
