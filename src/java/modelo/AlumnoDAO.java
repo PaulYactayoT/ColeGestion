@@ -427,94 +427,64 @@ public class AlumnoDAO {
     * @param padrePersonaId ID de la persona del padre/madre/tutor
     * @return Objeto Alumno o null si no se encuentra
     */
-   public Alumno obtenerAlumnoPorPadreId(int padrePersonaId) {
-       String sql = "SELECT a.id, a.persona_id, a.grado_id, a.codigo_alumno, " +
-                    "a.fecha_ingreso, a.estado, a.activo, a.eliminado, " +
-                    "p.nombres, p.apellidos, p.correo, p.dni, p.telefono, " +
-                    "p.direccion, p.fecha_nacimiento, " +
-                    "g.nombre as grado_nombre " +
-                    "FROM alumno a " +
-                    "INNER JOIN persona p ON a.persona_id = p.id " +
-                    "LEFT JOIN grado g ON a.grado_id = g.id " +
-                    "INNER JOIN relacion_familiar rf ON a.id = rf.alumno_id " +
-                    "WHERE rf.persona_id = ? " +
-                    "AND rf.activo = 1 " +
-                    "AND rf.eliminado = 0 " +
-                    "AND a.activo = 1 " +
-                    "AND a.eliminado = 0 " +
-                    "ORDER BY rf.es_contacto_principal DESC, rf.id " +
-                    "LIMIT 1";
-
-       try (Connection con = Conexion.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)) {
-
-           ps.setInt(1, padrePersonaId);
-           ResultSet rs = ps.executeQuery();
-
-           if (rs.next()) {
-               Alumno alumno = new Alumno();
-
-               // Datos de alumno
-               alumno.setId(rs.getInt("id"));
-               alumno.setPersonaId(rs.getInt("persona_id"));
-               alumno.setGradoId(rs.getInt("grado_id"));
-               alumno.setCodigoAlumno(rs.getString("codigo_alumno"));
-               alumno.setEstado(rs.getString("estado"));
-
-               // Fechas
-               if (rs.getDate("fecha_ingreso") != null) {
-                   alumno.setFechaIngreso(rs.getDate("fecha_ingreso").toLocalDate());
-               }
-               if (rs.getDate("fecha_nacimiento") != null) {
-                   alumno.setFechaNacimiento(rs.getDate("fecha_nacimiento").toLocalDate());
-               }
-
-               // Datos de persona
-               alumno.setNombres(rs.getString("nombres"));
-               alumno.setApellidos(rs.getString("apellidos"));
-               alumno.setCorreo(rs.getString("correo"));
-               alumno.setDni(rs.getString("dni"));
-               alumno.setTelefono(rs.getString("telefono"));
-               alumno.setDireccion(rs.getString("direccion"));
-
-               // Grado
-               alumno.setGradoNombre(rs.getString("grado_nombre"));
-
-               System.out.println("✅ Alumno encontrado para padre " + padrePersonaId + ": " + 
-                                alumno.getId() + " - " + alumno.getNombreCompleto());
-
-               return alumno;
-           } else {
-               System.out.println("⚠️ No se encontró alumno para el padre: " + padrePersonaId);
-
-               // DEBUG: Verificar si existe la relación
-               String sqlDebug = "SELECT rf.*, p.nombres, p.apellidos " +
-                               "FROM relacion_familiar rf " +
-                               "INNER JOIN alumno a ON rf.alumno_id = a.id " +
-                               "INNER JOIN persona p ON a.persona_id = p.id " +
-                               "WHERE rf.persona_id = ?";
-               try (PreparedStatement psDebug = con.prepareStatement(sqlDebug)) {
-                   psDebug.setInt(1, padrePersonaId);
-                   ResultSet rsDebug = psDebug.executeQuery();
-                   System.out.println("🔍 DEBUG - Relaciones encontradas para persona_id " + padrePersonaId + ":");
-                   while (rsDebug.next()) {
-                       System.out.println("   - Alumno ID: " + rsDebug.getInt("alumno_id") + 
-                                        ", Nombres: " + rsDebug.getString("nombres") + 
-                                        " " + rsDebug.getString("apellidos") +
-                                        ", Parentesco: " + rsDebug.getString("parentesco") +
-                                        ", Activo: " + rsDebug.getBoolean("activo"));
-                   }
-               }
-           }
-
-       } catch (SQLException e) {
-           System.out.println("❌ Error al obtener alumno por padre: " + e.getMessage());
-           e.printStackTrace();
-       }
-
-       return null;
-   }
+    
    
+   /**
+ * MÉTODO PARA AGREGAR A AlumnoDAO.java
+ * OBTENER ALUMNO POR ID DEL PADRE
+ */
+
+public Alumno obtenerAlumnoPorPadreId(int padreId) {
+    String sql = "SELECT a.*, " +
+                 "CONCAT(p.nombres, ' ', p.apellidos) as nombre_completo, " +
+                 "g.nombre as grado_nombre, " +
+                 "g.nivel as grado_nivel " +
+                 "FROM alumno a " +
+                 "INNER JOIN persona p ON a.persona_id = p.id " +
+                 "INNER JOIN relacion_familiar rf ON a.id = rf.alumno_id " +
+                 "LEFT JOIN grado g ON a.grado_id = g.id " +
+                 "WHERE rf.persona_id = ? " +
+                 "AND rf.parentesco IN ('PADRE', 'MADRE', 'TUTOR') " +
+                 "AND a.activo = 1 " +
+                 "AND a.eliminado = 0 " +
+                 "AND rf.activo = 1 " +
+                 "AND rf.eliminado = 0 " +
+                 "LIMIT 1";
+    
+    try (Connection con = Conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        
+        ps.setInt(1, padreId);
+        
+        System.out.println("🔍 Buscando alumno para padreId: " + padreId);
+        
+        ResultSet rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            Alumno alumno = new Alumno();
+            alumno.setId(rs.getInt("id"));
+            alumno.setPersonaId(rs.getInt("persona_id"));
+            alumno.setGradoId(rs.getInt("grado_id"));
+            alumno.setCodigoAlumno(rs.getString("codigo_alumno"));
+            alumno.setEstado(rs.getString("estado"));
+            alumno.setNombreCompleto(rs.getString("nombre_completo"));
+            alumno.setGradoNombre(rs.getString("grado_nombre"));
+            
+            System.out.println("✅ Alumno encontrado: " + alumno.getNombreCompleto());
+            
+            return alumno;
+        } else {
+            System.out.println("❌ No se encontró alumno para padreId: " + padreId);
+        }
+        
+    } catch (SQLException e) {
+        System.out.println("❌ Error al obtener alumno por padre: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    return null;
+}
+
    /**
     * OBTENER LISTA DE HIJOS POR PADRE (usando relacion_familiar)
     * Retorna todos los alumnos asociados a un padre/madre/tutor

@@ -1,5 +1,4 @@
 package modelo;
-
 import java.time.LocalDate;
 
 public class Alumno {
@@ -84,7 +83,7 @@ public class Alumno {
     public LocalDate getFechaIngreso() { return fechaIngreso; }
     public void setFechaIngreso(LocalDate fechaIngreso) { this.fechaIngreso = fechaIngreso; }
     
-    // Método auxiliar
+    // Método auxiliar para obtener nombre completo
     public String getNombreCompleto() {
         if (this.apellidos != null && this.nombres != null) {
             return this.apellidos + ", " + this.nombres;
@@ -96,5 +95,15 @@ public class Alumno {
             return this.apellidos;
         }
         return "Sin nombre";
+    }
+    
+    /**
+     * Setter para nombre completo (usado por AlumnoDAO)
+     * Este método solo se usa para compatibilidad con el DAO
+     * El nombre completo se calcula automáticamente con getNombreCompleto()
+     */
+    public void setNombreCompleto(String nombreCompleto) {
+        // No hace nada, es solo para compatibilidad
+        // El nombre completo se genera automáticamente desde nombres y apellidos
     }
 }

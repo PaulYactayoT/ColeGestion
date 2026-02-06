@@ -1,23 +1,51 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="modelo.*, java.util.*, java.time.*" %>
 <%
-    // Validar sesión
+    // ========================================
+    // VALIDACIÓN CRÍTICA DE SESIÓN
+    // ========================================
+    
+    // Validar sesión y rol
     String rol = (String) session.getAttribute("rol");
-    if (rol == null || (!rol.equals("admin") && !rol.equals("docente"))) {
+    Integer personaId = (Integer) session.getAttribute("personaId");
+    
+    System.out.println("🔍 DEBUG - revisarJustificaciones.jsp");
+    System.out.println("   - Rol: " + rol);
+    System.out.println("   - PersonaId: " + personaId);
+    
+    if (rol == null || personaId == null) {
+        System.out.println("❌ ERROR: Sesión inválida - redirigiendo a login");
         response.sendRedirect("index.jsp");
         return;
     }
     
-    Integer personaId = (Integer) session.getAttribute("personaId");
+    if (!rol.equals("admin") && !rol.equals("docente")) {
+        System.out.println("❌ ERROR: Acceso denegado - rol: " + rol);
+        response.sendRedirect("index.jsp");
+        return;
+    }
     
-    // Obtener parámetros
+    // ========================================
+    // OBTENER PARÁMETROS
+    // ========================================
+    
     String cursoIdStr = request.getParameter("cursoId");
     String turnoIdStr = request.getParameter("turnoId");
     
-    int cursoId = cursoIdStr != null ? Integer.parseInt(cursoIdStr) : 0;
-    int turnoId = turnoIdStr != null ? Integer.parseInt(turnoIdStr) : 0;
+    int cursoId = 0;
+    int turnoId = 0;
     
-    // DAOs
+    try {
+        cursoId = cursoIdStr != null ? Integer.parseInt(cursoIdStr) : 0;
+        turnoId = turnoIdStr != null ? Integer.parseInt(turnoIdStr) : 0;
+    } catch (NumberFormatException e) {
+        System.out.println("⚠️ Error al parsear parámetros: " + e.getMessage());
+    }
+    
+    // ========================================
+    // DAOs Y DATOS
+    // ========================================
+    
     JustificacionDAO justificacionDAO = new JustificacionDAO();
     CursoDAO cursoDAO = new CursoDAO();
     TurnoDAO turnoDAO = new TurnoDAO();
@@ -25,16 +53,43 @@
     // Obtener datos
     List<Justificacion> justificacionesPendientes = new ArrayList<>();
     if (cursoId > 0 && turnoId > 0) {
-        justificacionesPendientes = justificacionDAO.obtenerJustificacionesPendientes(cursoId, turnoId);
+        try {
+            justificacionesPendientes = justificacionDAO.obtenerJustificacionesPendientes(cursoId, turnoId);
+            System.out.println("✅ Justificaciones pendientes encontradas: " + justificacionesPendientes.size());
+        } catch (Exception e) {
+            System.out.println("❌ Error al obtener justificaciones: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     // Obtener listas para filtros
-    List<Curso> cursos = cursoDAO.obtenerCursosPorDocente(personaId);
-    List<Turno> turnos = turnoDAO.listarTurnos();
+    List<Curso> cursos = new ArrayList<>();
+    try {
+        cursos = cursoDAO.obtenerCursosPorDocente(personaId);
+        System.out.println("✅ Cursos encontrados: " + cursos.size());
+    } catch (Exception e) {
+        System.out.println("❌ Error al obtener cursos: " + e.getMessage());
+        e.printStackTrace();
+    }
+    
+    List<Turno> turnos = new ArrayList<>();
+    try {
+        turnos = turnoDAO.listarTurnos();
+        System.out.println("✅ Turnos encontrados: " + turnos.size());
+    } catch (Exception e) {
+        System.out.println("❌ Error al obtener turnos: " + e.getMessage());
+        e.printStackTrace();
+    }
     
     // Mensajes
     String mensaje = request.getParameter("mensaje");
     String tipoMensaje = request.getParameter("tipo");
+    
+    // Obtener nombre del usuario para mostrar
+    String nombreUsuario = (String) session.getAttribute("nombres");
+    if (nombreUsuario == null) {
+        nombreUsuario = "Usuario";
+    }
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -374,60 +429,6 @@
             min-width: 300px;
         }
         
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
-            background-color: #ffffff;
-            border-radius: 12px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            animation: modalSlideIn 0.3s ease;
-        }
-        
-        .modal-header {
-            background-color: #000000;
-            color: #ffffff;
-            padding: 20px 25px;
-            border-radius: 12px 12px 0 0;
-        }
-        
-        .modal-header h3 {
-            margin: 0;
-            font-size: 22px;
-            font-weight: 600;
-        }
-        
-        .modal-body {
-            padding: 25px;
-        }
-        
-        .modal-footer {
-            padding: 20px 25px;
-            border-top: 1px solid #e0e0e0;
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -480,17 +481,6 @@
             }
         }
         
-        @keyframes modalSlideIn {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
         /* Responsivo */
         @media (max-width: 768px) {
             .header-content {
@@ -528,7 +518,7 @@
     <header class="main-header">
         <div class="header-content">
             <div class="header-title">🏫 Sistema de Asistencia Escolar</div>
-            <div class="header-user">👤 <%= session.getAttribute("nombres") %> (<%= rol.toUpperCase() %>)</div>
+            <div class="header-user">👤 <%= nombreUsuario %> (<%= rol.toUpperCase() %>)</div>
         </div>
     </header>
     
@@ -542,7 +532,7 @@
         
         <!-- Mensajes -->
         <% if (mensaje != null) { %>
-            <div class="alert alert-<%= tipoMensaje %>">
+            <div class="alert alert-<%= tipoMensaje != null ? tipoMensaje : "success" %>">
                 <span><%= mensaje %></span>
             </div>
         <% } %>
@@ -555,11 +545,13 @@
                         <label for="cursoId">📚 Curso</label>
                         <select name="cursoId" id="cursoId" class="form-control" required>
                             <option value="">-- Seleccione un curso --</option>
-                            <% for (Curso c : cursos) { %>
+                            <% if (cursos != null) {
+                                for (Curso c : cursos) { %>
                                 <option value="<%= c.getId() %>" <%= c.getId() == cursoId ? "selected" : "" %>>
-                                    <%= c.getNombre() %> - <%= c.getGradoNombre() %> <%= c.getSeccion() %>
+                                    <%= c.getNombre() %> - <%= c.getGradoNombre() %>
                                 </option>
-                            <% } %>
+                            <% } 
+                            } %>
                         </select>
                     </div>
                     
@@ -567,11 +559,13 @@
                         <label for="turnoId">🕐 Turno</label>
                         <select name="turnoId" id="turnoId" class="form-control" required>
                             <option value="">-- Seleccione un turno --</option>
-                            <% for (Turno t : turnos) { %>
+                            <% if (turnos != null) {
+                                for (Turno t : turnos) { %>
                                 <option value="<%= t.getId() %>" <%= t.getId() == turnoId ? "selected" : "" %>>
                                     <%= t.getNombre() %> (<%= t.getHoraInicio() %> - <%= t.getHoraFin() %>)
                                 </option>
-                            <% } %>
+                            <% } 
+                            } %>
                         </select>
                     </div>
                 </div>
@@ -627,7 +621,7 @@
                                 <div class="justificacion-section">
                                     <label>Tipo de Justificación</label>
                                     <div class="justificacion-text">
-                                        <%= justif.getTipoJustificacion().getDescripcion() %>
+                                        <%= justif.getTipoJustificacion() != null ? justif.getTipoJustificacion().getDescripcion() : "No especificado" %>
                                     </div>
                                 </div>
                                 

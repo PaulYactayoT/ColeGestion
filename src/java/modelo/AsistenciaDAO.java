@@ -1065,6 +1065,67 @@ public class AsistenciaDAO {
     }
     
     /**
+     * OBTENER AUSENCIAS SIN JUSTIFICAR
+     */
+    public List<Asistencia> obtenerAusenciasSinJustificar(int alumnoId) {
+        List<Asistencia> lista = new ArrayList<>();
+        String sql = "SELECT a.*, c.nombre as curso_nombre, t.nombre as turno_nombre, " +
+                     "CONCAT(p.nombres, ' ', p.apellidos) as alumno_nombre " +
+                     "FROM asistencia a " +
+                     "INNER JOIN curso c ON a.curso_id = c.id " +
+                     "INNER JOIN turno t ON a.turno_id = t.id " +
+                     "INNER JOIN alumno al ON a.alumno_id = al.id " +
+                     "INNER JOIN persona p ON al.persona_id = p.id " +
+                     "WHERE a.alumno_id = ? " +
+                     "AND a.estado IN ('AUSENTE', 'TARDANZA') " +
+                     "AND a.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
+                     "AND NOT EXISTS (SELECT 1 FROM justificacion j " +
+                     "               WHERE j.asistencia_id = a.id " +
+                     "               AND j.estado = 'APROBADO') " +
+                     "AND NOT EXISTS (SELECT 1 FROM justificacion j2 " +
+                     "               WHERE j2.asistencia_id = a.id " +
+                     "               AND j2.estado = 'PENDIENTE') " +
+                     "ORDER BY a.fecha DESC, a.hora_clase DESC";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, alumnoId);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Asistencia asistencia = new Asistencia();
+                asistencia.setId(rs.getInt("id"));
+                
+                java.sql.Date fecha = rs.getDate("fecha");
+                if (fecha != null) {
+                    asistencia.setFecha(fecha.toLocalDate());
+                }
+                
+                java.sql.Time hora = rs.getTime("hora_clase");
+                if (hora != null) {
+                    asistencia.setHoraClase(hora.toLocalTime());
+                }
+                
+                asistencia.setEstadoFromString(rs.getString("estado"));
+                asistencia.setCursoNombre(rs.getString("curso_nombre"));
+                asistencia.setTurnoNombre(rs.getString("turno_nombre"));
+                asistencia.setAlumnoNombre(rs.getString("alumno_nombre"));
+                
+                lista.add(asistencia);
+            }
+            
+            System.out.println("DAO: Se encontraron " + lista.size() + " ausencias sin justificar para alumnoId=" + alumnoId);
+            
+        } catch (SQLException e) {
+            System.out.println("❌ Error en obtenerAusenciasSinJustificar: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return lista;
+    }
+
+    /**
      * OBTENER ESTADÍSTICAS DE ASISTENCIA PARA REPORTES
      */
     public Map<String, Object> obtenerEstadisticasAsistencia(int cursoId, int turnoId, 
@@ -1117,11 +1178,11 @@ public class AsistenciaDAO {
                 estadisticas.put("curso_id", cursoId);
                 estadisticas.put("turno_id", turnoId);
                 
-                System.out.println(" Estadísticas obtenidas: " + total + " registros totales");
+                System.out.println("📊 Estadísticas obtenidas: " + total + " registros totales");
             }
             
         } catch (SQLException e) {
-            System.out.println(" Error al obtener estadísticas: " + e.getMessage());
+            System.out.println("❌ Error al obtener estadísticas: " + e.getMessage());
             e.printStackTrace();
         }
         
@@ -1129,339 +1190,280 @@ public class AsistenciaDAO {
     }
     
     /**
-    * ACTUALIZAR ASISTENCIA CON VALIDACIÓN DE TIEMPO LÍMITE
-    */
-   public boolean actualizarAsistencia(Asistencia asistencia) {
-       //  VALIDACIÓN DE TIEMPO LÍMITE
-       ConfiguracionLimiteDAO configDAO = new ConfiguracionLimiteDAO();
-       boolean puedeEditar = configDAO.puedeEditarAsistencia(
-           asistencia.getCursoId(),
-           asistencia.getTurnoId(),
-           asistencia.getFecha(),
-           asistencia.getHoraClase()
-       );
+     * ACTUALIZAR ASISTENCIA CON VALIDACIÓN DE TIEMPO LÍMITE
+     */
+    public boolean actualizarAsistencia(Asistencia asistencia) {
+        // VALIDACIÓN DE TIEMPO LÍMITE
+        ConfiguracionLimiteDAO configDAO = new ConfiguracionLimiteDAO();
+        boolean puedeEditar = configDAO.puedeEditarAsistencia(
+            asistencia.getCursoId(),
+            asistencia.getTurnoId(),
+            asistencia.getFecha(),
+            asistencia.getHoraClase()
+        );
 
-       if (!puedeEditar) {
-           System.out.println(" NO se puede editar. Ya pasó el tiempo límite.");
-           return false;
-       }
+        if (!puedeEditar) {
+            System.out.println("❌ NO se puede editar. Ya pasó el tiempo límite.");
+            return false;
+        }
 
-       // Continúa con la actualización normal...
-       String sql = "UPDATE asistencia SET estado = ?, observaciones = ?, " +
-                    "fecha_actualizacion = ? WHERE id = ?";
+        // Continúa con la actualización normal...
+        String sql = "UPDATE asistencia SET estado = ?, observaciones = ?, " +
+                     "fecha_actualizacion = ? WHERE id = ?";
 
-       try (Connection con = Conexion.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-           ps.setString(1, asistencia.getEstadoString());
-           ps.setString(2, asistencia.getObservaciones());
-           ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
-           ps.setInt(4, asistencia.getId());
+            ps.setString(1, asistencia.getEstadoString());
+            ps.setString(2, asistencia.getObservaciones());
+            ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setInt(4, asistencia.getId());
 
-           int filasAfectadas = ps.executeUpdate();
+            int filasAfectadas = ps.executeUpdate();
 
-           if (filasAfectadas > 0) {
-               System.out.println(" Asistencia actualizada: " + asistencia.getId());
-               return true;
-           }
+            if (filasAfectadas > 0) {
+                System.out.println("✅ Asistencia actualizada: " + asistencia.getId());
+                return true;
+            }
 
-       } catch (SQLException e) {
-           System.out.println(" Error al actualizar asistencia: " + e.getMessage());
-           e.printStackTrace();
-       }
+        } catch (SQLException e) {
+            System.out.println("❌ Error al actualizar asistencia: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-       return false;
-   }
+        return false;
+    }
    
-   /**
-    * VALIDAR SI EL DOCENTE PUEDE REGISTRAR ASISTENCIA EN ESTE MOMENTO
-    * 
-    * @param cursoId ID del curso
-    * @param turnoId ID del turno
-    * @param profesorId ID del profesor
-    * @return true si puede registrar ahora
-    */
-   public boolean puedeRegistrarAsistenciaAhora(int cursoId, int turnoId, int profesorId) {
-       LocalDate hoy = LocalDate.now();
-       LocalTime ahora = LocalTime.now();
-       String diaHoy = hoy.getDayOfWeek().toString();
+    /**
+     * VALIDAR SI EL DOCENTE PUEDE REGISTRAR ASISTENCIA EN ESTE MOMENTO
+     * 
+     * @param cursoId ID del curso
+     * @param turnoId ID del turno
+     * @param profesorId ID del profesor
+     * @return true si puede registrar ahora
+     */
+    public boolean puedeRegistrarAsistenciaAhora(int cursoId, int turnoId, int profesorId) {
+        LocalDate hoy = LocalDate.now();
+        LocalTime ahora = LocalTime.now();
+        String diaHoy = hoy.getDayOfWeek().toString();
 
-       String sql = "SELECT h.hora_inicio, h.hora_fin " +
-                    "FROM horario_clase h " +
-                    "WHERE h.curso_id = ? " +
-                    "AND h.turno_id = ? " +
-                    "AND h.profesor_id = ? " +
-                    "AND h.dia_semana = ? " +
-                    "AND h.activo = 1 " +
-                    "AND h.eliminado = 0";
+        String sql = "SELECT h.hora_inicio, h.hora_fin " +
+                     "FROM horario_clase h " +
+                     "WHERE h.curso_id = ? " +
+                     "AND h.turno_id = ? " +
+                     "AND h.profesor_id = ? " +
+                     "AND h.dia_semana = ? " +
+                     "AND h.activo = 1 " +
+                     "AND h.eliminado = 0";
 
-       try (Connection con = Conexion.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-           ps.setInt(1, cursoId);
-           ps.setInt(2, turnoId);
-           ps.setInt(3, profesorId);
-           ps.setString(4, diaHoy);
+            ps.setInt(1, cursoId);
+            ps.setInt(2, turnoId);
+            ps.setInt(3, profesorId);
+            ps.setString(4, diaHoy);
 
-           ResultSet rs = ps.executeQuery();
+            ResultSet rs = ps.executeQuery();
 
-           while (rs.next()) {
-               LocalTime horaInicio = rs.getTime("hora_inicio").toLocalTime();
-               LocalTime horaFin = rs.getTime("hora_fin").toLocalTime();
+            while (rs.next()) {
+                LocalTime horaInicio = rs.getTime("hora_inicio").toLocalTime();
+                LocalTime horaFin = rs.getTime("hora_fin").toLocalTime();
 
-               // Verificar si la hora actual está dentro del horario de clase
-               if (!ahora.isBefore(horaInicio) && !ahora.isAfter(horaFin)) {
-                   System.out.println(" El profesor puede tomar asistencia ahora");
-                   return true;
-               }
-           }
+                // Verificar si la hora actual está dentro del horario de clase
+                if (!ahora.isBefore(horaInicio) && !ahora.isAfter(horaFin)) {
+                    System.out.println("✅ El profesor puede tomar asistencia ahora");
+                    return true;
+                }
+            }
 
-       } catch (SQLException e) {
-           System.out.println(" Error al verificar horario: " + e.getMessage());
-           e.printStackTrace();
-       }
+        } catch (SQLException e) {
+            System.out.println("❌ Error al verificar horario: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-       System.out.println(" No es hora de clase para este curso");
-       return false;
-   }
-   /**
-    * OBTENER HORARIO DE CLASE PARA UN CURSO ESPECÍFICO
-    * 
-    * @param cursoId ID del curso
-    * @param turnoId ID del turno
-    * @param fecha Fecha de la clase
-    * @return LocalTime con la hora de inicio, o null si no hay clase
-    */
-   public LocalTime obtenerHorarioClase(int cursoId, int turnoId, LocalDate fecha) {
-       String diaString = fecha.getDayOfWeek().toString();
-
-       String sql = "SELECT hora_inicio FROM horario_clase " +
-                    "WHERE curso_id = ? AND turno_id = ? " +
-                    "AND dia_semana = ? AND activo = 1";
-
-       try (Connection con = Conexion.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)) {
-
-           ps.setInt(1, cursoId);
-           ps.setInt(2, turnoId);
-           ps.setString(3, diaString);
-
-           ResultSet rs = ps.executeQuery();
-
-           if (rs.next()) {
-               return rs.getTime("hora_inicio").toLocalTime();
-           }
-
-       } catch (SQLException e) {
-           System.out.println(" Error al obtener horario: " + e.getMessage());
-           e.printStackTrace();
-       }
-
-       return null;
-   }
+        System.out.println("⚠️ No es hora de clase para este curso");
+        return false;
+    }
    
-   /**
-    * OBTENER AUSENCIAS SIN JUSTIFICAR PARA UN ALUMNO
-    * 
-    * @param alumnoId ID del alumno
-    * @return Lista de asistencias con estado AUSENTE sin justificación
-    */
-   public List<Asistencia> obtenerAusenciasSinJustificar(int alumnoId) {
-       List<Asistencia> lista = new ArrayList<>();
+    /**
+     * OBTENER HORARIO DE CLASE PARA UN CURSO ESPECÍFICO
+     * 
+     * @param cursoId ID del curso
+     * @param turnoId ID del turno
+     * @param fecha Fecha de la clase
+     * @return LocalTime con la hora de inicio, o null si no hay clase
+     */
+    public LocalTime obtenerHorarioClase(int cursoId, int turnoId, LocalDate fecha) {
+        String diaString = fecha.getDayOfWeek().toString();
 
-       String sql = "SELECT a.*, " +
-                    "c.nombre as curso_nombre, " +
-                    "t.nombre as turno_nombre, " +
-                    "CONCAT(p.nombres, ' ', p.apellidos) as alumno_nombre " +
-                    "FROM asistencia a " +
-                    "INNER JOIN curso c ON a.curso_id = c.id " +
-                    "INNER JOIN turno t ON a.turno_id = t.id " +
-                    "INNER JOIN alumno al ON a.alumno_id = al.id " +
-                    "INNER JOIN persona p ON al.persona_id = p.id " +
-                    "LEFT JOIN justificacion j ON a.id = j.asistencia_id AND j.activo = 1 " +
-                    "WHERE a.alumno_id = ? " +
-                    "AND a.estado = 'AUSENTE' " +
-                    "AND j.id IS NULL " +
-                    "AND a.activo = 1 " +
-                    "AND a.eliminado = 0 " +
-                    "ORDER BY a.fecha DESC, a.hora_clase DESC";
+        String sql = "SELECT hora_inicio FROM horario_clase " +
+                     "WHERE curso_id = ? AND turno_id = ? " +
+                     "AND dia_semana = ? AND activo = 1";
 
-       try (Connection con = Conexion.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-           ps.setInt(1, alumnoId);
-           ResultSet rs = ps.executeQuery();
+            ps.setInt(1, cursoId);
+            ps.setInt(2, turnoId);
+            ps.setString(3, diaString);
 
-           while (rs.next()) {
-               Asistencia asist = new Asistencia();
-               asist.setId(rs.getInt("id"));
-               asist.setAlumnoId(rs.getInt("alumno_id"));
-               asist.setCursoId(rs.getInt("curso_id"));
-               asist.setTurnoId(rs.getInt("turno_id"));
-               asist.setFecha(rs.getDate("fecha").toLocalDate());
-               asist.setHoraClase(rs.getTime("hora_clase").toLocalTime());
-               asist.setEstadoFromString(rs.getString("estado"));
-               asist.setObservaciones(rs.getString("observaciones"));
-               asist.setRegistradoPor(rs.getInt("registrado_por"));
-               asist.setCursoNombre(rs.getString("curso_nombre"));
-               asist.setTurnoNombre(rs.getString("turno_nombre"));
-               asist.setAlumnoNombre(rs.getString("alumno_nombre"));
+            ResultSet rs = ps.executeQuery();
 
-               lista.add(asist);
-           }
+            if (rs.next()) {
+                return rs.getTime("hora_inicio").toLocalTime();
+            }
 
-           System.out.println(" Ausencias sin justificar encontradas: " + lista.size());
+        } catch (SQLException e) {
+            System.out.println("❌ Error al obtener horario: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-       } catch (SQLException e) {
-           System.out.println(" Error al obtener ausencias: " + e.getMessage());
-           e.printStackTrace();
-       }
-
-       return lista;
-   }
+        return null;
+    }
    
-   /**
-    * ACTUALIZAR ASISTENCIA CON VALIDACIÓN DE TIEMPO LÍMITE
-    */
-   public boolean actualizarAsistenciaConValidacion(Asistencia asistencia) {
-       // Validar si se puede editar
-       ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
-       boolean puedeEditar = configDAO.puedeEditarAsistencia(
-           asistencia.getCursoId(),
-           asistencia.getTurnoId(),
-           asistencia.getFecha(),
-           asistencia.getHoraClase()
-       );
+    /**
+     * ACTUALIZAR ASISTENCIA CON VALIDACIÓN DE TIEMPO LÍMITE
+     */
+    public boolean actualizarAsistenciaConValidacion(Asistencia asistencia) {
+        // Validar si se puede editar
+        ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
+        boolean puedeEditar = configDAO.puedeEditarAsistencia(
+            asistencia.getCursoId(),
+            asistencia.getTurnoId(),
+            asistencia.getFecha(),
+            asistencia.getHoraClase()
+        );
 
-       if (!puedeEditar) {
-           System.out.println("NO se puede editar. Tiempo límite excedido.");
-           return false;
-       }
+        if (!puedeEditar) {
+            System.out.println("❌ NO se puede editar. Tiempo límite excedido.");
+            return false;
+        }
 
-       // Continuar con la actualización
-       return actualizarAsistenciaIndividual(asistencia);
-   }
+        // Continuar con la actualización
+        return actualizarAsistenciaIndividual(asistencia);
+    }
 
-   /**
-    * ACTUALIZAR ASISTENCIA INDIVIDUAL (método auxiliar)
-    */
-   private boolean actualizarAsistenciaIndividual(Asistencia asistencia) {
-       String sql = "UPDATE asistencia SET estado = ?, observaciones = ?, " +
-                   "fecha_actualizacion = ?, registrado_por = ? " +
-                   "WHERE id = ? AND activo = 1 AND eliminado = 0";
+    /**
+     * ACTUALIZAR ASISTENCIA INDIVIDUAL (método auxiliar)
+     */
+    private boolean actualizarAsistenciaIndividual(Asistencia asistencia) {
+        String sql = "UPDATE asistencia SET estado = ?, observaciones = ?, " +
+                    "fecha_actualizacion = ?, registrado_por = ? " +
+                    "WHERE id = ? AND activo = 1 AND eliminado = 0";
 
-       try (Connection con = Conexion.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-           ps.setString(1, asistencia.getEstadoString());
-           ps.setString(2, asistencia.getObservaciones());
-           ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
-           ps.setInt(4, asistencia.getRegistradoPor());
-           ps.setInt(5, asistencia.getId());
+            ps.setString(1, asistencia.getEstadoString());
+            ps.setString(2, asistencia.getObservaciones());
+            ps.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setInt(4, asistencia.getRegistradoPor());
+            ps.setInt(5, asistencia.getId());
 
-           int filas = ps.executeUpdate();
+            int filas = ps.executeUpdate();
 
-           if (filas > 0) {
-               System.out.println("Asistencia actualizada: ID " + asistencia.getId());
-               return true;
-           }
+            if (filas > 0) {
+                System.out.println("✅ Asistencia actualizada: ID " + asistencia.getId());
+                return true;
+            }
 
-       } catch (SQLException e) {
-           System.out.println("Error al actualizar asistencia: " + e.getMessage());
-           e.printStackTrace();
-       }
+        } catch (SQLException e) {
+            System.out.println("❌ Error al actualizar asistencia: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-       return false;
-   }
+        return false;
+    }
 
-   /**
-    * VERIFICAR ESTADO DE EDICIÓN PARA UNA ASISTENCIA
-    */
-   public Map<String, Object> verificarEstadoEdicion(int asistenciaId) {
-       Map<String, Object> resultado = new HashMap<>();
+    /**
+     * VERIFICAR ESTADO DE EDICIÓN PARA UNA ASISTENCIA
+     */
+    public Map<String, Object> verificarEstadoEdicion(int asistenciaId) {
+        Map<String, Object> resultado = new HashMap<>();
 
-       // Obtener la asistencia
-       Asistencia asistencia = obtenerAsistenciaPorId(asistenciaId);
+        // Obtener la asistencia
+        Asistencia asistencia = obtenerAsistenciaPorId(asistenciaId);
 
-       if (asistencia == null) {
-           resultado.put("puede_editar", false);
-           resultado.put("mensaje", "Asistencia no encontrada");
-           return resultado;
-       }
+        if (asistencia == null) {
+            resultado.put("puede_editar", false);
+            resultado.put("mensaje", "Asistencia no encontrada");
+            return resultado;
+        }
 
-       // Verificar con ConfiguracionAsistenciaDAO
-       ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
+        // Verificar con ConfiguracionAsistenciaDAO
+        ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
 
-       Map<String, Object> estado = configDAO.obtenerEstadoEdicionDetallado(
-           asistencia.getCursoId(),
-           asistencia.getTurnoId(),
-           asistencia.getFecha(),
-           asistencia.getHoraClase()
-       );
+        Map<String, Object> estado = configDAO.obtenerEstadoEdicionDetallado(
+            asistencia.getCursoId(),
+            asistencia.getTurnoId(),
+            asistencia.getFecha(),
+            asistencia.getHoraClase()
+        );
 
-       resultado.putAll(estado);
-       resultado.put("asistencia", asistencia);
+        resultado.putAll(estado);
+        resultado.put("asistencia", asistencia);
 
-       return resultado;
-   }
+        return resultado;
+    }
 
-   /**
-    * ACTUALIZAR ASISTENCIAS EN LOTE CON VALIDACIÓN
-    */
-   public Map<String, Object> actualizarAsistenciasEnLote(List<Asistencia> asistencias) {
-       Map<String, Object> resultado = new HashMap<>();
-       int exitosas = 0;
-       int fallidas = 0;
-       int tiempoExcedido = 0;
-       List<String> errores = new ArrayList<>();
+    /**
+     * ACTUALIZAR ASISTENCIAS EN LOTE CON VALIDACIÓN
+     */
+    public Map<String, Object> actualizarAsistenciasEnLote(List<Asistencia> asistencias) {
+        Map<String, Object> resultado = new HashMap<>();
+        int exitosas = 0;
+        int fallidas = 0;
+        int tiempoExcedido = 0;
+        List<String> errores = new ArrayList<>();
 
-       ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
+        ConfiguracionAsistenciaDAO configDAO = new ConfiguracionAsistenciaDAO();
 
-       for (Asistencia asistencia : asistencias) {
-           try {
-               // Verificar tiempo límite para cada asistencia
-               boolean puedeEditar = configDAO.puedeEditarAsistencia(
-                   asistencia.getCursoId(),
-                   asistencia.getTurnoId(),
-                   asistencia.getFecha(),
-                   asistencia.getHoraClase()
-               );
+        for (Asistencia asistencia : asistencias) {
+            try {
+                // Verificar tiempo límite para cada asistencia
+                boolean puedeEditar = configDAO.puedeEditarAsistencia(
+                    asistencia.getCursoId(),
+                    asistencia.getTurnoId(),
+                    asistencia.getFecha(),
+                    asistencia.getHoraClase()
+                );
 
-               if (!puedeEditar) {
-                   tiempoExcedido++;
-                   errores.add("Asistencia ID " + asistencia.getId() + ": Tiempo límite excedido");
-                   continue;
-               }
+                if (!puedeEditar) {
+                    tiempoExcedido++;
+                    errores.add("Asistencia ID " + asistencia.getId() + ": Tiempo límite excedido");
+                    continue;
+                }
 
-               // Actualizar
-               if (actualizarAsistenciaIndividual(asistencia)) {
-                   exitosas++;
-               } else {
-                   fallidas++;
-                   errores.add("Asistencia ID " + asistencia.getId() + ": Error al actualizar");
-               }
+                // Actualizar
+                if (actualizarAsistenciaIndividual(asistencia)) {
+                    exitosas++;
+                } else {
+                    fallidas++;
+                    errores.add("Asistencia ID " + asistencia.getId() + ": Error al actualizar");
+                }
 
-           } catch (Exception e) {
-               fallidas++;
-               errores.add("Asistencia ID " + asistencia.getId() + ": " + e.getMessage());
-           }
-       }
+            } catch (Exception e) {
+                fallidas++;
+                errores.add("Asistencia ID " + asistencia.getId() + ": " + e.getMessage());
+            }
+        }
 
-       resultado.put("exitosas", exitosas);
-       resultado.put("fallidas", fallidas);
-       resultado.put("tiempo_excedido", tiempoExcedido);
-       resultado.put("total", asistencias.size());
-       resultado.put("errores", errores);
+        resultado.put("exitosas", exitosas);
+        resultado.put("fallidas", fallidas);
+        resultado.put("tiempo_excedido", tiempoExcedido);
+        resultado.put("total", asistencias.size());
+        resultado.put("errores", errores);
 
-       System.out.println("   Resultado actualización en lote:");
-       System.out.println("   Exitosas: " + exitosas);
-       System.out.println("   Fallidas: " + fallidas);
-       System.out.println("   Tiempo excedido: " + tiempoExcedido);
+        System.out.println("📊 Resultado actualización en lote:");
+        System.out.println("   Exitosas: " + exitosas);
+        System.out.println("   Fallidas: " + fallidas);
+        System.out.println("   Tiempo excedido: " + tiempoExcedido);
 
-       return resultado;
-   }
-   
-   /**
+        return resultado;
+    }
+
+    /**
      * OBTENER ASISTENCIAS POR ALUMNO (Alias para obtenerAusenciasSinJustificar)
      * Este método es llamado desde justificarAusencia.jsp
      * 
@@ -1499,8 +1501,17 @@ public class AsistenciaDAO {
                 asist.setAlumnoId(rs.getInt("alumno_id"));
                 asist.setCursoId(rs.getInt("curso_id"));
                 asist.setTurnoId(rs.getInt("turno_id"));
-                asist.setFecha(rs.getDate("fecha").toLocalDate());
-                asist.setHoraClase(rs.getTime("hora_clase").toLocalTime());
+                
+                java.sql.Date sqlFecha = rs.getDate("fecha");
+                if (sqlFecha != null) {
+                    asist.setFecha(sqlFecha.toLocalDate());
+                }
+                
+                java.sql.Time sqlHora = rs.getTime("hora_clase");
+                if (sqlHora != null) {
+                    asist.setHoraClase(sqlHora.toLocalTime());
+                }
+                
                 asist.setEstadoFromString(rs.getString("estado"));
                 asist.setObservaciones(rs.getString("observaciones"));
                 asist.setRegistradoPor(rs.getInt("registrado_por"));
@@ -1511,14 +1522,13 @@ public class AsistenciaDAO {
                 lista.add(asist);
             }
             
-            System.out.println(" Asistencias encontradas para alumno " + alumnoId + ": " + lista.size());
+            System.out.println("✅ Asistencias encontradas para alumno " + alumnoId + ": " + lista.size());
             
         } catch (SQLException e) {
-            System.err.println(" Error al obtener asistencias por alumno: " + e.getMessage());
+            System.err.println("❌ Error al obtener asistencias por alumno: " + e.getMessage());
             e.printStackTrace();
         }
         
         return lista;
     }
-   
 }

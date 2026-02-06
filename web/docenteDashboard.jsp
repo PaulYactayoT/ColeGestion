@@ -296,7 +296,7 @@
                         <span class="text-sm">Asistencias</span>
                     </a>
                     <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="JustificacionServlet?accion=pending">
+                       href="revisarJustificaciones.jsp">
                         <i class="fas fa-clock" aria-hidden="true"></i>
                         <span class="text-sm">Justificaciones</span>
                     </a>
@@ -393,7 +393,7 @@
                             <span>Tomar Asistencia</span>
                         </a>
                         
-                        <a href="JustificacionServlet?accion=pending" 
+                        <a href="revisarJustificaciones.jsp" 
                            class="flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 text-gray-900 font-medium rounded-lg hover:bg-yellow-300 transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-white">
                             <span class="material-symbols-outlined">schedule</span>
                             <span>Justificaciones</span>
@@ -517,11 +517,10 @@
                         <div>
                             <h4 class="font-medium text-blue-800 dark:text-blue-300">Información importante:</h4>
                             <ul class="mt-2 text-sm text-blue-700 dark:text-blue-400 space-y-1">
-                                <li>• Para registrar un nuevo profesor, haz clic en "Registrar Profesor"</li>
-                                <li>• Los colores de los badges indican el nivel y estado del profesor</li>
-                                <li>• Para editar la información de un profesor, utiliza el botón de editar</li>
-                                <li>• Ten cuidado al eliminar profesores, esta acción no se puede deshacer</li>
-                                <li>• Puedes ver los detalles completos de un profesor usando el botón de "Ver detalles"</li>
+                                <li>• Las justificaciones pendientes aparecerán en la sección correspondiente</li>
+                                <li>• Puedes aprobar o rechazar justificaciones con comentarios</li>
+                                <li>• Revisa las asistencias regularmente para mantener el control</li>
+                                <li>• Los materiales de apoyo están disponibles para todos tus cursos</li>
                             </ul>
                         </div>
                     </div>
