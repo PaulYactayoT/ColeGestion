@@ -512,7 +512,6 @@
                                     <th>Correo</th>
                                     <th>Área</th>
                                     <th>Nivel</th>
-                                    <th>Turno</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -561,12 +560,7 @@
                                         <span class="status-badge <%= nivelBadgeClass %>">
                                             <%= nivel != null ? nivel : "Sin nivel" %>
                                         </span>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-                                            <%= p.getTurnoNombre()!= null ? p.getTurnoNombre() : "Sin turno"%>
-                                        </span>
-                                    </td>
+                                    </td> 
                                     <td>
                                         <% 
                                             String estado = p.getEstado();

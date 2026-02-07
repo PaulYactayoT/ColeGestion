@@ -194,7 +194,9 @@ public class Asistencia {
     public String getEstadoString() {
         return estado != null ? estado.name() : "";
     }
-    
+    public void setEstadoString(String estadoStr) {
+    this.setEstadoFromString(estadoStr);
+}
     public String getObservaciones() { 
         return observaciones; 
     }

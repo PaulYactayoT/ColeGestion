@@ -5,18 +5,8 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
-/**
- * DAO para gestionar justificaciones de asistencia
- * Permite crear, aprobar/rechazar y consultar justificaciones
- */
 public class JustificacionDAO {
     
-    /**
-     * CREAR NUEVA JUSTIFICACIÓN
-     * 
-     * @param justificacion Objeto Justificacion con los datos
-     * @return ID de la justificación creada, o 0 si falla
-     */
     public int crearJustificacion(Justificacion justificacion) {
         String sql = "INSERT INTO justificacion " +
                      "(asistencia_id, tipo_justificacion, descripcion, documento_adjunto, " +
@@ -52,15 +42,6 @@ public class JustificacionDAO {
         return 0;
     }
     
-    /**
-     * APROBAR JUSTIFICACIÓN
-     * Cambia el estado de la asistencia a JUSTIFICADO
-     * 
-     * @param justificacionId ID de la justificación
-     * @param aprobadoPor ID del profesor/admin que aprueba
-     * @param observaciones Observaciones opcionales
-     * @return true si se aprobó exitosamente
-     */
     public boolean aprobarJustificacion(int justificacionId, int aprobadoPor, String observaciones) {
         Connection con = null;
         
@@ -68,7 +49,6 @@ public class JustificacionDAO {
             con = Conexion.getConnection();
             con.setAutoCommit(false);
             
-            // 1. Actualizar estado de la justificación
             String sqlJustif = "UPDATE justificacion " +
                               "SET estado = 'APROBADO', aprobado_por = ?, " +
                               "fecha_aprobacion = ?, observaciones_aprobacion = ? " +
@@ -82,7 +62,6 @@ public class JustificacionDAO {
                 ps.executeUpdate();
             }
             
-            // 2. Actualizar estado de la asistencia a JUSTIFICADO
             String sqlAsist = "UPDATE asistencia a " +
                              "INNER JOIN justificacion j ON a.id = j.asistencia_id " +
                              "SET a.estado = 'JUSTIFICADO' " +
@@ -120,14 +99,6 @@ public class JustificacionDAO {
         }
     }
     
-    /**
-     * RECHAZAR JUSTIFICACIÓN
-     * 
-     * @param justificacionId ID de la justificación
-     * @param aprobadoPor ID del profesor/admin que rechaza
-     * @param observaciones Motivo del rechazo
-     * @return true si se rechazó exitosamente
-     */
     public boolean rechazarJustificacion(int justificacionId, int aprobadoPor, String observaciones) {
         String sql = "UPDATE justificacion " +
                      "SET estado = 'RECHAZADO', aprobado_por = ?, " +
@@ -157,13 +128,6 @@ public class JustificacionDAO {
         return false;
     }
     
-    /**
-     * OBTENER JUSTIFICACIONES PENDIENTES POR CURSO
-     * 
-     * @param cursoId ID del curso
-     * @param turnoId ID del turno
-     * @return Lista de justificaciones pendientes
-     */
     public List<Justificacion> obtenerJustificacionesPendientes(int cursoId, int turnoId) {
         List<Justificacion> lista = new ArrayList<>();
         String sql = "SELECT j.*, " +
@@ -200,12 +164,6 @@ public class JustificacionDAO {
         return lista;
     }
     
-    /**
-     * OBTENER JUSTIFICACIONES POR ASISTENCIA
-     * 
-     * @param asistenciaId ID de la asistencia
-     * @return Lista de justificaciones
-     */
     public List<Justificacion> obtenerJustificacionesPorAsistencia(int asistenciaId) {
         List<Justificacion> lista = new ArrayList<>();
         String sql = "SELECT j.*, " +
@@ -242,12 +200,6 @@ public class JustificacionDAO {
         return lista;
     }
     
-    /**
-     * OBTENER JUSTIFICACIÓN POR ID
-     * 
-     * @param id ID de la justificación
-     * @return Objeto Justificacion o null
-     */
     public Justificacion obtenerJustificacionPorId(int id) {
         String sql = "SELECT j.*, " +
                      "CONCAT(p.nombres, ' ', p.apellidos) as alumno_nombre, " +
@@ -282,12 +234,6 @@ public class JustificacionDAO {
         return null;
     }
     
-    /**
-     * VERIFICAR SI UNA ASISTENCIA TIENE JUSTIFICACIÓN PENDIENTE
-     * 
-     * @param asistenciaId ID de la asistencia
-     * @return true si tiene justificación pendiente
-     */
     public boolean tieneJustificacionPendiente(int asistenciaId) {
         String sql = "SELECT COUNT(*) as total FROM justificacion " +
                      "WHERE asistencia_id = ? AND estado = 'PENDIENTE' AND activo = 1";
@@ -310,9 +256,6 @@ public class JustificacionDAO {
         return false;
     }
     
-    /**
-     * MÉTODO AUXILIAR PARA MAPEAR ResultSet A OBJETO JUSTIFICACION
-     */
     private Justificacion mapearJustificacion(ResultSet rs) throws SQLException {
         Justificacion j = new Justificacion();
         j.setId(rs.getInt("id"));
@@ -338,7 +281,6 @@ public class JustificacionDAO {
         j.setObservacionesAprobacion(rs.getString("observaciones_aprobacion"));
         j.setActivo(rs.getBoolean("activo"));
         
-        // Campos adicionales
         j.setAlumnoNombre(rs.getString("alumno_nombre"));
         j.setCursoNombre(rs.getString("curso_nombre"));
         j.setJustificadorNombre(rs.getString("justificador_nombre"));
@@ -346,7 +288,6 @@ public class JustificacionDAO {
         try {
             j.setAprobadorNombre(rs.getString("aprobador_nombre"));
         } catch (SQLException e) {
-            // Campo opcional
         }
         
         try {
@@ -355,7 +296,6 @@ public class JustificacionDAO {
                 j.setFechaAsistencia(fecha.toString());
             }
         } catch (SQLException e) {
-            // Campo opcional
         }
         
         return j;

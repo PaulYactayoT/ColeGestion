@@ -201,7 +201,8 @@
                                 <% for (Asistencia a : asistencias) {
                                         String estadoBadge = "";
                                         String estadoIcon = "";
-                                        switch (a.getEstado()) {
+                                        // SOLUCIÓN: Usar getEstadoString() en lugar de getEstado()
+                                        switch (a.getEstadoString()) {
                                             case "PRESENTE":
                                                 estadoBadge = "bg-success";
                                                 estadoIcon = "bi-check-circle";
@@ -226,7 +227,7 @@
                                     <td><%= a.getGradoNombre() != null ? a.getGradoNombre() : "N/A" %></td>
                                     <td>
                                         <span class="badge <%= estadoBadge %>">
-                                            <i class="bi <%= estadoIcon %>"></i> <%= a.getEstado() %>
+                                            <i class="bi <%= estadoIcon %>"></i> <%= a.getEstadoString() %>
                                         </span>
                                     </td>
                                     <td><%= a.getHoraClase() != null ? a.getHoraClase() : "N/A" %></td>

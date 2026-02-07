@@ -185,8 +185,8 @@ public class ProfesorServlet extends HttpServlet {
                 apellidos == null || apellidos.trim().isEmpty() ||
                 correo == null || correo.trim().isEmpty() ||
                 nivel == null || nivel.trim().isEmpty() ||
-                areaIdStr == null || areaIdStr.trim().isEmpty() ||
-                turnoIdStr == null || turnoIdStr.trim().isEmpty()) {
+                areaIdStr == null || areaIdStr.trim().isEmpty()
+                ) {
 
                 session.setAttribute("error", "Los campos obligatorios no pueden estar vacíos");
                 response.sendRedirect("ProfesorServlet?accion=" + (id != null ? "editar&id=" + id : "nuevo"));
@@ -224,7 +224,6 @@ public class ProfesorServlet extends HttpServlet {
             // Información profesional
             profesor.setNivel(nivel.trim());
             profesor.setAreaId(Integer.parseInt(areaIdStr));
-            profesor.setTurnoId(Integer.parseInt(turnoIdStr));
             profesor.setCodigoProfesor(codigoProfesor != null ? codigoProfesor.trim() : "");
 
             // Fecha de contratación

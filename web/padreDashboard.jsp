@@ -15,12 +15,18 @@
             padre = padreDAO.obtenerPorUsername(username);
             if (padre != null) {
                 session.setAttribute("padre", padre);
+                session.setAttribute("personaId", padre.getId()); 
             }
         }
         
         if (padre == null) {
             response.sendRedirect("index.jsp?error=padre_no_encontrado");
             return;
+        }
+    }else {
+        // Asegurarnos de que personaId esté en la sesión
+        if (session.getAttribute("personaId") == null) {
+            session.setAttribute("personaId", padre.getId());
         }
     }
     
@@ -446,17 +452,23 @@
                             <% if (tieneAlumno) { %>
                                 <a href="AsistenciaServlet?accion=verPadre&alumno_id=<%= alumnoId%>" class="btn btn-light btn-dashboard me-2 mb-2">
                                     <i class="bi bi-graph-up me-1"></i>Ver Detalles
-                                </a>
-                                <a href="JustificacionServlet?accion=form" class="btn btn-warning-dashboard mb-2">
-                                    <i class="bi bi-pencil-square me-1"></i>Justificar
-                                </a>
+  <!-- En la tarjeta de resumen de asistencia -->
+<a href="JustificacionServlet?accion=form&alumno_id=<%= alumnoId %>&persona_id=<%= padre.getId() %>" 
+   class="btn btn-warning-dashboard mb-2">
+    <i class="bi bi-pencil-square me-1"></i>Justificar
+</a>
+
+
                             <% } else { %>
                                 <a href="#" class="btn btn-light btn-dashboard me-2 mb-2 btn-disabled" disabled>
                                     <i class="bi bi-graph-up me-1"></i>Ver Detalles
-                                </a>
-                                <a href="#" class="btn btn-warning-dashboard mb-2 btn-disabled" disabled>
-                                    <i class="bi bi-pencil-square me-1"></i>Justificar
-                                </a>
+                            <!-- En la tarjeta de resumen de asistencia -->
+<a href="JustificacionServlet?accion=form&alumno_id=<%= alumnoId %>&persona_id=<%= padre.getId() %>" 
+   class="btn btn-warning-dashboard mb-2">
+    <i class="bi bi-pencil-square me-1"></i>Justificar
+</a>
+
+
                             <% } %>
                         </div>
                     </div>
@@ -567,14 +579,16 @@
                             <i class="bi bi-calendar-check text-secondary me-2"></i>Asistencias
                         </h5>
                         <p>Consulta el historial completo y detallado de asistencias.</p>
-                        <% if (tieneAlumno) { %>
-                            <a href="asistenciasPadre.jsp?alumno_id=<%= alumnoId%>" class="btn btn-secondary-dashboard">
-                                <i class="bi bi-arrow-right me-1"></i>Ver Asistencias
-                            </a>
-                        <% } else { %>
-                            <a href="#" class="btn btn-secondary-dashboard btn-disabled" disabled>
-                                <i class="bi bi-lock me-1"></i>No disponible
-                            </a>
+                       <% if (tieneAlumno) { %>
+    <a href="JustificacionServlet?accion=form" 
+       class="btn btn-warning-dashboard mb-2">
+        <i class="bi bi-pencil-square me-1"></i>Justificar
+    </a>
+<% } else { %>
+    <a href="#" class="btn btn-warning-dashboard mb-2 btn-disabled" disabled>
+        <i class="bi bi-pencil-square me-1"></i>Justificar
+    </a>
+
                         <% } %>
                     </div>
                 </div>
