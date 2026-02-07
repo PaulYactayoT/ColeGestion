@@ -44,7 +44,6 @@ public class DisponibilidadServlet extends HttpServlet {
             case "eliminar":
                 eliminarHorario(request, response, docente);
                 break;
-            // === CASOS PARA EDITAR ===
             case "editar":
                 cargarDatosEdicion(request, response, docente);
                 break;
@@ -63,7 +62,7 @@ public class DisponibilidadServlet extends HttpServlet {
         List<Disponibilidad> lista = dao.listarPorProfesor(profesorId);
         request.setAttribute("listaHorarios", lista);
         
-        // CORREGIDO: Apunta a tu archivo disponibilidadDocente.jsp
+        // Asegúrate que este sea el nombre correcto de tu JSP del docente
         request.getRequestDispatcher("disponibilidadDocente.jsp").forward(request, response);
     }
 
@@ -74,12 +73,20 @@ public class DisponibilidadServlet extends HttpServlet {
             int profesorId = docente.getId();
             int turnoId = Integer.parseInt(request.getParameter("cboTurno")); 
             String dia = request.getParameter("cboDia");
-            String inicioStr = request.getParameter("txtInicio") + ":00"; 
-            String finStr = request.getParameter("txtFin") + ":00";
+            
+            // --- CORRECCIÓN HORA (PARCHE DE SEGURIDAD HTML5) ---
+            String inicioStr = request.getParameter("txtInicio");
+            String finStr = request.getParameter("txtFin");
+            
+            // Si la hora viene como "08:00" (5 letras), le agregamos ":00"
+            if (inicioStr != null && inicioStr.length() == 5) { inicioStr += ":00"; }
+            if (finStr != null && finStr.length() == 5) { finStr += ":00"; }
+            // ----------------------------------------------------
             
             Time horaInicio = Time.valueOf(inicioStr);
             Time horaFin = Time.valueOf(finStr);
 
+            // AQUI SE LLAMA A LA VALIDACIÓN STRICTA
             if (validarHorario(turnoId, horaInicio, horaFin, request)) {
                 Disponibilidad d = new Disponibilidad();
                 d.setProfesorId(profesorId);
@@ -89,12 +96,13 @@ public class DisponibilidadServlet extends HttpServlet {
                 d.setHoraFin(horaFin);
                 
                 boolean exito = dao.registrarDisponibilidad(d);
-                setMensaje(request, exito, "Horario registrado correctamente.", "Error al guardar.");
+                setMensaje(request, exito, "Horario registrado correctamente.", "Error al guardar (posible duplicado).");
             }
             
         } catch (Exception e) {
             request.setAttribute("mensaje", "Error de datos: " + e.getMessage());
             request.setAttribute("tipoMensaje", "danger");
+            e.printStackTrace();
         }
         listarHorarios(request, response, docente);
     }
@@ -113,14 +121,12 @@ public class DisponibilidadServlet extends HttpServlet {
         listarHorarios(request, response, docente);
     }
 
-    // === LÓGICA DE EDICIÓN ===
-
     private void cargarDatosEdicion(HttpServletRequest request, HttpServletResponse response, Profesor docente) 
             throws ServletException, IOException {
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             Disponibilidad d = dao.obtenerPorId(id);
-            request.setAttribute("disponibilidadEditar", d); // Enviamos el objeto al JSP
+            request.setAttribute("disponibilidadEditar", d); 
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -133,9 +139,19 @@ public class DisponibilidadServlet extends HttpServlet {
             int id = Integer.parseInt(request.getParameter("id"));
             int turnoId = Integer.parseInt(request.getParameter("cboTurno")); 
             String dia = request.getParameter("cboDia");
-            Time horaInicio = Time.valueOf(request.getParameter("txtInicio") + ":00");
-            Time horaFin = Time.valueOf(request.getParameter("txtFin") + ":00");
+            
+            // --- CORRECCIÓN HORA (PARCHE DE SEGURIDAD HTML5) ---
+            String inicioStr = request.getParameter("txtInicio");
+            String finStr = request.getParameter("txtFin");
+            
+            if (inicioStr != null && inicioStr.length() == 5) { inicioStr += ":00"; }
+            if (finStr != null && finStr.length() == 5) { finStr += ":00"; }
+            
+            Time horaInicio = Time.valueOf(inicioStr);
+            Time horaFin = Time.valueOf(finStr);
+            // ----------------------------------------------------
 
+            // AQUI SE LLAMA A LA VALIDACIÓN STRICTA
             if (validarHorario(turnoId, horaInicio, horaFin, request)) {
                 Disponibilidad d = new Disponibilidad();
                 d.setId(id);
@@ -145,9 +161,12 @@ public class DisponibilidadServlet extends HttpServlet {
                 d.setHoraFin(horaFin);
 
                 boolean exito = dao.actualizarDisponibilidad(d);
-                setMensaje(request, exito, "Horario actualizado correctamente.", "Error al actualizar.");
+                
+                // NOTA: El DAO ya se encarga de cambiar el estado a 'PENDIENTE'
+                setMensaje(request, exito, "Horario corregido y re-enviado a revisión.", "Error al actualizar.");
             } else {
-                // Si falla la validación, mantenemos los datos en el formulario
+                // Si falla validación, NO GUARDAMOS NADA y el mensaje de error ya está en el request
+                // Para mantener los datos en el formulario (opcional pero recomendado):
                 Disponibilidad dError = new Disponibilidad();
                 dError.setId(id); dError.setTurnoId(turnoId); dError.setDiaSemana(dia);
                 dError.setHoraInicio(horaInicio); dError.setHoraFin(horaFin);
@@ -155,33 +174,42 @@ public class DisponibilidadServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            request.setAttribute("mensaje", "Error: " + e.getMessage());
+            request.setAttribute("mensaje", "Error al actualizar: " + e.getMessage());
             request.setAttribute("tipoMensaje", "danger");
+            e.printStackTrace();
         }
         listarHorarios(request, response, docente);
     }
 
-    // Método auxiliar para no repetir validaciones
+    // =========================================================================
+    // MÉTODO DE VALIDACIÓN ESTRICTA (CORREGIDO)
+    // =========================================================================
     private boolean validarHorario(int turnoId, Time inicio, Time fin, HttpServletRequest request) {
+        // 1. Validar lógica básica de tiempo (Fin debe ser después de Inicio)
         if (!fin.after(inicio)) {
-            request.setAttribute("mensaje", "La hora Fin debe ser mayor a Inicio.");
+            request.setAttribute("mensaje", "Error: La hora Fin debe ser mayor a la hora de Inicio.");
             request.setAttribute("tipoMensaje", "danger");
             return false;
         }
-        if (turnoId == 1) { // Mañana 08-13
+
+        // 2. Validación ESTRICTA por Turno
+        if (turnoId == 1) { // Turno MAÑANA (ID 1)
+            // Regla: No antes de las 08:00 y no después de las 13:00
             if (inicio.before(Time.valueOf("08:00:00")) || fin.after(Time.valueOf("13:00:00"))) {
-                request.setAttribute("mensaje", "Turno MAÑANA es de 08:00 a 13:00.");
+                request.setAttribute("mensaje", "Error: El turno MAÑANA es estrictamente de 08:00 a 13:00.");
                 request.setAttribute("tipoMensaje", "danger");
-                return false;
+                return false; // <--- ESTO BLOQUEA EL GUARDADO
             }
-        } else if (turnoId == 2) { // Tarde 13-18
+        } else if (turnoId == 2) { // Turno TARDE (ID 2)
+            // Regla: No antes de las 13:00 y no después de las 18:00
             if (inicio.before(Time.valueOf("13:00:00")) || fin.after(Time.valueOf("18:00:00"))) {
-                request.setAttribute("mensaje", "Turno TARDE es de 13:00 a 18:00.");
+                request.setAttribute("mensaje", "Error: El turno TARDE es estrictamente de 13:00 a 18:00.");
                 request.setAttribute("tipoMensaje", "danger");
-                return false;
+                return false; // <--- ESTO BLOQUEA EL GUARDADO
             }
         }
-        return true;
+        
+        return true; // Si pasa todas las reglas, permite guardar
     }
 
     private void setMensaje(HttpServletRequest request, boolean exito, String msjOk, String msjError) {

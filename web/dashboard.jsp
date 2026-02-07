@@ -66,16 +66,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>San Antonio Admin Dashboard</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <script id="tailwind-config">
@@ -168,10 +164,8 @@
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen" id="main-content">
-    <!-- Skip to content link -->
     <a href="#main-content" class="skip-to-content focus:top-0">Saltar al contenido principal</a>
     
-    <!-- Accessibility Panel -->
     <div class="fixed top-20 right-0 z-50 accessibility-panel bg-white dark:bg-gray-800 shadow-xl rounded-l-lg p-4 w-80">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-lg">Opciones de Accesibilidad</h3>
@@ -223,7 +217,6 @@
         </div>
     </div>
     
-    <!-- Accessibility Toggle Button -->
     <button onclick="toggleAccessibilityPanel()" 
             class="fixed top-20 right-0 z-40 bg-primary text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors"
             aria-label="Abrir panel de accesibilidad">
@@ -231,10 +224,8 @@
     </button>
     
     <div class="flex h-screen overflow-hidden">
-        <!-- Left SideNavBar -->
         <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
             <div class="flex flex-col gap-8 p-6">
-                <!-- Brand -->
                 <div class="flex items-center gap-3">
                     <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
                         <span class="material-symbols-outlined">school</span>
@@ -245,7 +236,6 @@
                     </div>
                 </div>
                 
-                <!-- Navigation -->
                 <nav class="flex flex-col gap-2" aria-label="Navegación principal">
                     <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
                        href="#" 
@@ -278,10 +268,14 @@
                         <i class="fas fa-users-cog" aria-hidden="true"></i>
                         <span class="text-sm">Usuarios</span>
                     </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-yellow-600 dark:text-yellow-500 font-medium hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors" 
+                       href="AdminDisponibilidadServlet">
+                        <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                        <span class="text-sm">Aprobar Horarios</span>
+                    </a>
                 </nav>
             </div>
-                        <!-- Footer Sidebar -->
-            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
+                        <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
                 <a href="LogoutServlet" 
                    class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
                     <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
@@ -290,9 +284,7 @@
             </div>
         </aside>
         
-        <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- TopNavBar -->
             <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
                 <div class="flex items-center gap-4 flex-1">
                     <form action="dashboard.jsp" method="get" class="w-full max-w-md">
@@ -336,16 +328,13 @@
                 </div>
             </header>
             
-            <!-- Dashboard Content -->
             <div class="p-8 space-y-8 max-w-[1200px] mx-auto w-full">
-                <!-- Welcome Banner -->
                 <div class="relative rounded-xl overflow-hidden min-h-[180px] bg-primary flex flex-col justify-center px-8 shadow-lg shadow-primary/20" 
                      style="background-image: linear-gradient(90deg, rgba(19, 91, 236, 0.95) 0%, rgba(19, 91, 236, 0.6) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuB_3LXerE1vpUAm_1-q-D4EMXN-i8c-idTTZtPpQ58USnatUubEWaEA7NNTJhGtxA9glVNSU_OMWawnGSq4XX5HQvmUwfenKc6i66zaj2YSDXBn3IKNZQ4rkpfpv8Dvq_7FB1vCbkRfa3B33h-wF109oSVddHtKvBQS_mmEBKEorF9YbpZ5S1_tjrrkkRqaIgmrorMQiVIBf6m59RTKJhwF44UqJ3IBTkBBl-ch6fp8z52Qm823GZAMO-ZKdgXwLhe_q9AMTD-k4rs'); background-size: cover; background-position: center;">
                     <h2 class="text-white text-3xl font-bold tracking-tight">Bienvenido de nuevo, Administrador</h2>
                     <p class="text-blue-100 mt-2 max-w-md">Aquí tienes el resumen de lo que está sucediendo hoy en el Instituto San Antonio.</p>
                 </div>
                 
-                <!-- Results Section for Search -->
                 <% if (busqueda != null && !busqueda.trim().isEmpty()) { %>
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm">
                         <div class="flex justify-between items-center mb-4">
@@ -369,7 +358,6 @@
                     </div>
                 <% } %>
                 
-                <!-- KPI Cards (Stats) -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
                         <div class="flex justify-between items-start">
@@ -420,9 +408,23 @@
                     </div>
                 </div>
                 
-                <!-- Quick Access Cards -->
+                <h3 class="font-bold text-xl text-[#111318] dark:text-white mb-4">Accesos Directos</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Alumnos Card -->
+                
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-l-4 border-yellow-500 border-y border-r border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center" aria-hidden="true">
+                                <i class="fas fa-calendar-check text-yellow-600 dark:text-yellow-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Evaluación de Disponibilidad</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Revisar solicitudes pendientes</p>
+                            </div>
+                        </div>
+                        <a href="AdminDisponibilidadServlet" class="block w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white text-center rounded-lg font-bold transition-colors focus:outline focus:outline-3 focus:outline-yellow-500 shadow-sm">
+                            <i class="fas fa-eye me-2"></i> Ver Solicitudes
+                        </a>
+                    </div>
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center" aria-hidden="true">
@@ -438,7 +440,6 @@
                         </a>
                     </div>
                     
-                    <!-- Profesores Card -->
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center" aria-hidden="true">
@@ -454,7 +455,6 @@
                         </a>
                     </div>
                     
-                    <!-- Cursos Card -->
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center" aria-hidden="true">
@@ -470,7 +470,6 @@
                         </a>
                     </div>
                     
-                    <!-- Grados Card -->
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center" aria-hidden="true">
@@ -486,7 +485,6 @@
                         </a>
                     </div>
                     
-                    <!-- Usuarios Card -->
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center" aria-hidden="true">
