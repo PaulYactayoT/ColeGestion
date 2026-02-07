@@ -1,8 +1,40 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="modelo.Asistencia, java.util.List, java.time.format.DateTimeFormatter" %>
+<%@ page import="modelo.Padre" %>
 <%
-    // Eliminar toda la lógica de redirección inicial
-    // Cargar directamente los datos del request
+    // DEBUG: Mostrar todos los atributos de sesión
+    System.out.println("=== DEBUG justificarAusencia.jsp ===");
+    System.out.println("📝 URI solicitada: " + request.getRequestURI());
+    
+    java.util.Enumeration<String> sessionAttrs = session.getAttributeNames();
+    while (sessionAttrs.hasMoreElements()) {
+        String attrName = sessionAttrs.nextElement();
+        Object attrValue = session.getAttribute(attrName);
+        System.out.println("SESSION: " + attrName + " = " + attrValue);
+    }
+    
+    // Verificar si hay padre en sesión
+    Padre padre = (Padre) session.getAttribute("padre");
+    if (padre != null) {
+        System.out.println("✅ PADRE EN SESIÓN: " + padre.getNombreCompleto());
+        System.out.println("📋 PADRE PersonaId: " + padre.getPersonaId());
+        System.out.println("👤 PADRE AlumnoId: " + padre.getAlumnoId());
+        System.out.println("🔑 PADRE Username: " + padre.getUsername());
+    } else {
+        System.out.println("❌ NO HAY PADRE EN SESIÓN");
+    }
+    
+    // Intentar obtener personaId de diferentes maneras
+    Integer personaId = (Integer) session.getAttribute("personaId");
+    if (personaId == null && padre != null) {
+        personaId = padre.getPersonaId();
+        session.setAttribute("personaId", personaId);
+        System.out.println("✅ PersonaId obtenido del objeto Padre: " + personaId);
+    }
+    
+    System.out.println("==================================");
+    
+    // Resto del código original...
     List<Asistencia> ausencias = (List<Asistencia>) request.getAttribute("ausencias");
     Integer alumnoId = (Integer) request.getAttribute("alumnoId");
     String alumnoNombre = (String) request.getAttribute("alumnoNombre");
@@ -34,6 +66,7 @@
 <%
         return;
     }
+    
     
     // Manejar mensajes de sesión
     if (error == null) {
