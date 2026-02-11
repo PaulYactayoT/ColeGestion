@@ -163,18 +163,21 @@ public class RegistroCursoServlet extends HttpServlet {
 
            List<Map<String, Object>> turnos = dao.obtenerTurnos();
            List<Map<String, Object>> aulas = dao.obtenerAulas(); 
-           request.setAttribute("turnos", turnos);
-           request.setAttribute("aulas", aulas); 
 
             // Verificar que no sea null
             if (turnos == null) {
                 turnos = new ArrayList<>();
             }
+            if (aulas == null) {
+                aulas = new ArrayList<>();
+            }
 
             System.out.println("Turnos cargados: " + turnos.size());
+            System.out.println("Aulas cargadas: " + aulas.size());
 
-            // Establecer atributo para el JSP
+            // Establecer atributos para el JSP
             request.setAttribute("turnos", turnos);
+            request.setAttribute("aulas", aulas);
 
             // Forward al JSP
             RequestDispatcher dispatcher = request.getRequestDispatcher("registroCurso.jsp");
@@ -304,23 +307,14 @@ public class RegistroCursoServlet extends HttpServlet {
                    if (area != null && !area.trim().isEmpty() && !"undefined".equals(area) && !"0".equals(area)) {
 
                        // CASO 1: Tenemos área Y grado (ÓPTIMO)
-                       if (gradoIdStr != null && !gradoIdStr.trim().isEmpty() && !"undefined".equals(gradoIdStr)) {
-                           try {
-                               int gradoId = Integer.parseInt(gradoIdStr);
-                               System.out.println(" Usando obtenerCursosPorAreaYGrado");
-                               cursos = dao.obtenerCursosPorAreaYGrado(area.trim(), gradoId);
-                           } catch (NumberFormatException e) {
-                               System.err.println(" Error al parsear gradoId: " + gradoIdStr);
-                               // Si falla, usar solo área
-                               System.out.println(" Fallback: Usando obtenerCursosPorArea");
-                               cursos = dao.obtenerCursosPorArea(area.trim());
-                           }
-                       } 
-                       // CASO 2: Tenemos solo área (sin grado)
-                       else {
-                           System.out.println(" Usando obtenerCursosPorArea (sin filtro de grado)");
-                           cursos = dao.obtenerCursosPorArea(area.trim());
-                       }
+                       if (nivel != null && !nivel.trim().isEmpty() && !"undefined".equals(nivel)) {
+                            System.out.println("✓ Usando obtenerCursosPorAreaYNivel");
+                            cursos = dao.obtenerCursosPorAreaYNivel(area.trim(), nivel.trim());
+                        } else {
+                            // Fallback si no hay nivel
+                            System.out.println("✓ Fallback: Usando obtenerCursosPorArea");
+                            cursos = dao.obtenerCursosPorArea(area.trim());
+                        }
 
                    } else if (nivel != null && !nivel.trim().isEmpty() && !"undefined".equals(nivel)) {
                        // CASO 3: Tenemos solo nivel

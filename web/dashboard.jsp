@@ -276,7 +276,7 @@
                         <i class="fas fa-users-cog" aria-hidden="true"></i>
                         <span class="text-sm">Usuarios</span>
                     </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-yellow-600 dark:text-yellow-500 font-medium hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors" 
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
                        href="AdminDisponibilidadServlet">
                         <i class="fas fa-calendar-check" aria-hidden="true"></i>
                         <span class="text-sm">Aprobar Horarios</span>

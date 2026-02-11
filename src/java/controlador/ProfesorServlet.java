@@ -9,6 +9,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+// ========== IMPORT AGREGADO PARA MANEJAR ASIGNACIONES ==========
+import modelo.ProfesorNivelArea;  // ⭐ NUEVO: Para manejar niveles y áreas múltiples
+// ================================================================
 
 import modelo.Disponibilidad;
 import modelo.Profesor;
@@ -59,6 +64,10 @@ public class ProfesorServlet extends HttpServlet {
                 int idEditar = Integer.parseInt(request.getParameter("id"));
                 Profesor p = dao.obtenerPorId(idEditar);
                 if (p != null) {
+                    // IMPORTANTE: Cargar las asignaciones del profesor
+                    List<ProfesorNivelArea> asignaciones = dao.obtenerAsignaciones(idEditar);
+                    p.setAsignaciones(asignaciones);
+
                     request.setAttribute("profesor", p);
                     request.setAttribute("turnos", dao.listarTurnos());
                     request.setAttribute("areas", dao.listarAreas());
@@ -84,6 +93,10 @@ public class ProfesorServlet extends HttpServlet {
                 int idVer = Integer.parseInt(request.getParameter("id"));
                 Profesor pVer = dao.obtenerPorId(idVer);
                 if (pVer != null) {
+                    // IMPORTANTE: Cargar las asignaciones del profesor
+                    List<ProfesorNivelArea> asignaciones = dao.obtenerAsignaciones(idVer);
+                    pVer.setAsignaciones(asignaciones);
+
                     request.setAttribute("profesor", pVer);
                     request.getRequestDispatcher("profesorDetalle.jsp").forward(request, response);
                 } else {
@@ -91,7 +104,6 @@ public class ProfesorServlet extends HttpServlet {
                     response.sendRedirect("ProfesorServlet?accion=listar");
                 }
                 break;
-
             default:
                 response.sendRedirect("ProfesorServlet?accion=listar");
         }
@@ -137,6 +149,22 @@ public class ProfesorServlet extends HttpServlet {
             System.out.println("fecha_contratacion: " + request.getParameter("fecha_contratacion"));
             System.out.println("estado: " + request.getParameter("estado"));
             System.out.println("username: " + request.getParameter("username"));
+            
+            // ========== DEBUGGING DE ASIGNACIONES (NUEVO) ==========
+            System.out.println("----------------------------------------");
+            System.out.println("ASIGNACIONES MÚLTIPLES:");
+            String[] niveles = request.getParameterValues("asignacion_nivel[]");
+            String[] areas = request.getParameterValues("asignacion_area[]");
+            if (niveles != null && areas != null) {
+                System.out.println("Total de asignaciones recibidas: " + niveles.length);
+                for (int i = 0; i < niveles.length; i++) {
+                    System.out.println("  Asignación " + (i+1) + ": " + niveles[i] + " -> Área ID: " + areas[i]);
+                }
+            } else {
+                System.out.println("  No se recibieron asignaciones múltiples (usando método antiguo)");
+            }
+            // ========================================================
+            
             System.out.println("----------------------------------------");
             System.out.println("DISPONIBILIDADES:");
             System.out.println("total_disponibilidades: " + request.getParameter("total_disponibilidades"));
@@ -162,8 +190,6 @@ public class ProfesorServlet extends HttpServlet {
 
             // 1. OBTENER PARÁMETROS DEL FORMULARIO
             String idStr = request.getParameter("id");
-            Integer id = (idStr != null && !idStr.isEmpty()) ? Integer.parseInt(idStr) : null;
-
             String nombres = request.getParameter("nombres");
             String apellidos = request.getParameter("apellidos");
             String correo = request.getParameter("correo");
@@ -171,7 +197,6 @@ public class ProfesorServlet extends HttpServlet {
             String telefono = request.getParameter("telefono");
             String direccion = request.getParameter("direccion");
             String fechaNacimientoStr = request.getParameter("fecha_nacimiento");
-
             String nivel = request.getParameter("nivel");
             String areaIdStr = request.getParameter("area_id");
             String turnoIdStr = request.getParameter("turno_id");
@@ -179,37 +204,41 @@ public class ProfesorServlet extends HttpServlet {
             String fechaContratacionStr = request.getParameter("fecha_contratacion");
             String estado = request.getParameter("estado");
             String username = request.getParameter("username");
+            String password = request.getParameter("password");
 
-            // 2. VALIDAR CAMPOS OBLIGATORIOS
+            // 2. VALIDACIONES BÁSICAS
             if (nombres == null || nombres.trim().isEmpty() ||
                 apellidos == null || apellidos.trim().isEmpty() ||
-                correo == null || correo.trim().isEmpty() ||
-                nivel == null || nivel.trim().isEmpty() ||
-                areaIdStr == null || areaIdStr.trim().isEmpty()
-                ) {
+                dni == null || dni.trim().isEmpty()) {
 
-                session.setAttribute("error", "Los campos obligatorios no pueden estar vacíos");
-                response.sendRedirect("ProfesorServlet?accion=" + (id != null ? "editar&id=" + id : "nuevo"));
+                session.setAttribute("error", "Los campos nombres, apellidos y DNI son obligatorios");
+                response.sendRedirect("ProfesorServlet?accion=nuevo");
                 return;
             }
 
-            // 3. CREAR Y CONFIGURAR EL OBJETO PROFESOR
+            // 3. CREAR OBJETO PROFESOR Y ASIGNAR VALORES
             Profesor profesor = new Profesor();
 
-            if (id != null) {
+            // Si hay ID, es una actualización
+            Integer id = null;
+            if (idStr != null && !idStr.isEmpty()) {
+                id = Integer.parseInt(idStr);
                 profesor.setId(id);
-                Profesor profExistente = dao.obtenerPorId(id);
-                if (profExistente != null) {
-                    profesor.setPersonaId(profExistente.getPersonaId());
-                }
             }
 
+            // Datos personales
             profesor.setNombres(nombres.trim());
             profesor.setApellidos(apellidos.trim());
-            profesor.setCorreo(correo.trim());
-            profesor.setDni(dni != null ? dni.trim() : "");
+            profesor.setCorreo(correo != null ? correo.trim() : "");
+            profesor.setDni(dni.trim());
             profesor.setTelefono(telefono != null ? telefono.trim() : "");
             profesor.setDireccion(direccion != null ? direccion.trim() : "");
+            profesor.setPassword(password != null ? password.trim() : "");
+
+            // Turno
+            if (turnoIdStr != null && !turnoIdStr.isEmpty()) {
+                profesor.setTurnoId(Integer.parseInt(turnoIdStr));
+            }
 
             // Fecha de nacimiento
             if (fechaNacimientoStr != null && !fechaNacimientoStr.isEmpty()) {
@@ -221,9 +250,52 @@ public class ProfesorServlet extends HttpServlet {
                 }
             }
 
-            // Información profesional
-            profesor.setNivel(nivel.trim());
-            profesor.setAreaId(Integer.parseInt(areaIdStr));
+            // ========== MANEJO DE ASIGNACIONES MÚLTIPLES (NUEVO) ==========
+            List<ProfesorNivelArea> asignaciones = parsearAsignaciones(request);
+            
+            // Si no hay asignaciones múltiples, usar el método antiguo como fallback
+            if (asignaciones.isEmpty()) {
+                System.out.println("⚠️ No se encontraron asignaciones múltiples, usando método antiguo...");
+                if (nivel != null && !nivel.isEmpty() && areaIdStr != null && !areaIdStr.isEmpty()) {
+                    ProfesorNivelArea asignacion = new ProfesorNivelArea();
+                    asignacion.setNivel(nivel.trim());
+                    asignacion.setAreaId(Integer.parseInt(areaIdStr));
+                    asignacion.setEsPrincipal(true);
+                    asignaciones.add(asignacion);
+                    
+                    // También establecer en el profesor para compatibilidad
+                    profesor.setNivel(nivel.trim());
+                    profesor.setAreaId(Integer.parseInt(areaIdStr));
+                }
+            }
+            
+            // Validar que haya al menos una asignación
+            if (asignaciones.isEmpty()) {
+                session.setAttribute("error", "Debe seleccionar al menos un nivel y área para el profesor");
+                response.sendRedirect(id != null ? 
+                    "ProfesorServlet?accion=editar&id=" + id : 
+                    "ProfesorServlet?accion=nuevo");
+                return;
+            }
+            
+            // Establecer asignaciones en el profesor
+            profesor.setAsignaciones(asignaciones);
+            
+            System.out.println("✅ Total de asignaciones a guardar: " + asignaciones.size());
+            for (int i = 0; i < asignaciones.size(); i++) {
+                ProfesorNivelArea asig = asignaciones.get(i);
+                System.out.println("  " + (i+1) + ". " + asig.getNivel() + " -> Área ID: " + 
+                                 asig.getAreaId() + " (Principal: " + asig.isEsPrincipal() + ")");
+            }
+            // ================================================================
+
+            // Información profesional (valores de la primera asignación como principal)
+            if (!asignaciones.isEmpty()) {
+                ProfesorNivelArea principal = asignaciones.get(0);
+                profesor.setNivel(principal.getNivel());
+                profesor.setAreaId(principal.getAreaId());
+            }
+            
             profesor.setCodigoProfesor(codigoProfesor != null ? codigoProfesor.trim() : "");
 
             // Fecha de contratación
@@ -239,7 +311,7 @@ public class ProfesorServlet extends HttpServlet {
             profesor.setEstado(estado != null && !estado.isEmpty() ? estado : "ACTIVO");
             profesor.setUsername(username != null ? username.trim() : "");
 
-            // ========== NUEVO: CAPTURAR DISPONIBILIDADES Y AGREGARLAS AL OBJETO PROFESOR ==========
+            // ========== CAPTURAR DISPONIBILIDADES Y AGREGARLAS AL OBJETO PROFESOR ==========
             List<Disponibilidad> disponibilidades = capturarDisponibilidades(request, 0);
             if (!disponibilidades.isEmpty()) {
                 profesor.setDisponibilidades(disponibilidades);
@@ -251,29 +323,43 @@ public class ProfesorServlet extends HttpServlet {
             boolean exito = false;
 
             if (id != null) {
-                // ACTUALIZAR
+                // ========== ACTUALIZAR ==========
                 System.out.println("\n🔄 ACTUALIZANDO profesor ID: " + id);
                 exito = dao.actualizar(profesor);
 
-                // Para actualización, guardar disponibilidades por separado (como antes)
                 if (exito) {
+                    // Guardar disponibilidades
                     boolean dispGuardadas = dao.guardarDisponibilidades(id, disponibilidades);
-                    if (dispGuardadas) {
-                        session.setAttribute("mensaje", "Profesor actualizado correctamente");
-                    } else {
+                    
+                    // ========== GUARDAR ASIGNACIONES (NUEVO) ==========
+                    // Establecer el profesor_id en cada asignación antes de guardar
+                    for (ProfesorNivelArea asig : asignaciones) {
+                        asig.setProfesorId(id);
+                    }
+                    
+                    boolean asigGuardadas = dao.guardarAsignaciones(id, asignaciones);
+                    // ==================================================
+                    
+                    if (dispGuardadas && asigGuardadas) {
+                        session.setAttribute("mensaje", "Profesor actualizado correctamente con " + 
+                                           asignaciones.size() + " asignación(es) de nivel-área");
+                    } else if (!dispGuardadas) {
                         session.setAttribute("error", "Profesor actualizado pero hubo un error al guardar las disponibilidades");
+                    } else {
+                        session.setAttribute("error", "Profesor actualizado pero hubo un error al guardar las asignaciones");
                     }
                 } else {
                     session.setAttribute("error", "Error al actualizar el profesor");
                 }
             } else {
-                // CREAR NUEVO
+                // ========== CREAR NUEVO ==========
                 System.out.println("\n➕ CREANDO nuevo profesor");
-                exito = dao.crear(profesor);  // crear() ahora guarda las disponibilidades automáticamente
+                exito = dao.crear(profesor);  // crear() ahora guarda las disponibilidades Y asignaciones automáticamente
 
                 if (exito) {
-                    session.setAttribute("mensaje", "Profesor registrado correctamente");
-                    System.out.println("✅ Profesor creado exitosamente con sus disponibilidades");
+                    session.setAttribute("mensaje", "Profesor registrado correctamente con " + 
+                                       asignaciones.size() + " asignación(es) de nivel-área");
+                    System.out.println("✅ Profesor creado exitosamente con sus disponibilidades y asignaciones");
                 } else {
                     session.setAttribute("error", "Error al crear el profesor");
                 }
@@ -288,6 +374,53 @@ public class ProfesorServlet extends HttpServlet {
             response.sendRedirect("ProfesorServlet?accion=listar");
         }
     }
+
+    // ========================================================================
+    // ⭐ MÉTODO NUEVO: PARSEAR ASIGNACIONES MÚLTIPLES DESDE EL FORMULARIO
+    // ========================================================================
+    /**
+     * Parsea las asignaciones de nivel-área desde los parámetros del request
+     * 
+     * Los parámetros llegan en formato:
+     * - asignacion_nivel[]: ["INICIAL", "INICIAL", "PRIMARIA"]
+     * - asignacion_area[]: ["1", "2", "3"]
+     * 
+     * Donde cada índice corresponde a una asignación
+     */
+    private List<ProfesorNivelArea> parsearAsignaciones(HttpServletRequest request) {
+        List<ProfesorNivelArea> asignaciones = new ArrayList<>();
+        
+        String[] niveles = request.getParameterValues("asignacion_nivel[]");
+        String[] areas = request.getParameterValues("asignacion_area[]");
+        
+        if (niveles != null && areas != null && niveles.length == areas.length) {
+            System.out.println("\n📋 Parseando " + niveles.length + " asignaciones del formulario...");
+            
+            for (int i = 0; i < niveles.length; i++) {
+                if (niveles[i] != null && !niveles[i].trim().isEmpty() && 
+                    areas[i] != null && !areas[i].trim().isEmpty()) {
+                    
+                    try {
+                        ProfesorNivelArea asignacion = new ProfesorNivelArea();
+                        asignacion.setNivel(niveles[i].trim());
+                        asignacion.setAreaId(Integer.parseInt(areas[i].trim()));
+                        asignacion.setEsPrincipal(i == 0); // La primera es principal
+                        
+                        asignaciones.add(asignacion);
+                        System.out.println("  ✓ Asignación " + (i+1) + ": " + niveles[i] + " - Área ID: " + areas[i]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("  ✗ Error al parsear área ID: " + areas[i]);
+                    }
+                }
+            }
+        } else {
+            System.out.println("\n⚠️ No se encontraron parámetros asignacion_nivel[] o asignacion_area[]");
+        }
+        
+        System.out.println("Total asignaciones parseadas correctamente: " + asignaciones.size() + "\n");
+        return asignaciones;
+    }
+    // ========================================================================
 
     /**
      * CAPTURAR DISPONIBILIDADES DEL REQUEST

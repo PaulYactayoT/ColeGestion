@@ -1,5 +1,6 @@
 <%@ page import="modelo.Profesor" %>
 <%@ page import="modelo.Area" %>
+<%@ page import="modelo.ProfesorNivelArea" %>
 <%@ page import="java.util.List" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.time.LocalDate" %>
@@ -214,34 +215,39 @@
             border-left-color: #10b981;
         }
         
-        .alert-info {
-            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-            color: #1e40af;
-            border-left-color: #3b82f6;
-        }
-        
-        /* Badge */
-        .badge {
-            padding: 0.35rem 0.85rem;
-            border-radius: 9999px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: inline-flex;
+        /* Sección de título */
+        .section-title {
+            display: flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #135bec;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #e5e7eb;
         }
         
-        /* Botones */
+        .section-title i {
+            font-size: 1.25rem;
+        }
+        
+        .section-divider {
+            border: 0;
+            border-top: 2px solid #e5e7eb;
+            margin: 2rem 0;
+        }
+        
+        /* Botones modernos */
         .btn-modern {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 0.95rem;
-            border: none;
-            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
             cursor: pointer;
             text-decoration: none;
         }
@@ -252,8 +258,9 @@
         }
         
         .btn-primary-modern:hover {
+            background: linear-gradient(135deg, #0d47a1, #135bec);
             transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(19, 91, 236, 0.3);
+            box-shadow: 0 4px 12px rgba(19, 91, 236, 0.4);
         }
         
         .btn-success-modern {
@@ -262,8 +269,9 @@
         }
         
         .btn-success-modern:hover {
+            background: linear-gradient(135deg, #059669, #10b981);
             transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
         }
         
         .btn-secondary-modern {
@@ -282,272 +290,187 @@
         }
         
         .btn-danger-modern:hover {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
             transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(239, 68, 68, 0.3);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         }
         
-        /* Table styles */
-        .custom-table {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: 100%;
-            background: white;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        /* Estilos para asignaciones múltiples */
+        .asignacion-item {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
         }
-        
-        .dark .custom-table {
-            background: #1a2233;
+
+        .asignacion-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            border-color: #135bec;
         }
-        
-        .custom-table thead {
-            background: linear-gradient(135deg, #135bec 0%, #0d47a1 100%);
+
+        .asignacion-principal {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-color: #3b82f6;
         }
-        
-        .custom-table th {
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: white;
-            font-size: 0.95rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .custom-table tbody tr {
-            border-bottom: 1px solid #e5e7eb;
-            transition: background-color 0.2s;
-        }
-        
-        .dark .custom-table tbody tr {
-            border-bottom: 1px solid #374151;
-        }
-        
-        .custom-table td {
-            padding: 1rem;
-            color: #374151;
-            font-size: 0.95rem;
-        }
-        
-        .dark .custom-table td {
-            color: #d1d5db;
-        }
-        
-        /* Section styles */
-        .section-divider {
-            border: none;
-            height: 2px;
-            background: linear-gradient(90deg, #135bec, transparent);
-            margin: 2rem 0 1.5rem 0;
-        }
-        
-        .section-title {
-            color: #135bec;
-            font-weight: 600;
-            font-size: 1.2rem;
-            margin-bottom: 1.5rem;
+
+        .asignacion-numero {
+            font-size: 0.875rem;
+            font-weight: 500;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-        
-        .dark .section-title {
-            color: #60a5fa;
-        }
-        
-        .tooltip-info {
-            cursor: help;
-            color: #3b82f6;
-            margin-left: 0.25rem;
-        }
-        
-        .accessibility-toggle {
-            transition: all 0.3s ease;
-        }
-        
-        .accessibility-toggle:hover {
-            transform: scale(1.1);
+
+        #asignaciones-container:empty::before {
+            content: "? Haga clic en 'Agregar Nivel/Área' para comenzar";
+            display: block;
+            padding: 2rem;
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            border: 2px dashed #dee2e6;
+            border-radius: 0.5rem;
+            background: #f8f9fa;
         }
     </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen" id="main-content">
-    <!-- Skip to content link -->
-    <a href="#main-content" class="skip-to-content focus:top-0">Saltar al contenido principal</a>
-    
-    <!-- Accessibility Panel -->
-    <div class="fixed top-20 right-0 z-50 accessibility-panel bg-white dark:bg-gray-800 shadow-xl rounded-l-lg p-4 w-80">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="font-bold text-lg">Opciones de Accesibilidad</h3>
-            <button onclick="toggleAccessibilityPanel()" class="text-gray-500 hover:text-gray-700">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        
-        <div class="space-y-4">
-            <div class="space-y-2">
-                <h4 class="font-medium">Tamaño de texto</h4>
-                <div class="flex gap-2">
-                    <button onclick="setTextSize('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
-                    <button onclick="setTextSize('large')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Grande</button>
-                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Más Grande</button>
-                </div>
-            </div>
-            
-            <div class="space-y-2">
-                <h4 class="font-medium">Contraste</h4>
-                <div class="flex gap-2">
-                    <button onclick="setContrast('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
-                    <button onclick="setContrast('high')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Alto Contraste</button>
-                    <button onclick="setContrast('yellow')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Amarillo/Negro</button>
-                </div>
-            </div>
-            
-            <div class="space-y-2">
-                <h4 class="font-medium">Otros ajustes</h4>
-                <div class="flex flex-col gap-2">
-                    <label class="flex items-center gap-2">
-                        <input type="checkbox" id="reduceMotion" onchange="toggleMotion()">
-                        <span>Reducir movimiento</span>
-                    </label>
-                    <label class="flex items-center gap-2">
-                        <input type="checkbox" id="dyslexiaFont" onchange="toggleDyslexiaFont()">
-                        <span>Fuente para dislexia</span>
-                    </label>
-                    <label class="flex items-center gap-2">
-                        <input type="checkbox" id="beigeBackground" onchange="toggleBeigeBackground()">
-                        <span>Fondo beige</span>
-                    </label>
-                </div>
-            </div>
-            
-            <button onclick="resetAccessibility()" class="w-full py-2 bg-gray-800 text-white rounded hover:bg-gray-900">
-                Restablecer ajustes
-            </button>
-        </div>
-    </div>
-    
-    <!-- Accessibility Toggle Button -->
-    <button onclick="toggleAccessibilityPanel()" 
-            class="fixed top-20 right-0 z-40 bg-primary text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors accessibility-toggle"
-            aria-label="Abrir panel de accesibilidad">
-        <span class="material-symbols-outlined">accessibility_new</span>
-    </button>
-    
-    <div class="flex h-screen overflow-hidden">
-        <!-- Left SideNavBar -->
-        <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
-            <div class="flex flex-col gap-8 p-6">
-                <!-- Brand -->
-                <div class="flex items-center gap-3">
-                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
-                        <span class="material-symbols-outlined">school</span>
+<body class="bg-background-light dark:bg-background-dark transition-colors duration-200">
+    <!-- Skip to content (Accesibilidad) -->
+    <a href="#main-content" class="skip-to-content">Saltar al contenido principal</a>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white dark:bg-card-dark border-r border-[#dbdfe6] dark:border-gray-700 shadow-lg">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-school text-white text-xl"></i>
                     </div>
-                    <div class="flex flex-col">
-                        <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
-                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Gestión Académica</p>
-                    </div>
+                    <span class="text-xl font-bold text-[#111318] dark:text-white">San Antonio</span>
                 </div>
                 
-                <!-- Navigation -->
-                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="dashboard.jsp">
-                        <span class="material-symbols-outlined">dashboard</span>
-                        <span class="text-sm">Dashboard</span>
+                <nav class="space-y-2">
+                    <a href="dashboard.jsp" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fas fa-home w-5"></i>
+                        <span>Dashboard</span>
                     </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="AlumnoServlet">
-                        <i class="fas fa-user-graduate" aria-hidden="true"></i>
-                        <span class="text-sm">Estudiantes</span>
+                    <a href="ProfesorServlet" class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-lg">
+                        <i class="fas fa-chalkboard-teacher w-5"></i>
+                        <span>Profesores</span>
                     </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
-                       href="ProfesorServlet"
-                       aria-current="page">
-                        <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
-                        <span class="text-sm">Profesores</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="CursoServlet">
-                        <i class="fas fa-book" aria-hidden="true"></i>
-                        <span class="text-sm">Cursos</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="GradoServlet">
-                        <i class="fas fa-layer-group" aria-hidden="true"></i>
-                        <span class="text-sm">Grados</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="UsuarioServlet">
-                        <i class="fas fa-users-cog" aria-hidden="true"></i>
-                        <span class="text-sm">Usuarios</span>
+                    <a href="EstudianteServlet" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fas fa-user-graduate w-5"></i>
+                        <span>Estudiantes</span>
                     </a>
                 </nav>
             </div>
-            
-            <!-- Footer Sidebar -->
-            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
-                <a href="LogoutServlet" 
-                   class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
-                    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
-                    <span>Cerrar Sesión</span>
-                </a>
-            </div>
         </aside>
-        
+
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- TopNavBar -->
-            <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
-                <div class="flex items-center gap-4 flex-1">
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-xl font-bold text-[#111318] dark:text-white">
-                            <%= editar ? "Editar Profesor" : "Registrar Nuevo Profesor" %>
-                        </h1>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-4 ml-8">
-                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
-                            aria-label="Notificaciones">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
-                    </button>
+        <main id="main-content" class="flex-1">
+            <!-- Header -->
+            <header class="bg-white dark:bg-card-dark border-b border-[#dbdfe6] dark:border-gray-700 p-4 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-[#111318] dark:text-white">
+                        <i class="fas <%= editar ? "fa-edit" : "fa-user-plus" %> text-primary mr-2"></i>
+                        <%= editar ? "Editar Profesor" : "Registrar Nuevo Profesor" %>
+                    </h1>
                     
-                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                            aria-label="Configuración">
-                        <span class="material-symbols-outlined">settings</span>
-                    </button>
-                    
-                    <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
-                    
-                    <div class="flex items-center gap-3">
-                        <p class="text-sm font-medium hidden md:block">
-                            <%= session.getAttribute("usuario") != null ? session.getAttribute("usuario") : "Administrador" %>
-                        </p>
-                        <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
-                             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCO64ytW7WFj5YJ0XxtUSKDLHtMumvYdpNUpuyZfiJ1u2v-o-ZSRqiNGLyx6pmhB7nZDuPBYTD_VLKKCEUg0atLHJC4hTrMG5QjAfNlLQdzKId6L3tl2-QhmWJUVQVRr4hk7ODNpJ2OomnFQx_u6WT5QgxJRWLtvZ2I5ecv8WfcR1-MoMfF485fYSxo5s9ErvyApFtN9ro0oew7DMrNHFDQJp1zE9Dtyls43R9C7cnQa5HNlhDoiFBsEBf8CYKzebhaA6Yfuad3vcM');"
-                             aria-label="Foto de perfil del administrador">
+                    <div class="flex items-center gap-4">
+                        <!-- Botón de accesibilidad -->
+                        <button onclick="toggleAccessibilityPanel()" 
+                                class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                aria-label="Opciones de accesibilidad">
+                            <i class="fas fa-universal-access text-gray-600 dark:text-gray-300 text-xl"></i>
+                        </button>
+                        
+                        <!-- Usuario -->
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            <span class="text-sm font-medium text-[#111318] dark:text-white">
+                                <%= session.getAttribute("usuario") %>
+                            </span>
                         </div>
                     </div>
                 </div>
             </header>
-            
-            <!-- Main Content -->
-            <div class="p-8">
-                <!-- Header con título -->
-                <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-[#111318] dark:text-white">Gestión de Profesores</h2>
-                    <p class="text-[#616f89] dark:text-gray-400 mt-1"><%= editar ? "Edita la información del profesor" : "Completa el formulario para registrar un nuevo profesor" %></p>
+
+            <!-- Panel de Accesibilidad -->
+            <div class="accessibility-panel fixed right-0 top-0 h-full w-80 bg-white dark:bg-card-dark shadow-2xl z-50 overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-[#111318] dark:text-white">Accesibilidad</h3>
+                        <button onclick="toggleAccessibilityPanel()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Tamaño de texto -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Tamaño de texto
+                            </label>
+                            <div class="flex gap-2">
+                                <button onclick="setTextSize('normal')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Normal</button>
+                                <button onclick="setTextSize('large')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Grande</button>
+                                <button onclick="setTextSize('larger')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Más grande</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Contraste -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Contraste
+                            </label>
+                            <div class="flex gap-2">
+                                <button onclick="setContrast('normal')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Normal</button>
+                                <button onclick="setContrast('high')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Alto</button>
+                                <button onclick="setContrast('yellow')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Amarillo</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Opciones adicionales -->
+                        <div class="space-y-3">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" id="reduceMotion" onchange="toggleMotion()" class="rounded">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Reducir movimiento</span>
+                            </label>
+                            
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" id="dyslexiaFont" onchange="toggleDyslexiaFont()" class="rounded">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Fuente para dislexia</span>
+                            </label>
+                            
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" id="beigeBackground" onchange="toggleBeigeBackground()" class="rounded">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Fondo beige</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Resetear -->
+                        <button onclick="resetAccessibility()" class="w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                            Restablecer configuración
+                        </button>
+                    </div>
                 </div>
-                
-                <!-- Alertas -->
+            </div>
+
+            <!-- Contenido del formulario -->
+            <div class="p-6">
+                <!-- Mensajes de error/éxito -->
                 <% 
                     String error = (String) session.getAttribute("error");
                     String mensaje = (String) session.getAttribute("mensaje");
-                    
-                    if (error != null) { 
-                        session.removeAttribute("error");
+                %>
+                
+                <% if (error != null) { 
+                    session.removeAttribute("error");
                 %>
                 <div class="alert-modern alert-danger mb-6" role="alert">
                     <i class="fas fa-exclamation-circle"></i>
@@ -677,58 +600,46 @@
 
                             <hr class="section-divider">
 
-                            <!-- SECCIÓN: INFORMACIÓN PROFESIONAL -->
+                            <!-- SECCIÓN: ASIGNACIONES DE NIVEL Y ÁREA -->
                             <div class="section-title">
-                                <i class="fas fa-briefcase"></i>
-                                Información Profesional
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                Niveles y Áreas que dicta el Profesor
                             </div>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                <div>
-                                    <label for="nivel" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
-                                        Nivel que Enseña
-                                    </label>
-                                    <select class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                            name="nivel" id="nivel" required>
-                                        <option value="">Seleccione un nivel</option>
-                                        <option value="INICIAL" <%= (editar && "INICIAL".equals(p.getNivel())) ? "selected" : "" %>>Inicial</option>
-                                        <option value="PRIMARIA" <%= (editar && "PRIMARIA".equals(p.getNivel())) ? "selected" : "" %>>Primaria</option>
-                                        <option value="SECUNDARIA" <%= (editar && "SECUNDARIA".equals(p.getNivel())) ? "selected" : "" %>>Secundaria</option>
-                                        <option value="TODOS" <%= (editar && "TODOS".equals(p.getNivel())) ? "selected" : "" %>>Todos los Niveles</option>
-                                    </select>
-                                    <div class="text-sm text-red-600 mt-1" id="nivel-error"></div>
-                                </div>
-                                
-                                <div>
-                                    <label for="area_id" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
-                                        Área
-                                    </label>
-                                    <select class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                        name="area_id" id="area_id" required>
-                                    <option value="">Primero seleccione un nivel</option>
-                                    <% 
-                                        if (areas != null && !areas.isEmpty()) {
-                                            for (Area area : areas) {
-                                                boolean selected = editar && p.getAreaId() == area.getId();
-                                    %>
-                                        <option value="<%= area.getId() %>" 
-                                                data-nivel="<%= area.getNivel() %>"
-                                                <%= selected ? "selected" : "" %>>
-                                            <%= area.getNombre() %>
-                                        </option>
-                                    <% 
-                                            }
-                                        } else {
-                                    %>
-                                        <option value="" disabled>No hay áreas disponibles</option>
-                                    <% 
-                                        }
-                                    %>
-                                </select>
-                                    <div class="text-sm text-gray-500 mt-1">Las áreas se filtran según el nivel seleccionado</div>
-                                    <div class="text-sm text-red-600 mt-1" id="area-error"></div>
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mt-1"></i>
+                                    <div class="text-sm text-blue-800 dark:text-blue-200">
+                                        <strong>Importante:</strong> Un profesor puede dictar en múltiples niveles y áreas. 
+                                        Por ejemplo: Matemática en Primaria y Secundaria, o Comunicación y Personal Social en Inicial.
+                                        La primera asignación será considerada como la principal.
+                                    </div>
                                 </div>
                             </div>
+                            
+                            <!-- Container de asignaciones -->
+                            <div id="asignaciones-container" class="mb-4">
+                                <!-- Las asignaciones se cargarán dinámicamente aquí -->
+                            </div>
+                            
+                            <!-- Botón para agregar más asignaciones -->
+                            <div class="mb-6">
+                                <button type="button" 
+                                        class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+                                        onclick="agregarAsignacion()">
+                                    <i class="fas fa-plus-circle"></i>
+                                    Agregar otro Nivel/Área
+                                </button>
+                            </div>
+
+                            <hr class="section-divider">
+
+                            <!-- SECCIÓN: INFORMACIÓN ADMINISTRATIVA -->
+                            <div class="section-title">
+                                <i class="fas fa-briefcase"></i>
+                                Información Administrativa
+                            </div>
+                            
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
                                     <label for="fecha_contratacion" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
@@ -752,7 +663,8 @@
                                         <option value="JUBILADO" <%= (editar && "JUBILADO".equals(p.getEstado())) ? "selected" : "" %>>JUBILADO</option>
                                     </select>
                                 </div>
-                            </div>  
+                            </div>
+                            
                             <!-- BOTONES -->
                             <div class="flex justify-between items-center mt-8 pt-6 border-t border-[#e5e7eb] dark:border-gray-700">
                                 <div class="flex gap-3">
@@ -782,6 +694,64 @@
         </main>
     </div>
 
+    <!-- Template para asignaciones (oculto) -->
+    <template id="asignacion-template">
+        <div class="asignacion-item">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                <!-- Selector de Nivel -->
+                <div class="md:col-span-5">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-layer-group mr-1"></i> Nivel Educativo
+                    </label>
+                    <select name="asignacion_nivel[]" class="nivel-select w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary" required onchange="filtrarAreasPorNivelAsignacion(this)">
+                        <option value="">-- Seleccione nivel --</option>
+                        <option value="INICIAL"> Inicial</option>
+                        <option value="PRIMARIA"> Primaria</option>
+                        <option value="SECUNDARIA"> Secundaria</option>
+                    </select>
+                </div>
+                
+                <!-- Selector de Área -->
+                <div class="md:col-span-5">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-book mr-1"></i> Área o Materia
+                    </label>
+                    <select name="asignacion_area[]" class="area-select w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary" required disabled>
+                        <option value="">Primero seleccione un nivel</option>
+                        <% 
+                            if (areas != null && !areas.isEmpty()) {
+                                for (Area area : areas) {
+                        %>
+                            <option value="<%= area.getId() %>" data-nivel="<%= area.getNivel() %>"><%= area.getNombre() %></option>
+                        <% 
+                                }
+                            }
+                        %>
+                    </select>
+                </div>
+                
+                <!-- Botón eliminar -->
+                <div class="md:col-span-2 text-center">
+                    <label class="block text-sm font-medium text-transparent mb-2">&nbsp;</label>
+                    <button type="button" 
+                            class="w-full px-4 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                            onclick="eliminarAsignacion(this)"
+                            title="Eliminar esta asignación">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Indicador -->
+            <div class="mt-3 pt-3 border-t border-gray-300">
+                <span class="asignacion-numero text-gray-600 dark:text-gray-400">
+                    <!-- Se actualizará dinámicamente -->
+                </span>
+            </div>
+        </div>
+    </template>
+
+    <!-- JAVASCRIPT -->
     <script>
         // ==================== FUNCIONES DE ACCESIBILIDAD ====================
         function toggleAccessibilityPanel() {
@@ -824,6 +794,7 @@
             document.getElementById('dyslexiaFont').checked = false;
             document.getElementById('beigeBackground').checked = false;
         }
+        
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
             let bgClass = 'bg-blue-600';
@@ -843,102 +814,218 @@
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 5000);
         }
- 
-    </script>
-    <script>
-// Filtrar áreas según nivel seleccionado
-function filtrarAreasPorNivel() {
-    const nivelSelect = document.getElementById('nivel');
-    const areaSelect = document.getElementById('area_id');
-    const nivelSeleccionado = nivelSelect.value;
-    
-    const opciones = areaSelect.querySelectorAll('option');
-    areaSelect.value = '';
-    
-    if (!nivelSeleccionado) {
-        areaSelect.disabled = true;
-        opciones.forEach((opcion, index) => {
-            if (index === 0) {
-                opcion.style.display = 'block';
-                opcion.textContent = 'Primero seleccione un nivel';
-            } else {
-                opcion.style.display = 'none';
+
+        // ==================== GESTIÓN DE ASIGNACIONES MÚLTIPLES ====================
+        let contadorAsignaciones = 0;
+
+        /**
+         * Agregar una nueva asignación
+         */
+        function agregarAsignacion(nivel = '', areaId = '') {
+            const container = document.getElementById('asignaciones-container');
+            const template = document.getElementById('asignacion-template');
+            
+            // Clonar el template
+            const clone = template.content.cloneNode(true);
+            
+            // Establecer valores si vienen como parámetro
+            if (nivel) {
+                const selectNivel = clone.querySelector('select[name="asignacion_nivel[]"]');
+                selectNivel.value = nivel;
+                
+                // Si hay nivel, filtrar áreas inmediatamente después de agregar
+                setTimeout(() => {
+                    const asignaciones = container.querySelectorAll('.asignacion-item');
+                    const ultimaAsignacion = asignaciones[asignaciones.length - 1];
+                    const nivelSelect = ultimaAsignacion.querySelector('.nivel-select');
+                    filtrarAreasPorNivelAsignacion(nivelSelect);
+                }, 10);
             }
-        });
-        return;
-    }
-    
-    areaSelect.disabled = false;
-    opciones[0].textContent = 'Seleccione un área';
-    opciones[0].style.display = 'block';
-    
-    let areasVisibles = 0;
-    
-    opciones.forEach((opcion, index) => {
-        if (index === 0) return;
-        
-        const nivelArea = opcion.getAttribute('data-nivel');
-        
-        if (nivelArea === nivelSeleccionado || 
-            nivelSeleccionado === 'TODOS' || 
-            nivelArea === 'TODOS') {
-            opcion.style.display = 'block';
-            areasVisibles++;
-        } else {
-            opcion.style.display = 'none';
+            
+            if (areaId) {
+                const selectArea = clone.querySelector('select[name="asignacion_area[]"]');
+                // El área se seleccionará después del filtrado
+                setTimeout(() => {
+                    const asignaciones = container.querySelectorAll('.asignacion-item');
+                    const ultimaAsignacion = asignaciones[asignaciones.length - 1];
+                    const areaSelect = ultimaAsignacion.querySelector('.area-select');
+                    areaSelect.value = areaId;
+                }, 20);
+            }
+            
+            // Agregar al container
+            container.appendChild(clone);
+            contadorAsignaciones++;
+            
+            // Actualizar números
+            actualizarNumerosAsignacion();
+            
+            console.log('? Asignación agregada. Total:', contadorAsignaciones);
         }
-    });
-    
-    if (areasVisibles === 0) {
-        opciones[0].textContent = 'No hay áreas disponibles para este nivel';
-        areaSelect.disabled = true;
-    }
-}
 
-// Validar formulario
-function validarFormulario(event) {
-    const nivelSelect = document.getElementById('nivel');
-    const areaSelect = document.getElementById('area_id');
-    const nivelError = document.getElementById('nivel-error');
-    const areaError = document.getElementById('area-error');
-    
-    nivelError.textContent = '';
-    areaError.textContent = '';
-    
-    let esValido = true;
-    
-    if (!nivelSelect.value) {
-        nivelError.textContent = 'Debe seleccionar un nivel educativo';
-        esValido = false;
-    }
-    
-    if (!areaSelect.value) {
-        areaError.textContent = 'Debe seleccionar un área';
-        esValido = false;
-    }
-    
-    if (!esValido) {
-        event.preventDefault();
-        showToast('Por favor complete todos los campos obligatorios', 'error');
-    }
-    
-    return esValido;
-}
+        /**
+         * Filtrar áreas según el nivel seleccionado en una asignación
+         */
+        function filtrarAreasPorNivelAsignacion(selectNivel) {
+            // Encontrar el select de área correspondiente
+            const asignacionItem = selectNivel.closest('.asignacion-item');
+            const selectArea = asignacionItem.querySelector('.area-select');
+            
+            const nivelSeleccionado = selectNivel.value;
+            const opciones = selectArea.querySelectorAll('option');
+            
+            // Resetear el valor del área
+            selectArea.value = '';
+            
+            if (!nivelSeleccionado) {
+                // Si no hay nivel seleccionado, deshabilitar área
+                selectArea.disabled = true;
+                opciones.forEach((opcion, index) => {
+                    if (index === 0) {
+                        opcion.style.display = 'block';
+                        opcion.textContent = 'Primero seleccione un nivel';
+                    } else {
+                        opcion.style.display = 'none';
+                    }
+                });
+                return;
+            }
+            
+            // Habilitar el select de área
+            selectArea.disabled = false;
+            
+            // Actualizar texto de la primera opción
+            opciones[0].textContent = '-- Seleccione área --';
+            opciones[0].style.display = 'block';
+            
+            let areasVisibles = 0;
+            
+            // Filtrar opciones según el nivel
+            opciones.forEach((opcion, index) => {
+                if (index === 0) return; // Saltar la primera opción
+                
+                const nivelArea = opcion.getAttribute('data-nivel');
+                
+                // Mostrar si coincide con el nivel o si el área es para TODOS los niveles
+                if (nivelArea === nivelSeleccionado || nivelArea === 'TODOS') {
+                    opcion.style.display = 'block';
+                    areasVisibles++;
+                } else {
+                    opcion.style.display = 'none';
+                }
+            });
+            
+            // Si no hay áreas disponibles
+            if (areasVisibles === 0) {
+                opciones[0].textContent = 'No hay áreas disponibles para este nivel';
+                selectArea.disabled = true;
+            }
+            
+            console.log(`? Áreas filtradas para nivel ${nivelSeleccionado}: ${areasVisibles} disponibles`);
+        }
 
-// Inicializar
-document.addEventListener('DOMContentLoaded', function() {
-    const nivelSelect = document.getElementById('nivel');
-    const formulario = document.getElementById('profesorForm');
-    
-    nivelSelect.addEventListener('change', filtrarAreasPorNivel);
-    formulario.addEventListener('submit', validarFormulario);
-    
-    if (nivelSelect.value) {
-        filtrarAreasPorNivel();
-    }
-    
-    console.log('Sistema de filtrado de áreas inicializado correctamente');
-});
-</script>
+        /**
+         * Eliminar una asignación
+         */
+        function eliminarAsignacion(btn) {
+            const item = btn.closest('.asignacion-item');
+            const container = document.getElementById('asignaciones-container');
+            
+            // Validar que no sea la única
+            if (container.children.length <= 1) {
+                showToast('Debe haber al menos una asignación de nivel y área', 'error');
+                return;
+            }
+            
+            if (confirm('¿Está seguro de eliminar esta asignación?')) {
+                item.remove();
+                contadorAsignaciones--;
+                actualizarNumerosAsignacion();
+                showToast('Asignación eliminada correctamente', 'success');
+            }
+        }
+
+        /**
+         * Actualizar números de asignaciones
+         */
+        function actualizarNumerosAsignacion() {
+            const asignaciones = document.querySelectorAll('.asignacion-item');
+            
+            asignaciones.forEach((asig, index) => {
+                const numeroLabel = asig.querySelector('.asignacion-numero');
+                
+                // Quitar y agregar clase principal
+                asig.classList.remove('asignacion-principal');
+                
+                if (index === 0) {
+                    asig.classList.add('asignacion-principal');
+                    numeroLabel.innerHTML = '<i class="fas fa-star text-yellow-500"></i> <strong>Asignación Principal</strong> - Esta será la asignación por defecto del profesor';
+                } else {
+                    numeroLabel.innerHTML = `<i class="fas fa-circle text-primary"></i> Asignación ${index + 1}`;
+                }
+            });
+        }
+
+        /**
+         * Validar formulario antes de enviar
+         */
+        function validarFormularioAsignaciones() {
+            const container = document.getElementById('asignaciones-container');
+            
+            // Verificar que haya al menos una asignación
+            if (container.children.length === 0) {
+                showToast('Debe agregar al menos una asignación de nivel y área', 'error');
+                return false;
+            }
+            
+            // Verificar que todas estén completas
+            const asignaciones = container.querySelectorAll('.asignacion-item');
+            let validas = true;
+            
+            asignaciones.forEach((asig, index) => {
+                const nivel = asig.querySelector('select[name="asignacion_nivel[]"]').value;
+                const area = asig.querySelector('select[name="asignacion_area[]"]').value;
+                
+                if (!nivel || !area) {
+                    showToast(`La asignación ${index + 1} está incompleta`, 'error');
+                    validas = false;
+                }
+            });
+            
+            return validas;
+        }
+
+        // ==================== INICIALIZACIÓN ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('? Inicializando formulario de profesor...');
+            
+            // Cargar asignaciones existentes o crear una nueva
+            <% if (editar && p != null && p.getAsignaciones() != null && !p.getAsignaciones().isEmpty()) { %>
+                // MODO EDICIÓN: Cargar asignaciones existentes
+                console.log('Modo edición: Cargando <%= p.getAsignaciones().size() %> asignaciones');
+                <% for (ProfesorNivelArea asig : p.getAsignaciones()) { %>
+                    agregarAsignacion('<%= asig.getNivel() %>', '<%= asig.getAreaId() %>');
+                <% } %>
+            <% } else { %>
+                // MODO NUEVO: Agregar una asignación vacía
+                console.log('Modo nuevo: Agregando asignación vacía');
+                agregarAsignacion();
+            <% } %>
+            
+            // Agregar validación al submit
+            const formulario = document.getElementById('profesorForm');
+            if (formulario) {
+                formulario.addEventListener('submit', function(e) {
+                    if (!validarFormularioAsignaciones()) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    return true;
+                });
+            }
+            
+            console.log(' Formulario inicializado correctamente');
+        });
+    </script>
 </body>
 </html>

@@ -2,6 +2,7 @@
 <%@ page import="modelo.Turno" %>
 <%@ page import="modelo.Area" %>
 <%@ page import="java.util.List" %>
+<%@ page import="modelo.ProfesorNivelArea" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
@@ -1177,32 +1178,119 @@
                             <h2 class="card-title">Información Profesional</h2>
                         </div>
                         
+                       
+                        <!-- ASIGNACIONES MÚLTIPLES DE NIVEL Y ÁREA -->
                         <div class="info-item">
                             <div class="info-icon icon-primary">
-                                <i class="fas fa-book"></i>
+                                <i class="fas fa-chalkboard-teacher"></i>
                             </div>
                             <div class="info-content">
-                                <div class="info-label">Especialidad / Área</div>
-                                <div class="info-value large">
-                                    <%= p.getAreaNombre() != null ? p.getAreaNombre() : "No asignada" %>
+                                <div class="info-label">Niveles y Áreas que dicta</div>
+                                <div class="info-value">
+                                    <% 
+                                    if (p.getAsignaciones() != null && !p.getAsignaciones().isEmpty()) {
+                                        // Mostrar todas las asignaciones
+                                    %>
+                                        <div class="grid grid-cols-1 gap-3 mt-2">
+                                            <% 
+                                            for (int i = 0; i < p.getAsignaciones().size(); i++) {
+                                                ProfesorNivelArea asig = p.getAsignaciones().get(i);
+
+                                                // Determinar clase de nivel para el badge
+                                                String asigNivelClass = "";
+                                                String asigNivelIcon = "";
+                                                switch(asig.getNivel()) {
+                                                    case "INICIAL":
+                                                        asigNivelClass = "bg-pink-100 text-pink-800 border-pink-300 dark:bg-pink-900 dark:text-pink-100";
+                                                        asigNivelIcon = "*";
+                                                        break;
+                                                    case "PRIMARIA":
+                                                        asigNivelClass = "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-100";
+                                                        asigNivelIcon = "*";
+                                                        break;
+                                                    case "SECUNDARIA":
+                                                        asigNivelClass = "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900 dark:text-purple-100";
+                                                        asigNivelIcon = "*";
+                                                        break;
+                                                    default:
+                                                        asigNivelClass = "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-100";
+                                                        asigNivelIcon = "*";
+                                                }
+                                            %>
+                                                <div class="flex items-center justify-between p-3 rounded-lg border-2 <%= asigNivelClass %> transition-all hover:shadow-md">
+                                                    <div class="flex items-center gap-3 flex-1">
+                                                        <!-- Badge de nivel -->
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="text-2xl"><%= asigNivelIcon %></span>
+                                                            <div>
+                                                                <div class="font-semibold text-sm">
+                                                                    <%= asig.getNivel() %>
+                                                                </div>
+                                                                <div class="text-lg font-bold">
+                                                                    <%= asig.getAreaNombre() != null ? asig.getAreaNombre() : "Área #" + asig.getAreaId() %>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Indicador de principal -->
+                                                    <% if (asig.isEsPrincipal()) { %>
+                                                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300 text-xs font-semibold">
+                                                            <i class="fas fa-star"></i>
+                                                            Principal
+                                                        </span>
+                                                    <% } else { %>
+                                                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white text-gray-600 border border-gray-300 text-xs">
+                                                            <i class="fas fa-circle text-xs"></i>
+                                                            Asignación <%= i + 1 %>
+                                                        </span>
+                                                    <% } %>
+                                                </div>
+                                            <% 
+                                            }
+                                            %>
+                                        </div>
+
+                                        <!-- Resumen de asignaciones -->
+                                        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                                <i class="fas fa-info-circle mr-1"></i>
+                                                <strong>Total:</strong> <%= p.getAsignaciones().size() %> asignación<%= p.getAsignaciones().size() > 1 ? "es" : "" %>
+
+                                                <!-- Mostrar niveles únicos -->
+                                                <% 
+                                                List<String> nivelesUnicos = p.getNivelesDistintos();
+                                                if (nivelesUnicos != null && !nivelesUnicos.isEmpty()) {
+                                                %>
+                                                    <span class="ml-2">|</span>
+                                                    <span class="ml-2">
+                                                        <i class="fas fa-layer-group mr-1"></i>
+                                                        Niveles: <%= String.join(", ", nivelesUnicos) %>
+                                                    </span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% 
+                                    } else {
+                                        // Fallback: mostrar área antigua si no hay asignaciones
+                                    %>
+                                        <div class="text-gray-500 italic p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i>
+                                            No hay asignaciones registradas para este profesor.
+                                            <% if (p.getAreaNombre() != null) { %>
+                                                <br>
+                                                <span class="text-sm mt-2 block">
+                                                    (Área registrada anteriormente: <strong><%= p.getAreaNombre() %></strong>)
+                                                </span>
+                                            <% } %>
+                                        </div>
+                                    <% 
+                                    }
+                                    %>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="info-item">
-                            <div class="info-icon icon-success">
-                                <i class="fas fa-layer-group"></i>
-                            </div>
-                            <div class="info-content">
-                                <div class="info-label">Nivel que Enseña</div>
-                                <div class="info-value">
-                                    <span class="nivel-badge <%= nivelClass %>">
-                                        <i class="fas fa-graduation-cap"></i>
-                                        <%= nivelTexto %>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
                         
                         <div class="info-item">
                             <div class="info-icon icon-warning">

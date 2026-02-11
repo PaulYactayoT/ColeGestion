@@ -1,8 +1,9 @@
 package modelo;
 
 import java.util.Date;
-import java.util.List; // Para manejar la lista de disponibilidades
-import java.util.ArrayList; // Para inicializar la lista
+import java.util.List;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class Profesor {
     private int id;
@@ -198,10 +199,6 @@ public class Profesor {
         this.nivel = nivel;
     }
 
-    // ========================================
-    // Permiten acceder y modificar la lista de horarios disponibles
-    // ========================================
-    
     /**
      * Obtiene la lista completa de disponibilidades del profesor
      * @return Lista de objetos Disponibilidad
@@ -231,5 +228,117 @@ public class Profesor {
     public String getNombreCompleto() {
         return nombres + " " + apellidos;
     }
+    
+    private List<ProfesorNivelArea> asignaciones;
+    
+    /**
+     * Obtiene la lista de asignaciones de nivel-área
+     */
+    public List<ProfesorNivelArea> getAsignaciones() {
+        if (asignaciones == null) {
+            asignaciones = new ArrayList<>();
+        }
+        return asignaciones;
+    }
+    
+    /**
+     * Establece la lista de asignaciones
+     */
+    public void setAsignaciones(List<ProfesorNivelArea> asignaciones) {
+        this.asignaciones = asignaciones;
+    }
   
-}
+    /**
+     * Agrega una asignación a la lista
+     */
+    public void agregarAsignacion(ProfesorNivelArea asignacion) {
+        if (this.asignaciones == null) {
+            this.asignaciones = new ArrayList<>();
+        }
+        this.asignaciones.add(asignacion);
+    }
+    
+    /**
+     * Verifica si el profesor tiene asignaciones
+     */
+    public boolean tieneAsignaciones() {
+        return asignaciones != null && !asignaciones.isEmpty();
+    }
+    
+    /**
+     * Obtiene todas las asignaciones de un nivel específico
+     */
+    public List<ProfesorNivelArea> getAsignacionesPorNivel(String nivel) {
+        List<ProfesorNivelArea> resultado = new ArrayList<>();
+        if (asignaciones != null) {
+            for (ProfesorNivelArea asig : asignaciones) {
+                if (asig.getNivel().equals(nivel)) {
+                    resultado.add(asig);
+                }
+            }
+        }
+        return resultado;
+    }
+    
+   /**
+    * Obtiene una lista de niveles únicos de todas las asignaciones del profesor
+    * @return Lista de niveles distintos (sin duplicados)
+    */
+   public List<String> getNivelesDistintos() {
+       if (asignaciones == null || asignaciones.isEmpty()) {
+           return new ArrayList<>();
+       }
+
+       // Usar Stream para obtener niveles únicos
+       return asignaciones.stream()
+               .map(ProfesorNivelArea::getNivel)
+               .filter(nivel -> nivel != null && !nivel.trim().isEmpty())
+               .distinct()
+               .collect(Collectors.toList());
+   }
+    
+    /**
+     * Obtiene todas las áreas en las que dicta el profesor (sin duplicados)
+     */
+    public List<Integer> getAreasDistintas() {
+        List<Integer> areas = new ArrayList<>();
+        if (asignaciones != null) {
+            for (ProfesorNivelArea asig : asignaciones) {
+                if (!areas.contains(asig.getAreaId())) {
+                    areas.add(asig.getAreaId());
+                }
+            }
+        }
+        return areas;
+    }
+    
+    /**
+     * Verifica si el profesor dicta en un nivel específico
+     */
+    public boolean dictaEnNivel(String nivel) {
+        if (asignaciones != null) {
+            for (ProfesorNivelArea asig : asignaciones) {
+                if (asig.getNivel().equals(nivel)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Verifica si el profesor dicta un área específica
+     */
+    public boolean dictaArea(int areaId) {
+        if (asignaciones != null) {
+            for (ProfesorNivelArea asig : asignaciones) {
+                if (asig.getAreaId() == areaId) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+ 
+ 
+}   
