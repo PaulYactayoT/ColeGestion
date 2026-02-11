@@ -1,7 +1,6 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.util.*" %>
-
+<%@ page import="modelo.EstadisticasDAO" %>
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response.setHeader("Pragma", "no-cache");
@@ -11,6 +10,15 @@
         response.sendRedirect("index.jsp");
         return;
     }
+    
+    // OBTENER ESTADÍSTICAS REALES
+    EstadisticasDAO estadisticasDAO = new EstadisticasDAO();
+    Map<String, Integer> estadisticas = estadisticasDAO.obtenerEstadisticasGenerales();
+    
+    int totalEstudiantes = estadisticas.get("totalEstudiantes");
+    int totalProfesores = estadisticas.get("totalProfesores");
+    int totalCursos = estadisticas.get("totalCursos");
+    int totalGrados = estadisticas.get("totalGrados");
     
     // Datos de ejemplo para grados
     List<Map<String, String>> grados = new ArrayList<>();
@@ -44,7 +52,7 @@
     g5.put("estudiantes", "29");
     grados.add(g5);
     
-    // Obtener parÃ¡metro de bÃºsqueda
+    // Obtener parámetro de búsqueda
     String busqueda = request.getParameter("busqueda");
     List<Map<String, String>> resultados = new ArrayList<>();
     
@@ -176,11 +184,11 @@
         
         <div class="space-y-4">
             <div class="space-y-2">
-                <h4 class="font-medium">TamaÃ±o de texto</h4>
+                <h4 class="font-medium">Tamaño de texto</h4>
                 <div class="flex gap-2">
                     <button onclick="setTextSize('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
                     <button onclick="setTextSize('large')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Grande</button>
-                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">MÃ¡s Grande</button>
+                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Más Grande</button>
                 </div>
             </div>
             
@@ -236,7 +244,7 @@
                     </div>
                 </div>
                 
-                <nav class="flex flex-col gap-2" aria-label="NavegaciÃ³n principal">
+                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
                     <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
                        href="#" 
                        aria-current="page">
@@ -279,7 +287,7 @@
                 <a href="LogoutServlet" 
                    class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
                     <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
-                    <span>Cerrar SesiÃ³n</span>
+                    <span>Cerrar Sesión</span>
                 </a>
             </div>
         </aside>
@@ -297,7 +305,7 @@
                                    placeholder="Buscar grados, estudiantes, cursos..." 
                                    type="text"
                                    value="<%= busqueda != null ? busqueda : "" %>"
-                                   aria-label="Campo de bÃºsqueda"/>
+                                   aria-label="Campo de búsqueda"/>
                         </div>
                     </form>
                 </div>
@@ -310,7 +318,7 @@
                     </button>
                     
                     <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                            aria-label="ConfiguraciÃ³n">
+                            aria-label="Configuración">
                         <span class="material-symbols-outlined">settings</span>
                     </button>
                     
@@ -332,24 +340,24 @@
                 <div class="relative rounded-xl overflow-hidden min-h-[180px] bg-primary flex flex-col justify-center px-8 shadow-lg shadow-primary/20" 
                      style="background-image: linear-gradient(90deg, rgba(19, 91, 236, 0.95) 0%, rgba(19, 91, 236, 0.6) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuB_3LXerE1vpUAm_1-q-D4EMXN-i8c-idTTZtPpQ58USnatUubEWaEA7NNTJhGtxA9glVNSU_OMWawnGSq4XX5HQvmUwfenKc6i66zaj2YSDXBn3IKNZQ4rkpfpv8Dvq_7FB1vCbkRfa3B33h-wF109oSVddHtKvBQS_mmEBKEorF9YbpZ5S1_tjrrkkRqaIgmrorMQiVIBf6m59RTKJhwF44UqJ3IBTkBBl-ch6fp8z52Qm823GZAMO-ZKdgXwLhe_q9AMTD-k4rs'); background-size: cover; background-position: center;">
                     <h2 class="text-white text-3xl font-bold tracking-tight">Bienvenido de nuevo, Administrador</h2>
-                    <p class="text-blue-100 mt-2 max-w-md">AquÃ­ tienes el resumen de lo que estÃ¡ sucediendo hoy en el Instituto San Antonio.</p>
+                    <p class="text-blue-100 mt-2 max-w-md">Aquí tienes el resumen de lo que está sucediendo hoy en el Instituto San Antonio.</p>
                 </div>
                 
                 <% if (busqueda != null && !busqueda.trim().isEmpty()) { %>
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-xl font-bold">Resultados de bÃºsqueda para "<%= busqueda %>"</h3>
-                            <a href="dashboard.jsp" class="text-primary hover:underline">Limpiar bÃºsqueda</a>
+                            <h3 class="text-xl font-bold">Resultados de búsqueda para "<%= busqueda %>"</h3>
+                            <a href="dashboard.jsp" class="text-primary hover:underline">Limpiar búsqueda</a>
                         </div>
                         
                         <% if (resultados.isEmpty()) { %>
-                            <p class="text-gray-500">No se encontraron grados que coincidan con tu bÃºsqueda.</p>
+                            <p class="text-gray-500">No se encontraron grados que coincidan con tu búsqueda.</p>
                         <% } else { %>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <% for (Map<String, String> grado : resultados) { %>
                                     <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                         <h4 class="font-bold text-lg"><%= grado.get("nombre") %></h4>
-                                        <p class="text-gray-600 dark:text-gray-400">SecciÃ³n: <%= grado.get("seccion") %></p>
+                                        <p class="text-gray-600 dark:text-gray-400">Sección: <%= grado.get("seccion") %></p>
                                         <p class="text-gray-600 dark:text-gray-400">Estudiantes: <%= grado.get("estudiantes") %></p>
                                     </div>
                                 <% } %>
@@ -364,46 +372,46 @@
                             <p class="text-[#616f89] text-sm font-medium">Total Estudiantes</p>
                             <span class="material-symbols-outlined text-primary" aria-hidden="true">groups</span>
                         </div>
-                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white">250</h3>
+                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white"><%= totalEstudiantes %></h3>
                         <div class="flex items-center gap-1 mt-2">
-                            <span class="text-[#07883b] text-sm font-semibold">+5%</span>
-                            <p class="text-[#616f89] text-xs">desde el mes pasado</p>
+                            <span class="text-[#07883b] text-sm font-semibold">Activos</span>
+                            <p class="text-[#616f89] text-xs">en el sistema</p>
                         </div>
                     </div>
-                    
+
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
                         <div class="flex justify-between items-start">
                             <p class="text-[#616f89] text-sm font-medium">Profesores Activos</p>
                             <span class="material-symbols-outlined text-primary" aria-hidden="true">school</span>
                         </div>
-                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white">25</h3>
+                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white"><%= totalProfesores %></h3>
                         <div class="flex items-center gap-1 mt-2">
-                            <span class="text-[#07883b] text-sm font-semibold">+2%</span>
-                            <p class="text-[#616f89] text-xs">nuevas incorporaciones</p>
+                            <span class="text-[#07883b] text-sm font-semibold">Activos</span>
+                            <p class="text-[#616f89] text-xs">en el sistema</p>
                         </div>
                     </div>
-                    
+
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
                         <div class="flex justify-between items-start">
                             <p class="text-[#616f89] text-sm font-medium">Total Cursos</p>
                             <span class="material-symbols-outlined text-orange-500" aria-hidden="true">book</span>
                         </div>
-                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white">15</h3>
+                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white"><%= totalCursos %></h3>
                         <div class="flex items-center gap-1 mt-2">
-                            <span class="text-[#07883b] text-sm font-semibold">+8%</span>
-                            <p class="text-[#616f89] text-xs">este semestre</p>
+                            <span class="text-[#07883b] text-sm font-semibold">Activos</span>
+                            <p class="text-[#616f89] text-xs">en el sistema</p>
                         </div>
                     </div>
-                    
+
                     <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
                         <div class="flex justify-between items-start">
                             <p class="text-[#616f89] text-sm font-medium">Grados Activos</p>
                             <span class="material-symbols-outlined text-purple-500" aria-hidden="true">layers</span>
                         </div>
-                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white">8</h3>
+                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white"><%= totalGrados %></h3>
                         <div class="flex items-center gap-1 mt-2">
-                            <span class="text-[#07883b] text-sm font-semibold">+0%</span>
-                            <p class="text-[#616f89] text-xs">estable</p>
+                            <span class="text-[#07883b] text-sm font-semibold">Activos</span>
+                            <p class="text-[#616f89] text-xs">en el sistema</p>
                         </div>
                     </div>
                 </div>
@@ -417,7 +425,7 @@
                                 <i class="fas fa-calendar-check text-yellow-600 dark:text-yellow-500 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">EvaluaciÃ³n de Disponibilidad</h3>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Evaluación de Disponibilidad</h3>
                                 <p class="text-sm text-[#616f89] dark:text-gray-400">Revisar solicitudes pendientes</p>
                             </div>
                         </div>
@@ -431,8 +439,8 @@
                                 <i class="fas fa-user-graduate text-blue-600 dark:text-blue-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÃ³n de Alumnos</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar informaciÃ³n acadÃ©mica</p>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Alumnos</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar información académica</p>
                             </div>
                         </div>
                         <a href="AlumnoServlet" class="block w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-blue-500">
@@ -446,7 +454,7 @@
                                 <i class="fas fa-chalkboard-teacher text-green-600 dark:text-green-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÃ³n de Profesores</h3>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Profesores</h3>
                                 <p class="text-sm text-[#616f89] dark:text-gray-400">Personal docente y asignaciones</p>
                             </div>
                         </div>
@@ -461,8 +469,8 @@
                                 <i class="fas fa-book text-orange-600 dark:text-orange-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÃ³n de Cursos</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Configurar cursos acadÃ©micos</p>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Cursos</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Configurar cursos académicos</p>
                             </div>
                         </div>
                         <a href="CursoServlet" class="block w-full py-3 bg-orange-600 hover:bg-orange-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-orange-500">
@@ -476,8 +484,8 @@
                                 <i class="fas fa-layer-group text-red-600 dark:text-red-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÃ³n de Grados</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar grados acadÃ©micos</p>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Grados</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar grados académicos</p>
                             </div>
                         </div>
                         <a href="GradoServlet" class="block w-full py-3 bg-red-600 hover:bg-red-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-red-500">
@@ -491,7 +499,7 @@
                                 <i class="fas fa-users-cog text-gray-600 dark:text-gray-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÃ³n de Usuarios</h3>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gestión de Usuarios</h3>
                                 <p class="text-sm text-[#616f89] dark:text-gray-400">Permisos y roles de acceso</p>
                             </div>
                         </div>

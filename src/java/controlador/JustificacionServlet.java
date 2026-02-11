@@ -58,7 +58,7 @@ public class JustificacionServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         String accion = request.getParameter("accion");
         
-        System.out.println("📝 JustificacionServlet - POST - Acción: " + accion);
+        System.out.println("JustificacionServlet - POST - Acción: " + accion);
         
         if (accion == null) {
             response.sendRedirect("revisarJustificaciones.jsp");
@@ -87,17 +87,17 @@ public class JustificacionServlet extends HttpServlet {
             Integer personaId = (Integer) session.getAttribute("personaId");
             
             if (personaId == null) {
-                System.out.println("❌ PersonaId es null - Redirigiendo a login");
+                System.out.println("PersonaId es null - Redirigiendo a login");
                 response.sendRedirect("index.jsp");
                 return;
             }
             
-            System.out.println("🔍 Buscando alumno para personaId (padre): " + personaId);
+            System.out.println("Buscando alumno para personaId (padre): " + personaId);
             
             Alumno alumno = alumnoDAO.obtenerAlumnoPorPadreId(personaId);
             
             if (alumno == null) {
-                System.out.println("❌ No se encontró alumno asociado al padre: " + personaId);
+                System.out.println("No se encontró alumno asociado al padre: " + personaId);
                 request.setAttribute("error", "No se encontró información del estudiante asociado a su cuenta.");
                 request.setAttribute("ausencias", new java.util.ArrayList<>());
                 request.setAttribute("alumnoId", null);
@@ -107,11 +107,11 @@ public class JustificacionServlet extends HttpServlet {
             
             int alumnoId = alumno.getId();
             String alumnoNombre = alumno.getNombreCompleto();
-            System.out.println("✅ Alumno encontrado: ID=" + alumnoId + " - " + alumnoNombre);
+            System.out.println("Alumno encontrado: ID=" + alumnoId + " - " + alumnoNombre);
             
             List<Asistencia> ausencias = asistenciaDAO.obtenerAusenciasSinJustificar(alumnoId);
             
-            System.out.println("📋 Total de ausencias sin justificar: " + ausencias.size());
+            System.out.println("Total de ausencias sin justificar: " + ausencias.size());
             
             if (!ausencias.isEmpty()) {
                 System.out.println("   Detalles de ausencias encontradas:");
@@ -134,11 +134,11 @@ public class JustificacionServlet extends HttpServlet {
                     "El estudiante " + alumnoNombre + " no tiene ausencias pendientes de justificación.");
             }
             
-            System.out.println("✅ Redirigiendo al JSP con " + ausencias.size() + " ausencias");
+            System.out.println("Redirigiendo al JSP con " + ausencias.size() + " ausencias");
             request.getRequestDispatcher("justificarAusencia.jsp").forward(request, response);
             
         } catch (Exception e) {
-            System.out.println("❌ Error en mostrarFormulario: " + e.getMessage());
+            System.out.println("Error en mostrarFormulario: " + e.getMessage());
             e.printStackTrace();
             request.setAttribute("error", "Error al cargar el formulario: " + e.getMessage());
             request.setAttribute("ausencias", new java.util.ArrayList<>());
@@ -162,7 +162,7 @@ public class JustificacionServlet extends HttpServlet {
             String tipoStr = request.getParameter("tipoJustificacion");
             String descripcion = request.getParameter("descripcion");
             
-            System.out.println("📝 Creando justificación:");
+            System.out.println(" Creando justificación:");
             System.out.println("   - AsistenciaId: " + asistenciaId);
             System.out.println("   - AlumnoId: " + alumnoId);
             System.out.println("   - Tipo: " + tipoStr);
@@ -178,17 +178,47 @@ public class JustificacionServlet extends HttpServlet {
             Part filePart = request.getPart("archivo");
             if (filePart != null && filePart.getSize() > 0) {
                 String fileName = getFileName(filePart);
+                
+                // Validar formato de archivo - Solo PDF, Word e Imágenes
+                String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+                String[] allowedExtensions = {".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"};
+                boolean isValidFormat = false;
+                
+                for (String ext : allowedExtensions) {
+                    if (extension.equals(ext)) {
+                        isValidFormat = true;
+                        break;
+                    }
+                }
+                
+                if (!isValidFormat) {
+                    System.out.println("Formato de archivo no permitido: " + extension);
+                    session.setAttribute("error", "Formato de archivo no permitido. Solo se aceptan: PDF, Word (.doc, .docx) e imágenes (JPG, PNG)");
+                    response.sendRedirect("JustificacionServlet?accion=form");
+                    return;
+                }
+                
+                // Validar tamaño (5MB máximo)
+                long fileSize = filePart.getSize();
+                long maxSize = 5 * 1024 * 1024; // 5MB en bytes
+                
+                if (fileSize > maxSize) {
+                    System.out.println("Archivo demasiado grande: " + (fileSize / 1024 / 1024) + "MB");
+                    session.setAttribute("error", "El archivo es demasiado grande. Tamaño máximo: 5MB");
+                    response.sendRedirect("JustificacionServlet?accion=form");
+                    return;
+                }
+                
                 String uploadPath = getServletContext().getRealPath("") + File.separator + "uploads" + 
                                    File.separator + "justificaciones";
                 
                 File uploadDir = new File(uploadPath);
                 if (!uploadDir.exists()) {
                     uploadDir.mkdirs();
-                    System.out.println("📁 Directorio creado: " + uploadPath);
+                    System.out.println("Directorio creado: " + uploadPath);
                 }
                 
                 String timestamp = String.valueOf(System.currentTimeMillis());
-                String extension = fileName.substring(fileName.lastIndexOf("."));
                 String newFileName = "just_" + asistenciaId + "_" + timestamp + extension;
                 String filePath = uploadPath + File.separator + newFileName;
                 
@@ -197,23 +227,23 @@ public class JustificacionServlet extends HttpServlet {
                 String relativePath = "uploads/justificaciones/" + newFileName;
                 justificacion.setDocumentoAdjunto(relativePath);
                 
-                System.out.println("✅ Archivo guardado: " + relativePath);
+                System.out.println("Archivo guardado: " + relativePath + " (Tamaño: " + (fileSize / 1024) + "KB)");
             }
             
             int justificacionId = justificacionDAO.crearJustificacion(justificacion);
             
             if (justificacionId > 0) {
-                System.out.println("✅ Justificación creada con ID: " + justificacionId);
+                System.out.println("Justificación creada con ID: " + justificacionId);
                 session.setAttribute("mensaje", "Justificación enviada exitosamente. Será revisada por el docente.");
                 response.sendRedirect("AsistenciaServlet?accion=verPadre");
             } else {
-                System.out.println("❌ Error al crear justificación");
+                System.out.println("Error al crear justificación");
                 session.setAttribute("error", "Error al enviar la justificación. Intente nuevamente.");
                 response.sendRedirect("JustificacionServlet?accion=form");
             }
             
         } catch (Exception e) {
-            System.out.println("❌ Error al crear justificación: " + e.getMessage());
+            System.out.println("Error al crear justificación: " + e.getMessage());
             e.printStackTrace();
             HttpSession session = request.getSession();
             session.setAttribute("error", "Error: " + e.getMessage());
@@ -252,7 +282,7 @@ public class JustificacionServlet extends HttpServlet {
             response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId);
             
         } catch (Exception e) {
-            System.out.println("❌ Error al aprobar: " + e.getMessage());
+            System.out.println("Error al aprobar: " + e.getMessage());
             e.printStackTrace();
             HttpSession session = request.getSession();
             session.setAttribute("error", "Error: " + e.getMessage());
@@ -282,7 +312,7 @@ public class JustificacionServlet extends HttpServlet {
                 return;
             }
             
-            System.out.println("❌ Rechazando justificación ID: " + justificacionId);
+            System.out.println("Rechazando justificación ID: " + justificacionId);
             
             boolean resultado = justificacionDAO.rechazarJustificacion(
                 justificacionId, personaId, observaciones
@@ -297,7 +327,7 @@ public class JustificacionServlet extends HttpServlet {
             response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId);
             
         } catch (Exception e) {
-            System.out.println("❌ Error al rechazar: " + e.getMessage());
+            System.out.println("Error al rechazar: " + e.getMessage());
             e.printStackTrace();
             HttpSession session = request.getSession();
             session.setAttribute("error", "Error: " + e.getMessage());

@@ -47,728 +47,687 @@
     session.removeAttribute("mensaje");
     session.removeAttribute("error");
     session.removeAttribute("advertencia");
+    
+    // Obtener nombre del usuario para mostrar
+    String nombreUsuario = (String) session.getAttribute("nombres");
+    if (nombreUsuario == null) {
+        nombreUsuario = "Usuario";
+    }
 %>
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Asistencia - Sistema Escolar</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <title>Registrar Asistencia - San Antonio</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
-            color: #000000;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
         
-        /* Header */
-        .main-header {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            padding: 12px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        /* Mejoras de accesibilidad */
+        .reduce-motion * { 
+            animation-duration: 0.01ms !important; 
+            animation-iteration-count: 1 !important; 
+            transition-duration: 0.01ms !important; 
+        }
+        .high-contrast-invert { 
+            filter: invert(1) hue-rotate(180deg); 
+        }
+        .high-contrast-yellow { 
+            background-color: #000000 !important; 
+            color: #ffff00 !important; 
+        }
+        .beige-background { 
+            background-color: #f5f5dc !important; 
         }
         
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Tamaños de texto */
+        .large-text { font-size: 18px !important; }
+        .larger-text { font-size: 20px !important; }
+        .largest-text { font-size: 22px !important; }
+        
+        .dyslexia-font { 
+            font-family: Arial !important; 
+            font-size: 1.1em !important; 
+            line-height: 1.6 !important; 
+            letter-spacing: 0.5px !important; 
         }
         
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        /* Panel de accesibilidad */
+        .accessibility-panel {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .accessibility-panel.open {
+            transform: translateX(0);
         }
         
-        .logo-img {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
+        /* Skip to content */
+        .skip-to-content {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #135bec;
+            color: white;
+            padding: 8px;
+            z-index: 100;
+        }
+        .skip-to-content:focus {
+            top: 0;
         }
         
-        .header-title {
-            font-size: 20px;
+        /* Focus styles */
+        :focus {
+            outline: 3px solid #135bec !important;
+            outline-offset: 2px;
+        }
+        
+        /* Badge con tamaño base más grande */
+        .status-badge {
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #ffffff;
         }
         
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .header-user {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #ffffff;
-        }
-        
-        .btn-logout {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background-color: transparent;
-            border: 1px solid #ffffff;
-            color: #ffffff;
-            padding: 6px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            text-decoration: none;
+        /* Botón de accesibilidad */
+        .accessibility-toggle {
             transition: all 0.3s ease;
         }
         
-        .btn-logout:hover {
-            background-color: #ffffff;
-            color: #1a1a1a;
-        }
-        
-        /* Container Principal */
-        .container {
-            flex: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 30px 20px;
-            width: 100%;
-        }
-        
-        /* Título de Página */
-        .page-header {
-            background: linear-gradient(135deg, #A8D8EA 0%, #7FB3D5 100%);
-            color: #000000;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(168, 216, 234, 0.3);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .page-header-left h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .page-header-left p {
-            font-size: 15px;
-            opacity: 0.85;
-        }
-        
-        .btn-back {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background-color: #000000;
-            color: #ffffff;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-back:hover {
-            background-color: #333333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            color: #ffffff;
+        .accessibility-toggle:hover {
+            transform: scale(1.1);
         }
         
         /* Alertas */
         .alert {
-            padding: 16px 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 500;
-            animation: slideDown 0.3s ease;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+        }
+        
+        .alert-danger {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+        
+        .dark .alert-danger {
+            background-color: #450a0a;
+            border-color: #7f1d1d;
+            color: #fca5a5;
         }
         
         .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #16a34a;
         }
         
-        .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-left: 4px solid #dc3545;
+        .dark .alert-success {
+            background-color: #052e16;
+            border-color: #14532d;
+            color: #86efac;
         }
         
         .alert-warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border-left: 4px solid #ffc107;
+            background-color: #fffbeb;
+            border-color: #fde68a;
+            color: #92400e;
         }
         
-        .alert-info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border-left: 4px solid #17a2b8;
+        .dark .alert-warning {
+            background-color: #451a03;
+            border-color: #78350f;
+            color: #fde68a;
         }
         
-        /* Mensaje de Bloqueo */
-        .locked-message {
-            background-color: #f8d7da;
-            border: 3px solid #dc3545;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 25px;
+        /* Animaciones suaves */
+        .transition-smooth {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .locked-message .icon {
-            font-size: 64px;
-            color: #dc3545;
-            margin-bottom: 15px;
-        }
-        
-        .locked-message h3 {
-            font-size: 24px;
-            color: #721c24;
-            margin-bottom: 10px;
-        }
-        
-        .locked-message p {
-            font-size: 16px;
-            color: #721c24;
-        }
-        
-        /* Formulario de Filtros */
-        .filter-section {
-            background-color: #ffffff;
-            border: 2px solid #e0e0e0;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 0;
-        }
-        
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #000000;
-            font-size: 15px;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            font-family: inherit;
-            background-color: #ffffff;
-            color: #000000;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: #A8D8EA;
-            box-shadow: 0 0 0 3px rgba(168, 216, 234, 0.2);
-        }
-        
-        .form-control:disabled {
-            background-color: #f5f5f5;
-            cursor: not-allowed;
-        }
-        
-        /* Botones */
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-        
-        .btn-primary {
-            background-color: #A8D8EA;
-            color: #000000;
-        }
-        
-        .btn-primary:hover:not(:disabled) {
-            background-color: #7FB3D5;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(168, 216, 234, 0.4);
-        }
-        
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .btn-success {
-            background-color: #28a745;
-            color: #ffffff;
-        }
-        
-        .btn-success:hover:not(:disabled) {
-            background-color: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
-        }
-        
-        /* Tabla */
-        .table-container {
-            background-color: #ffffff;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
-        }
-        
-        .table-header {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        
-        .table-header h2 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 700;
-            color: #000000;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        thead {
-            background-color: #000000;
-            color: #ffffff;
-        }
-        
-        th {
-            padding: 16px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 14px;
-            letter-spacing: 0.5px;
-        }
-        
-        td {
-            padding: 16px;
-            border-bottom: 1px solid #f0f0f0;
-            color: #000000;
-        }
-        
-        tbody tr {
-            transition: background-color 0.2s ease;
-        }
-        
-        tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-        
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-        
-        /* Radio Buttons */
-        .radio-group {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
+        /* Radio buttons custom */
         .radio-option {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
             cursor: pointer;
         }
         
+        .radio-option:hover {
+            background-color: rgba(19, 91, 236, 0.1);
+        }
+        
         .radio-option input[type="radio"] {
+            width: 1.125rem;
+            height: 1.125rem;
             cursor: pointer;
-            width: 18px;
-            height: 18px;
-            accent-color: #A8D8EA;
         }
         
         .radio-option input[type="radio"]:disabled {
             cursor: not-allowed;
         }
         
-        /* Badges */
-        .badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        
-        .badge-presente {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .badge-tardanza {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .badge-ausente {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        
-        .badge-justificado {
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }
-        
-        /* Footer de Tabla */
-        .table-footer {
-            padding: 20px;
-            text-align: right;
-            background-color: #f8f9fa;
-            border-top: 2px solid #e0e0e0;
-        }
-        
-        /* Footer */
-        .main-footer {
-            background-color: #000000;
-            color: #ffffff;
-            padding: 20px 0;
-            text-align: center;
-            margin-top: auto;
-        }
-        
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            font-size: 14px;
-        }
-        
-        /* Info Box */
-        .info-box {
-            background-color: #A8D8EA;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-        
-        .info-box p {
-            margin: 8px 0;
-            line-height: 1.6;
-            color: #000000;
-        }
-        
-        .info-box strong {
-            color: #000000;
-        }
-        
-        /* Animaciones */
-        @keyframes slideDown {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        /* Responsivo */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-            
-            .page-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            table {
-                font-size: 13px;
-            }
-            
-            th, td {
-                padding: 10px;
-            }
-            
-            .radio-group {
-                flex-direction: column;
-                gap: 8px;
-            }
+        /* Table responsive */
+        .table-scroll {
+            overflow-x: auto;
         }
     </style>
 </head>
-<body>
-    <!-- Header -->
-    <header class="main-header">
-        <div class="header-content">
-            <div class="header-left">
-                <img src="assets/img/logosa.png" alt="Logo" class="logo-img">
-                <span class="header-title">Colegio SA</span>
-            </div>
-            <div class="header-right">
-                <div class="header-user">
-                    <i class="bi bi-person-circle"></i>
-                    <span><%= session.getAttribute("nombres") %></span>
-                </div>
-                <a href="LogoutServlet" class="btn-logout">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Cerrar sesión</span>
-                </a>
-            </div>
-        </div>
-    </header>
+<body class="bg-background-light dark:bg-background-dark transition-colors duration-300">
+    <a href="#main-content" class="skip-to-content">Saltar al contenido principal</a>
     
-    <!-- Container Principal -->
-    <div class="container">
-        <!-- Titulo de Pagina -->
-        <div class="page-header">
-            <div class="page-header-left">
-                <h1><i class="bi bi-clipboard-check"></i> Registrar Asistencia</h1>
-                <p>Gestiona la asistencia de los alumnos de forma rapida y eficiente</p>
-            </div>
-            <a href="DocenteDashboardServlet" class="btn-back">
-                <i class="bi bi-arrow-left-circle"></i>
-                <span>Volver al Panel</span>
-            </a>
+    <!-- Accessibility Panel -->
+    <div class="accessibility-panel fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">Accesibilidad</h2>
+            <button onclick="toggleAccessibilityPanel()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
         
-        <!-- Mensajes -->
-        <% if (mensaje != null) { %>
-            <div class="alert alert-success">
-                <span><i class="bi bi-check-circle"></i> <%= mensaje %></span>
-            </div>
-        <% } %>
-        
-        <% if (error != null) { %>
-            <div class="alert alert-error">
-                <span><i class="bi bi-x-circle"></i> <%= error %></span>
-            </div>
-        <% } %>
-        
-        <% if (advertencia != null) { %>
-            <div class="alert alert-warning">
-                <span><i class="bi bi-exclamation-triangle"></i> <%= advertencia %></span>
-            </div>
-        <% } %>
-        
-        <!-- Nuevas funcionalidades: Mensaje de límite de tiempo -->
-        <% if (!puedeEditar) { %>
-            <div class="alert alert-warning">
-                <i class="bi bi-clock-history"></i> ${mensajeLimite}
-                <small>El formulario está en modo solo lectura.</small>
-            </div>
-        <% } %>
-        
-        <!-- Mensaje de Bloqueo (solo si está completamente bloqueado) -->
-        <% if (cursoSeleccionado != null && !puedeEditar && mensajeLimite != null && mensajeLimite.contains("vencido")) { %>
-            <div class="locked-message">
-                <div class="icon"><i class="bi bi-lock" style="font-size: 64px;"></i></div>
-                <h3>Edicion Bloqueada</h3>
-                <p><%= mensajeLimite %></p>
-                <p>Para modificar esta asistencia, contacta al administrador del sistema.</p>
-            </div>
-        <% } %>
-        
-        <!-- Formulario de Filtros -->
-        <div class="filter-section">
-            <form method="GET" action="AsistenciaServlet">
-                <input type="hidden" name="accion" value="registrar">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="curso_id"><i class="bi bi-book"></i> Curso</label>
-                        <select name="curso_id" id="curso_id" class="form-control" required>
-                            <option value="">-- Seleccione un curso --</option>
-                            <% for (Curso c : cursos) { %>
-                                <option value="<%= c.getId() %>" <%= c.getId() == (cursoSeleccionado != null ? cursoSeleccionado.getId() : 0) ? "selected" : "" %>>
-                                    <%= c.getNombre() %><%= c.getGradoNombre() != null ? " - " + c.getGradoNombre() : "" %>
-                                </option>
-                            <% } %>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="turno_id"><i class="bi bi-clock"></i> Turno</label>
-                        <select name="turno_id" id="turno_id" class="form-control" required>
-                            <option value="1" <%= "1".equals(turnoIdParam) ? "selected" : "" %>>Manana</option>
-                            <option value="2" <%= "2".equals(turnoIdParam) ? "selected" : "" %>>Tarde</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="fecha"><i class="bi bi-calendar"></i> Fecha</label>
-                        <input type="date" name="fecha" id="fecha" class="form-control" 
-                               value="<%= fechaParam %>" 
-                               max="<%= LocalDate.now() %>" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="hora_clase"><i class="bi bi-alarm"></i> Hora de Clase</label>
-                        <input type="time" name="hora_clase" id="hora_clase" class="form-control" 
-                               value="<%= horaClaseParam %>" required>
-                    </div>
+        <div class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tamaño de texto</label>
+                <div class="flex gap-2">
+                    <button onclick="setTextSize('normal')" class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm">Normal</button>
+                    <button onclick="setTextSize('large')" class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm">Grande</button>
+                    <button onclick="setTextSize('larger')" class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm">Más grande</button>
                 </div>
-                
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-arrow-repeat"></i> Cargar Asistencia
-                </button>
-            </form>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contraste</label>
+                <div class="space-y-2">
+                    <button onclick="setContrast('normal')" class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm text-left">Normal</button>
+                    <button onclick="setContrast('high')" class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm text-left">Alto contraste</button>
+                    <button onclick="setContrast('yellow')" class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm text-left">Amarillo sobre negro</button>
+                </div>
+            </div>
+            
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="reduceMotion" onchange="toggleMotion()" class="rounded">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Reducir animaciones</span>
+                </label>
+            </div>
+            
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="dyslexiaFont" onchange="toggleDyslexiaFont()" class="rounded">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Fuente para dislexia</span>
+                </label>
+            </div>
+            
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="beigeBackground" onchange="toggleBeigeBackground()" class="rounded">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Fondo beige</span>
+                </label>
+            </div>
+            
+            <button onclick="resetAccessibility()" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
+                Restablecer todo
+            </button>
         </div>
-        
-        <!-- Tabla de Asistencias -->
-        <% if (cursoSeleccionado != null && alumnos != null && alumnos.size() > 0) { %>
-            <div class="table-container">
-                <div class="table-header">
-                    <h2><i class="bi bi-people"></i> Lista de Alumnos - <%= cursoSeleccionado.getNombre() %></h2>
-                </div>
-                
-                <form method="POST" action="AsistenciaServlet">
-                    <input type="hidden" name="accion" value="registrarGrupal">
-                    <input type="hidden" name="cursoId" value="<%= cursoSeleccionado.getId() %>">
-                    <input type="hidden" name="turnoId" value="<%= turnoIdParam %>">
-                    <input type="hidden" name="fecha" value="<%= fechaParam %>">
-                    <input type="hidden" name="horaClase" value="<%= horaClaseParam %>">
-                    
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>N°</th>
-                                <th>Alumno</th>
-                                <th>Estado Actual</th>
-                                <th>Marcar Asistencia</th>
-                                <th>Observaciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% 
-                            int contador = 1;
-                            for (Alumno alumno : alumnos) { 
-                                Asistencia asistExistente = mapaAsistencias.get(alumno.getId());
-                                String estadoActual = asistExistente != null ? asistExistente.getEstadoString() : "Sin registro";
-                                String observaciones = asistExistente != null && asistExistente.getObservaciones() != null ? asistExistente.getObservaciones() : "";
-                            %>
-                                <tr>
-                                    <td><%= contador++ %></td>
-                                    <td>
-                                        <strong><%= alumno.getNombreCompleto() %></strong>
-                                    </td>
-                                    <td>
-                                        <% if (asistExistente != null) { %>
-                                            <span class="badge badge-<%= estadoActual.toLowerCase() %>">
-                                                <%= estadoActual %>
-                                            </span>
-                                        <% } else { %>
-                                            <span style="color: #999;">Sin registro</span>
-                                        <% } %>
-                                    </td>
-                                    <td>
-                                        <div class="radio-group">
-                                            <label class="radio-option">
-                                                <input type="radio" name="estado_<%= alumno.getId() %>" 
-                                                       value="PRESENTE"
-                                                       <%= "PRESENTE".equals(estadoActual) ? "checked" : "" %>
-                                                       <%= !puedeEditar ? "disabled" : "" %>>
-                                                <i class="bi bi-check-circle"></i> Presente
-                                            </label>
-                                            <label class="radio-option">
-                                                <input type="radio" name="estado_<%= alumno.getId() %>" 
-                                                       value="TARDANZA"
-                                                       <%= "TARDANZA".equals(estadoActual) ? "checked" : "" %>
-                                                       <%= !puedeEditar ? "disabled" : "" %>>
-                                                <i class="bi bi-clock-history"></i> Tardanza
-                                            </label>
-                                            <label class="radio-option">
-                                                <input type="radio" name="estado_<%= alumno.getId() %>" 
-                                                       value="AUSENTE"
-                                                       <%= ("AUSENTE".equals(estadoActual) || asistExistente == null) ? "checked" : "" %>
-                                                       <%= !puedeEditar ? "disabled" : "" %>>
-                                                <i class="bi bi-x-circle"></i> Ausente
-                                            </label>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <input type="text" name="observaciones_<%= alumno.getId() %>" 
-                                               class="form-control" 
-                                               value="<%= observaciones %>"
-                                               placeholder="Opcional"
-                                               <%= !puedeEditar ? "disabled" : "" %>>
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                    
-                    <div class="table-footer">
-                        <button type="submit" class="btn btn-success" <%= !puedeEditar ? "disabled" : "" %>>
-                            <i class="bi bi-save"></i> Guardar Asistencias
-                        </button>
-                    </div>
-                </form>
-            </div>
-        <% } else if (cursoSeleccionado != null && (alumnos == null || alumnos.size() == 0)) { %>
-            <div class="alert alert-warning">
-                <span><i class="bi bi-exclamation-triangle"></i> No hay alumnos registrados en este curso y turno.</span>
-            </div>
-        <% } %>
     </div>
     
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="footer-content">
-            &copy; 2025 Sistema de Asistencia Escolar. Todos los derechos reservados.
-        </div>
-    </footer>
+    <!-- Main Container -->
+    <div class="flex flex-col min-h-screen">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40 transition-colors duration-300">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center gap-4">
+                        <!-- Botón de regreso -->
+                        <a href="DocenteDashboardServlet" 
+                           class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+                           title="Volver al Panel">
+                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">arrow_back</span>
+                        </a>
+                        
+                        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="material-symbols-outlined text-white text-xl">school</span>
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-bold text-gray-900 dark:text-white">San Antonio</h1>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">Registrar Asistencia</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <!-- User Info -->
+                        <div class="hidden md:flex items-center gap-2">
+                            <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">person</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white"><%= nombreUsuario %></span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">(<%= rol %>)</span>
+                        </div>
+                        
+                        <!-- Dark Mode Toggle -->
+                        <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle dark mode">
+                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">dark_mode</span>
+                        </button>
+                        
+                        <!-- Accessibility Toggle -->
+                        <button onclick="toggleAccessibilityPanel()" class="accessibility-toggle p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Abrir panel de accesibilidad">
+                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">accessibility</span>
+                        </button>
+                        
+                        <!-- Logout -->
+                        <a href="LogoutServlet" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                            <span class="material-symbols-outlined text-sm">logout</span>
+                            <span class="hidden sm:inline text-sm">Salir</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Alerts -->
+            <% if (mensaje != null) { %>
+                <div class="alert alert-success flex items-center gap-3 mb-6">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    <span><%= mensaje %></span>
+                </div>
+            <% } %>
+            
+            <% if (error != null) { %>
+                <div class="alert alert-danger flex items-center gap-3 mb-6">
+                    <span class="material-symbols-outlined">error</span>
+                    <span><%= error %></span>
+                </div>
+            <% } %>
+            
+            <% if (advertencia != null) { %>
+                <div class="alert alert-warning flex items-center gap-3 mb-6">
+                    <span class="material-symbols-outlined">warning</span>
+                    <span><%= advertencia %></span>
+                </div>
+            <% } %>
+            
+            <!-- Mensaje de límite de tiempo -->
+            <% if (!puedeEditar && mensajeLimite != null && !mensajeLimite.isEmpty()) { %>
+                <div class="alert alert-warning flex items-center gap-3 mb-6">
+                    <span class="material-symbols-outlined">schedule</span>
+                    <div>
+                        <div><%= mensajeLimite %></div>
+                        <small class="text-xs">El formulario está en modo solo lectura.</small>
+                    </div>
+                </div>
+            <% } %>
+            
+            <!-- Mensaje de Bloqueo Completo -->
+            <% if (cursoSeleccionado != null && !puedeEditar && mensajeLimite != null && mensajeLimite.contains("vencido")) { %>
+                <div class="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-800 rounded-xl p-8 mb-8 text-center">
+                    <div class="flex flex-col items-center justify-center">
+                        <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-6xl mb-4">
+                            lock
+                        </span>
+                        <h3 class="text-2xl font-bold text-red-800 dark:text-red-300 mb-2">Edición Bloqueada</h3>
+                        <p class="text-red-700 dark:text-red-400 mb-2"><%= mensajeLimite %></p>
+                        <p class="text-sm text-red-600 dark:text-red-500">Para modificar esta asistencia, contacta al administrador del sistema.</p>
+                    </div>
+                </div>
+            <% } %>
+            
+            <!-- Formulario de Filtros -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-colors duration-300">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">filter_list</span>
+                    Seleccionar Curso y Fecha
+                </h2>
+                
+                <form method="GET" action="AsistenciaServlet">
+                    <input type="hidden" name="accion" value="registrar">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div>
+                            <label for="curso_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-book text-primary"></i> Curso
+                            </label>
+                            <select name="curso_id" id="curso_id" required
+                                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                <option value="">-- Seleccione un curso --</option>
+                                <% for (Curso c : cursos) { %>
+                                    <option value="<%= c.getId() %>" <%= c.getId() == (cursoSeleccionado != null ? cursoSeleccionado.getId() : 0) ? "selected" : "" %>>
+                                        <%= c.getNombre() %><%= c.getGradoNombre() != null ? " - " + c.getGradoNombre() : "" %>
+                                    </option>
+                                <% } %>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="turno_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-clock text-primary"></i> Turno
+                            </label>
+                            <select name="turno_id" id="turno_id" required
+                                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                <option value="1" <%= "1".equals(turnoIdParam) ? "selected" : "" %>>Mañana</option>
+                                <option value="2" <%= "2".equals(turnoIdParam) ? "selected" : "" %>>Tarde</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="fecha" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-calendar text-primary"></i> Fecha
+                            </label>
+                            <input type="date" name="fecha" id="fecha" required
+                                   value="<%= fechaParam %>" 
+                                   max="<%= LocalDate.now() %>"
+                                   class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                        </div>
+                        
+                        <div>
+                            <label for="hora_clase" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-clock text-primary"></i> Hora de Clase
+                            </label>
+                            <input type="time" name="hora_clase" id="hora_clase" required
+                                   value="<%= horaClaseParam %>"
+                                   class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-primary flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">refresh</span>
+                        <span>Cargar Asistencia</span>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Tabla de Asistencias -->
+            <% if (cursoSeleccionado != null && alumnos != null && alumnos.size() > 0) { %>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-colors duration-300">
+                    <!-- Header de la tabla -->
+                    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">group</span>
+                            Lista de Alumnos - <%= cursoSeleccionado.getNombre() %>
+                        </h2>
+                    </div>
+                    
+                    <form method="POST" action="AsistenciaServlet">
+                        <input type="hidden" name="accion" value="registrarGrupal">
+                        <input type="hidden" name="cursoId" value="<%= cursoSeleccionado.getId() %>">
+                        <input type="hidden" name="turnoId" value="<%= turnoIdParam %>">
+                        <input type="hidden" name="fecha" value="<%= fechaParam %>">
+                        <input type="hidden" name="horaClase" value="<%= horaClaseParam %>">
+                        
+                        <div class="table-scroll overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-900 dark:bg-gray-950">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">N°</th>
+                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">Alumno</th>
+                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">Estado Actual</th>
+                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">Marcar Asistencia</th>
+                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                    <% 
+                                    int contador = 1;
+                                    for (Alumno alumno : alumnos) { 
+                                        Asistencia asistExistente = mapaAsistencias.get(alumno.getId());
+                                        String estadoActual = asistExistente != null ? asistExistente.getEstadoString() : "Sin registro";
+                                        String observaciones = asistExistente != null && asistExistente.getObservaciones() != null ? asistExistente.getObservaciones() : "";
+                                    %>
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                            <td class="px-6 py-4 text-gray-900 dark:text-white font-medium"><%= contador++ %></td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center">
+                                                        <span class="material-symbols-outlined text-white text-xl">person</span>
+                                                    </div>
+                                                    <span class="font-semibold text-gray-900 dark:text-white"><%= alumno.getNombreCompleto() %></span>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <% if (asistExistente != null) { %>
+                                                    <% if ("PRESENTE".equals(estadoActual)) { %>
+                                                        <span class="status-badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                            <i class="fas fa-check-circle"></i> <%= estadoActual %>
+                                                        </span>
+                                                    <% } else if ("TARDANZA".equals(estadoActual)) { %>
+                                                        <span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                            <i class="fas fa-clock"></i> <%= estadoActual %>
+                                                        </span>
+                                                    <% } else if ("AUSENTE".equals(estadoActual)) { %>
+                                                        <span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                            <i class="fas fa-times-circle"></i> <%= estadoActual %>
+                                                        </span>
+                                                    <% } else { %>
+                                                        <span class="status-badge bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                                                            <%= estadoActual %>
+                                                        </span>
+                                                    <% } %>
+                                                <% } else { %>
+                                                    <span class="text-sm text-gray-500 dark:text-gray-400">Sin registro</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex flex-wrap gap-2">
+                                                    <label class="radio-option bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300">
+                                                        <input type="radio" name="estado_<%= alumno.getId() %>" 
+                                                               value="PRESENTE"
+                                                               <%= "PRESENTE".equals(estadoActual) ? "checked" : "" %>
+                                                               <%= !puedeEditar ? "disabled" : "" %>
+                                                               class="text-green-600 focus:ring-green-500">
+                                                        <i class="fas fa-check-circle"></i> Presente
+                                                    </label>
+                                                    <label class="radio-option bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">
+                                                        <input type="radio" name="estado_<%= alumno.getId() %>" 
+                                                               value="TARDANZA"
+                                                               <%= "TARDANZA".equals(estadoActual) ? "checked" : "" %>
+                                                               <%= !puedeEditar ? "disabled" : "" %>
+                                                               class="text-yellow-600 focus:ring-yellow-500">
+                                                        <i class="fas fa-clock"></i> Tardanza
+                                                    </label>
+                                                    <label class="radio-option bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300">
+                                                        <input type="radio" name="estado_<%= alumno.getId() %>" 
+                                                               value="AUSENTE"
+                                                               <%= ("AUSENTE".equals(estadoActual) || asistExistente == null) ? "checked" : "" %>
+                                                               <%= !puedeEditar ? "disabled" : "" %>
+                                                               class="text-red-600 focus:ring-red-500">
+                                                        <i class="fas fa-times-circle"></i> Ausente
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <input type="text" name="observaciones_<%= alumno.getId() %>" 
+                                                       value="<%= observaciones %>"
+                                                       placeholder="Opcional"
+                                                       <%= !puedeEditar ? "disabled" : "" %>
+                                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed">
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Footer de la tabla -->
+                        <div class="bg-gray-50 dark:bg-gray-900 p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                            <button type="submit" 
+                                    <%= !puedeEditar ? "disabled" : "" %>
+                                    class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                                <span class="material-symbols-outlined">save</span>
+                                <span>Guardar Asistencias</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            <% } else if (cursoSeleccionado != null && (alumnos == null || alumnos.size() == 0)) { %>
+                <div class="alert alert-warning flex items-center gap-3">
+                    <span class="material-symbols-outlined">warning</span>
+                    <span>No hay alumnos registrados en este curso y turno.</span>
+                </div>
+            <% } %>
+            
+            <!-- Info Box -->
+            <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+                <div class="flex items-start gap-4">
+                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl mt-1">
+                        info
+                    </span>
+                    <div>
+                        <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-3">Información importante:</h4>
+                        <ul class="space-y-2 text-sm text-blue-700 dark:text-blue-400">
+                            <li class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                <span>Selecciona el curso, turno, fecha y hora antes de cargar la lista de asistencia</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                <span>Marca el estado de asistencia de cada alumno (Presente, Tardanza o Ausente)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                <span>Puedes agregar observaciones opcionales para cada alumno</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                <span>El sistema puede bloquear la edición si ha pasado el tiempo límite establecido</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                <span>Revisa cuidadosamente antes de guardar, ya que las modificaciones pueden tener restricciones de tiempo</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-12 transition-colors duration-300">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                    © 2025 Sistema de Asistencia Escolar - San Antonio. Todos los derechos reservados.
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Accessibility Functions
+        function toggleAccessibilityPanel() {
+            const panel = document.querySelector('.accessibility-panel');
+            panel.classList.toggle('open');
+        }
+        
+        function setTextSize(size) {
+            document.body.classList.remove('large-text', 'larger-text', 'largest-text');
+            if (size === 'large') {
+                document.body.classList.add('large-text');
+            } else if (size === 'larger') {
+                document.body.classList.add('larger-text');
+            } else if (size === 'largest') {
+                document.body.classList.add('largest-text');
+            }
+            document.body.offsetHeight;
+        }
+        
+        function setContrast(mode) {
+            document.body.classList.remove('high-contrast-invert', 'high-contrast-yellow');
+            if (mode === 'high') {
+                document.body.classList.add('high-contrast-invert');
+            } else if (mode === 'yellow') {
+                document.body.classList.add('high-contrast-yellow');
+            }
+        }
+        
+        function toggleMotion() {
+            const checkbox = document.getElementById('reduceMotion');
+            if (checkbox.checked) {
+                document.body.classList.add('reduce-motion');
+            } else {
+                document.body.classList.remove('reduce-motion');
+            }
+        }
+        
+        function toggleDyslexiaFont() {
+            const checkbox = document.getElementById('dyslexiaFont');
+            if (checkbox.checked) {
+                document.body.classList.add('dyslexia-font');
+            } else {
+                document.body.classList.remove('dyslexia-font');
+            }
+        }
+        
+        function toggleBeigeBackground() {
+            const checkbox = document.getElementById('beigeBackground');
+            if (checkbox.checked) {
+                document.body.classList.add('beige-background');
+            } else {
+                document.body.classList.remove('beige-background');
+            }
+        }
+        
+        function resetAccessibility() {
+            document.body.classList.remove(
+                'large-text', 'larger-text', 'largest-text',
+                'high-contrast-invert', 'high-contrast-yellow',
+                'reduce-motion', 'dyslexia-font', 'beige-background'
+            );
+            
+            document.getElementById('reduceMotion').checked = false;
+            document.getElementById('dyslexiaFont').checked = false;
+            document.getElementById('beigeBackground').checked = false;
+        }
+        
+        // Focus management for accessibility
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const panel = document.querySelector('.accessibility-panel');
+                if (panel.classList.contains('open')) {
+                    panel.classList.remove('open');
+                }
+            }
+        });
+        
+        // Toggle dark mode
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+    </script>
 </body>
 </html>

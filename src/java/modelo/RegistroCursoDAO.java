@@ -163,69 +163,52 @@ public class RegistroCursoDAO {
      * - Enseñen en PRIMARIA (o TODOS)
      * - Su especialidad sea Computación/Tecnología
      */
-    public List<Map<String, Object>> obtenerProfesoresPorCursoTurnoNivel(
-            String nombreCurso, int turnoId, String nivel) {
+    public List<Map<String, Object>> obtenerProfesoresPorCursoTurnoNivel(String curso, int turnoId, String nivel) {
+    List<Map<String, Object>> profesores = new ArrayList<>();
+    String sql = "CALL obtener_profesores_por_curso_turno_nivel(?, ?, ?)";
+    
+    System.out.println("\n=== DAO: OBTENIENDO PROFESORES ===");
+    System.out.println("📋 Parámetros recibidos:");
+    System.out.println("  - Curso: '" + curso + "'");
+    System.out.println("  - Turno ID: " + turnoId);
+    System.out.println("  - Nivel: '" + nivel + "'");
+    
+    try (Connection conn = Conexion.getConnection();
+         CallableStatement cs = conn.prepareCall(sql)) {
         
-        List<Map<String, Object>> profesores = new ArrayList<>();
+        cs.setString(1, curso);
+        cs.setInt(2, turnoId);
+        cs.setString(3, nivel);
         
-        // CONSULTA DIRECTA - más confiable que stored procedure
-        String sql = "SELECT DISTINCT " +
-                    "    p.id, " +
-                    "    per.apellidos, " +                          
-                    "    per.nombres, " +                            
-                    "    CONCAT(per.nombres, ' ', per.apellidos) as nombre_completo, " +
-                    "    a.nombre as especialidad, " +
-                    "    p.codigo_profesor " +
-                    "FROM profesor p " +
-                    "INNER JOIN persona per ON p.persona_id = per.id " +
-                    "INNER JOIN area a ON p.area_id = a.id " +
-                    "WHERE p.activo = 1 AND p.eliminado = 0 " +
-                    "AND p.estado = 'ACTIVO' " +
-                    "AND p.turno_id = ? " +
-                    "AND (p.nivel COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci " +
-                    "     OR p.nivel COLLATE utf8mb4_unicode_ci = 'TODOS') " +
-                    "AND a.nombre COLLATE utf8mb4_unicode_ci = (" +
-                    "    SELECT DISTINCT a2.nombre " +
-                    "    FROM curso c2 " +
-                    "    INNER JOIN area a2 ON c2.area_id = a2.id " +
-                    "    WHERE c2.nombre COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci " +
-                    "    AND c2.activo = 1 AND c2.eliminado = 0 " +
-                    "    LIMIT 1" +
-                    ") " +
-                    "ORDER BY per.apellidos, per.nombres";
-
-        try (Connection conn = Conexion.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, turnoId);
-            ps.setString(2, nivel);
-            ps.setString(3, nombreCurso);
+        System.out.println("📡 Ejecutando stored procedure: " + sql);
+        
+        ResultSet rs = cs.executeQuery();
+        
+        int count = 0;
+        while (rs.next()) {
+            count++;
+            Map<String, Object> profesor = new HashMap<>();
+            profesor.put("id", rs.getInt("id"));
+            profesor.put("nombre_completo", rs.getString("nombre_completo"));
+            profesor.put("especialidad", rs.getString("especialidad"));
+            profesor.put("email", rs.getString("email"));
+            profesor.put("telefono", rs.getString("telefono"));
+            profesores.add(profesor);
             
-            System.out.println(" DAO - Buscando profesores para:");
-            System.out.println("  Curso: " + nombreCurso);
-            System.out.println("  Turno ID: " + turnoId);
-            System.out.println("  Nivel: " + nivel);
-            
-            ResultSet rs = ps.executeQuery();
-            
-            while (rs.next()) {
-                Map<String, Object> profesor = new HashMap<>();
-                profesor.put("id", rs.getInt("id"));
-                profesor.put("nombre_completo", rs.getString("nombre_completo"));
-                profesor.put("especialidad", rs.getString("especialidad"));
-                profesor.put("codigo_profesor", rs.getString("codigo_profesor"));
-                profesores.add(profesor);
-            }
-            
-            System.out.println(" DAO - Profesores encontrados: " + profesores.size());
-            
-        } catch (SQLException e) {
-            System.err.println(" Error al obtener profesores: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("  Profesor " + count + ": " + rs.getString("nombre_completo"));
         }
         
-        return profesores;
+        System.out.println("✅ Total profesores encontrados: " + profesores.size());
+        
+    } catch (SQLException e) {
+        System.err.println("Error en DAO obtenerProfesoresPorCursoTurnoNivel: " + e.getMessage());
+        System.err.println("SQL State: " + e.getSQLState());
+        System.err.println("Error Code: " + e.getErrorCode());
+        e.printStackTrace();
     }
+    
+    return profesores;
+}
 
     /**
      * ============================================================
@@ -817,4 +800,129 @@ public class RegistroCursoDAO {
         }
         return aulas;
     }
+    
+    public List<Map<String, Object>> obtenerDisponibilidadAprobada(int profesorId) {
+    List<Map<String, Object>> lista = new ArrayList<>();
+    String sql = "SELECT dia_semana, hora_inicio, hora_fin FROM disponibilidad_profesor " +
+                 "WHERE profesor_id = ? AND estado = 'APROBADO' AND activo = 1";
+    
+    try (Connection conn = Conexion.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, profesorId);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> d = new HashMap<>();
+                d.put("dia", rs.getString("dia_semana"));
+                d.put("inicio", rs.getTime("hora_inicio").toString());
+                d.put("fin", rs.getTime("hora_fin").toString());
+                lista.add(d);
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return lista;
+}
+    
+    /**
+    * Obtiene la disponibilidad APROBADA del profesor con detalles completos
+    */
+   public List<Map<String, Object>> obtenerDisponibilidadAprobadaDetallada(int profesorId) {
+       List<Map<String, Object>> lista = new ArrayList<>();
+
+       String sql = "SELECT " +
+                   "    d.id, " +
+                   "    d.dia_semana, " +
+                   "    d.hora_inicio, " +
+                   "    d.hora_fin, " +
+                   "    d.turno_id, " +
+                   "    t.nombre as turno_nombre " +
+                   "FROM disponibilidad_profesor d " +
+                   "INNER JOIN turno t ON d.turno_id = t.id " +
+                   "WHERE d.profesor_id = ? " +
+                   "AND d.estado = 'APROBADO' " +
+                   "AND d.activo = 1 " +
+                   "AND d.eliminado = 0 " +
+                   "ORDER BY " +
+                   "    FIELD(d.dia_semana, 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'), " +
+                   "    d.hora_inicio";
+
+       try (Connection conn = Conexion.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+
+           ps.setInt(1, profesorId);
+
+           try (ResultSet rs = ps.executeQuery()) {
+               while (rs.next()) {
+                   Map<String, Object> disponibilidad = new HashMap<>();
+                   disponibilidad.put("id", rs.getInt("id"));
+                   disponibilidad.put("dia", rs.getString("dia_semana"));
+                   disponibilidad.put("hora_inicio", rs.getTime("hora_inicio").toString());
+                   disponibilidad.put("hora_fin", rs.getTime("hora_fin").toString());
+                   disponibilidad.put("turno_id", rs.getInt("turno_id"));
+                   disponibilidad.put("turno_nombre", rs.getString("turno_nombre"));
+
+                   lista.add(disponibilidad);
+               }
+           }
+
+           System.out.println(" DAO - Disponibilidades aprobadas para profesor " + profesorId + ": " + lista.size());
+
+       } catch (SQLException e) {
+           System.err.println(" Error al obtener disponibilidad aprobada: " + e.getMessage());
+           e.printStackTrace();
+       }
+
+       return lista;
+   }
+
+   /**
+    * Valida si el profesor tiene disponibilidad APROBADA para un horario específico
+    */
+   public Map<String, Object> validarDisponibilidadProfesor(
+           int profesorId, int turnoId, String diaSemana, 
+           String horaInicio, String horaFin) {
+
+       Map<String, Object> resultado = new HashMap<>();
+       resultado.put("disponible", false);
+       resultado.put("mensaje", "Profesor no disponible");
+
+       String sql = "SELECT COUNT(*) as total " +
+                   "FROM disponibilidad_profesor " +
+                   "WHERE profesor_id = ? " +
+                   "AND turno_id = ? " +
+                   "AND dia_semana = ? " +
+                   "AND estado = 'APROBADO' " +
+                   "AND activo = 1 " +
+                   "AND eliminado = 0 " +
+                   "AND ? >= hora_inicio " +
+                   "AND ? <= hora_fin";
+
+       try (Connection conn = Conexion.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+
+           ps.setInt(1, profesorId);
+           ps.setInt(2, turnoId);
+           ps.setString(3, diaSemana.toUpperCase());
+           ps.setString(4, horaInicio);
+           ps.setString(5, horaFin);
+
+           try (ResultSet rs = ps.executeQuery()) {
+               if (rs.next() && rs.getInt("total") > 0) {
+                   resultado.put("disponible", true);
+                   resultado.put("mensaje", "Profesor disponible en ese horario");
+               } else {
+                   resultado.put("mensaje", "El profesor no tiene disponibilidad APROBADA para " + 
+                                          diaSemana + " de " + horaInicio + " a " + horaFin);
+               }
+           }
+
+       } catch (SQLException e) {
+           System.err.println(" Error al validar disponibilidad: " + e.getMessage());
+           resultado.put("mensaje", "Error al validar disponibilidad: " + e.getMessage());
+           e.printStackTrace();
+       }
+
+       return resultado;
+   }
 }

@@ -92,623 +92,645 @@
     }
 %>
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Revisar Justificaciones - Sistema Escolar</title>
+    <title>Revisar Justificaciones - San Antonio</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
-            color: #000000;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
         
-        /* Header */
-        .main-header {
-            background-color: #000000;
-            color: #ffffff;
-            padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        /* Mejoras de accesibilidad */
+        .reduce-motion * { 
+            animation-duration: 0.01ms !important; 
+            animation-iteration-count: 1 !important; 
+            transition-duration: 0.01ms !important; 
+        }
+        .high-contrast-invert { 
+            filter: invert(1) hue-rotate(180deg); 
+        }
+        .high-contrast-yellow { 
+            background-color: #000000 !important; 
+            color: #ffff00 !important; 
+        }
+        .beige-background { 
+            background-color: #f5f5dc !important; 
         }
         
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Tamaños de texto */
+        .large-text { font-size: 18px !important; }
+        .larger-text { font-size: 20px !important; }
+        .largest-text { font-size: 22px !important; }
+        
+        .dyslexia-font { 
+            font-family: Arial !important; 
+            font-size: 1.1em !important; 
+            line-height: 1.6 !important; 
+            letter-spacing: 0.5px !important; 
         }
         
-        .header-title {
-            font-size: 24px;
+        /* Panel de accesibilidad */
+        .accessibility-panel {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .accessibility-panel.open {
+            transform: translateX(0);
+        }
+        
+        /* Skip to content */
+        .skip-to-content {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #135bec;
+            color: white;
+            padding: 8px;
+            z-index: 100;
+        }
+        .skip-to-content:focus {
+            top: 0;
+        }
+        
+        /* Focus styles */
+        :focus {
+            outline: 3px solid #135bec !important;
+            outline-offset: 2px;
+        }
+        
+        /* Badge con tamaño base más grande */
+        .status-badge {
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
             font-weight: 600;
         }
         
-        .header-user {
-            font-size: 14px;
-            opacity: 0.9;
+        /* Botón de accesibilidad */
+        .accessibility-toggle {
+            transition: all 0.3s ease;
         }
         
-        /* Container */
-        .container {
-            flex: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 30px 20px;
-            width: 100%;
-        }
-        
-        /* Page Header */
-        .page-header {
-            background: linear-gradient(135deg, #A8D8EA 0%, #7FB3D5 100%);
-            color: #000000;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(168, 216, 234, 0.3);
-        }
-        
-        .page-header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .page-header p {
-            font-size: 15px;
-            opacity: 0.85;
+        .accessibility-toggle:hover {
+            transform: scale(1.1);
         }
         
         /* Alertas */
         .alert {
-            padding: 16px 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 500;
-            animation: slideDown 0.3s ease;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+        }
+        
+        .alert-danger {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+        
+        .dark .alert-danger {
+            background-color: #450a0a;
+            border-color: #7f1d1d;
+            color: #fca5a5;
         }
         
         .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #16a34a;
         }
         
-        .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-left: 4px solid #dc3545;
+        .dark .alert-success {
+            background-color: #052e16;
+            border-color: #14532d;
+            color: #86efac;
         }
         
-        .alert-info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border-left: 4px solid #17a2b8;
+        /* Animaciones suaves */
+        .transition-smooth {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        /* Filtros */
-        .filter-section {
-            background-color: #ffffff;
-            border: 2px solid #e0e0e0;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 0;
-        }
-        
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #000000;
-            font-size: 15px;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            font-family: inherit;
-            background-color: #ffffff;
-            color: #000000;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: #A8D8EA;
-            box-shadow: 0 0 0 3px rgba(168, 216, 234, 0.2);
-        }
-        
-        textarea.form-control {
-            resize: vertical;
-            min-height: 100px;
-        }
-        
-        /* Botones */
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-        
-        .btn-primary {
-            background-color: #A8D8EA;
-            color: #000000;
-        }
-        
-        .btn-primary:hover {
-            background-color: #7FB3D5;
+        /* Hover effects */
+        .card-hover:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(168, 216, 234, 0.4);
-        }
-        
-        .btn-success {
-            background-color: #28a745;
-            color: #ffffff;
-        }
-        
-        .btn-success:hover {
-            background-color: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
-        }
-        
-        .btn-danger {
-            background-color: #dc3545;
-            color: #ffffff;
-        }
-        
-        .btn-danger:hover {
-            background-color: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-        }
-        
-        .btn-sm {
-            padding: 8px 16px;
-            font-size: 13px;
-        }
-        
-        /* Justificaciones List */
-        .justificaciones-list {
-            margin-bottom: 30px;
-        }
-        
-        .justificacion-card {
-            background-color: #ffffff;
-            border: 2px solid #e0e0e0;
-            border-left: 4px solid #ffc107;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        
-        .justificacion-card:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        
-        .justificacion-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        
-        .justificacion-info {
-            flex: 1;
-        }
-        
-        .justificacion-info h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #000000;
-        }
-        
-        .info-row {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            margin-bottom: 8px;
-        }
-        
-        .info-item {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .info-item strong {
-            color: #000000;
-            font-weight: 600;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .badge-warning {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .justificacion-body {
-            margin-bottom: 20px;
-        }
-        
-        .justificacion-section {
-            margin-bottom: 15px;
-        }
-        
-        .justificacion-section label {
-            display: block;
-            font-weight: 600;
-            color: #000000;
-            margin-bottom: 8px;
-            font-size: 15px;
-        }
-        
-        .justificacion-text {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 3px solid #A8D8EA;
-            line-height: 1.6;
-        }
-        
-        .documento-adjunto {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .documento-adjunto a {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
-        .documento-adjunto a:hover {
-            text-decoration: underline;
-        }
-        
-        .justificacion-actions {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .action-form {
-            flex: 1;
-            min-width: 300px;
-        }
-        
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-        }
-        
-        .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-        
-        .empty-state h3 {
-            font-size: 22px;
-            margin-bottom: 10px;
-            color: #000000;
-        }
-        
-        .empty-state p {
-            font-size: 15px;
-            color: #6c757d;
-        }
-        
-        /* Footer */
-        .main-footer {
-            background-color: #000000;
-            color: #ffffff;
-            padding: 20px 0;
-            text-align: center;
-            margin-top: auto;
-        }
-        
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            font-size: 14px;
-        }
-        
-        /* Animaciones */
-        @keyframes slideDown {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        /* Responsivo */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-            
-            .justificacion-header {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .info-row {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .justificacion-actions {
-                flex-direction: column;
-            }
-            
-            .action-form {
-                min-width: 100%;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
+            box-shadow: 0 12px 24px -10px rgba(19, 91, 236, 0.3);
         }
     </style>
 </head>
-<body>
-    <!-- Header -->
-    <header class="main-header">
-        <div class="header-content">
-            <div class="header-title">🏫 Sistema de Asistencia Escolar</div>
-            <div class="header-user">👤 <%= nombreUsuario %> (<%= rol.toUpperCase() %>)</div>
-        </div>
-    </header>
+<body class="bg-background-light dark:bg-background-dark transition-colors duration-300">
+    <a href="#main-content" class="skip-to-content">Saltar al contenido principal</a>
     
-    <!-- Container -->
-    <div class="container">
-        <!-- Page Header -->
-        <div class="page-header">
-            <h1>🔍 Revisar Justificaciones</h1>
-            <p>Aprueba o rechaza las justificaciones de ausencias enviadas por los padres</p>
+    <!-- Accessibility Panel -->
+    <div class="accessibility-panel fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-2xl z-50 overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">Accesibilidad</h2>
+            <button onclick="toggleAccessibilityPanel()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
         
-        <!-- Mensajes -->
-        <% if (mensaje != null) { %>
-            <div class="alert alert-<%= tipoMensaje != null ? tipoMensaje : "success" %>">
-                <span><%= mensaje %></span>
+        <div class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tamaño de texto</label>
+                <div class="flex gap-2">
+                    <button onclick="setTextSize('normal')" class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm">Normal</button>
+                    <button onclick="setTextSize('large')" class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm">Grande</button>
+                    <button onclick="setTextSize('larger')" class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm">Más grande</button>
+                </div>
             </div>
-        <% } %>
-        
-        <!-- Filtros -->
-        <div class="filter-section">
-            <form method="GET" action="revisarJustificaciones.jsp">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="cursoId">📚 Curso</label>
-                        <select name="cursoId" id="cursoId" class="form-control" required>
-                            <option value="">-- Seleccione un curso --</option>
-                            <% if (cursos != null) {
-                                for (Curso c : cursos) { %>
-                                <option value="<%= c.getId() %>" <%= c.getId() == cursoId ? "selected" : "" %>>
-                                    <%= c.getNombre() %> - <%= c.getGradoNombre() %>
-                                </option>
-                            <% } 
-                            } %>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="turnoId">🕐 Turno</label>
-                        <select name="turnoId" id="turnoId" class="form-control" required>
-                            <option value="">-- Seleccione un turno --</option>
-                            <% if (turnos != null) {
-                                for (Turno t : turnos) { %>
-                                <option value="<%= t.getId() %>" <%= t.getId() == turnoId ? "selected" : "" %>>
-                                    <%= t.getNombre() %> (<%= t.getHoraInicio() %> - <%= t.getHoraFin() %>)
-                                </option>
-                            <% } 
-                            } %>
-                        </select>
-                    </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Contraste</label>
+                <div class="space-y-2">
+                    <button onclick="setContrast('normal')" class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm text-left">Normal</button>
+                    <button onclick="setContrast('high')" class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm text-left">Alto contraste</button>
+                    <button onclick="setContrast('yellow')" class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-sm text-left">Amarillo sobre negro</button>
                 </div>
-                
-                <button type="submit" class="btn btn-primary">
-                    🔍 Buscar Justificaciones
-                </button>
-            </form>
+            </div>
+            
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="reduceMotion" onchange="toggleMotion()" class="rounded">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Reducir animaciones</span>
+                </label>
+            </div>
+            
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="dyslexiaFont" onchange="toggleDyslexiaFont()" class="rounded">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Fuente para dislexia</span>
+                </label>
+            </div>
+            
+            <div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="beigeBackground" onchange="toggleBeigeBackground()" class="rounded">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">Fondo beige</span>
+                </label>
+            </div>
+            
+            <button onclick="resetAccessibility()" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700">
+                Restablecer todo
+            </button>
         </div>
-        
-        <!-- Lista de Justificaciones -->
-        <% if (cursoId > 0 && turnoId > 0) { %>
-            <% if (justificacionesPendientes.isEmpty()) { %>
-                <div class="empty-state">
-                    <div class="empty-state-icon">✅</div>
-                    <h3>No hay justificaciones pendientes</h3>
-                    <p>Todas las justificaciones han sido revisadas</p>
-                </div>
-            <% } else { %>
-                <div class="justificaciones-list">
-                    <h2 style="margin-bottom: 25px; font-size: 22px; color: #000000;">
-                        📋 Justificaciones Pendientes (<%= justificacionesPendientes.size() %>)
-                    </h2>
-                    
-                    <% for (Justificacion justif : justificacionesPendientes) { %>
-                        <div class="justificacion-card">
-                            <div class="justificacion-header">
-                                <div class="justificacion-info">
-                                    <h3>👨‍🎓 <%= justif.getAlumnoNombre() %></h3>
-                                    <div class="info-row">
-                                        <div class="info-item">
-                                            <strong>Fecha de Ausencia:</strong> <%= justif.getFechaAsistencia() %>
-                                        </div>
-                                        <div class="info-item">
-                                            <strong>Curso:</strong> <%= justif.getCursoNombre() %>
-                                        </div>
-                                    </div>
-                                    <div class="info-row">
-                                        <div class="info-item">
-                                            <strong>Justificado por:</strong> <%= justif.getJustificadorNombre() %>
-                                        </div>
-                                        <div class="info-item">
-                                            <strong>Fecha de Justificación:</strong> <%= justif.getFechaJustificacionFormateada() %>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <span class="badge badge-warning">⏳ PENDIENTE</span>
-                                </div>
-                            </div>
-                            
-                            <div class="justificacion-body">
-                                <div class="justificacion-section">
-                                    <label>Tipo de Justificación</label>
-                                    <div class="justificacion-text">
-                                        <%= justif.getTipoJustificacion() != null ? justif.getTipoJustificacion().getDescripcion() : "No especificado" %>
-                                    </div>
-                                </div>
-                                
-                                <div class="justificacion-section">
-                                    <label>Descripción</label>
-                                    <div class="justificacion-text">
-                                        <%= justif.getDescripcion() %>
-                                    </div>
-                                </div>
-                                
-                                <% if (justif.tieneDocumento()) { %>
-                                    <div class="justificacion-section">
-                                        <label>Documento Adjunto</label>
-                                        <div class="documento-adjunto">
-                                            <span>📎</span>
-                                            <a href="<%= justif.getDocumentoAdjunto() %>" target="_blank">
-                                                <%= justif.getNombreArchivo() %> 
-                                                (<%= justif.getTipoArchivo() %>)
-                                            </a>
-                                        </div>
-                                    </div>
-                                <% } %>
-                            </div>
-                            
-                            <div class="justificacion-actions">
-                                <!-- Formulario Aprobar -->
-                                <div class="action-form">
-                                    <form method="POST" action="JustificacionServlet">
-                                        <input type="hidden" name="accion" value="aprobar">
-                                        <input type="hidden" name="justificacionId" value="<%= justif.getId() %>">
-                                        <input type="hidden" name="cursoId" value="<%= cursoId %>">
-                                        <input type="hidden" name="turnoId" value="<%= turnoId %>">
-                                        
-                                        <div class="form-group" style="margin-bottom: 15px;">
-                                            <label for="obs_aprobar_<%= justif.getId() %>">
-                                                Observaciones (opcional)
-                                            </label>
-                                            <textarea name="observaciones" id="obs_aprobar_<%= justif.getId() %>" 
-                                                      class="form-control" rows="2"
-                                                      placeholder="Añade comentarios adicionales..."></textarea>
-                                        </div>
-                                        
-                                        <button type="submit" class="btn btn-success" style="width: 100%;">
-                                            ✅ Aprobar Justificación
-                                        </button>
-                                    </form>
-                                </div>
-                                
-                                <!-- Formulario Rechazar -->
-                                <div class="action-form">
-                                    <form method="POST" action="JustificacionServlet" 
-                                          onsubmit="return validarRechazo(<%= justif.getId() %>)">
-                                        <input type="hidden" name="accion" value="rechazar">
-                                        <input type="hidden" name="justificacionId" value="<%= justif.getId() %>">
-                                        <input type="hidden" name="cursoId" value="<%= cursoId %>">
-                                        <input type="hidden" name="turnoId" value="<%= turnoId %>">
-                                        
-                                        <div class="form-group" style="margin-bottom: 15px;">
-                                            <label for="obs_rechazar_<%= justif.getId() %>">
-                                                Motivo del Rechazo *
-                                            </label>
-                                            <textarea name="observaciones" id="obs_rechazar_<%= justif.getId() %>" 
-                                                      class="form-control" rows="2" required
-                                                      placeholder="Explique por qué rechaza esta justificación..."></textarea>
-                                        </div>
-                                        
-                                        <button type="submit" class="btn btn-danger" style="width: 100%;">
-                                            ❌ Rechazar Justificación
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    <% } %>
-                </div>
-            <% } %>
-        <% } %>
     </div>
     
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="footer-content">
-            © 2025 Sistema de Asistencia Escolar. Todos los derechos reservados.
-        </div>
-    </footer>
-    
+    <!-- Main Container -->
+    <div class="flex flex-col min-h-screen">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-900 shadow-md sticky top-0 z-40 transition-colors duration-300">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center gap-4">
+                        <!-- Botón de regreso -->
+                        <a href="DocenteDashboardServlet" 
+                           class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+                           title="Volver al Panel">
+                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">arrow_back</span>
+                        </a>
+                        
+                        <div class="w-12 h-12 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center">
+                            <span class="material-symbols-outlined text-white text-2xl">school</span>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">San Antonio</h1>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Sistema de Gestión Escolar</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <!-- User Info -->
+                        <div class="hidden md:flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg">
+                            <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">person</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white"><%= nombreUsuario %></span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">(<%= rol %>)</span>
+                        </div>
+                        
+                        <!-- Dark Mode Toggle -->
+                        <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle dark mode">
+                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">dark_mode</span>
+                        </button>
+                        
+                        <!-- Accessibility Toggle -->
+                        <button onclick="toggleAccessibilityPanel()" class="accessibility-toggle p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label="Abrir panel de accesibilidad">
+                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">accessibility</span>
+                        </button>
+                        
+                        <!-- Logout -->
+                        <a href="LogoutServlet" class="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors">
+                            <span class="material-symbols-outlined text-sm">logout</span>
+                            <span class="hidden sm:inline text-sm">Salir</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Page Header -->
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-2xl p-8 mb-8 shadow-lg">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white text-4xl">fact_check</span>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">Revisar Justificaciones</h1>
+                        <p class="text-blue-100">Gestiona las justificaciones de ausencias de tus estudiantes</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alerts -->
+            <% if (mensaje != null && !mensaje.isEmpty()) { %>
+                <% if ("success".equals(tipoMensaje)) { %>
+                    <div class="alert alert-success flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        <span><%= mensaje %></span>
+                    </div>
+                <% } else { %>
+                    <div class="alert alert-danger flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined">error</span>
+                        <span><%= mensaje %></span>
+                    </div>
+                <% } %>
+            <% } %>
+            
+            <!-- Filter Form -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-colors duration-300">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">filter_list</span>
+                    Filtrar Justificaciones
+                </h2>
+                
+                <form method="GET" action="revisarJustificaciones.jsp">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="cursoId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-book text-primary"></i> Curso
+                            </label>
+                            <select name="cursoId" id="cursoId" required
+                                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                <option value="">-- Seleccione un curso --</option>
+                                <% if (cursos != null) {
+                                    for (Curso c : cursos) { %>
+                                    <option value="<%= c.getId() %>" <%= c.getId() == cursoId ? "selected" : "" %>>
+                                        <%= c.getNombre() %> - <%= c.getGradoNombre() %>
+                                    </option>
+                                <% } 
+                                } %>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="turnoId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-clock text-primary"></i> Turno
+                            </label>
+                            <select name="turnoId" id="turnoId" required
+                                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                <option value="">-- Seleccione un turno --</option>
+                                <% if (turnos != null) {
+                                    for (Turno t : turnos) { %>
+                                    <option value="<%= t.getId() %>" <%= t.getId() == turnoId ? "selected" : "" %>>
+                                        <%= t.getNombre() %> (<%= t.getHoraInicio() %> - <%= t.getHoraFin() %>)
+                                    </option>
+                                <% } 
+                                } %>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-primary flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">search</span>
+                        <span>Buscar Justificaciones</span>
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Justifications List -->
+            <% if (cursoId > 0 && turnoId > 0) { %>
+                <% if (justificacionesPendientes.isEmpty()) { %>
+                    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-12 text-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="material-symbols-outlined text-green-600 dark:text-green-400 text-6xl mb-4">
+                                check_circle
+                            </span>
+                            <h3 class="text-2xl font-bold text-green-800 dark:text-green-300 mb-2">No hay justificaciones pendientes</h3>
+                            <p class="text-green-700 dark:text-green-400">Todas las justificaciones han sido revisadas</p>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">assignment</span>
+                            Justificaciones Pendientes
+                            <span class="ml-2 px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full text-sm font-semibold">
+                                <%= justificacionesPendientes.size() %>
+                            </span>
+                        </h2>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <% for (Justificacion justif : justificacionesPendientes) { %>
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-smooth card-hover">
+                                <!-- Card Header -->
+                                <div class="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 p-6 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-3">
+                                                <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                                    <span class="material-symbols-outlined text-white">person</span>
+                                                </div>
+                                                <div>
+                                                    <h3 class="text-xl font-bold text-gray-900 dark:text-white"><%= justif.getAlumnoNombre() %></h3>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400"><%= justif.getCursoNombre() %></p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div class="flex items-center gap-2 text-sm">
+                                                    <span class="material-symbols-outlined text-gray-500 dark:text-gray-400 text-base">calendar_today</span>
+                                                    <span class="text-gray-700 dark:text-gray-300">
+                                                        <strong>Fecha de Ausencia:</strong> <%= justif.getFechaAsistencia() %>
+                                                    </span>
+                                                </div>
+                                                <div class="flex items-center gap-2 text-sm">
+                                                    <span class="material-symbols-outlined text-gray-500 dark:text-gray-400 text-base">event</span>
+                                                    <span class="text-gray-700 dark:text-gray-300">
+                                                        <strong>Fecha de Justificación:</strong> <%= justif.getFechaJustificacionFormateada() %>
+                                                    </span>
+                                                </div>
+                                                <div class="flex items-center gap-2 text-sm md:col-span-2">
+                                                    <span class="material-symbols-outlined text-gray-500 dark:text-gray-400 text-base">account_circle</span>
+                                                    <span class="text-gray-700 dark:text-gray-300">
+                                                        <strong>Justificado por:</strong> <%= justif.getJustificadorNombre() %>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-sm">pending</span>
+                                                PENDIENTE
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Card Body -->
+                                <div class="p-6 space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                            <i class="fas fa-tag text-primary"></i> Tipo de Justificación
+                                        </label>
+                                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-gray-900 dark:text-white">
+                                            <%= justif.getTipoJustificacion() != null ? justif.getTipoJustificacion().getDescripcion() : "No especificado" %>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                            <i class="fas fa-file-alt text-primary"></i> Descripción
+                                        </label>
+                                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-gray-900 dark:text-white">
+                                            <%= justif.getDescripcion() %>
+                                        </div>
+                                    </div>
+                                    
+                                    <% if (justif.tieneDocumento()) { %>
+                                        <div>
+                                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                                <i class="fas fa-paperclip text-primary"></i> Documento Adjunto
+                                            </label>
+                                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                                <a href="<%= justif.getDocumentoAdjunto() %>" target="_blank" 
+                                                   class="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
+                                                    <span class="material-symbols-outlined">description</span>
+                                                    <span><%= justif.getNombreArchivo() %> (<%= justif.getTipoArchivo() %>)</span>
+                                                    <span class="material-symbols-outlined text-sm ml-auto">open_in_new</span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                
+                                <!-- Card Actions -->
+                                <div class="bg-gray-50 dark:bg-gray-900 p-6 border-t border-gray-200 dark:border-gray-700">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <!-- Aprobar Form -->
+                                        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-green-200 dark:border-green-800">
+                                            <form method="POST" action="JustificacionServlet">
+                                                <input type="hidden" name="accion" value="aprobar">
+                                                <input type="hidden" name="justificacionId" value="<%= justif.getId() %>">
+                                                <input type="hidden" name="cursoId" value="<%= cursoId %>">
+                                                <input type="hidden" name="turnoId" value="<%= turnoId %>">
+                                                
+                                                <label for="obs_aprobar_<%= justif.getId() %>" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Observaciones (opcional)
+                                                </label>
+                                                <textarea name="observaciones" id="obs_aprobar_<%= justif.getId() %>" rows="3"
+                                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4 transition-colors"
+                                                          placeholder="Añade comentarios adicionales..."></textarea>
+                                                
+                                                <button type="submit" 
+                                                        class="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                                                    <span class="material-symbols-outlined">check_circle</span>
+                                                    <span>Aprobar Justificación</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        
+                                        <!-- Rechazar Form -->
+                                        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border-2 border-red-200 dark:border-red-800">
+                                            <form method="POST" action="JustificacionServlet" 
+                                                  onsubmit="return validarRechazo(<%= justif.getId() %>)">
+                                                <input type="hidden" name="accion" value="rechazar">
+                                                <input type="hidden" name="justificacionId" value="<%= justif.getId() %>">
+                                                <input type="hidden" name="cursoId" value="<%= cursoId %>">
+                                                <input type="hidden" name="turnoId" value="<%= turnoId %>">
+                                                
+                                                <label for="obs_rechazar_<%= justif.getId() %>" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Motivo del Rechazo <span class="text-red-500">*</span>
+                                                </label>
+                                                <textarea name="observaciones" id="obs_rechazar_<%= justif.getId() %>" rows="3" required
+                                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4 transition-colors"
+                                                          placeholder="Explique por qué rechaza esta justificación..."></textarea>
+                                                
+                                                <button type="submit" 
+                                                        class="w-full px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                                                    <span class="material-symbols-outlined">cancel</span>
+                                                    <span>Rechazar Justificación</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                <% } %>
+            <% } %>
+            
+            <!-- Info Box -->
+            <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+                <div class="flex items-start gap-4">
+                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl mt-1">
+                        info
+                    </span>
+                    <div>
+                        <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-3">Información importante:</h4>
+                        <ul class="space-y-2 text-sm text-blue-700 dark:text-blue-400">
+                            <li class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                <span>Las justificaciones pendientes aparecerán en esta sección después de aplicar los filtros</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                <span>Puedes aprobar o rechazar justificaciones con comentarios</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                <span>Al rechazar una justificación, el motivo será notificado al padre de familia</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                <span>Revisa cuidadosamente los documentos adjuntos antes de tomar una decisión</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-12 transition-colors duration-300">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                    © 2025 Sistema de Asistencia Escolar - San Antonio. Todos los derechos reservados.
+                </p>
+            </div>
+        </footer>
+    </div>
+
     <script>
+        // Accessibility Functions
+        function toggleAccessibilityPanel() {
+            const panel = document.querySelector('.accessibility-panel');
+            panel.classList.toggle('open');
+        }
+        
+        function setTextSize(size) {
+            document.body.classList.remove('large-text', 'larger-text', 'largest-text');
+            if (size === 'large') {
+                document.body.classList.add('large-text');
+            } else if (size === 'larger') {
+                document.body.classList.add('larger-text');
+            } else if (size === 'largest') {
+                document.body.classList.add('largest-text');
+            }
+            document.body.offsetHeight;
+        }
+        
+        function setContrast(mode) {
+            document.body.classList.remove('high-contrast-invert', 'high-contrast-yellow');
+            if (mode === 'high') {
+                document.body.classList.add('high-contrast-invert');
+            } else if (mode === 'yellow') {
+                document.body.classList.add('high-contrast-yellow');
+            }
+        }
+        
+        function toggleMotion() {
+            const checkbox = document.getElementById('reduceMotion');
+            if (checkbox.checked) {
+                document.body.classList.add('reduce-motion');
+            } else {
+                document.body.classList.remove('reduce-motion');
+            }
+        }
+        
+        function toggleDyslexiaFont() {
+            const checkbox = document.getElementById('dyslexiaFont');
+            if (checkbox.checked) {
+                document.body.classList.add('dyslexia-font');
+            } else {
+                document.body.classList.remove('dyslexia-font');
+            }
+        }
+        
+        function toggleBeigeBackground() {
+            const checkbox = document.getElementById('beigeBackground');
+            if (checkbox.checked) {
+                document.body.classList.add('beige-background');
+            } else {
+                document.body.classList.remove('beige-background');
+            }
+        }
+        
+        function resetAccessibility() {
+            document.body.classList.remove(
+                'large-text', 'larger-text', 'largest-text',
+                'high-contrast-invert', 'high-contrast-yellow',
+                'reduce-motion', 'dyslexia-font', 'beige-background'
+            );
+            
+            document.getElementById('reduceMotion').checked = false;
+            document.getElementById('dyslexiaFont').checked = false;
+            document.getElementById('beigeBackground').checked = false;
+        }
+        
+        // Focus management for accessibility
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const panel = document.querySelector('.accessibility-panel');
+                if (panel.classList.contains('open')) {
+                    panel.classList.remove('open');
+                }
+            }
+        });
+        
+        // Toggle dark mode
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+        
+        // Validation function
         function validarRechazo(justificacionId) {
             const observaciones = document.getElementById('obs_rechazar_' + justificacionId).value;
             if (!observaciones || observaciones.trim() === '') {

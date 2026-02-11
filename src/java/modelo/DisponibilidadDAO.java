@@ -19,10 +19,9 @@ public class DisponibilidadDAO {
         boolean exito = false;
         Connection con = null;
         CallableStatement cs = null;
-        PreparedStatement ps = null; 
         ResultSet rs = null;
+        // Solo usamos el Stored Procedure, él se encarga de todo 
         String sql = "{CALL sp_gestion_disponibilidad_hu10(?, ?, ?, ?, ?)}";
-        String sqlFix = "UPDATE disponibilidad_profesor SET eliminado = 0, activo = 1 WHERE profesor_id = ? AND dia_semana = ? AND hora_inicio = ? AND hora_fin = ?";
 
         try {
             con = Conexion.getConnection(); 
@@ -33,18 +32,26 @@ public class DisponibilidadDAO {
                 cs.setString(3, dispo.getDiaSemana());
                 cs.setTime(4, dispo.getHoraInicio());
                 cs.setTime(5, dispo.getHoraFin());
+
                 rs = cs.executeQuery();
-                if (rs.next()) exito = rs.getInt("exito") == 1;
-                
-                ps = con.prepareStatement(sqlFix);
-                ps.setInt(1, dispo.getProfesorId());
-                ps.setString(2, dispo.getDiaSemana());
-                ps.setTime(3, dispo.getHoraInicio());
-                ps.setTime(4, dispo.getHoraFin());
-                if (ps.executeUpdate() > 0) exito = true; 
+
+                // Leemos la respuesta del procedimiento almacenado 
+                if (rs.next()) {
+                    exito = rs.getInt("exito") == 1;
+                }
             }
-        } catch (SQLException e) { System.out.println("Error registro: " + e.getMessage()); } 
-        finally { try { if(rs != null) rs.close(); if(cs != null) cs.close(); if(ps != null) ps.close(); if(con != null) con.close(); } catch(Exception e) {} }
+        } catch (SQLException e) { 
+            System.out.println("Error registro: " + e.getMessage()); 
+        } finally { 
+            // Cierre seguro de conexiones 
+            try { 
+                if(rs != null) rs.close(); 
+                if(cs != null) cs.close(); 
+                if(con != null) con.close(); 
+            } catch(Exception e) {
+                System.out.println("Error cerrando recursos: " + e.getMessage());
+            } 
+        }
         return exito;
     }
 

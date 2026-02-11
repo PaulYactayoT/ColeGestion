@@ -45,20 +45,23 @@
     if (alumnoId == null) {
 %>
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Justificar Ausencia - Sistema Escolar</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="container mt-5">
-        <div class="alert alert-warning text-center">
-            <h4 class="alert-heading">Información no disponible</h4>
-            <p>No se encontraron datos del estudiante. Por favor, regrese al dashboard e intente nuevamente.</p>
-            <hr>
-            <a href="PadreDashboardServlet" class="btn btn-primary">Volver al Dashboard</a>
+<body class="bg-[#f6f6f8] font-['Lexend']">
+    <div class="container mx-auto mt-20 px-4">
+        <div class="max-w-md mx-auto bg-gradient-to-br from-yellow-50 to-yellow-100 border-l-4 border-yellow-500 rounded-lg p-6 shadow-lg">
+            <h4 class="text-xl font-bold text-yellow-800 mb-3">Información no disponible</h4>
+            <p class="text-yellow-700 mb-4">No se encontraron datos del estudiante. Por favor, regrese al dashboard e intente nuevamente.</p>
+            <hr class="my-4 border-yellow-300">
+            <a href="PadreDashboardServlet" class="inline-block bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all">
+                Volver al Dashboard
+            </a>
         </div>
     </div>
 </body>
@@ -66,7 +69,6 @@
 <%
         return;
     }
-    
     
     // Manejar mensajes de sesión
     if (error == null) {
@@ -87,448 +89,491 @@
     String alumnoIdStr = (alumnoId != null) ? String.valueOf(alumnoId) : "";
     
     DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 %>
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Justificar Ausencia - Sistema Escolar</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "primary-dark": "#0d47a1",
+                        "success": "#10b981",
+                        "danger": "#ef4444",
+                        "warning": "#f59e0b",
+                        "info": "#3b82f6",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                },
+            },
+        }
+    </script>
+    
     <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        body { font-family: 'Lexend', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-        .card {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border: none;
-            border-radius: 12px;
-            margin-bottom: 20px;
+        
+        .alert-modern {
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
         }
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 12px 12px 0 0 !important;
-            padding: 20px;
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #991b1b;
+            border-left-color: #ef4444;
         }
-        .info-card {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+            border-left-color: #10b981;
         }
-        .warning-card {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            color: #212529;
-            border-radius: 12px;
-            padding: 20px;
+        
+        .alert-warning {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+            border-left-color: #f59e0b;
         }
-        .form-control, .form-select {
-            border-radius: 8px;
-            border: 2px solid #e0e0e0;
-            padding: 12px 16px;
-            transition: all 0.3s ease;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            padding: 14px 28px;
-            border-radius: 8px;
+        
+        .section-title {
+            color: #135bec;
             font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #93c5fd;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .file-upload-area:hover {
+            border-color: #135bec;
+            background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+        }
+        
+        .ausencia-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #ef4444;
             transition: all 0.3s ease;
         }
-        .btn-primary:hover {
+        
+        .ausencia-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
         }
-        .btn-primary:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .badge-ausencia {
-            font-size: 0.85em;
-            padding: 6px 12px;
-            border-radius: 20px;
-        }
-        .badge-ausencia.presente { background-color: #d4edda; color: #155724; }
-        .badge-ausencia.ausente { background-color: #f8d7da; color: #721c24; }
-        .badge-ausencia.tardanza { background-color: #fff3cd; color: #856404; }
-        .badge-ausencia.justificado { background-color: #d1ecf1; color: #0c5460; }
     </style>
 </head>
-<body>
-    <jsp:include page="header.jsp"/>
-
-    <div class="container mt-4 mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="mb-1"><i class="bi bi-pencil-square me-2"></i> Justificar Ausencia</h2>
-                <p class="text-muted mb-0">
-                    Complete el formulario para justificar una ausencia del estudiante
-                    <% if (alumnoNombre != null) { %>
-                        <br><strong class="text-primary"><%= alumnoNombre %></strong>
-                    <% } %>
-                </p>
-            </div>
-            <a href="AsistenciaServlet?accion=verPadre" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-2"></i> Volver a Asistencias
-            </a>
-        </div>
-
-        <!-- Mensajes de éxito/error -->
-        <% if (mensaje != null && !mensaje.isEmpty()) { %>
-            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center" role="alert">
-                <i class="bi bi-check-circle-fill me-3 fs-4"></i>
-                <div class="flex-grow-1">
-                    <strong class="fs-6">Éxito:</strong>
-                    <div class="mt-1"><%= mensaje %></div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <% } %>
-        
-        <% if (error != null && !error.isEmpty()) { %>
-            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
-                <div class="flex-grow-1">
-                    <strong class="fs-6">Error:</strong>
-                    <div class="mt-1"><%= error %></div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <% } %>
-
-        <!-- Advertencia si no hay ausencias -->
-        <% if (ausencias.isEmpty() && alumnoId != null) { %>
-            <div class="alert alert-info alert-dismissible fade show d-flex align-items-center" role="alert">
-                <i class="bi bi-info-circle-fill me-3 fs-4"></i>
-                <div class="flex-grow-1">
-                    <strong class="fs-6">Información:</strong>
-                    <div class="mt-1">No se encontraron ausencias pendientes de justificación en los últimos 30 días.</div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <% } %>
-
-        <div class="row">
-            <!-- Formulario Principal -->
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <i class="bi bi-file-earmark-text me-3 fs-3"></i>
-                        <div>
-                            <h5 class="mb-0 fw-bold">Formulario de Justificación</h5>
-                            <small class="opacity-75">Complete todos los campos obligatorios (*)</small>
-                        </div>
+<body class="bg-[#f6f6f8] text-[#111318] min-h-screen">
+    
+    <div class="flex h-screen overflow-hidden">
+        <!-- Left SideNavBar -->
+        <aside class="w-64 flex-shrink-0 bg-white border-r border-[#dbdfe6] flex flex-col justify-between">
+            <div class="flex flex-col gap-8 p-6">
+                <!-- Brand -->
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white">
+                        <span class="material-symbols-outlined">school</span>
                     </div>
-                    <div class="card-body p-4">
-                        <form method="post" action="JustificacionServlet" enctype="multipart/form-data" id="formJustificacion">
-                            <input type="hidden" name="accion" value="crear">
-                            <input type="hidden" name="alumnoId" value="<%= alumnoIdStr %>">
-                            
-                            <!-- Selección de Ausencia -->
-                            <div class="mb-4">
-                                <label for="asistenciaId" class="form-label fw-semibold">
-                                    <i class="bi bi-calendar-x me-2"></i> Seleccione la ausencia a justificar *
-                                </label>
-                                <select class="form-select form-select-lg" id="asistenciaId" name="asistenciaId" required>
-                                    <option value="">-- Seleccione una fecha de ausencia --</option>
-                                    <% 
-                                    if (ausencias != null && !ausencias.isEmpty()) {
-                                        System.out.println("DEBUG JSP: Mostrando " + ausencias.size() + " ausencias");
-                                        for (Asistencia a : ausencias) { 
-                                            String fechaFormateada = a.getFecha() != null ? 
-                                                a.getFecha().format(dateFormatter) : "Sin fecha";
-                                            String horaFormateada = a.getHoraClase() != null ? 
-                                                a.getHoraClase().format(timeFormatter) : "";
-                                            String estado = a.getEstadoString() != null ? a.getEstadoString() : "";
-                                            String cursoNombre = a.getCursoNombre() != null ? a.getCursoNombre() : "Curso";
-                                            
-                                            String estadoEmoji = "";
-                                            String estadoClase = "";
-                                            if ("AUSENTE".equals(estado)) {
-                                                estadoEmoji = "❌"; 
-                                                estadoClase = "ausente";
-                                            } else if ("TARDANZA".equals(estado)) {
-                                                estadoEmoji = "⏰"; 
-                                                estadoClase = "tardanza";
-                                            } else {
-                                                estadoEmoji = "📋";
-                                                estadoClase = "presente";
-                                            }
-                                    %>
-                                            <option value="<%= a.getId() %>" 
-                                                    data-curso="<%= cursoNombre %>"
-                                                    data-fecha="<%= fechaFormateada %>"
-                                                    data-hora="<%= horaFormateada %>"
-                                                    data-estado="<%= estado %>">
-                                                <%= estadoEmoji %> <%= fechaFormateada %> | 
-                                                🕐 <%= horaFormateada %> | 
-                                                📚 <%= cursoNombre %> | 
-                                                <span class="badge badge-ausencia <%= estadoClase %>"><%= estado %></span>
-                                            </option>
-                                        <% 
-                                        }
-                                    } else { 
-                                    %>
-                                        <option value="" disabled>No hay ausencias pendientes de justificación</option>
-                                    <% } %>
-                                </select>
-                                <div class="form-text mt-2">
-                                    <% if (!ausencias.isEmpty()) { %>
-                                        <i class="bi bi-info-circle me-1"></i> 
-                                        Se encontraron <span class="fw-semibold"><%= ausencias.size() %></span> 
-                                        ausencia<%= ausencias.size() != 1 ? "s" : "" %> pendiente<%= ausencias.size() != 1 ? "s" : "" %> de justificación
-                                    <% } else { %>
-                                        <i class="bi bi-check-circle me-1"></i> 
-                                        No se encontraron ausencias recientes para justificar
-                                    <% } %>
-                                </div>
-                            </div>
-                            
-                            <!-- Tipo de Justificación -->
-                            <div class="mb-4">
-                                <label for="tipoJustificacion" class="form-label fw-semibold">
-                                    <i class="bi bi-tag me-2"></i> Tipo de Justificación *
-                                </label>
-                                <select class="form-select" id="tipoJustificacion" name="tipoJustificacion" required>
-                                    <option value="">-- Seleccione un tipo de justificación --</option>
-                                    <option value="ENFERMEDAD">🏥 Enfermedad (con o sin certificado médico)</option>
-                                    <option value="EMERGENCIA_FAMILIAR">👨‍👩‍👧 Emergencia Familiar (situación urgente)</option>
-                                    <option value="CITA_MEDICA">📋 Cita Médica (programada o de control)</option>
-                                    <option value="OTRO">📝 Otro (especifique en la descripción)</option>
-                                </select>
-                                <div class="form-text">Seleccione el motivo principal de la ausencia</div>
-                            </div>
-                            
-                            <!-- Descripción Detallada -->
-                            <div class="mb-4">
-                                <label for="descripcion" class="form-label fw-semibold">
-                                    <i class="bi bi-chat-left-text me-2"></i> Descripción Detallada *
-                                </label>
-                                <textarea class="form-control" id="descripcion" name="descripcion" 
-                                          rows="6" placeholder="Describa el motivo de la ausencia de manera detallada... 
-
-Ejemplo: 'El estudiante presentó fiebre alta de 39°C desde la noche anterior, por lo que no pudo asistir a clases. Se le administró medicación y reposo indicado por médico.'"
-                                          required></textarea>
-                                <div class="form-text mt-2">
-                                    <i class="bi bi-lightbulb me-1"></i> 
-                                    Proporcione todos los detalles necesarios: síntomas, fechas, acciones tomadas, etc.
-                                    <span id="charCount" class="ms-2 text-muted">(0 caracteres)</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Documento Adjunto -->
-                            <div class="mb-4">
-                                <label for="archivo" class="form-label fw-semibold">
-                                    <i class="bi bi-paperclip me-2"></i> Documento Adjunto (Opcional pero recomendado)
-                                </label>
-                                <div class="input-group">
-                                    <input type="file" class="form-control" id="archivo" name="archivo" 
-                                           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                           onchange="previewFileName(this)">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="clearFile()">
-                                        <i class="bi bi-x-circle"></i>
-                                    </button>
-                                </div>
-                                <div class="form-text mt-2">
-                                    <i class="bi bi-file-earmark-pdf me-1"></i> 
-                                    Formatos permitidos: PDF, JPG, PNG, DOC, DOCX (máximo 5MB)
-                                </div>
-                                <div id="filePreview" class="mt-2 d-none">
-                                    <div class="alert alert-info d-flex align-items-center p-2">
-                                        <i class="bi bi-file-earmark me-2"></i>
-                                        <span id="fileName"></span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Información Importante -->
-                            <div class="alert alert-info border-start border-info border-4">
-                                <div class="d-flex">
-                                    <i class="bi bi-info-circle-fill me-3 fs-4 text-info"></i>
-                                    <div>
-                                        <h6 class="alert-heading fw-bold mb-2">Importante sobre el proceso de justificación</h6>
-                                        <ul class="mb-0 ps-3">
-                                            <li>Las justificaciones serán revisadas por el personal docente correspondiente</li>
-                                            <li>Recibirá una notificación una vez que sea aprobada o rechazada</li>
-                                            <li>El plazo máximo para justificar una ausencia es de 30 días</li>
-                                            <li>Puede consultar el estado en el historial de asistencias</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Botones de acción -->
-                            <div class="d-grid gap-3">
-                                <button type="submit" class="btn btn-primary btn-lg" id="btn-enviar" 
-                                        <%= ausencias.isEmpty() ? "disabled" : "" %>>
-                                    <i class="bi bi-send-fill me-2"></i> 
-                                    <span id="btn-text">Enviar Justificación</span>
-                                    <span id="btn-loading" class="d-none">
-                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                        Procesando...
-                                    </span>
-                                </button>
-                                
-                                <div class="d-flex gap-2">
-                                    <a href="AsistenciaServlet?accion=verPadre" class="btn btn-outline-secondary flex-grow-1">
-                                        <i class="bi bi-x-circle me-2"></i> Cancelar
-                                    </a>
-                                </div>
-                            </div>
-                        </form>
+                    <div class="flex flex-col">
+                        <h1 class="text-[#111318] text-lg font-bold">San Antonio</h1>
+                        <p class="text-[#616f89] text-xs">Gestión Académica</p>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Panel de Información -->
-            <div class="col-md-4">
-                <!-- Tipos de Justificación -->
-                <div class="info-card">
-                    <h6 class="card-title fw-bold mb-3">
-                        <i class="bi bi-question-circle-fill me-2"></i> Tipos de Justificación
-                    </h6>
-                    <hr style="border-color: rgba(255,255,255,0.3); margin: 1rem 0;">
-                    <div class="mb-3">
-                        <div class="d-flex align-items-start mb-2">
-                            <span class="me-2">🏥</span>
-                            <div>
-                                <h6 class="mb-1 fw-semibold">Enfermedad</h6>
-                                <small class="opacity-75">Incluye certificados médicos o justificativos de salud. 
-                                Se recomienda adjuntar documento médico cuando sea posible.</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="d-flex align-items-start mb-2">
-                            <span class="me-2">👨‍👩‍👧</span>
-                            <div>
-                                <h6 class="mb-1 fw-semibold">Emergencia Familiar</h6>
-                                <small class="opacity-75">Situaciones familiares urgentes que requieren la presencia del estudiante. 
-                                Puede incluir problemas de salud familiar, trámites urgentes, etc.</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="d-flex align-items-start mb-2">
-                            <span class="me-2">📋</span>
-                            <div>
-                                <h6 class="mb-1 fw-semibold">Cita Médica</h6>
-                                <small class="opacity-75">Consultas médicas programadas, controles, exámenes de laboratorio, 
-                                vacunación, etc. Adjunte comprobante si está disponible.</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-0">
-                        <div class="d-flex align-items-start">
-                            <span class="me-2">📝</span>
-                            <div>
-                                <h6 class="mb-1 fw-semibold">Otro</h6>
-                                <small class="opacity-75">Otras situaciones justificadas que no encajan en las categorías anteriores. 
-                                Describa detalladamente en el campo correspondiente.</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Información Importante -->
-                <div class="warning-card">
-                    <h6 class="card-title fw-bold mb-3">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Información Importante
-                    </h6>
-                    <hr style="border-color: rgba(0,0,0,0.1); margin: 1rem 0;">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-3 d-flex">
-                            <i class="bi bi-clock-fill me-3 text-warning fs-5"></i>
-                            <div>
-                                <strong class="d-block">Plazo de justificación</strong>
-                                <small>Las justificaciones deben enviarse dentro de los 30 días siguientes a la ausencia.</small>
-                            </div>
-                        </li>
-                        <li class="mb-3 d-flex">
-                            <i class="bi bi-x-circle-fill me-3 text-danger fs-5"></i>
-                            <div>
-                                <strong class="d-block">Sin justificación</strong>
-                                <small>Si no se justifica, la ausencia se mantendrá como "AUSENTE" en el registro.</small>
-                            </div>
-                        </li>
-                        <li class="mb-3 d-flex">
-                            <i class="bi bi-person-fill-check me-3 text-primary fs-5"></i>
-                            <div>
-                                <strong class="d-block">Revisión docente</strong>
-                                <small>El docente puede solicitar información adicional si es necesario.</small>
-                            </div>
-                        </li>
-                        <li class="d-flex">
-                            <i class="bi bi-list-check me-3 text-success fs-5"></i>
-                            <div>
-                                <strong class="d-block">Seguimiento</strong>
-                                <small>Puede ver el estado de sus justificaciones en el historial en cualquier momento.</small>
-                            </div>
-                        </li>
-                    </ul>
                 </div>
                 
-                <!-- Estadísticas -->
-                <% if (ausencias != null && !ausencias.isEmpty()) { %>
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <h6 class="card-title fw-bold mb-3">
-                            <i class="bi bi-bar-chart-fill me-2"></i> Estadísticas
-                        </h6>
-                        <div class="row text-center">
-                            <div class="col-6 mb-3">
-                                <div class="p-3 bg-light rounded">
-                                    <h3 class="fw-bold text-primary mb-0"><%= ausencias.size() %></h3>
-                                    <small class="text-muted">Ausencias pendientes</small>
-                                </div>
-                            </div>
-                            <div class="col-6 mb-3">
-                                <div class="p-3 bg-light rounded">
-                                    <h3 class="fw-bold text-success mb-0">30</h3>
-                                    <small class="text-muted">Días plazo máximo</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="progress mt-2" style="height: 8px;">
-                            <div class="progress-bar bg-success" role="progressbar" 
-                                 style="width: <%= Math.min(100, (ausencias.size() * 10)) %>%" 
-                                 aria-valuenow="<%= ausencias.size() %>" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="10">
-                            </div>
-                        </div>
-                        <small class="text-muted mt-2 d-block">
-                            <% if (ausencias.size() > 5) { %>
-                                <i class="bi bi-exclamation-triangle text-warning me-1"></i>
-                                Tiene varias ausencias pendientes de justificación
-                            <% } else if (ausencias.size() > 0) { %>
-                                <i class="bi bi-check-circle text-success me-1"></i>
-                                Gestione sus ausencias pendientes oportunamente
+                <!-- Navigation -->
+                <nav class="flex flex-col gap-2">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100" 
+                       href="PadreDashboardServlet">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="text-sm">Dashboard</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100" 
+                       href="AsistenciaServlet?accion=verPadre">
+                        <i class="fas fa-calendar-check"></i>
+                        <span class="text-sm">Asistencias</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary text-white" 
+                       href="JustificacionServlet?accion=form">
+                        <i class="fas fa-file-medical"></i>
+                        <span class="text-sm">Justificar Ausencia</span>
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- User Info -->
+            <div class="p-6 border-t border-[#dbdfe6]">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary size-10 rounded-full flex items-center justify-center text-white font-semibold">
+                        <% if (padre != null) { %>
+                            <%= padre.getNombreCompleto().substring(0, 1).toUpperCase() %>
+                        <% } else { %>
+                            P
+                        <% } %>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-sm font-semibold text-[#111318] truncate">
+                            <% if (padre != null) { %>
+                                <%= padre.getNombreCompleto() %>
                             <% } else { %>
-                                <i class="bi bi-check-circle text-success me-1"></i>
-                                No tiene ausencias pendientes
+                                Padre de Familia
                             <% } %>
-                        </small>
+                        </p>
+                        <p class="text-xs text-[#616f89]">Apoderado</p>
+                    </div>
+                </div>
+                <a href="logout.jsp" class="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-danger hover:bg-red-50 transition-colors">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <!-- Top Bar -->
+            <div class="bg-white border-b border-[#dbdfe6] px-8 py-4 sticky top-0 z-10">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-[#111318]">
+                            <i class="fas fa-file-medical text-primary mr-2"></i>
+                            Justificar Ausencia
+                        </h2>
+                        <p class="text-sm text-[#616f89] mt-1">
+                            Complete el formulario para justificar las ausencias de 
+                            <% if (alumnoNombre != null) { %>
+                                <strong class="text-primary"><%= alumnoNombre %></strong>
+                            <% } else { %>
+                                su hijo(a)
+                            <% } %>
+                        </p>
+                    </div>
+                    <a href="AsistenciaServlet?accion=verPadre" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Volver</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-8">
+                <!-- Mensajes de alerta -->
+                <% if (error != null && !error.isEmpty()) { %>
+                <div class="alert-modern alert-danger">
+                    <i class="fas fa-exclamation-circle text-2xl"></i>
+                    <div>
+                        <strong class="block font-semibold">Error</strong>
+                        <span><%= error %></span>
                     </div>
                 </div>
                 <% } %>
+                
+                <% if (mensaje != null && !mensaje.isEmpty()) { %>
+                <div class="alert-modern alert-success">
+                    <i class="fas fa-check-circle text-2xl"></i>
+                    <div>
+                        <strong class="block font-semibold">Éxito</strong>
+                        <span><%= mensaje %></span>
+                    </div>
+                </div>
+                <% } %>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Formulario Principal -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-xl shadow-sm border border-[#dbdfe6] p-6">
+                            <% if (ausencias == null || ausencias.isEmpty()) { %>
+                            <div class="alert-modern alert-warning">
+                                <i class="fas fa-info-circle text-2xl"></i>
+                                <div>
+                                    <strong class="block font-semibold">No hay ausencias pendientes</strong>
+                                    <span>El estudiante <strong><%= alumnoNombre %></strong> no tiene ausencias pendientes de justificación en este momento.</span>
+                                </div>
+                            </div>
+                            <div class="text-center py-8">
+                                <i class="fas fa-check-circle text-6xl text-success mb-4"></i>
+                                <p class="text-lg text-gray-600">¡Todo al día!</p>
+                            </div>
+                            <% } else { %>
+                            <form id="formJustificacion" action="JustificacionServlet" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="accion" value="crear">
+                                <input type="hidden" name="alumnoId" value="<%= alumnoIdStr %>">
+                                
+                                <!-- Selección de Ausencia -->
+                                <div class="mb-6">
+                                    <h3 class="section-title">
+                                        <i class="fas fa-calendar-times"></i>
+                                        Seleccionar Ausencia
+                                    </h3>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Ausencia a justificar <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="asistenciaId" id="asistenciaId" 
+                                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                            required>
+                                        <option value="">-- Seleccione una ausencia --</option>
+                                        <% for (Asistencia a : ausencias) { %>
+                                        <option value="<%= a.getId() %>" 
+                                                data-fecha="<%= a.getFecha().format(dateFormatter) %>">
+                                            <%= a.getFecha().format(dateFormatter) %> - 
+                                            <%= a.getCursoNombre() %> - 
+                                            <%= a.getEstadoString() %>
+                                        </option>
+                                        <% } %>
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <i class="fas fa-info-circle"></i>
+                                        Total de ausencias sin justificar: <strong><%= ausencias.size() %></strong>
+                                    </p>
+                                </div>
+
+                                <!-- Tipo de Justificación -->
+                                <div class="mb-6">
+                                    <h3 class="section-title">
+                                        <i class="fas fa-list-alt"></i>
+                                        Tipo de Justificación
+                                    </h3>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Motivo <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="tipoJustificacion" id="tipoJustificacion" 
+                                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                            required>
+                                        <option value="">-- Seleccione el motivo --</option>
+                                        <option value="ENFERMEDAD">Enfermedad</option>
+                                        <option value="EMERGENCIA_FAMILIAR">Emergencia Familiar</option>
+                                        <option value="CITA_MEDICA">Cita Médica</option>
+                                        <option value="OTRO">Otro</option>
+                                    </select>
+                                </div>
+
+                                <!-- Descripción -->
+                                <div class="mb-6">
+                                    <h3 class="section-title">
+                                        <i class="fas fa-align-left"></i>
+                                        Descripción Detallada
+                                    </h3>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Detalles <span class="text-red-500">*</span>
+                                    </label>
+                                    <textarea name="descripcion" id="descripcion" rows="5" 
+                                              class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                                              placeholder="Describa detalladamente el motivo de la ausencia (mínimo 20 caracteres)..."
+                                              required></textarea>
+                                    <div class="flex justify-between items-center mt-2">
+                                        <p class="text-xs text-gray-500">
+                                            <i class="fas fa-info-circle"></i>
+                                            Mínimo 20 caracteres
+                                        </p>
+                                        <p class="text-xs text-gray-500" id="charCount">(0 caracteres)</p>
+                                    </div>
+                                </div>
+
+                                <!-- Documento Adjunto -->
+                                <div class="mb-6">
+                                    <h3 class="section-title">
+                                        <i class="fas fa-paperclip"></i>
+                                        Documento de Respaldo
+                                    </h3>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Archivo adjunto (opcional)
+                                    </label>
+                                    <div class="file-upload-area" onclick="document.getElementById('archivo').click()">
+                                        <i class="fas fa-cloud-upload-alt text-4xl text-primary mb-3"></i>
+                                        <p class="text-sm font-semibold text-gray-700 mb-1">Click para seleccionar archivo</p>
+                                        <p class="text-xs text-gray-500">Formatos permitidos: PDF, Word (.doc, .docx), Imágenes (JPG, PNG)</p>
+                                        <p class="text-xs text-gray-500 mt-1">Tamaño máximo: 5MB</p>
+                                    </div>
+                                    <input type="file" name="archivo" id="archivo" 
+                                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                           class="hidden" 
+                                           onchange="previewFileName(this)">
+                                    
+                                    <!-- Preview del archivo -->
+                                    <div id="filePreview" class="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200 hidden">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <i class="fas fa-file-alt text-2xl text-primary"></i>
+                                                <div>
+                                                    <p class="text-sm font-semibold text-gray-700" id="fileName"></p>
+                                                    <p class="text-xs text-gray-500">Archivo seleccionado</p>
+                                                </div>
+                                            </div>
+                                            <button type="button" onclick="clearFile()" 
+                                                    class="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Botón de envío -->
+                                <div class="flex items-center gap-4 pt-6 border-t border-gray-200">
+                                    <button type="submit" id="btn-enviar"
+                                            class="flex-1 bg-gradient-to-r from-primary to-primary-dark text-white px-6 py-4 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                            disabled>
+                                        <i class="fas fa-paper-plane"></i>
+                                        <span id="btn-text">Enviar Justificación</span>
+                                        <span id="btn-loading" class="hidden">
+                                            <i class="fas fa-spinner fa-spin"></i> Enviando...
+                                        </span>
+                                    </button>
+                                    <button type="reset" 
+                                            class="px-6 py-4 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
+                                        <i class="fas fa-redo"></i> Limpiar
+                                    </button>
+                                </div>
+                            </form>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Panel Lateral -->
+                    <div class="lg:col-span-1">
+                        <!-- Ausencias Pendientes -->
+                        <% if (ausencias != null && !ausencias.isEmpty()) { %>
+                        <div class="bg-white rounded-xl shadow-sm border border-[#dbdfe6] p-6 mb-6">
+                            <h3 class="section-title">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Ausencias Pendientes
+                            </h3>
+                            <div class="space-y-3 max-h-96 overflow-y-auto">
+                                <% for (Asistencia a : ausencias) { %>
+                                <div class="ausencia-card">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-gray-800 text-sm">
+                                                <%= a.getCursoNombre() %>
+                                            </p>
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                <i class="fas fa-calendar"></i>
+                                                <%= a.getFecha().format(dateFormatter) %>
+                                            </p>
+                                        </div>
+                                        <span class="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
+                                            <%= a.getEstadoString() %>
+                                        </span>
+                                    </div>
+                                </div>
+                                <% } %>
+                            </div>
+                            <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                                <p class="text-sm text-gray-600">
+                                    <strong class="text-primary"><%= ausencias.size() %></strong> 
+                                    <%= ausencias.size() == 1 ? "ausencia" : "ausencias" %> 
+                                    pendiente<%= ausencias.size() == 1 ? "" : "s" %>
+                                </p>
+                            </div>
+                        </div>
+                        <% } %>
+
+                        <!-- Información Importante -->
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 p-6">
+                            <h3 class="font-bold text-blue-900 mb-4 flex items-center gap-2">
+                                <i class="fas fa-info-circle text-xl"></i>
+                                Información Importante
+                            </h3>
+                            <ul class="space-y-3 text-sm text-blue-800">
+                                <li class="flex gap-2">
+                                    <i class="fas fa-check-circle text-blue-600 mt-1 flex-shrink-0"></i>
+                                    <span>Complete todos los campos obligatorios (*) del formulario.</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <i class="fas fa-file-alt text-blue-600 mt-1 flex-shrink-0"></i>
+                                    <span>Adjunte documentos de respaldo cuando sea posible (certificado médico, constancia, etc.).</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <i class="fas fa-clock text-blue-600 mt-1 flex-shrink-0"></i>
+                                    <span>Las justificaciones deben presentarse dentro de los 30 días posteriores a la ausencia.</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <i class="fas fa-user-check text-blue-600 mt-1 flex-shrink-0"></i>
+                                    <span>El docente revisará y aprobará/rechazará su justificación.</span>
+                                </li>
+                                <li class="flex gap-2">
+                                    <i class="fas fa-bell text-blue-600 mt-1 flex-shrink-0"></i>
+                                    <span>Recibirá notificación del resultado de la revisión.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Formatos Aceptados -->
+                        <div class="bg-white rounded-xl shadow-sm border border-[#dbdfe6] p-6 mt-6">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <i class="fas fa-file-upload"></i>
+                                Formatos Aceptados
+                            </h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex items-center gap-2 text-gray-700">
+                                    <i class="fas fa-file-pdf text-red-500"></i>
+                                    <span>PDF (.pdf)</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-700">
+                                    <i class="fas fa-file-word text-blue-500"></i>
+                                    <span>Word (.doc, .docx)</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-700">
+                                    <i class="fas fa-file-image text-green-500"></i>
+                                    <span>Imágenes (.jpg, .jpeg, .png)</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
+                                <i class="fas fa-exclamation-triangle text-warning"></i>
+                                Tamaño máximo por archivo: 5MB
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </main>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Contador de caracteres
         document.getElementById('descripcion').addEventListener('input', function() {
@@ -548,8 +593,7 @@ Ejemplo: 'El estudiante presentó fiebre alta de 39°C desde la noche anterior, 
             } else {
                 btnEnviar.disabled = false;
                 const fecha = option.getAttribute('data-fecha') || '';
-                const hora = option.getAttribute('data-hora') || '';
-                btnText.textContent = 'Justificar: ' + fecha + ' ' + hora;
+                btnText.textContent = 'Justificar: ' + fecha;
             }
         });
         
@@ -561,23 +605,44 @@ Ejemplo: 'El estudiante presentó fiebre alta de 39°C desde la noche anterior, 
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 const fileSize = (file.size / 1024 / 1024).toFixed(2); // MB
+                const fileExt = file.name.split('.').pop().toLowerCase();
                 
-                if (fileSize > 5) {
-                    alert('⚠️ El archivo es demasiado grande. El tamaño máximo es 5MB.');
+                // Validar formato
+                const allowedFormats = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+                if (!allowedFormats.includes(fileExt)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Formato no permitido',
+                        text: 'Solo se permiten archivos PDF, Word e imágenes (JPG, PNG)',
+                        confirmButtonColor: '#135bec'
+                    });
                     input.value = '';
-                    filePreview.classList.add('d-none');
+                    filePreview.classList.add('hidden');
+                    return;
+                }
+                
+                // Validar tamaño
+                if (fileSize > 5) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Archivo demasiado grande',
+                        text: 'El tamaño máximo permitido es 5MB',
+                        confirmButtonColor: '#135bec'
+                    });
+                    input.value = '';
+                    filePreview.classList.add('hidden');
                     return;
                 }
                 
                 fileName.textContent = file.name + ' (' + fileSize + ' MB)';
-                filePreview.classList.remove('d-none');
+                filePreview.classList.remove('hidden');
             }
         }
         
         // Limpiar archivo
         function clearFile() {
             document.getElementById('archivo').value = '';
-            document.getElementById('filePreview').classList.add('d-none');
+            document.getElementById('filePreview').classList.add('hidden');
         }
         
         // Envío del formulario
@@ -593,20 +658,30 @@ Ejemplo: 'El estudiante presentó fiebre alta de 39°C desde la noche anterior, 
             
             if (!asistenciaId || !tipo || !descripcion) {
                 e.preventDefault();
-                alert('⚠️ Complete todos los campos obligatorios antes de enviar.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Campos incompletos',
+                    text: 'Complete todos los campos obligatorios antes de enviar',
+                    confirmButtonColor: '#135bec'
+                });
                 return;
             }
             
             if (descripcion.length < 20) {
                 e.preventDefault();
-                alert('⚠️ La descripción debe tener al menos 20 caracteres.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Descripción muy corta',
+                    text: 'La descripción debe tener al menos 20 caracteres',
+                    confirmButtonColor: '#135bec'
+                });
                 return;
             }
             
             // Mostrar loading
             btnEnviar.disabled = true;
-            btnText.classList.add('d-none');
-            btnLoading.classList.remove('d-none');
+            btnText.classList.add('hidden');
+            btnLoading.classList.remove('hidden');
             
             // Permitir el envío
             return true;
@@ -615,21 +690,29 @@ Ejemplo: 'El estudiante presentó fiebre alta de 39°C desde la noche anterior, 
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
             const asistenciaSelect = document.getElementById('asistenciaId');
-            if (asistenciaSelect.value === '') {
+            if (asistenciaSelect && asistenciaSelect.value === '') {
                 document.getElementById('btn-enviar').disabled = true;
             }
             
             console.log('✅ Formulario de justificación cargado');
-            console.log('📋 Opciones en select: ' + asistenciaSelect.options.length);
             
-            // Contar solo las opciones que no son la opción por defecto
-            const opcionesAusencias = Array.from(asistenciaSelect.options).filter(opt => opt.value !== "");
-            console.log('📋 Ausencias disponibles para seleccionar: ' + opcionesAusencias.length);
-            
-            // Mostrar información de cada ausencia
-            opcionesAusencias.forEach((opt, index) => {
-                console.log('   Ausencia ' + (index + 1) + ': ' + opt.textContent);
+            <% if (mensaje != null && !mensaje.isEmpty()) { %>
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '<%= mensaje %>',
+                confirmButtonColor: '#135bec'
             });
+            <% } %>
+            
+            <% if (error != null && !error.isEmpty()) { %>
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '<%= error %>',
+                confirmButtonColor: '#135bec'
+            });
+            <% } %>
         });
     </script>
 </body>

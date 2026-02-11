@@ -162,12 +162,16 @@
                                     </thead>
                                     <tbody>
                                         <% 
-                                        if (lista != null && !lista.isEmpty()) {
-                                            for (Disponibilidad d : lista) { 
-                                                boolean esRechazado = "RECHAZADO".equals(d.getEstado());
-                                                boolean esAprobado = "APROBADO".equals(d.getEstado());
-                                                boolean esPendiente = "PENDIENTE".equals(d.getEstado());
-                                        %>
+                                            if (lista != null && !lista.isEmpty()) {
+                                                for (Disponibilidad d : lista) { 
+                                                    // PASO 1: Limpiar el texto que viene de la base de datos
+                                                    String estadoLimpio = (d.getEstado() != null) ? d.getEstado().trim().toUpperCase() : "PENDIENTE";
+
+                                                    // PASO 2: Comparar con el texto limpio
+                                                    boolean esRechazado = "RECHAZADO".equals(estadoLimpio);
+                                                    boolean esAprobado = "APROBADO".equals(estadoLimpio);
+                                                    boolean esPendiente = "PENDIENTE".equals(estadoLimpio);
+                                            %>
                                             <tr>
                                                 <td class="ps-4 fw-bold text-dark"><%= d.getDiaSemana() %></td>
                                                 <td><span class="text-muted"><%= d.getTurnoNombre() %></span></td>

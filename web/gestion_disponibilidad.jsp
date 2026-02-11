@@ -35,11 +35,13 @@
         
         // Script para rechazar con motivo
         function rechazar(id) {
-            let motivo = prompt("Ingrese el motivo del rechazo:", "Cruce de horarios");
-            if (motivo !== null && motivo.trim() !== "") {
-                window.location.href = "AdminDisponibilidadServlet?accion=rechazar&id=" + id + "&observacion=" + encodeURIComponent(motivo);
-            }
+    const motivo = prompt("Ingrese el motivo del rechazo:");
+    if (motivo) {
+        // CAMBIO: accion=rechazar y el parámetro es &observacion=
+        window.location.href = "AdminDisponibilidadServlet?accion=rechazar&id=" + id + 
+                               "&observacion=" + encodeURIComponent(motivo);
         }
+    }
     </script>
     <style>body { font-family: 'Lexend', sans-serif; }</style>
 </head>

@@ -1531,4 +1531,47 @@ public class AsistenciaDAO {
         
         return lista;
     }
+    
+    /**
+ * OBTENER ESTADÍSTICAS DE ASISTENCIA HOY PARA UN CURSO
+ * @param cursoId ID del curso
+ * @param fecha Fecha para la consulta (normalmente hoy)
+ * @return Map con las estadísticas
+ */
+public Map<String, Object> obtenerEstadisticasHoy(int cursoId, String fecha) {
+    Map<String, Object> stats = new HashMap<>();
+    String sql = "{CALL obtener_estadisticas_asistencia_curso(?, ?)}";
+    
+    try (Connection con = Conexion.getConnection(); 
+         CallableStatement cs = con.prepareCall(sql)) {
+        
+        cs.setInt(1, cursoId);
+        cs.setString(2, fecha);
+        ResultSet rs = cs.executeQuery();
+        
+        if (rs.next()) {
+            stats.put("totalAlumnos", rs.getInt("total_alumnos"));
+            stats.put("presentesHoy", rs.getInt("presentes"));
+            stats.put("ausentesHoy", rs.getInt("ausentes"));
+            stats.put("porcentajeAsistencia", rs.getDouble("porcentaje_asistencia"));
+        } else {
+            // Valores por defecto si no hay datos
+            stats.put("totalAlumnos", 0);
+            stats.put("presentesHoy", 0);
+            stats.put("ausentesHoy", 0);
+            stats.put("porcentajeAsistencia", 0.0);
+        }
+        
+    } catch (Exception e) {
+        System.out.println("Error al obtener estadísticas de asistencia");
+        e.printStackTrace();
+        // Valores por defecto en caso de error
+        stats.put("totalAlumnos", 0);
+        stats.put("presentesHoy", 0);
+        stats.put("ausentesHoy", 0);
+        stats.put("porcentajeAsistencia", 0.0);
+    }
+    
+    return stats;
+}
 }

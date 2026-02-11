@@ -24,7 +24,7 @@ public class ImageDAO {
      * @return true si el guardado fue exitoso
      */
     public boolean guardarImagen(int alumnoId, String ruta) {
-        String sql = "INSERT INTO imagenes (alumno_id, ruta) VALUES (?, ?)";
+        String sql = "INSERT INTO imagen (alumno_id, ruta, tipo, activo, eliminado) VALUES (?, ?, 'FOTO_PERFIL', 1, 0)";
         try (Connection c = Conexion.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, alumnoId);
@@ -44,7 +44,7 @@ public class ImageDAO {
      */
     public List<Imagen> listarPorAlumno(int alumnoId) {
         List<Imagen> lista = new ArrayList<>();
-        String sql = "SELECT id, alumno_id, ruta, fecha_subida FROM imagenes WHERE alumno_id = ?";
+        String sql = "SELECT id, alumno_id, ruta, fecha_subida FROM imagen WHERE alumno_id = ? AND activo = 1 AND eliminado = 0";
         try (Connection c = Conexion.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, alumnoId);
@@ -71,8 +71,8 @@ public class ImageDAO {
      * @return true si la eliminacion fue exitosa
      */
     public boolean eliminarImagen(int id, String contextPath) {
-        String sqlSelect = "SELECT ruta FROM imagenes WHERE id = ?";
-        String sqlDelete = "DELETE FROM imagenes WHERE id = ?";
+        String sqlSelect = "SELECT ruta FROM imagen WHERE id = ?";
+        String sqlDelete = "UPDATE imagen SET eliminado = 1, activo = 0 WHERE id = ?";
         String ruta = null;
         try (Connection con = Conexion.getConnection();
              PreparedStatement ps1 = con.prepareStatement(sqlSelect)) {
@@ -82,14 +82,13 @@ public class ImageDAO {
             if (!rs.next()) return false;
             ruta = rs.getString("ruta");
 
-            // 1) Primero eliminar registro BD
+            // 1) Primero marcar como eliminado en BD
             try (PreparedStatement ps2 = con.prepareStatement(sqlDelete)) {
                 ps2.setInt(1, id);
                 ps2.executeUpdate();
             }
 
-            // 2) Luego borrar el fichero
-            // ruta almacena algo como "uploads/imagen123.jpg"
+            // 2) Luego borrar el fichero fisico
             File f = new File(contextPath, ruta);
             if (f.exists()) {
                 f.delete();

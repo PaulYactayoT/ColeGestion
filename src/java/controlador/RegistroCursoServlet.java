@@ -54,13 +54,10 @@ public class RegistroCursoServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         String accion = request.getParameter("accion");
-        System.out.println("\n========================================");
         System.out.println("GET - Acción recibida: " + accion);
-        System.out.println("========================================");
-        
-        // Determinar qué acción ejecutar
+
         if ("cargarFormulario".equals(accion)) {
             cargarFormulario(request, response);
         } 
@@ -82,7 +79,20 @@ public class RegistroCursoServlet extends HttpServlet {
         else if ("validarHorario".equals(accion)) {
             validarHorarioEnTurno(request, response);
         }
-        // ... otros if ...
+        else if ("obtenerDisponibilidad".equals(accion)) {
+            try {
+                int profId = Integer.parseInt(request.getParameter("profesorId"));
+                // Llama al nuevo método que creaste en el DAO
+                List<Map<String, Object>> disponibilidad = dao.obtenerDisponibilidadAprobada(profId);
+
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(gson.toJson(disponibilidad));
+            } catch (Exception e) {
+                response.setStatus(500);
+                response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+            }
+        }
         else if ("jsonAulas".equals(accion)) {
             List<Map<String, Object>> aulas = dao.obtenerAulas();
             String json = new Gson().toJson(aulas);
@@ -90,11 +100,12 @@ public class RegistroCursoServlet extends HttpServlet {
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write(json);
         }
+        else if ("obtenerDisponibilidadProfesor".equals(accion)) {
+            obtenerDisponibilidadProfesor(request, response);
+        }
         else {
-            // Si no hay acción o es desconocida, cargar formulario
             cargarFormulario(request, response);
         }
-        
     }
 
     /**
@@ -201,34 +212,51 @@ public class RegistroCursoServlet extends HttpServlet {
      * Ejemplo de URL:
      * RegistroCursoServlet?accion=obtenerGrados&nivel=PRIMARIA
      */
-    private void obtenerGradosPorNivel(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
-        String nivel = request.getParameter("nivel");
-        
-        System.out.println("=== OBTENIENDO GRADOS ===");
-        System.out.println("Nivel: " + nivel);
+        private void obtenerGradosPorNivel(HttpServletRequest request, HttpServletResponse response)
+                throws ServletException, IOException {
 
-        // Validar que el nivel no sea nulo
-        if (nivel == null || nivel.isEmpty()) {
+            String nivel = request.getParameter("nivel");
+
+            System.out.println("\n=== OBTENIENDO GRADOS ===");
+            System.out.println("📥 Parámetro 'nivel' recibido: " + nivel);
+            System.out.println("📥 Parámetro 'nivel' (raw): " + request.getParameter("nivel"));
+
+            // Mostrar TODOS los parámetros recibidos
+            System.out.println("📥 Todos los parámetros de la petición:");
+            Enumeration<String> paramNames = request.getParameterNames();
+            while (paramNames.hasMoreElements()) {
+                String paramName = paramNames.nextElement();
+                System.out.println("  - " + paramName + " = " + request.getParameter(paramName));
+            }
+
+            // Validar que el nivel no sea nulo
+            if (nivel == null || nivel.isEmpty()) {
+                System.err.println("❌ ERROR: Nivel es nulo o vacío");
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write("[]");
+                return;
+            }
+
+            System.out.println("📥 Nivel procesado: '" + nivel + "'");
+
+            // Obtener grados de la BD
+            List<Map<String, Object>> grados = dao.obtenerGradosPorNivel(nivel);
+
+            System.out.println("✅ Grados encontrados: " + grados.size());
+            if (!grados.isEmpty()) {
+                for (Map<String, Object> grado : grados) {
+                    System.out.println("  - ID: " + grado.get("id") + ", Nombre: " + grado.get("nombre"));
+                }
+            }
+
+            // Convertir a JSON y enviar
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("[]"); // Array vacío
-            return;
+            String json = gson.toJson(grados);
+            System.out.println("📤 JSON enviado: " + json);
+            response.getWriter().write(json);
         }
-
-        // Obtener grados de la BD
-        List<Map<String, Object>> grados = dao.obtenerGradosPorNivel(nivel);
-
-        System.out.println("Grados encontrados: " + grados.size());
-
-        // Convertir a JSON y enviar
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(gson.toJson(grados));
-        
-        System.out.println(" JSON enviado al cliente");
-    }
 
         /**
             * ============================================================
@@ -318,7 +346,7 @@ public class RegistroCursoServlet extends HttpServlet {
                    response.getWriter().write(json);
 
                } catch (Exception e) {
-                   System.err.println("❌ Error al obtener cursos:");
+                   System.err.println(" Error al obtener cursos:");
                    e.printStackTrace();
 
                    // Enviar array vacío en caso de error
@@ -351,51 +379,74 @@ public class RegistroCursoServlet extends HttpServlet {
      * - Su especialidad sea Computación/Tecnología
      */
     private void obtenerProfesores(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
 
-        String curso = request.getParameter("curso");
-        String turnoIdStr = request.getParameter("turno");
-        String nivel = request.getParameter("nivel");
+    String curso = request.getParameter("curso");
+    String turnoIdStr = request.getParameter("turno");
+    String nivel = request.getParameter("nivel");
 
-        System.out.println("=== OBTENIENDO PROFESORES ===");
-        System.out.println("Curso: " + curso);
-        System.out.println("Turno ID: " + turnoIdStr);
-        System.out.println("Nivel: " + nivel);
-
-        // Validar parámetros
-        if (curso == null || turnoIdStr == null || nivel == null ||
-            curso.isEmpty() || turnoIdStr.isEmpty() || nivel.isEmpty()) {
-            
-            System.out.println(" Parámetros incompletos");
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("[]");
-            return;
-        }
-
-        try {
-            int turnoId = Integer.parseInt(turnoIdStr);
-            
-            // Obtener profesores filtrados
-            List<Map<String, Object>> profesores = 
-                dao.obtenerProfesoresPorCursoTurnoNivel(curso, turnoId, nivel);
-
-            System.out.println("Profesores encontrados: " + profesores.size());
-
-            // Convertir a JSON y enviar
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write(gson.toJson(profesores));
-            
-            System.out.println(" JSON enviado al cliente");
-            
-        } catch (NumberFormatException e) {
-            System.err.println(" Error: turnoId no es un número válido");
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("[]");
-        }
+    System.out.println("\n=== OBTENIENDO PROFESORES ===");
+    System.out.println(" Curso recibido: " + curso);
+    System.out.println(" Turno ID recibido: " + turnoIdStr);
+    System.out.println(" Nivel recibido: " + nivel);
+    
+    // Mostrar TODOS los parámetros
+    System.out.println(" Todos los parámetros:");
+    Enumeration<String> params = request.getParameterNames();
+    while (params.hasMoreElements()) {
+        String param = params.nextElement();
+        System.out.println("  - " + param + " = " + request.getParameter(param));
     }
+
+    // Validar parámetros
+    if (curso == null || turnoIdStr == null || nivel == null ||
+        curso.isEmpty() || turnoIdStr.isEmpty() || nivel.isEmpty()) {
+        
+        System.out.println("❌ Parámetros incompletos");
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("[]");
+        return;
+    }
+
+    try {
+        int turnoId = Integer.parseInt(turnoIdStr);
+        
+        System.out.println(" Llamando a DAO con:");
+        System.out.println("  - Curso: " + curso);
+        System.out.println("  - Turno ID: " + turnoId);
+        System.out.println("  - Nivel: " + nivel);
+        
+        // Obtener profesores filtrados
+        List<Map<String, Object>> profesores = 
+            dao.obtenerProfesoresPorCursoTurnoNivel(curso, turnoId, nivel);
+
+        System.out.println("✅ Profesores encontrados: " + profesores.size());
+        
+        if (!profesores.isEmpty()) {
+            for (Map<String, Object> profesor : profesores) {
+                System.out.println("  - ID: " + profesor.get("id") + 
+                                 ", Nombre: " + profesor.get("nombre_completo") +
+                                 ", Especialidad: " + profesor.get("especialidad"));
+            }
+        } else {
+            System.out.println(" No se encontraron profesores con esos criterios");
+        }
+
+        // Convertir a JSON y enviar
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        String json = gson.toJson(profesores);
+        System.out.println(" JSON enviado: " + json);
+        response.getWriter().write(json);
+        
+    } catch (NumberFormatException e) {
+        System.err.println(" Error: turnoId no es un número válido");
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("[]");
+    }
+}
 
     /**
      * ============================================================
@@ -418,64 +469,38 @@ public class RegistroCursoServlet extends HttpServlet {
      * }
      */
     private void validarDisponibilidad(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        
+        throws IOException {
+    
         try {
-            // Obtener parámetros
             int profesorId = Integer.parseInt(request.getParameter("profesorId"));
             int turnoId = Integer.parseInt(request.getParameter("turnoId"));
             String diaSemana = request.getParameter("diaSemana");
             String horaInicio = request.getParameter("horaInicio");
             String horaFin = request.getParameter("horaFin");
-            
-            System.out.println("=== VALIDANDO DISPONIBILIDAD ===");
-            System.out.println("Profesor ID: " + profesorId);
-            System.out.println("Turno ID: " + turnoId);
-            System.out.println("Día: " + diaSemana);
-            System.out.println("Horario: " + horaInicio + " - " + horaFin);
-            
-            // VALIDACIÓN 1: Límite de 4 cursos por día
-            int cursosEnDia = dao.validarLimiteCursos(profesorId, turnoId, diaSemana);
-            boolean excedeLimite = cursosEnDia >= 4;
-            
-            System.out.println("Cursos en el día: " + cursosEnDia);
-            System.out.println("Excede límite: " + (excedeLimite ? "SÍ" : "NO"));
-            
-            // VALIDACIÓN 2: Conflicto de horarios
-            boolean hayConflicto = dao.validarConflictoHorario(
+
+            System.out.println(" Validando disponibilidad:");
+            System.out.println("   Profesor: " + profesorId);
+            System.out.println("   Turno: " + turnoId);
+            System.out.println("   Día: " + diaSemana);
+            System.out.println("   Horario: " + horaInicio + " - " + horaFin);
+
+            // Validar usando el método actualizado del DAO
+            Map<String, Object> resultado = dao.validarDisponibilidadProfesor(
                 profesorId, turnoId, diaSemana, horaInicio, horaFin
             );
-            
-            System.out.println("Hay conflicto: " + (hayConflicto ? "SÍ" : "NO"));
-            
-            // Construir respuesta JSON
-            Map<String, Object> resultado = new HashMap<>();
-            resultado.put("disponible", !excedeLimite && !hayConflicto);
-            resultado.put("cursosEnDia", cursosEnDia);
-            resultado.put("excedeLimite", excedeLimite);
-            resultado.put("hayConflicto", hayConflicto);
-            resultado.put("mensaje", 
-                excedeLimite ? "El profesor ya tiene 4 cursos este día" :
-                hayConflicto ? "Conflicto de horario con otra clase" :
-                "Disponible"
-            );
-            
-            // Enviar JSON
+
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write(gson.toJson(resultado));
-            
-            System.out.println(" Validación completada");
-            
+
         } catch (Exception e) {
-            System.err.println(" Error en validación:");
+            System.err.println(" Error en validación: " + e.getMessage());
             e.printStackTrace();
-            
-            // Enviar error en JSON
+
             Map<String, Object> error = new HashMap<>();
             error.put("disponible", false);
-            error.put("mensaje", "Error en validación: " + e.getMessage());
-            
+            error.put("mensaje", "Error al validar disponibilidad: " + e.getMessage());
+
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write(gson.toJson(error));
@@ -806,4 +831,37 @@ public class RegistroCursoServlet extends HttpServlet {
                 response.getWriter().write(gson.toJson(error));
             }
         }
+        
+        /**
+        * Obtiene la disponibilidad APROBADA del profesor en formato JSON
+        */
+       private void obtenerDisponibilidadProfesor(HttpServletRequest request, HttpServletResponse response)
+               throws IOException {
+
+           try {
+               int profesorId = Integer.parseInt(request.getParameter("profesorId"));
+
+               System.out.println(" Obteniendo disponibilidad para profesor ID: " + profesorId);
+
+               // Obtener disponibilidad detallada del profesor
+               List<Map<String, Object>> disponibilidad = dao.obtenerDisponibilidadAprobadaDetallada(profesorId);
+
+               System.out.println(" Disponibilidades encontradas: " + disponibilidad.size());
+
+               // Retornar JSON
+               response.setContentType("application/json");
+               response.setCharacterEncoding("UTF-8");
+               response.getWriter().write(gson.toJson(disponibilidad));
+
+           } catch (NumberFormatException e) {
+               System.err.println(" Error: profesorId inválido");
+               response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+               response.getWriter().write("{\"error\": \"ID de profesor inválido\"}");
+           } catch (Exception e) {
+               System.err.println(" Error al obtener disponibilidad: " + e.getMessage());
+               e.printStackTrace();
+               response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+               response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
+           }
+       }
 }

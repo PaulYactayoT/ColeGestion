@@ -17,14 +17,15 @@
 
     AsistenciaDAO asistenciaDAO = new AsistenciaDAO();
     Map<Integer, Map<String, Object>> estadisticasCursos = new HashMap<>();
+    
+    // Obtener fecha de hoy en formato yyyy-MM-dd
+    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+    String fechaHoy = sdf.format(new java.util.Date());
 
     if (cursos != null && !cursos.isEmpty()) {
         for (Curso curso : cursos) {
-            Map<String, Object> stats = new HashMap<>();
-            stats.put("totalAlumnos", 25);
-            stats.put("presentesHoy", 22);
-            stats.put("ausentesHoy", 3);
-            stats.put("porcentajeAsistencia", 88.0);
+            // Obtener estadísticas reales desde la base de datos
+            Map<String, Object> stats = asistenciaDAO.obtenerEstadisticasHoy(curso.getId(), fechaHoy);
             estadisticasCursos.put(curso.getId(), stats);
         }
     }
@@ -39,6 +40,9 @@
         session.removeAttribute("error");
     }
 %>
+
+<!DOCTYPE html>
+<html class="light" lang="es">
 
 <!DOCTYPE html>
 <html class="light" lang="es">
