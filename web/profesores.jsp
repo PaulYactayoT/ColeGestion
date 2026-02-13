@@ -1,4 +1,3 @@
-
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*, modelo.Profesor" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
@@ -6,7 +5,7 @@
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response.setHeader("Pragma", "no-cache");
-    response.setDateHeader("Expires", 0);
+    response.setHeader("Expires", "0");
 
     if (session == null || session.getAttribute("usuario") == null) {
         response.sendRedirect("index.jsp");
@@ -23,16 +22,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profesores - San Antonio</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <script id="tailwind-config">
@@ -180,7 +175,7 @@
             text-align: left;
             font-weight: 600;
             color: white;
-            font-size: 0.95rem; /* Aumentado de 0.875rem */
+            font-size: 0.95rem; 
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -205,7 +200,7 @@
         .custom-table td {
             padding: 1rem;
             color: #374151;
-            font-size: 0.95rem; /* Aumentado de 0.875rem */
+            font-size: 0.95rem; 
         }
         
         .dark .custom-table td {
@@ -214,9 +209,9 @@
         
         /* Badge con tamaño base más grande */
         .status-badge {
-            padding: 0.35rem 0.85rem; /* Aumentado */
+            padding: 0.35rem 0.85rem; 
             border-radius: 9999px;
-            font-size: 0.85rem; /* Aumentado de 0.75rem */
+            font-size: 0.85rem; 
             font-weight: 600;
         }
         
@@ -235,11 +230,11 @@
         
         /* Textos generales más grandes por defecto */
         .text-sm {
-            font-size: 0.95rem !important; /* Aumentado */
+            font-size: 0.95rem !important; 
         }
         
         .text-xs {
-            font-size: 0.85rem !important; /* Aumentado */
+            font-size: 0.85rem !important; 
         }
         
         /* Asegurar que los iconos también se agranden */
@@ -298,10 +293,8 @@
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen" id="main-content">
-    <!-- Skip to content link -->
     <a href="#main-content" class="skip-to-content focus:top-0">Saltar al contenido principal</a>
     
-    <!-- Accessibility Panel -->
     <div class="fixed top-20 right-0 z-50 accessibility-panel bg-white dark:bg-gray-800 shadow-xl rounded-l-lg p-4 w-80">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-lg">Opciones de Accesibilidad</h3>
@@ -353,7 +346,6 @@
         </div>
     </div>
     
-    <!-- Accessibility Toggle Button -->
     <button onclick="toggleAccessibilityPanel()" 
             class="fixed top-20 right-0 z-40 bg-primary text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors accessibility-toggle"
             aria-label="Abrir panel de accesibilidad">
@@ -361,10 +353,8 @@
     </button>
     
     <div class="flex h-screen overflow-hidden">
-        <!-- Left SideNavBar -->
         <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
             <div class="flex flex-col gap-8 p-6">
-                <!-- Brand -->
                 <div class="flex items-center gap-3">
                     <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
                         <span class="material-symbols-outlined">school</span>
@@ -375,7 +365,6 @@
                     </div>
                 </div>
                 
-                <!-- Navigation -->
                 <nav class="flex flex-col gap-2" aria-label="Navegación principal">
                     <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
                        href="dashboard.jsp">
@@ -411,7 +400,6 @@
                 </nav>
             </div>
             
-                       <!-- Footer Sidebar -->
             <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
                 <a href="LogoutServlet" 
                    class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
@@ -421,9 +409,7 @@
             </div>
         </aside>
         
-        <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- TopNavBar -->
             <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
                 <div class="flex items-center gap-4 flex-1">
                     <div class="flex items-center gap-3">
@@ -459,9 +445,7 @@
                 </div>
             </header>
             
-            <!-- Main Content -->
             <div class="p-8">
-                <!-- Alertas -->
                 <% 
                     String error = (String) session.getAttribute("error");
                     String mensaje = (String) session.getAttribute("mensaje");
@@ -488,7 +472,6 @@
                 </div>
                 <% } %>
                 
-                <!-- Header con título y botón -->
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h2 class="text-2xl font-bold text-[#111318] dark:text-white">Gestión de Profesores</h2>
@@ -500,8 +483,27 @@
                         <span>Registrar Profesor</span>
                     </a>
                 </div>
+
+                <div class="mb-8 max-w-md">
+                    <form action="ProfesorServlet" method="GET">
+                        <input type="hidden" name="accion" value="listar">
+                        
+                        <div class="relative group"> 
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="material-symbols-outlined text-gray-500">person_search</span>
+                            </div>
+                            
+                            <input type="text" name="txtBuscar" id="txtBuscar" 
+                                   class="block w-full pl-10 pr-3 py-3 border-none rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white dark:focus:bg-[#1a2233] transition-all duration-200 ease-in-out sm:text-sm shadow-inner"
+                                   placeholder="Filtrar resultados..."
+                                   autocomplete="off"
+                                   value="<%= request.getParameter("txtBuscar") != null ? request.getParameter("txtBuscar") : "" %>">
+                                   
+                            <div class="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-300 group-focus-within:w-full"></div>
+                        </div>
+                    </form>
+                </div>
                 
-                <!-- Tabla de profesores -->
                 <div class="bg-white dark:bg-[#1a2233] rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="custom-table">
@@ -516,7 +518,7 @@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tablaResultados">
                                 <%
                                     if (lista != null && !lista.isEmpty()) {
                                         for (Profesor p : lista) {
@@ -548,7 +550,7 @@
                                             String nivelBadgeClass = "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
                                             
                                             if ("INICIAL".equals(nivel)) {
-                                                nivelBadgeClass = "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+                                                nivelBadgeClass = "bg-sky-100 text-sky-800 dark:bg-green-900 dark:text-sky-200"; 
                                             } else if ("PRIMARIA".equals(nivel)) {
                                                 nivelBadgeClass = "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
                                             } else if ("SECUNDARIA".equals(nivel)) {
@@ -586,27 +588,27 @@
                                                class="btn-icon bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 focus:outline focus:outline-2 focus:outline-blue-500"
                                                title="Editar profesor"
                                                aria-label="Editar profesor <%= p.getNombres()%>">
-                                                <span class="material-symbols-outlined text-sm">edit</span>
+                                                 <span class="material-symbols-outlined text-sm">edit</span>
                                             </a>
                                             <a href="ProfesorServlet?accion=ver&id=<%= p.getId()%>" 
                                                class="btn-icon bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 focus:outline focus:outline-2 focus:outline-green-500"
                                                title="Ver detalles"
                                                aria-label="Ver detalles del profesor <%= p.getNombres()%>">
-                                                <span class="material-symbols-outlined text-sm">visibility</span>
+                                                 <span class="material-symbols-outlined text-sm">visibility</span>
                                             </a>
                                             <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId()%>" 
                                                class="btn-icon bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 focus:outline focus:outline-2 focus:outline-red-500"
                                                title="Eliminar profesor"
                                                aria-label="Eliminar profesor <%= p.getNombres()%>"
                                                onclick="return confirm('¿Estás seguro de eliminar este profesor?')">
-                                                <span class="material-symbols-outlined text-sm">delete</span>
+                                                 <span class="material-symbols-outlined text-sm">delete</span>
                                             </a>
                                         </div>
                                     </td>
                                 </tr>
                                 <%
-                                    }
-                                } else {
+                                        }
+                                    } else {
                                 %>
                                 <tr>
                                     <td colspan="8" class="text-center py-8">
@@ -623,7 +625,6 @@
                     </div>
                 </div>
                 
-                <!-- Información adicional -->
                 <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <div class="flex items-start gap-3">
                         <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 mt-0.5">
@@ -753,6 +754,48 @@
             const registrarBtn = document.querySelector('a[href*="ProfesorServlet?accion=nuevo"]');
             if (registrarBtn) {
                 registrarBtn.focus();
+            }
+
+            // SCRIPT PARA BÚSQUEDA EN VIVO (LETRA POR LETRA)
+            const inputBuscar = document.getElementById('txtBuscar');
+            const tablaResultados = document.getElementById('tablaResultados');
+            let timeout = null;
+
+            if(inputBuscar && tablaResultados) {
+                inputBuscar.addEventListener('input', function() {
+                    const texto = this.value;
+
+                    // Limpiamos el reloj anterior para no saturar al servidor
+                    clearTimeout(timeout);
+
+                    // Esperamos 300ms después de que dejes de escribir para buscar
+                    timeout = setTimeout(function() {
+                        realizarBusqueda(texto);
+                    }, 300);
+                });
+            }
+
+            function realizarBusqueda(texto) {
+                // Usamos fetch para llamar al Servlet sin recargar
+                fetch('ProfesorServlet?accion=listar&txtBuscar=' + encodeURIComponent(texto))
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Extraemos solo el nuevo tbody de la respuesta
+                        const nuevaTabla = doc.getElementById('tablaResultados');
+                        
+                        // Reemplazamos el tbody actual con el nuevo
+                        if (nuevaTabla) {
+                            tablaResultados.innerHTML = nuevaTabla.innerHTML;
+                            
+                            // Reaplicar navegación por teclado en las nuevas filas si es necesario
+                            const rows = tablaResultados.querySelectorAll('tr');
+                            rows.forEach(row => row.setAttribute('tabindex', '0'));
+                        }
+                    })
+                    .catch(error => console.error('Error en búsqueda en vivo:', error));
             }
         });
         

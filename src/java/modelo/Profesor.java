@@ -27,18 +27,36 @@ public class Profesor {
     private String turnoNombre; 
     private String nivel;
     
+    // ✅ NUEVO ATRIBUTO: FOTO
+    private String foto;
+
     // Lista de disponibilidades del profesor
-    // Esta lista almacenará todos los horarios disponibles del docente
-    // ========================================
     private List<Disponibilidad> disponibilidades;
+    
+    // Lista de asignaciones (Nivel-Área)
+    private List<ProfesorNivelArea> asignaciones;
     
     // Constructor
     public Profesor() {
         // Inicializar la lista de disponibilidades vacía
         this.disponibilidades = new ArrayList<>();
+        // Inicializar asignaciones
+        this.asignaciones = new ArrayList<>();
     }
 
-    // Getters y Setters
+    // ==========================================
+    // ✅ NUEVOS MÉTODOS GETTER Y SETTER PARA FOTO
+    // ==========================================
+    public String getFoto() {
+        return foto;
+    }
+
+    public void setFoto(String foto) {
+        this.foto = foto;
+    }
+    // ==========================================
+
+    // Getters y Setters EXISTENTES
     public int getId() {
         return id;
     }
@@ -229,8 +247,6 @@ public class Profesor {
         return nombres + " " + apellidos;
     }
     
-    private List<ProfesorNivelArea> asignaciones;
-    
     /**
      * Obtiene la lista de asignaciones de nivel-área
      */
@@ -339,6 +355,4 @@ public class Profesor {
         }
         return false;
     }
- 
- 
-}   
+}

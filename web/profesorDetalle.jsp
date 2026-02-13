@@ -31,7 +31,6 @@
     String estadoClass = "";
     String estadoTexto = "";
     String estadoIcon = "";
-    
     switch(estado) {
         case "ACTIVO":
             estadoClass = "status-active";
@@ -98,16 +97,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil Profesional - <%= p.getNombres() %> <%= p.getApellidos() %> - San Antonio</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <script id="tailwind-config">
@@ -149,54 +144,31 @@
         
         /* Mejoras de accesibilidad */
         .reduce-motion * { 
-            animation-duration: 0.01ms !important; 
+            animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important; 
             transition-duration: 0.01ms !important; 
         }
         .high-contrast-invert { 
-            filter: invert(1) hue-rotate(180deg); 
+            filter: invert(1) hue-rotate(180deg);
         }
         .high-contrast-yellow { 
-            background-color: #000000 !important; 
+            background-color: #000000 !important;
             color: #ffff00 !important; 
         }
         .beige-background { 
-            background-color: #f5f5dc !important; 
+            background-color: #f5f5dc !important;
         }
         
-        /* Tamaños de texto - Afectar a toda la página */
-        .large-text { 
-            font-size: 18px !important; 
-        }
-        .large-text .form-label,
-        .large-text .form-control,
-        .large-text .form-select,
-        .large-text .text-sm {
-            font-size: 16px !important;
-        }
-        
-        .larger-text { 
-            font-size: 20px !important; 
-        }
-        .larger-text .form-label,
-        .larger-text .form-control,
-        .larger-text .form-select,
-        .larger-text .text-sm {
-            font-size: 18px !important;
-        }
-        
-        .largest-text { 
-            font-size: 22px !important; 
-        }
-        .largest-text .form-label,
-        .largest-text .form-control,
-        .largest-text .form-select,
-        .largest-text .text-sm {
-            font-size: 20px !important;
-        }
+        /* Tamaños de texto */
+        .large-text { font-size: 18px !important; }
+        .large-text .form-label, .large-text .form-control, .large-text .form-select, .large-text .text-sm { font-size: 16px !important; }
+        .larger-text { font-size: 20px !important; }
+        .larger-text .form-label, .larger-text .form-control, .larger-text .form-select, .larger-text .text-sm { font-size: 18px !important; }
+        .largest-text { font-size: 22px !important; }
+        .largest-text .form-label, .largest-text .form-control, .largest-text .form-select, .largest-text .text-sm { font-size: 20px !important; }
         
         .dyslexia-font { 
-            font-family: Arial !important; 
+            font-family: Arial !important;
             font-size: 1.1em !important; 
             line-height: 1.6 !important; 
             letter-spacing: 0.5px !important; 
@@ -877,10 +849,8 @@
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen" id="main-content">
-    <!-- Skip to content link -->
     <a href="#main-content" class="skip-to-content focus:top-0">Saltar al contenido principal</a>
     
-    <!-- Accessibility Panel -->
     <div class="fixed top-20 right-0 z-50 accessibility-panel bg-white dark:bg-gray-800 shadow-xl rounded-l-lg p-4 w-80">
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-lg">Opciones de Accesibilidad</h3>
@@ -932,7 +902,6 @@
         </div>
     </div>
     
-    <!-- Accessibility Toggle Button -->
     <button onclick="toggleAccessibilityPanel()" 
             class="fixed top-20 right-0 z-40 bg-primary text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors accessibility-toggle"
             aria-label="Abrir panel de accesibilidad">
@@ -940,10 +909,8 @@
     </button>
     
     <div class="flex h-screen overflow-hidden">
-        <!-- Left SideNavBar -->
         <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
             <div class="flex flex-col gap-8 p-6">
-                <!-- Brand -->
                 <div class="flex items-center gap-3">
                     <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
                         <span class="material-symbols-outlined">school</span>
@@ -954,7 +921,6 @@
                     </div>
                 </div>
                 
-                <!-- Navigation -->
                 <nav class="flex flex-col gap-2" aria-label="Navegación principal">
                     <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
                        href="dashboard.jsp">
@@ -990,7 +956,6 @@
                 </nav>
             </div>
             
-            <!-- Footer Sidebar -->
             <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
                 <a href="LogoutServlet" 
                    class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
@@ -1000,9 +965,7 @@
             </div>
         </aside>
         
-        <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- TopNavBar -->
             <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
                 <div class="flex items-center gap-4 flex-1">
                     <div class="flex items-center gap-3">
@@ -1038,15 +1001,12 @@
                 </div>
             </header>
             
-            <!-- Main Content -->
             <div class="p-8">
-                <!-- Header con título -->
                 <div class="mb-6">
                     <h2 class="text-2xl font-bold text-[#111318] dark:text-white">Detalles del Profesor</h2>
                     <p class="text-[#616f89] dark:text-gray-400 mt-1">Información completa del perfil profesional</p>
                 </div>
                 
-                <!-- Alertas -->
                 <% 
                     String error = (String) session.getAttribute("error");
                     String mensaje = (String) session.getAttribute("mensaje");
@@ -1073,14 +1033,32 @@
                 </div>
                 <% } %>
                 
-                <!-- Header Card con Avatar -->
                 <div class="profile-header-card">
                     <div class="profile-cover"></div>
                     
                     <div class="profile-info-section">
                         <div class="profile-avatar-container">
-                            <div class="profile-avatar">
-                                <%= p.getNombres().substring(0, 1) + p.getApellidos().substring(0, 1) %>
+                            
+                            <form id="formFotoRapida" action="ProfesorServlet" method="post" enctype="multipart/form-data" style="display: none;">
+                                <input type="hidden" name="accion" value="cambiarFotoPerfil">
+                                <input type="hidden" name="id" value="<%= p.getId() %>">
+                                <input type="file" name="foto" id="inputFotoRapida" accept="image/*" onchange="document.getElementById('formFotoRapida').submit()">
+                            </form>
+
+                            <div class="profile-avatar cursor-pointer relative group" 
+                                 onclick="document.getElementById('inputFotoRapida').click()"
+                                 title="Clic para cambiar la foto"
+                                 style="overflow: hidden; padding: 0;"> <% if (p.getFoto() != null && !p.getFoto().isEmpty()) { %>
+                                    <img src="uploads/<%= p.getFoto() %>" alt="Foto de perfil" style="width: 100%; height: 100%; object-fit: cover;">
+                                <% } else { %>
+                                    <%= p.getNombres().substring(0, 1) %><%= p.getApellidos().substring(0, 1) %>
+                                <% } %>
+
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;"
+                                     onmouseover="this.style.opacity='1'" 
+                                     onmouseout="this.style.opacity='0'">
+                                    <i class="fas fa-camera text-white text-4xl"></i>
+                                </div>
                             </div>
                             
                             <div class="profile-title-section">
@@ -1096,7 +1074,6 @@
                             </div>
                         </div>
                         
-                        <!-- Estado Badge -->
                         <div class="status-badge-large <%= estadoClass %>">
                             <i class="fas <%= estadoIcon %>"></i>
                             <%= estadoTexto %>
@@ -1104,10 +1081,8 @@
                     </div>
                 </div>
 
-                <!-- Information Cards Grid -->
                 <div class="info-cards-grid">
                     
-                    <!-- Card 1: Información Personal -->
                     <div class="info-card">
                         <div class="card-header-section">
                             <div class="card-icon card-icon-personal">
@@ -1169,7 +1144,6 @@
                         </div>
                     </div>
 
-                    <!-- Card 2: Información Profesional -->
                     <div class="info-card">
                         <div class="card-header-section">
                             <div class="card-icon card-icon-professional">
@@ -1178,8 +1152,6 @@
                             <h2 class="card-title">Información Profesional</h2>
                         </div>
                         
-                       
-                        <!-- ASIGNACIONES MÚLTIPLES DE NIVEL Y ÁREA -->
                         <div class="info-item">
                             <div class="info-icon icon-primary">
                                 <i class="fas fa-chalkboard-teacher"></i>
@@ -1195,7 +1167,6 @@
                                             <% 
                                             for (int i = 0; i < p.getAsignaciones().size(); i++) {
                                                 ProfesorNivelArea asig = p.getAsignaciones().get(i);
-
                                                 // Determinar clase de nivel para el badge
                                                 String asigNivelClass = "";
                                                 String asigNivelIcon = "";
@@ -1219,7 +1190,6 @@
                                             %>
                                                 <div class="flex items-center justify-between p-3 rounded-lg border-2 <%= asigNivelClass %> transition-all hover:shadow-md">
                                                     <div class="flex items-center gap-3 flex-1">
-                                                        <!-- Badge de nivel -->
                                                         <div class="flex items-center gap-2">
                                                             <span class="text-2xl"><%= asigNivelIcon %></span>
                                                             <div>
@@ -1233,7 +1203,6 @@
                                                         </div>
                                                     </div>
 
-                                                    <!-- Indicador de principal -->
                                                     <% if (asig.isEsPrincipal()) { %>
                                                         <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300 text-xs font-semibold">
                                                             <i class="fas fa-star"></i>
@@ -1251,13 +1220,11 @@
                                             %>
                                         </div>
 
-                                        <!-- Resumen de asignaciones -->
                                         <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                                             <div class="text-sm text-gray-600 dark:text-gray-400">
                                                 <i class="fas fa-info-circle mr-1"></i>
                                                 <strong>Total:</strong> <%= p.getAsignaciones().size() %> asignación<%= p.getAsignaciones().size() > 1 ? "es" : "" %>
 
-                                                <!-- Mostrar niveles únicos -->
                                                 <% 
                                                 List<String> nivelesUnicos = p.getNivelesDistintos();
                                                 if (nivelesUnicos != null && !nivelesUnicos.isEmpty()) {
@@ -1291,17 +1258,6 @@
                             </div>
                         </div>
                         
-                        
-                        <div class="info-item">
-                            <div class="info-icon icon-warning">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="info-content">
-                                <div class="info-label">Turno</div>
-                                <div class="info-value"><%= p.getTurnoNombre() != null ? p.getTurnoNombre() : "Sin turno" %></div>
-                            </div>
-                        </div>
-                        
                         <div class="info-item">
                             <div class="info-icon icon-info">
                                 <i class="fas fa-calendar-check"></i>
@@ -1316,7 +1272,6 @@
                     </div>
                 </div>
       
-                <!-- BOTONES -->
                 <div class="flex justify-between items-center mt-8 pt-6 border-t border-[#e5e7eb] dark:border-gray-700">
                     <div class="flex gap-3">
                         <a href="ProfesorServlet?accion=listar" 
@@ -1400,7 +1355,6 @@
         // Toast notifications
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
-
             // Determinar estilo según tipo
             let bgClass = 'bg-blue-600';
             let iconClass = 'fa-info-circle';
@@ -1420,7 +1374,6 @@
                     <span>${message}</span>
                 </div>
             `;
-
             document.body.appendChild(toast);
 
             setTimeout(() => {

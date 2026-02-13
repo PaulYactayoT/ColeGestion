@@ -1,3 +1,4 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="modelo.Profesor" %>
 <%@ page import="modelo.Area" %>
 <%@ page import="modelo.ProfesorNivelArea" %>
@@ -42,16 +43,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= editar ? "Editar Profesor" : "Registrar Profesor" %> - San Antonio</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <script id="tailwind-config">
@@ -62,601 +55,236 @@
                     colors: {
                         "primary": "#135bec",
                         "primary-dark": "#0d47a1",
-                        "success": "#10b981",
-                        "danger": "#ef4444",
-                        "warning": "#f59e0b",
-                        "info": "#3b82f6",
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#101622",
-                        "card-light": "#ffffff",
-                        "card-dark": "#1a2233",
-                        "border-light": "#e5e7eb",
-                        "border-dark": "#374151",
+                        "card-bg": "#f3f4f6",
                     },
                     fontFamily: {
                         "display": ["Lexend"]
-                    },
-                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                    }
                 },
             },
         }
     </script>
     
     <style>
-        body {
-            font-family: 'Lexend', sans-serif;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        
-        /* Mejoras de accesibilidad */
-        .reduce-motion * { 
-            animation-duration: 0.01ms !important; 
-            animation-iteration-count: 1 !important; 
-            transition-duration: 0.01ms !important; 
-        }
-        .high-contrast-invert { 
-            filter: invert(1) hue-rotate(180deg); 
-        }
-        .high-contrast-yellow { 
-            background-color: #000000 !important; 
-            color: #ffff00 !important; 
-        }
-        .beige-background { 
-            background-color: #f5f5dc !important; 
-        }
-        
-        /* TamaÒos de texto */
-        .large-text { font-size: 18px !important; }
-        .large-text .form-label,
-        .large-text .form-control,
-        .large-text .form-select,
-        .large-text .text-sm {
-            font-size: 16px !important;
-        }
-        
-        .larger-text { font-size: 20px !important; }
-        .larger-text .form-label,
-        .larger-text .form-control,
-        .larger-text .form-select,
-        .larger-text .text-sm {
-            font-size: 18px !important;
-        }
-        
-        .largest-text { font-size: 22px !important; }
-        .largest-text .form-label,
-        .largest-text .form-control,
-        .largest-text .form-select,
-        .largest-text .text-sm {
-            font-size: 20px !important;
-        }
-        
-        .dyslexia-font { 
-            font-family: Arial !important; 
-            font-size: 1.1em !important; 
-            line-height: 1.6 !important; 
-            letter-spacing: 0.5px !important; 
-        }
-        
-        /* Accessibility panel */
-        .accessibility-panel {
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-        }
-        .accessibility-panel.open {
-            transform: translateX(0);
-        }
-        
-        .skip-to-content {
-            position: absolute;
-            top: -40px;
-            left: 0;
-            background: #135bec;
-            color: white;
-            padding: 8px;
-            z-index: 100;
-        }
-        .skip-to-content:focus {
-            top: 0;
-        }
-        
-        :focus {
-            outline: 3px solid #135bec !important;
-            outline-offset: 2px;
-        }
-        
-        .input-group-icon {
-            position: relative;
-        }
-        
-        .input-group-icon i,
-        .input-group-icon .material-symbols-outlined {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6b7280;
-            z-index: 10;
-        }
-        
-        .input-group-icon .form-control,
-        .input-group-icon .form-select {
-            padding-left: 16px;
-        }
-        
-        .required-field::after {
-            content: " *";
-            color: #ef4444;
-            font-weight: bold;
-        }
-        
-        /* Alertas */
-        .alert-modern {
-            border-radius: 0.5rem;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-left: 4px solid;
-        }
-        
-        .alert-danger {
-            background: linear-gradient(135deg, #fee2e2, #fecaca);
-            color: #991b1b;
-            border-left-color: #ef4444;
-        }
-        
-        .alert-success {
-            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-            color: #065f46;
-            border-left-color: #10b981;
-        }
-        
-        /* SecciÛn de tÌtulo */
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #135bec;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        
-        .section-title i {
-            font-size: 1.25rem;
-        }
-        
-        .section-divider {
-            border: 0;
-            border-top: 2px solid #e5e7eb;
-            margin: 2rem 0;
-        }
-        
-        /* Botones modernos */
-        .btn-modern {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1.25rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            transition: all 0.2s;
-            border: none;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        
-        .btn-primary-modern {
-            background: linear-gradient(135deg, #135bec, #0d47a1);
-            color: white;
-        }
-        
-        .btn-primary-modern:hover {
-            background: linear-gradient(135deg, #0d47a1, #135bec);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(19, 91, 236, 0.4);
-        }
-        
-        .btn-success-modern {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-        }
-        
-        .btn-success-modern:hover {
-            background: linear-gradient(135deg, #059669, #10b981);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-        }
-        
-        .btn-secondary-modern {
-            background: #6b7280;
-            color: white;
-        }
-        
-        .btn-secondary-modern:hover {
-            background: #4b5563;
-            transform: translateY(-2px);
-        }
-        
-        .btn-danger-modern {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-        }
-        
-        .btn-danger-modern:hover {
-            background: linear-gradient(135deg, #dc2626, #ef4444);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        }
-        
-        /* Estilos para asignaciones m˙ltiples */
-        .asignacion-item {
-            transition: all 0.3s ease;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 2px solid #dee2e6;
-            border-radius: 0.75rem;
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-        }
-
-        .asignacion-item:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-            border-color: #135bec;
-        }
-
-        .asignacion-principal {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border-color: #3b82f6;
-        }
-
-        .asignacion-numero {
-            font-size: 0.875rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        #asignaciones-container:empty::before {
-            content: "? Haga clic en 'Agregar Nivel/¡rea' para comenzar";
-            display: block;
-            padding: 2rem;
-            text-align: center;
-            color: #6c757d;
-            font-style: italic;
-            border: 2px dashed #dee2e6;
-            border-radius: 0.5rem;
-            background: #f8f9fa;
-        }
+        body { font-family: 'Lexend', sans-serif; }
+        .step-section { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .step-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .input-figma { background-color: #ffffff; border: 1px solid #d1d5db; border-radius: 0.5rem; transition: all 0.2s; }
+        .input-figma:focus { border-color: #135bec; box-shadow: 0 0 0 3px rgba(19, 91, 236, 0.1); }
+        .required-field::after { content: " *"; color: #ef4444; font-weight: bold; }
+        .asignacion-item { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .asignacion-principal { background: #eff6ff; border-color: #bfdbfe; }
     </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark transition-colors duration-200">
-    <!-- Skip to content (Accesibilidad) -->
-    <a href="#main-content" class="skip-to-content">Saltar al contenido principal</a>
+<body class="bg-gray-100 min-h-screen flex text-gray-800">
 
-    <div class="flex min-h-screen">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-white dark:bg-card-dark border-r border-[#dbdfe6] dark:border-gray-700 shadow-lg">
-            <div class="p-6">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                        <i class="fas fa-school text-white text-xl"></i>
-                    </div>
-                    <span class="text-xl font-bold text-[#111318] dark:text-white">San Antonio</span>
+    <aside class="w-64 bg-white border-r border-gray-200 hidden md:block">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                    <i class="fas fa-school text-white text-xl"></i>
                 </div>
-                
-                <nav class="space-y-2">
-                    <a href="dashboard.jsp" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                        <i class="fas fa-home w-5"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="ProfesorServlet" class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-lg">
-                        <i class="fas fa-chalkboard-teacher w-5"></i>
-                        <span>Profesores</span>
-                    </a>
-                    <a href="EstudianteServlet" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-                        <i class="fas fa-user-graduate w-5"></i>
-                        <span>Estudiantes</span>
-                    </a>
-                </nav>
+                <span class="text-xl font-bold">San Antonio</span>
             </div>
-        </aside>
+            <nav class="space-y-2">
+                <a href="dashboard.jsp" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"><i class="fas fa-home w-5"></i> Dashboard</a>
+                <a href="ProfesorServlet" class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-lg"><i class="fas fa-chalkboard-teacher w-5"></i> Profesores</a>
+                <a href="EstudianteServlet" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"><i class="fas fa-user-graduate w-5"></i> Estudiantes</a>
+            </nav>
+        </div>
+    </aside>
 
-        <!-- Main Content -->
-        <main id="main-content" class="flex-1">
-            <!-- Header -->
-            <header class="bg-white dark:bg-card-dark border-b border-[#dbdfe6] dark:border-gray-700 p-4 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <h1 class="text-2xl font-bold text-[#111318] dark:text-white">
-                        <i class="fas <%= editar ? "fa-edit" : "fa-user-plus" %> text-primary mr-2"></i>
-                        <%= editar ? "Editar Profesor" : "Registrar Nuevo Profesor" %>
-                    </h1>
-                    
-                    <div class="flex items-center gap-4">
-                        <!-- BotÛn de accesibilidad -->
-                        <button onclick="toggleAccessibilityPanel()" 
-                                class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                aria-label="Opciones de accesibilidad">
-                            <i class="fas fa-universal-access text-gray-600 dark:text-gray-300 text-xl"></i>
-                        </button>
-                        
-                        <!-- Usuario -->
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                                <i class="fas fa-user text-white text-sm"></i>
-                            </div>
-                            <span class="text-sm font-medium text-[#111318] dark:text-white">
-                                <%= session.getAttribute("usuario") %>
-                            </span>
-                        </div>
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header class="bg-white border-b border-gray-200 p-4 shadow-sm flex justify-end items-center">
+             <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white text-sm"></i>
                     </div>
-                </div>
-            </header>
-
-            <!-- Panel de Accesibilidad -->
-            <div class="accessibility-panel fixed right-0 top-0 h-full w-80 bg-white dark:bg-card-dark shadow-2xl z-50 overflow-y-auto">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-bold text-[#111318] dark:text-white">Accesibilidad</h3>
-                        <button onclick="toggleAccessibilityPanel()" class="text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <!-- TamaÒo de texto -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                TamaÒo de texto
-                            </label>
-                            <div class="flex gap-2">
-                                <button onclick="setTextSize('normal')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Normal</button>
-                                <button onclick="setTextSize('large')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Grande</button>
-                                <button onclick="setTextSize('larger')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">M·s grande</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Contraste -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Contraste
-                            </label>
-                            <div class="flex gap-2">
-                                <button onclick="setContrast('normal')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Normal</button>
-                                <button onclick="setContrast('high')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Alto</button>
-                                <button onclick="setContrast('yellow')" class="flex-1 px-3 py-2 text-sm border rounded hover:bg-gray-50">Amarillo</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Opciones adicionales -->
-                        <div class="space-y-3">
-                            <label class="flex items-center gap-2">
-                                <input type="checkbox" id="reduceMotion" onchange="toggleMotion()" class="rounded">
-                                <span class="text-sm text-gray-700 dark:text-gray-300">Reducir movimiento</span>
-                            </label>
-                            
-                            <label class="flex items-center gap-2">
-                                <input type="checkbox" id="dyslexiaFont" onchange="toggleDyslexiaFont()" class="rounded">
-                                <span class="text-sm text-gray-700 dark:text-gray-300">Fuente para dislexia</span>
-                            </label>
-                            
-                            <label class="flex items-center gap-2">
-                                <input type="checkbox" id="beigeBackground" onchange="toggleBeigeBackground()" class="rounded">
-                                <span class="text-sm text-gray-700 dark:text-gray-300">Fondo beige</span>
-                            </label>
-                        </div>
-                        
-                        <!-- Resetear -->
-                        <button onclick="resetAccessibility()" class="w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
-                            Restablecer configuraciÛn
-                        </button>
-                    </div>
+                    <span class="text-sm font-medium"><%= session.getAttribute("usuario") %></span>
                 </div>
             </div>
+        </header>
 
-            <!-- Contenido del formulario -->
-            <div class="p-6">
-                <!-- Mensajes de error/Èxito -->
-                <% 
-                    String error = (String) session.getAttribute("error");
-                    String mensaje = (String) session.getAttribute("mensaje");
-                %>
-                
-                <% if (error != null) { 
-                    session.removeAttribute("error");
-                %>
-                <div class="alert-modern alert-danger mb-6" role="alert">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <div>
-                        <strong>Error:</strong> <%= error %>
-                    </div>
+        <div class="p-4 md:p-8 max-w-5xl mx-auto w-full">
+            
+            <% 
+                String error = (String) session.getAttribute("error");
+                String mensaje = (String) session.getAttribute("mensaje");
+                if (error != null) { session.removeAttribute("error"); %>
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded shadow-sm" role="alert">
+                    <p class="font-bold">Error</p>
+                    <p><%= error %></p>
                 </div>
-                <% } %>
-                
-                <% if (mensaje != null) { 
-                    session.removeAttribute("mensaje");
-                %>
-                <div class="alert-modern alert-success mb-6" role="alert">
-                    <i class="fas fa-check-circle"></i>
-                    <div>
-                        <strong>…xito:</strong> <%= mensaje %>
-                    </div>
+            <% } if (mensaje != null) { session.removeAttribute("mensaje"); %>
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 rounded shadow-sm" role="alert">
+                    <p class="font-bold">√âxito</p>
+                    <p><%= mensaje %></p>
                 </div>
-                <% } %>
+            <% } %>
+
+            <form action="ProfesorServlet" method="post" id="profesorForm" novalidate enctype="multipart/form-data">
+                <input type="hidden" name="id" value="<%= editar ? p.getId() : "" %>">
+                <input type="hidden" name="accion" value="<%= editar ? "actualizar" : "guardar" %>">
+                <input type="hidden" name="codigo_profesor" value="<%= (editar && p.getCodigoProfesor() != null) ? p.getCodigoProfesor() : "" %>">
                 
-                <!-- Formulario -->
-                <div class="bg-white dark:bg-card-dark rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm overflow-hidden">
-                    <div class="p-6">
-                        <form action="ProfesorServlet" method="post" id="profesorForm" novalidate>
-                            <input type="hidden" name="id" value="<%= editar ? p.getId() : "" %>">
-                            <input type="hidden" name="accion" value="<%= editar ? "actualizar" : "guardar" %>">
+                <div id="step1" class="step-section active">
+                    <div class="bg-card-bg rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+                        
+                        <div class="bg-primary text-white p-6 flex items-center gap-6">
                             
-                            <!-- SECCI”N: INFORMACI”N PERSONAL -->
-                            <div class="section-title">
-                                <i class="fas fa-user"></i>
-                                InformaciÛn Personal
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                <div>
-                                    <label for="nombres" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
-                                        Nombres
-                                    </label>
-                                    <div class="input-group-icon">
-                                        <input type="text" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                               name="nombres" id="nombres"
-                                               value="<%= editar && p.getNombres() != null ? p.getNombres() : "" %>" 
-                                               required maxlength="100" placeholder="Ingrese los nombres">
+                            <div class="relative group cursor-pointer" onclick="document.getElementById('inputFoto').click()">
+                                <input type="file" name="foto" id="inputFoto" class="hidden" accept="image/*" onchange="previsualizarImagen(this)">
+                                
+                                <div class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-white/30 overflow-hidden hover:bg-white/30 transition shadow-lg relative">
+                                    
+                                    <img id="imgPreview" 
+                                         src="<%= (editar && p.getFoto() != null) ? "uploads/" + p.getFoto() : "" %>" 
+                                         class="w-full h-full object-cover <%= (editar && p.getFoto() != null) ? "" : "hidden" %>">
+                                    
+                                    <div id="placeholderIcon" class="<%= (editar && p.getFoto() != null) ? "hidden" : "flex" %> flex-col items-center justify-center text-white">
+                                        <% if (editar) { %>
+                                            <span class="text-2xl font-bold">
+                                                <%= p.getNombres().substring(0,1) %><%= p.getApellidos().substring(0,1) %>
+                                            </span>
+                                        <% } else { %>
+                                            <i class="fas fa-camera text-3xl mb-1"></i>
+                                        <% } %>
                                     </div>
-                                    <div class="text-sm text-red-600 mt-1" id="nombres-error"></div>
-                                </div>
 
-                                <div>
-                                    <label for="apellidos" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
-                                        Apellidos
-                                    </label>
-                                    <div class="input-group-icon">
-                                        <input type="text" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                               name="apellidos" id="apellidos"
-                                               value="<%= editar && p.getApellidos() != null ? p.getApellidos() : "" %>" 
-                                               required maxlength="100" placeholder="Ingrese los apellidos">
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <i class="fas fa-pen text-white"></i>
                                     </div>
-                                    <div class="text-sm text-red-600 mt-1" id="apellidos-error"></div>
+                                </div>
+                                
+                                <div class="absolute bottom-0 right-0 bg-white text-primary rounded-full p-1.5 shadow-md border border-gray-200">
+                                    <i class="fas fa-camera text-xs"></i>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <h1 class="text-2xl font-bold italic tracking-wide">
+                                    <%= editar ? "Editar Profesor" : "Registrar Nuevo Profesor" %>
+                                </h1>
+                                <p class="text-blue-100 text-sm opacity-90">
+                                    Haga clic en la imagen para subir una foto
+                                </p>
+                            </div>
+                        </div>
+                        <div class="p-8">
+                            <h3 class="text-primary font-bold text-lg mb-4 border-b pb-2 flex items-center gap-2">
+                                <i class="fas fa-address-card"></i> Informaci√≥n Personal
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label for="correo" class="block text-sm font-medium text-[#111318] dark:text-white mb-2 required-field">
-                                        Correo ElectrÛnico
-                                    </label>
-                                    <div class="input-group-icon">
-                                        <input type="email" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                               name="correo" id="correo"
-                                               value="<%= editar && p.getCorreo() != null ? p.getCorreo() : "" %>" 
-                                               required maxlength="100" placeholder="ejemplo@email.com">
-                                    </div>
-                                    <div class="text-sm text-red-600 mt-1" id="correo-error"></div>
+                                    <label for="nombres" class="block text-sm font-bold text-gray-700 mb-1 required-field">Nombres</label>
+                                    <input type="text" class="input-figma w-full p-3" name="nombres" id="nombres" 
+                                           value="<%= editar && p.getNombres() != null ? p.getNombres() : "" %>" required placeholder="Ej: Ricardo Juan">
+                                    <div class="text-xs text-red-500 mt-1 hidden" id="error-nombres">Este campo es obligatorio</div>
                                 </div>
 
                                 <div>
-                                    <label for="dni" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
-                                        DNI
-                                        <i class="fas fa-info-circle tooltip-info" title="Opcional - 8 dÌgitos numÈricos"></i>
-                                    </label>
-                                    <div class="input-group-icon">
-                                        <input type="text" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                               name="dni" id="dni"
-                                               value="<%= editar && p.getDni() != null ? p.getDni() : "" %>" 
-                                               maxlength="8" placeholder="12345678">
-                                    </div>
-                                    <div class="text-sm text-gray-500 mt-1">Opcional, 8 dÌgitos numÈricos</div>
-                                    <div class="text-sm text-red-600 mt-1" id="dni-error"></div>
+                                    <label for="apellidos" class="block text-sm font-bold text-gray-700 mb-1 required-field">Apellidos</label>
+                                    <input type="text" class="input-figma w-full p-3" name="apellidos" id="apellidos" 
+                                           value="<%= editar && p.getApellidos() != null ? p.getApellidos() : "" %>" required placeholder="Ej: Tapia Carbajal">
+                                    <div class="text-xs text-red-500 mt-1 hidden" id="error-apellidos">Este campo es obligatorio</div>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label for="fecha_nacimiento" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
-                                        Fecha de Nacimiento
-                                    </label>
-                                    <div class="input-group-icon">
-                                        <input type="date" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                               name="fecha_nacimiento" id="fecha_nacimiento"
-                                               value="<%= fechaNacimientoStr %>">
-                                    </div>
+                                    <label for="correo" class="block text-sm font-bold text-gray-700 mb-1 required-field">Correo electr√≥nico</label>
+                                    <input type="email" class="input-figma w-full p-3" name="correo" id="correo" 
+                                           value="<%= editar && p.getCorreo() != null ? p.getCorreo() : "" %>" required placeholder="Ej: Juan23@gmail.com">
+                                    <div class="text-xs text-red-500 mt-1 hidden" id="error-correo">Este campo es obligatorio</div>
                                 </div>
 
                                 <div>
-                                    <label for="telefono" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
-                                        TelÈfono
-                                    </label>
-                                    <div class="input-group-icon">
-                                        <input type="tel" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                               name="telefono" id="telefono"
-                                               value="<%= editar && p.getTelefono() != null ? p.getTelefono() : "" %>" 
-                                               maxlength="20" placeholder="987654321">
-                                    </div>
+                                    <label for="dni" class="block text-sm font-bold text-gray-700 mb-1 required-field">DNI</label>
+                                    <input type="text" class="input-figma w-full p-3" name="dni" id="dni" 
+                                           value="<%= editar && p.getDni() != null ? p.getDni() : "" %>" maxlength="8" placeholder="Solo se admiten 8 n√∫meros">
+                                    <div class="text-xs text-red-500 mt-1 hidden" id="error-dni">Este campo es obligatorio</div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label for="fecha_nacimiento" class="block text-sm font-bold text-gray-700 mb-1 required-field">Fecha de Nacimiento</label>
+                                    <input type="date" class="input-figma w-full p-3" name="fecha_nacimiento" id="fecha_nacimiento" 
+                                           value="<%= fechaNacimientoStr %>" max="9999-12-31" onblur="validarAnio(this)">
+                                    <div class="text-xs text-red-500 mt-1 hidden" id="error-fecha">Seleccione una fecha v√°lida</div>
+                                </div>
+
+                                <div>
+                                    <label for="telefono" class="block text-sm font-bold text-gray-700 mb-1 required-field">Tel√©fono</label>
+                                    <input type="tel" class="input-figma w-full p-3" name="telefono" id="telefono" 
+                                           value="<%= editar && p.getTelefono() != null ? p.getTelefono() : "" %>" maxlength="9" placeholder="Solo se admiten 9 n√∫meros y que empiece con 9">
+                                    <div class="text-xs text-red-500 mt-1 hidden" id="error-telefono">Este campo es obligatorio</div>
                                 </div>
                             </div>
 
                             <div class="mb-6">
-                                <label for="direccion" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
-                                    DirecciÛn
-                                </label>
-                                <div class="input-group-icon">
-                                    <textarea class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                              name="direccion" id="direccion" rows="2" maxlength="255" 
-                                              placeholder="Av. Principal 123, Distrito, Ciudad"><%= editar && p.getDireccion() != null ? p.getDireccion() : "" %></textarea>
-                                </div>
+                                <label for="direccion" class="block text-sm font-bold text-gray-700 mb-1 required-field">Direcci√≥n</label>
+                                <input type="text" class="input-figma w-full p-3" name="direccion" id="direccion" 
+                                       value="<%= editar && p.getDireccion() != null ? p.getDireccion() : "" %>" placeholder="Ej: Av. la Marina 137">
+                                <div class="text-xs text-red-500 mt-1 hidden" id="error-direccion">Este campo es obligatorio</div>
                             </div>
 
-                            <hr class="section-divider">
+                            <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-300">
+                                <a href="ProfesorServlet" class="bg-black text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg flex items-center gap-2">
+                                    <i class="fas fa-arrow-left"></i> Volver al panel
+                                </a>
+                                <button type="button" onclick="validarYPasarSiguiente()" class="bg-blue-400 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-500 transition shadow-lg flex items-center gap-2">
+                                    SIGUIENTE <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <!-- SECCI”N: ASIGNACIONES DE NIVEL Y ¡REA -->
-                            <div class="section-title">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                                Niveles y ¡reas que dicta el Profesor
+                <div id="step2" class="step-section">
+                    <div class="bg-card-bg rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+                        <div class="bg-primary text-white p-6 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                                <i class="fas fa-briefcase text-2xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold italic tracking-wide">
+                                    <%= editar ? "Editar Profesor" : "Registrar Nuevo Profesor" %>
+                                </h1>
+                                <p class="text-blue-100 text-sm opacity-90">Paso 2: Informaci√≥n Profesional</p>
+                            </div>
+                        </div>
+
+                        <div class="p-8">
+                            <h3 class="text-primary font-bold text-lg mb-4 border-b pb-2 flex items-center gap-2">
+                                <i class="fas fa-layer-group"></i> Niveles y √Åreas
+                            </h3>
+
+                            <div id="asignaciones-container" class="mb-4 space-y-4">
                             </div>
                             
-                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                                <div class="flex items-start gap-3">
-                                    <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mt-1"></i>
-                                    <div class="text-sm text-blue-800 dark:text-blue-200">
-                                        <strong>Importante:</strong> Un profesor puede dictar en m˙ltiples niveles y ·reas. 
-                                        Por ejemplo: Matem·tica en Primaria y Secundaria, o ComunicaciÛn y Personal Social en Inicial.
-                                        La primera asignaciÛn ser· considerada como la principal.
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Container de asignaciones -->
-                            <div id="asignaciones-container" class="mb-4">
-                                <!-- Las asignaciones se cargar·n din·micamente aquÌ -->
-                            </div>
-                            
-                            <!-- BotÛn para agregar m·s asignaciones -->
-                            <div class="mb-6">
-                                <button type="button" 
-                                        class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-                                        onclick="agregarAsignacion()">
-                                    <i class="fas fa-plus-circle"></i>
-                                    Agregar otro Nivel/¡rea
+                            <div class="mb-8">
+                                <button type="button" onclick="agregarAsignacion()" class="text-primary font-bold hover:underline flex items-center gap-2 text-sm">
+                                    <i class="fas fa-plus-circle"></i> Agregar otro Nivel/√Årea
                                 </button>
                             </div>
 
-                            <hr class="section-divider">
+                            <h3 class="text-primary font-bold text-lg mb-4 border-b pb-2 flex items-center gap-2">
+                                <i class="fas fa-file-contract"></i> Datos Administrativos
+                            </h3>
 
-                            <!-- SECCI”N: INFORMACI”N ADMINISTRATIVA -->
-                            <div class="section-title">
-                                <i class="fas fa-briefcase"></i>
-                                InformaciÛn Administrativa
-                            </div>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label for="fecha_contratacion" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
-                                        Fecha de ContrataciÛn
-                                    </label>
-                                    <div class="input-group-icon">
-                                        <input type="date" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent" 
-                                               name="fecha_contratacion" id="fecha_contratacion"
-                                               value="<%= fechaContratacionStr %>">
-                                    </div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Contrataci√≥n</label>
+                                    <input type="date" class="input-figma w-full p-3" name="fecha_contratacion" 
+                                           value="<%= fechaContratacionStr %>"max="9999-12-31" onblur="validarAnio(this)">
                                 </div>
-
                                 <div>
-                                    <label for="estado" class="block text-sm font-medium text-[#111318] dark:text-white mb-2">
-                                        Estado
-                                    </label>
-                                    <select name="estado" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Estado</label>
+                                    <select name="estado" class="input-figma w-full p-3">
                                         <option value="ACTIVO" <%= (editar && "ACTIVO".equals(p.getEstado())) ? "selected" : "" %>>ACTIVO</option>
                                         <option value="INACTIVO" <%= (editar && "INACTIVO".equals(p.getEstado())) ? "selected" : "" %>>INACTIVO</option>
                                         <option value="LICENCIA" <%= (editar && "LICENCIA".equals(p.getEstado())) ? "selected" : "" %>>LICENCIA</option>
@@ -664,367 +292,264 @@
                                     </select>
                                 </div>
                             </div>
-                            
-                            <!-- BOTONES -->
-                            <div class="flex justify-between items-center mt-8 pt-6 border-t border-[#e5e7eb] dark:border-gray-700">
-                                <div class="flex gap-3">
-                                    <button type="submit" class="btn-modern <%= editar ? "btn-primary-modern" : "btn-success-modern" %>">
-                                        <i class="fas <%= editar ? "fa-save" : "fa-check" %>"></i>
-                                        <%= editar ? "Actualizar Profesor" : "Registrar Profesor" %>
-                                    </button>
-                                    <a href="ProfesorServlet" class="btn-modern btn-secondary-modern">
-                                        <i class="fas fa-times"></i>
-                                        Cancelar
-                                    </a>
-                                </div>
+
+                            <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-300">
+                                <button type="button" onclick="volverPasoAnterior()" class="bg-black text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg flex items-center gap-2">
+                                    <i class="fas fa-arrow-left"></i> ATR√ÅS
+                                </button>
                                 
-                                <% if (editar) { %>
-                                <a href="ProfesorServlet?accion=eliminar&id=<%= p.getId() %>" 
-                                   class="btn-modern btn-danger-modern"
-                                   onclick="return confirm('øEst· seguro de eliminar este profesor?')">
-                                    <i class="fas fa-trash"></i>
-                                    Eliminar
-                                </a>
-                                <% } %>
+                                <button type="submit" class="bg-green-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-600 transition shadow-lg flex items-center gap-2">
+                                    <i class="fas fa-check"></i> <%= editar ? "ACTUALIZAR" : "REGISTRAR PROFESOR" %>
+                                </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </main>
-    </div>
 
-    <!-- Template para asignaciones (oculto) -->
+            </form>
+        </div>
+    </main>
+
     <template id="asignacion-template">
-        <div class="asignacion-item">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                <!-- Selector de Nivel -->
-                <div class="md:col-span-5">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <i class="fas fa-layer-group mr-1"></i> Nivel Educativo
-                    </label>
-                    <select name="asignacion_nivel[]" class="nivel-select w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary" required onchange="filtrarAreasPorNivelAsignacion(this)">
-                        <option value="">-- Seleccione nivel --</option>
-                        <option value="INICIAL"> Inicial</option>
-                        <option value="PRIMARIA"> Primaria</option>
-                        <option value="SECUNDARIA"> Secundaria</option>
+        <div class="asignacion-item bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="flex-1 w-full">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Nivel de educaci√≥n</label>
+                    <select name="asignacion_nivel[]" class="nivel-select w-full p-2 border rounded bg-gray-50" required>
+                        <option value="">-- Seleccione --</option>
+                        <option value="INICIAL">Inicial</option>
+                        <option value="PRIMARIA">Primaria</option>
+                        <option value="SECUNDARIA">Secundaria</option>
                     </select>
                 </div>
-                
-                <!-- Selector de ¡rea -->
-                <div class="md:col-span-5">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <i class="fas fa-book mr-1"></i> ¡rea o Materia
-                    </label>
-                    <select name="asignacion_area[]" class="area-select w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary" required disabled>
-                        <option value="">Primero seleccione un nivel</option>
-                        <% 
-                            if (areas != null && !areas.isEmpty()) {
-                                for (Area area : areas) {
-                        %>
+                <div class="flex-1 w-full">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">√Årea</label>
+                    <select name="asignacion_area[]" class="area-select w-full p-2 border rounded bg-gray-50" required disabled>
+                        <option value="">Primero seleccione nivel</option>
+                        <% if (areas != null) { for (Area area : areas) { %>
                             <option value="<%= area.getId() %>" data-nivel="<%= area.getNivel() %>"><%= area.getNombre() %></option>
-                        <% 
-                                }
-                            }
-                        %>
+                        <% } } %>
                     </select>
                 </div>
-                
-                <!-- BotÛn eliminar -->
-                <div class="md:col-span-2 text-center">
-                    <label class="block text-sm font-medium text-transparent mb-2">&nbsp;</label>
-                    <button type="button" 
-                            class="w-full px-4 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                            onclick="eliminarAsignacion(this)"
-                            title="Eliminar esta asignaciÛn">
+                <div>
+                    <button type="button" onclick="eliminarAsignacion(this)" class="text-red-500 hover:text-red-700 p-2">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
             </div>
-            
-            <!-- Indicador -->
-            <div class="mt-3 pt-3 border-t border-gray-300">
-                <span class="asignacion-numero text-gray-600 dark:text-gray-400">
-                    <!-- Se actualizar· din·micamente -->
-                </span>
-            </div>
+             <div class="mt-2 text-xs font-bold text-gray-400 asignacion-numero"></div>
         </div>
     </template>
 
-    <!-- JAVASCRIPT -->
     <script>
-        // ==================== FUNCIONES DE ACCESIBILIDAD ====================
-        function toggleAccessibilityPanel() {
-            const panel = document.querySelector('.accessibility-panel');
-            panel.classList.toggle('open');
+        // ‚úÖ FUNCI√ìN PARA PREVISUALIZAR LA IMAGEN
+        function previsualizarImagen(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    // Ocultar √≠cono/iniciales
+                    var icon = document.getElementById('placeholderIcon');
+                    if(icon) {
+                        icon.classList.add('hidden');
+                        icon.classList.remove('flex');
+                    }
+                    
+                    // Mostrar imagen
+                    var img = document.getElementById('imgPreview');
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
         }
-        
-        function setTextSize(size) {
-            document.body.classList.remove('large-text', 'larger-text', 'largest-text');
-            if (size === 'large') document.body.classList.add('large-text');
-            else if (size === 'larger') document.body.classList.add('larger-text');
-            else if (size === 'largest') document.body.classList.add('largest-text');
-            document.body.offsetHeight;
-        }
-        
-        function setContrast(mode) {
-            document.body.classList.remove('high-contrast-invert', 'high-contrast-yellow');
-            if (mode === 'high') document.body.classList.add('high-contrast-invert');
-            else if (mode === 'yellow') document.body.classList.add('high-contrast-yellow');
-        }
-        
-        function toggleMotion() {
-            const checkbox = document.getElementById('reduceMotion');
-            document.body.classList.toggle('reduce-motion', checkbox.checked);
-        }
-        
-        function toggleDyslexiaFont() {
-            const checkbox = document.getElementById('dyslexiaFont');
-            document.body.classList.toggle('dyslexia-font', checkbox.checked);
-        }
-        
-        function toggleBeigeBackground() {
-            const checkbox = document.getElementById('beigeBackground');
-            document.body.classList.toggle('beige-background', checkbox.checked);
-        }
-        
-        function resetAccessibility() {
-            document.body.classList.remove('large-text', 'larger-text', 'largest-text', 'high-contrast-invert', 'high-contrast-yellow', 'reduce-motion', 'dyslexia-font', 'beige-background');
-            document.getElementById('reduceMotion').checked = false;
-            document.getElementById('dyslexiaFont').checked = false;
-            document.getElementById('beigeBackground').checked = false;
-        }
-        
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            let bgClass = 'bg-blue-600';
-            let iconClass = 'fa-info-circle';
 
-            if (type === 'success') {
-                bgClass = 'bg-green-600';
-                iconClass = 'fa-check-circle';
-            } else if (type === 'error') {
-                bgClass = 'bg-red-600';
-                iconClass = 'fa-exclamation-circle';
+        // ==========================================
+        // 1. VALIDACI√ìN DEL WIZARD (MANTENIDA)
+        // ==========================================
+        function validarAnio(input) {
+            if (input.value) {
+                const partes = input.value.split('-'); 
+                const anio = partes[0];
+                if (anio.length > 4) {
+                    const anioCorregido = anio.substring(0, 4);
+                    input.value = anioCorregido + '-' + partes[1] + '-' + partes[2];
+                }
+            }
+        }
+
+        function validarYPasarSiguiente() {
+            const nombres = document.getElementById('nombres');
+            const apellidos = document.getElementById('apellidos');
+            const correo = document.getElementById('correo');
+            const dni = document.getElementById('dni');
+            const fechaNac = document.getElementById('fecha_nacimiento');
+            const telefono = document.getElementById('telefono');
+            const direccion = document.getElementById('direccion');
+            
+            let valido = true;
+
+            document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.input-figma').forEach(el => el.classList.remove('border-red-500', 'ring-2', 'ring-red-200'));
+
+            const mostrarError = (input, idError) => {
+                document.getElementById(idError).classList.remove('hidden');
+                input.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                if(valido) input.focus(); 
+                valido = false;
+            };
+
+            if (!nombres.value.trim()) mostrarError(nombres, 'error-nombres');
+            if (!apellidos.value.trim()) mostrarError(apellidos, 'error-apellidos');
+            if (!correo.value.trim()) mostrarError(correo, 'error-correo');
+            if (!dni.value.trim()) mostrarError(dni, 'error-dni');
+            
+            if (!fechaNac.value) {
+                mostrarError(fechaNac, 'error-fecha');
+            } else {
+                const anio = parseInt(fechaNac.value.split('-')[0]);
+                if (anio > 9999 || anio < 1900) {
+                    mostrarError(fechaNac, 'error-fecha');
+                    alert("A√±o inv√°lido");
+                }
             }
 
-            toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg text-white ${bgClass}`;
-            toast.innerHTML = `<div class="flex items-center gap-2"><i class="fas ${iconClass}"></i><span>${message}</span></div>`;
+            if (!telefono.value.trim()) mostrarError(telefono, 'error-telefono');
+            if (!direccion.value.trim()) mostrarError(direccion, 'error-direccion');
 
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 5000);
+            if (valido) {
+                document.getElementById('step1').classList.remove('active');
+                setTimeout(() => {
+                    document.getElementById('step2').classList.add('active');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100); 
+            }
         }
 
-        // ==================== GESTI”N DE ASIGNACIONES M⁄LTIPLES ====================
+        function volverPasoAnterior() {
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step1').classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        // ==========================================
+        // 2. L√ìGICA DE ASIGNACIONES (CORREGIDA)
+        // ==========================================
         let contadorAsignaciones = 0;
 
-        /**
-         * Agregar una nueva asignaciÛn
-         */
         function agregarAsignacion(nivel = '', areaId = '') {
             const container = document.getElementById('asignaciones-container');
             const template = document.getElementById('asignacion-template');
-            
-            // Clonar el template
+            // Clonar el nodo
             const clone = template.content.cloneNode(true);
             
-            // Establecer valores si vienen como par·metro
+            // Obtener referencias a los elementos DENTRO del clon
+            const selectNivel = clone.querySelector('.nivel-select');
+            const selectArea = clone.querySelector('.area-select');
+
+            // Si estamos en modo EDICI√ìN (tenemos datos)
             if (nivel) {
-                const selectNivel = clone.querySelector('select[name="asignacion_nivel[]"]');
                 selectNivel.value = nivel;
-                
-                // Si hay nivel, filtrar ·reas inmediatamente despuÈs de agregar
-                setTimeout(() => {
-                    const asignaciones = container.querySelectorAll('.asignacion-item');
-                    const ultimaAsignacion = asignaciones[asignaciones.length - 1];
-                    const nivelSelect = ultimaAsignacion.querySelector('.nivel-select');
-                    filtrarAreasPorNivelAsignacion(nivelSelect);
-                }, 10);
+                // IMPORTANTE: Llamamos a la funci√≥n de filtrado pasando el ID preseleccionado
+                filtrarAreasLogica(selectNivel, selectArea, areaId);
             }
-            
-            if (areaId) {
-                const selectArea = clone.querySelector('select[name="asignacion_area[]"]');
-                // El ·rea se seleccionar· despuÈs del filtrado
-                setTimeout(() => {
-                    const asignaciones = container.querySelectorAll('.asignacion-item');
-                    const ultimaAsignacion = asignaciones[asignaciones.length - 1];
-                    const areaSelect = ultimaAsignacion.querySelector('.area-select');
-                    areaSelect.value = areaId;
-                }, 20);
-            }
-            
-            // Agregar al container
+
+            // Agregar evento onchange manualmente
+            selectNivel.onchange = function() {
+                // Al cambiar manualmente, no pasamos areaId para que se resetee
+                filtrarAreasLogica(this, this.closest('.asignacion-item').querySelector('.area-select'), null);
+            };
+
             container.appendChild(clone);
             contadorAsignaciones++;
-            
-            // Actualizar n˙meros
             actualizarNumerosAsignacion();
-            
-            console.log('? AsignaciÛn agregada. Total:', contadorAsignaciones);
         }
 
-        /**
-         * Filtrar ·reas seg˙n el nivel seleccionado en una asignaciÛn
-         */
-        function filtrarAreasPorNivelAsignacion(selectNivel) {
-            // Encontrar el select de ·rea correspondiente
-            const asignacionItem = selectNivel.closest('.asignacion-item');
-            const selectArea = asignacionItem.querySelector('.area-select');
-            
-            const nivelSeleccionado = selectNivel.value;
+        // Funci√≥n que separa la l√≥gica de filtrado para poder reusarla
+        function filtrarAreasLogica(selectNivel, selectArea, areaIdPreseleccionado) {
+            const nivel = selectNivel.value;
             const opciones = selectArea.querySelectorAll('option');
-            
-            // Resetear el valor del ·rea
-            selectArea.value = '';
-            
-            if (!nivelSeleccionado) {
-                // Si no hay nivel seleccionado, deshabilitar ·rea
-                selectArea.disabled = true;
-                opciones.forEach((opcion, index) => {
-                    if (index === 0) {
-                        opcion.style.display = 'block';
-                        opcion.textContent = 'Primero seleccione un nivel';
-                    } else {
-                        opcion.style.display = 'none';
-                    }
-                });
-                return;
-            }
-            
-            // Habilitar el select de ·rea
-            selectArea.disabled = false;
-            
-            // Actualizar texto de la primera opciÛn
-            opciones[0].textContent = '-- Seleccione ·rea --';
-            opciones[0].style.display = 'block';
-            
-            let areasVisibles = 0;
-            
-            // Filtrar opciones seg˙n el nivel
-            opciones.forEach((opcion, index) => {
-                if (index === 0) return; // Saltar la primera opciÛn
-                
-                const nivelArea = opcion.getAttribute('data-nivel');
-                
-                // Mostrar si coincide con el nivel o si el ·rea es para TODOS los niveles
-                if (nivelArea === nivelSeleccionado || nivelArea === 'TODOS') {
-                    opcion.style.display = 'block';
-                    areasVisibles++;
-                } else {
-                    opcion.style.display = 'none';
-                }
-            });
-            
-            // Si no hay ·reas disponibles
-            if (areasVisibles === 0) {
-                opciones[0].textContent = 'No hay ·reas disponibles para este nivel';
-                selectArea.disabled = true;
-            }
-            
-            console.log(`? ¡reas filtradas para nivel ${nivelSeleccionado}: ${areasVisibles} disponibles`);
-        }
 
-        /**
-         * Eliminar una asignaciÛn
-         */
-        function eliminarAsignacion(btn) {
-            const item = btn.closest('.asignacion-item');
-            const container = document.getElementById('asignaciones-container');
+            // 1. Resetear estado inicial
+            selectArea.disabled = false; // DESBLOQUEAR INMEDIATAMENTE
             
-            // Validar que no sea la ˙nica
-            if (container.children.length <= 1) {
-                showToast('Debe haber al menos una asignaciÛn de nivel y ·rea', 'error');
-                return;
-            }
-            
-            if (confirm('øEst· seguro de eliminar esta asignaciÛn?')) {
-                item.remove();
-                contadorAsignaciones--;
-                actualizarNumerosAsignacion();
-                showToast('AsignaciÛn eliminada correctamente', 'success');
-            }
-        }
+            // 2. Filtrar opciones
+            let encontradoPreseleccionado = false;
 
-        /**
-         * Actualizar n˙meros de asignaciones
-         */
-        function actualizarNumerosAsignacion() {
-            const asignaciones = document.querySelectorAll('.asignacion-item');
-            
-            asignaciones.forEach((asig, index) => {
-                const numeroLabel = asig.querySelector('.asignacion-numero');
-                
-                // Quitar y agregar clase principal
-                asig.classList.remove('asignacion-principal');
-                
+            opciones.forEach((op, index) => {
                 if (index === 0) {
-                    asig.classList.add('asignacion-principal');
-                    numeroLabel.innerHTML = '<i class="fas fa-star text-yellow-500"></i> <strong>AsignaciÛn Principal</strong> - Esta ser· la asignaciÛn por defecto del profesor';
-                } else {
-                    numeroLabel.innerHTML = `<i class="fas fa-circle text-primary"></i> AsignaciÛn ${index + 1}`;
+                    op.textContent = '-- Seleccione √°rea --';
+                    return;
                 }
-            });
-        }
-
-        /**
-         * Validar formulario antes de enviar
-         */
-        function validarFormularioAsignaciones() {
-            const container = document.getElementById('asignaciones-container');
-            
-            // Verificar que haya al menos una asignaciÛn
-            if (container.children.length === 0) {
-                showToast('Debe agregar al menos una asignaciÛn de nivel y ·rea', 'error');
-                return false;
-            }
-            
-            // Verificar que todas estÈn completas
-            const asignaciones = container.querySelectorAll('.asignacion-item');
-            let validas = true;
-            
-            asignaciones.forEach((asig, index) => {
-                const nivel = asig.querySelector('select[name="asignacion_nivel[]"]').value;
-                const area = asig.querySelector('select[name="asignacion_area[]"]').value;
                 
-                if (!nivel || !area) {
-                    showToast(`La asignaciÛn ${index + 1} est· incompleta`, 'error');
-                    validas = false;
+                const nivelArea = op.getAttribute('data-nivel');
+                
+                // L√≥gica de visualizaci√≥n
+                if (nivel && (nivelArea === nivel || nivelArea === 'TODOS')) {
+                    op.style.display = 'block'; // Mostrar opci√≥n
+                    
+                    // Si coincide con el que queremos preseleccionar
+                    if (areaIdPreseleccionado && op.value === areaIdPreseleccionado) {
+                        encontradoPreseleccionado = true;
+                    }
+                } else {
+                    op.style.display = 'none'; // Ocultar opci√≥n
                 }
             });
-            
-            return validas;
+
+            // 3. Asignar valor
+            if (areaIdPreseleccionado && encontradoPreseleccionado) {
+                selectArea.value = areaIdPreseleccionado; // Poner el valor guardado
+            } else if (!areaIdPreseleccionado) {
+                selectArea.value = ""; // Resetear si es cambio manual
+            }
+
+            // 4. Manejo si no hay nivel
+            if (!nivel) {
+                selectArea.value = "";
+                selectArea.disabled = true; // Bloquear solo si no hay nivel
+                opciones[0].textContent = 'Primero seleccione nivel';
+            }
         }
 
-        // ==================== INICIALIZACI”N ====================
+        function eliminarAsignacion(btn) {
+            const container = document.getElementById('asignaciones-container');
+            if (container.children.length <= 1) {
+                alert('Debe haber al menos una asignaci√≥n.');
+                return;
+            }
+            btn.closest('.asignacion-item').remove();
+            contadorAsignaciones--;
+            actualizarNumerosAsignacion();
+        }
+
+        function actualizarNumerosAsignacion() {
+            const items = document.querySelectorAll('.asignacion-item');
+            items.forEach((item, index) => {
+                const label = item.querySelector('.asignacion-numero');
+                item.classList.remove('asignacion-principal');
+                if (index === 0) {
+                    item.classList.add('asignacion-principal');
+                    label.innerHTML = '<i class="fas fa-star text-yellow-500"></i> Asignaci√≥n Principal';
+                } else {
+                    label.innerHTML = `Asignaci√≥n ${index + 1}`;
+                }
+            });
+        }
+
+        // ==========================================
+        // 3. INICIALIZACI√ìN (CARGA DE DATOS)
+        // ==========================================
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('? Inicializando formulario de profesor...');
-            
-            // Cargar asignaciones existentes o crear una nueva
             <% if (editar && p != null && p.getAsignaciones() != null && !p.getAsignaciones().isEmpty()) { %>
-                // MODO EDICI”N: Cargar asignaciones existentes
-                console.log('Modo ediciÛn: Cargando <%= p.getAsignaciones().size() %> asignaciones');
+                // MODO EDICI√ìN: Carga los datos existentes
                 <% for (ProfesorNivelArea asig : p.getAsignaciones()) { %>
+                    // IMPORTANTE: Aqu√≠ pasamos los IDs como string
                     agregarAsignacion('<%= asig.getNivel() %>', '<%= asig.getAreaId() %>');
                 <% } %>
             <% } else { %>
-                // MODO NUEVO: Agregar una asignaciÛn vacÌa
-                console.log('Modo nuevo: Agregando asignaciÛn vacÌa');
+                // MODO NUEVO
                 agregarAsignacion();
             <% } %>
-            
-            // Agregar validaciÛn al submit
-            const formulario = document.getElementById('profesorForm');
-            if (formulario) {
-                formulario.addEventListener('submit', function(e) {
-                    if (!validarFormularioAsignaciones()) {
-                        e.preventDefault();
-                        return false;
-                    }
-                    return true;
-                });
-            }
-            
-            console.log(' Formulario inicializado correctamente');
         });
     </script>
 </body>
