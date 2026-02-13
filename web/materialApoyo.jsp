@@ -125,14 +125,20 @@
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="hidden md:flex flex-col items-end">
-                    <span class="text-sm font-semibold text-slate-700"><%= docente.getNombres() %></span>
-                    <span class="text-xs text-slate-500">Docente</span>
-                </div>
-                <div class="size-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold">
-                    <%= docente.getNombres().substring(0,1) %>
-                </div>
+            <div class="hidden md:flex flex-col items-end">
+                <span class="text-sm font-semibold text-slate-700"><%= docente.getNombres() %> <%= docente.getApellidos() %></span>
+                <span class="text-xs text-slate-500">Docente</span>
             </div>
+
+            <% if (docente.getFoto() != null && !docente.getFoto().isEmpty()) { %>
+                <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
+                     style="background-image: url('uploads/<%= docente.getFoto() %>');"></div>
+            <% } else { %>
+                <div class="size-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-primary font-bold">
+                    <%= docente.getNombres().substring(0,1) %><%= docente.getApellidos().substring(0,1) %>
+                </div>
+            <% } %>
+        </div>
         </header>
 
         <div class="p-6 md:p-8 max-w-7xl mx-auto w-full">

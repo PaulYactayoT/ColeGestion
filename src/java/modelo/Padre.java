@@ -7,6 +7,7 @@ public class Padre {
     private String correo;
     private String dni;
     private String telefono;
+    private String foto; 
     private String rol;
     private String username;
     
@@ -56,6 +57,9 @@ public class Padre {
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
     
+    public String getFoto() { return foto; } 
+    public void setFoto(String foto) { this.foto = foto; }
+
     public String getRol() { return rol; }
     public void setRol(String rol) { this.rol = rol; }
     

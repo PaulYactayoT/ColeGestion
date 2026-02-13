@@ -85,10 +85,12 @@
     String mensaje = request.getParameter("mensaje");
     String tipoMensaje = request.getParameter("tipo");
     
-    // Obtener nombre del usuario para mostrar
-    String nombreUsuario = (String) session.getAttribute("nombres");
-    if (nombreUsuario == null) {
-        nombreUsuario = "Usuario";
+    // Obtener el objeto docente completo
+    Profesor docente = (Profesor) session.getAttribute("docente");
+    String nombreUsuario = "Usuario";
+
+    if (docente != null) {
+        nombreUsuario = docente.getNombres() + " " + docente.getApellidos();
     }
 %>
 <!DOCTYPE html>
@@ -310,56 +312,115 @@
         </div>
     </div>
     
-    <!-- Main Container -->
-    <div class="flex flex-col min-h-screen">
-        <!-- Header -->
-        <header class="bg-white dark:bg-gray-900 shadow-md sticky top-0 z-40 transition-colors duration-300">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center gap-4">
-                        <!-- Botón de regreso -->
-                        <a href="DocenteDashboardServlet" 
-                           class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
-                           title="Volver al Panel">
-                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">arrow_back</span>
-                        </a>
-                        
-                        <div class="w-12 h-12 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center">
-                            <span class="material-symbols-outlined text-white text-2xl">school</span>
-                        </div>
-                        <div>
-                            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">San Antonio</h1>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Sistema de Gestión Escolar</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-3">
-                        <!-- User Info -->
-                        <div class="hidden md:flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg">
-                            <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">person</span>
-                            <span class="text-sm font-medium text-gray-900 dark:text-white"><%= nombreUsuario %></span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">(<%= rol %>)</span>
-                        </div>
-                        
-                        <!-- Dark Mode Toggle -->
-                        <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle dark mode">
-                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">dark_mode</span>
-                        </button>
-                        
-                        <!-- Accessibility Toggle -->
-                        <button onclick="toggleAccessibilityPanel()" class="accessibility-toggle p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label="Abrir panel de accesibilidad">
-                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">accessibility</span>
-                        </button>
-                        
-                        <!-- Logout -->
-                        <a href="LogoutServlet" class="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors">
-                            <span class="material-symbols-outlined text-sm">logout</span>
-                            <span class="hidden sm:inline text-sm">Salir</span>
-                        </a>
-                    </div>
+    <!-- Main Container con Sidebar -->
+<div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-gray-200 dark:border-gray-700 flex flex-col justify-between">
+        <div class="flex flex-col gap-6 p-6">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white">
+                    <span class="material-symbols-outlined">school</span>
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-gray-900 dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
+                    <p class="text-gray-500 dark:text-gray-400 text-xs font-normal">Panel del Docente</p>
                 </div>
             </div>
-        </header>
+            
+            <!-- Navegación -->
+            <nav class="flex flex-col gap-2">
+                <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                   href="DocenteDashboardServlet">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="text-sm">Dashboard</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                   href="AsistenciaServlet?accion=registrar">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span class="text-sm">Asistencias</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
+                   href="revisarJustificaciones.jsp"
+                   aria-current="page">
+                    <i class="fas fa-clock"></i>
+                    <span class="text-sm">Justificaciones</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                   href="MaterialServlet?accion=seleccionarCurso">
+                    <i class="fas fa-folder"></i>
+                    <span class="text-sm">Material de Apoyo</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
+                   href="DisponibilidadServlet">
+                    <span class="material-symbols-outlined text-[20px]">event_available</span>
+                    <span class="text-sm">Mi Disponibilidad</span>
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Botón Cerrar Sesión -->
+        <div class="p-6 border-t border-gray-200 dark:border-gray-700">
+            <a href="LogoutServlet" 
+               class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
+                <span class="material-symbols-outlined text-[18px]">logout</span>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- Main Content Wrapper -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <!-- Header -->
+            <header class="bg-white dark:bg-gray-900 shadow-md sticky top-0 z-10 transition-colors duration-300">
+    <div class="px-8 py-3">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white">Revisar Justificaciones</h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Botón Dark Mode -->
+                <button onclick="toggleDarkMode()" 
+                        class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        aria-label="Cambiar tema">
+                    <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+                    <span class="material-symbols-outlined hidden dark:inline">light_mode</span>
+                </button>
+                
+                <!-- Botón Accesibilidad -->
+                <button onclick="toggleAccessibilityPanel()" 
+                        class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors accessibility-toggle"
+                        aria-label="Abrir panel de accesibilidad">
+                    <span class="material-symbols-outlined">accessibility</span>
+                </button>
+                
+                <!-- User Info con Foto -->
+                <div class="flex items-center gap-3">
+                    <div class="hidden md:block">
+                        <span class="text-sm font-medium text-gray-900 dark:text-white text-right block"><%= nombreUsuario %></span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block text-right">(<%= rol %>)</span>
+                    </div>
+                    <% if (docente != null && docente.getFoto() != null && !docente.getFoto().isEmpty()) { %>
+                        <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
+                             style="background-image: url('uploads/<%= docente.getFoto() %>');"></div>
+                    <% } else { %>
+                        <div class="size-10 rounded-full border-2 border-primary/20 bg-primary flex items-center justify-center text-white font-bold">
+                            <% if (docente != null) { %>
+                                <%= docente.getNombres().substring(0, 1) %><%= docente.getApellidos().substring(0, 1) %>
+                            <% } else { %>
+                                U
+                            <% } %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+        
+        <!-- Main Content -->
+        <div id="main-content" class="flex-1 px-8 py-8">
         
         <!-- Main Content -->
         <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -637,15 +698,6 @@
                 </div>
             </div>
         </main>
-        
-        <!-- Footer -->
-        <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-12 transition-colors duration-300">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <p class="text-center text-sm text-gray-600 dark:text-gray-400">
-                    © 2025 Sistema de Asistencia Escolar - San Antonio. Todos los derechos reservados.
-                </p>
-            </div>
-        </footer>
     </div>
 
     <script>
@@ -734,12 +786,14 @@
         function validarRechazo(justificacionId) {
             const observaciones = document.getElementById('obs_rechazar_' + justificacionId).value;
             if (!observaciones || observaciones.trim() === '') {
-                alert('⚠️ Debe especificar el motivo del rechazo');
+                alert('Debe especificar el motivo del rechazo');
                 return false;
             }
             
             return confirm('¿Está seguro de rechazar esta justificación?\n\nEl padre de familia será notificado del rechazo.');
         }
     </script>
+    
+  </div>
 </body>
 </html>

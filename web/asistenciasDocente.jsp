@@ -1,18 +1,18 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="modelo.Curso, java.util.List" %>
+<%@ page import="modelo.Profesor" %>
 <%
     List<Curso> cursos = (List<Curso>) request.getAttribute("misCursos");
     String mensaje = (String) request.getParameter("mensaje");
     String error = (String) request.getParameter("error");
     
-    // Obtener nombre del usuario para mostrar
-    String nombreUsuario = (String) session.getAttribute("nombres");
-    String rol = (String) session.getAttribute("rol");
-    if (nombreUsuario == null) {
-        nombreUsuario = "Usuario";
-    }
-    if (rol == null) {
-        rol = "docente";
+    // Obtener el objeto docente completo
+    Profesor docente = (Profesor) session.getAttribute("docente");
+    String nombreUsuario = "Usuario";
+    String rol = "docente";
+    
+    if (docente != null) {
+        nombreUsuario = docente.getNombres() + " " + docente.getApellidos();
     }
 %>
 <!DOCTYPE html>
@@ -258,12 +258,25 @@
                     </div>
                     
                     <div class="flex items-center gap-3">
-                        <!-- User Info -->
-                        <div class="hidden md:flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg">
-                            <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">person</span>
+                    <!-- User Info con Foto -->
+                    <div class="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-lg">
+                        <% if (docente != null && docente.getFoto() != null && !docente.getFoto().isEmpty()) { %>
+                            <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
+                                 style="background-image: url('uploads/<%= docente.getFoto() %>');"></div>
+                        <% } else { %>
+                            <div class="size-10 rounded-full border-2 border-primary/20 bg-primary flex items-center justify-center text-white font-bold">
+                                <% if (docente != null) { %>
+                                    <%= docente.getNombres().substring(0, 1) %><%= docente.getApellidos().substring(0, 1) %>
+                                <% } else { %>
+                                    U
+                                <% } %>
+                            </div>
+                        <% } %>
+                        <div class="hidden md:block">
                             <span class="text-sm font-medium text-gray-900 dark:text-white"><%= nombreUsuario %></span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">(<%= rol %>)</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 block">(<%= rol %>)</span>
                         </div>
+                    </div>
                         
                         <!-- Dark Mode Toggle -->
                         <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle dark mode">

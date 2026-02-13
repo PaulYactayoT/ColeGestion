@@ -378,7 +378,7 @@
             transform: scale(1.1);
         }
         
-        /* Perfil específico */
+        /* Perfil especifico */
         .profile-header-card {
             background: white;
             border-radius: 20px;
@@ -461,7 +461,8 @@
         
         .profile-role {
             font-size: 1.3rem;
-            color: #6b7280;
+            color: #2d2d2d; 
+            font-weight: 700;
             margin-top: 0.75rem;
             display: flex;
             align-items: center;
@@ -865,7 +866,7 @@
                 <div class="flex gap-2">
                     <button onclick="setTextSize('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
                     <button onclick="setTextSize('large')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Grande</button>
-                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Más Grande</button>
+                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Mas Grande</button>
                 </div>
             </div>
             
@@ -917,11 +918,11 @@
                     </div>
                     <div class="flex flex-col">
                         <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
-                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Gestión Académica</p>
+                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Gestion Academica</p>
                     </div>
                 </div>
                 
-                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
+                <nav class="flex flex-col gap-2" aria-label="Navegacion principal">
                     <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
                        href="dashboard.jsp">
                         <span class="material-symbols-outlined">dashboard</span>
@@ -960,7 +961,7 @@
                 <a href="LogoutServlet" 
                    class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
                     <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
-                    <span>Cerrar Sesión</span>
+                    <span>Cerrar Sesion</span>
                 </a>
             </div>
         </aside>
@@ -983,7 +984,7 @@
                     </button>
                     
                     <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                            aria-label="Configuración">
+                            aria-label="Configuracion">
                         <span class="material-symbols-outlined">settings</span>
                     </button>
                     
@@ -1004,7 +1005,7 @@
             <div class="p-8">
                 <div class="mb-6">
                     <h2 class="text-2xl font-bold text-[#111318] dark:text-white">Detalles del Profesor</h2>
-                    <p class="text-[#616f89] dark:text-gray-400 mt-1">Información completa del perfil profesional</p>
+                    <p class="text-[#616f89] dark:text-gray-400 mt-1">Informacion completa del perfil profesional</p>
                 </div>
                 
                 <% 
@@ -1028,7 +1029,7 @@
                 <div class="alert-modern alert-success mb-6" role="alert">
                     <i class="fas fa-check-circle"></i>
                     <div>
-                        <strong>Éxito:</strong> <%= mensaje %>
+                        <strong>exito:</strong> <%= mensaje %>
                     </div>
                 </div>
                 <% } %>
@@ -1039,37 +1040,24 @@
                     <div class="profile-info-section">
                         <div class="profile-avatar-container">
                             
-                            <form id="formFotoRapida" action="ProfesorServlet" method="post" enctype="multipart/form-data" style="display: none;">
-                                <input type="hidden" name="accion" value="cambiarFotoPerfil">
-                                <input type="hidden" name="id" value="<%= p.getId() %>">
-                                <input type="file" name="foto" id="inputFotoRapida" accept="image/*" onchange="document.getElementById('formFotoRapida').submit()">
-                            </form>
-
-                            <div class="profile-avatar cursor-pointer relative group" 
-                                 onclick="document.getElementById('inputFotoRapida').click()"
-                                 title="Clic para cambiar la foto"
+                            <!-- Solo visualización - sin opción de editar -->
+                            <div class="profile-avatar relative" 
                                  style="overflow: hidden; padding: 0;"> <% if (p.getFoto() != null && !p.getFoto().isEmpty()) { %>
                                     <img src="uploads/<%= p.getFoto() %>" alt="Foto de perfil" style="width: 100%; height: 100%; object-fit: cover;">
                                 <% } else { %>
                                     <%= p.getNombres().substring(0, 1) %><%= p.getApellidos().substring(0, 1) %>
                                 <% } %>
-
-                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s;"
-                                     onmouseover="this.style.opacity='1'" 
-                                     onmouseout="this.style.opacity='0'">
-                                    <i class="fas fa-camera text-white text-4xl"></i>
-                                </div>
                             </div>
                             
                             <div class="profile-title-section">
                                 <h1 class="profile-name"><%= p.getNombres() %> <%= p.getApellidos() %></h1>
                                 <div class="profile-role">
                                     <i class="fas fa-chalkboard-teacher"></i>
-                                    Docente de <%= p.getAreaNombre() != null ? p.getAreaNombre() : "Área no asignada" %>
+                                    Docente de <%= p.getAreaNombre() != null ? p.getAreaNombre() : "Area no asignada" %>
                                 </div>
                                 <div class="profile-code">
                                     <i class="fas fa-id-badge"></i>
-                                    <%= p.getCodigoProfesor() != null ? p.getCodigoProfesor() : "Sin código" %>
+                                    <%= p.getCodigoProfesor() != null ? p.getCodigoProfesor() : "Sin codigo" %>
                                 </div>
                             </div>
                         </div>
@@ -1088,7 +1076,7 @@
                             <div class="card-icon card-icon-personal">
                                 <i class="fas fa-user"></i>
                             </div>
-                            <h2 class="card-title">Información Personal</h2>
+                            <h2 class="card-title">Informacion Personal</h2>
                         </div>
                         
                         <div class="info-item">
@@ -1106,7 +1094,7 @@
                                 <i class="fas fa-envelope"></i>
                             </div>
                             <div class="info-content">
-                                <div class="info-label">Correo Electrónico</div>
+                                <div class="info-label">Correo Electronico</div>
                                 <div class="info-value"><%= p.getCorreo() != null ? p.getCorreo() : "No registrado" %></div>
                             </div>
                         </div>
@@ -1116,7 +1104,7 @@
                                 <i class="fas fa-phone"></i>
                             </div>
                             <div class="info-content">
-                                <div class="info-label">Teléfono</div>
+                                <div class="info-label">Telefono</div>
                                 <div class="info-value"><%= p.getTelefono() != null ? p.getTelefono() : "No registrado" %></div>
                             </div>
                         </div>
@@ -1138,7 +1126,7 @@
                                 <i class="fas fa-map-marker-alt"></i>
                             </div>
                             <div class="info-content">
-                                <div class="info-label">Dirección</div>
+                                <div class="info-label">Direccion</div>
                                 <div class="info-value"><%= p.getDireccion() != null ? p.getDireccion() : "No registrada" %></div>
                             </div>
                         </div>
@@ -1149,7 +1137,7 @@
                             <div class="card-icon card-icon-professional">
                                 <i class="fas fa-briefcase"></i>
                             </div>
-                            <h2 class="card-title">Información Profesional</h2>
+                            <h2 class="card-title">Informacion Profesional</h2>
                         </div>
                         
                         <div class="info-item">
@@ -1157,7 +1145,7 @@
                                 <i class="fas fa-chalkboard-teacher"></i>
                             </div>
                             <div class="info-content">
-                                <div class="info-label">Niveles y Áreas que dicta</div>
+                                <div class="info-label">Niveles y areas que dicta</div>
                                 <div class="info-value">
                                     <% 
                                     if (p.getAsignaciones() != null && !p.getAsignaciones().isEmpty()) {
@@ -1197,7 +1185,7 @@
                                                                     <%= asig.getNivel() %>
                                                                 </div>
                                                                 <div class="text-lg font-bold">
-                                                                    <%= asig.getAreaNombre() != null ? asig.getAreaNombre() : "Área #" + asig.getAreaId() %>
+                                                                    <%= asig.getAreaNombre() != null ? asig.getAreaNombre() : "Area #" + asig.getAreaId() %>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1211,7 +1199,7 @@
                                                     <% } else { %>
                                                         <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white text-gray-600 border border-gray-300 text-xs">
                                                             <i class="fas fa-circle text-xs"></i>
-                                                            Asignación <%= i + 1 %>
+                                                            Asignacion <%= i + 1 %>
                                                         </span>
                                                     <% } %>
                                                 </div>
@@ -1223,7 +1211,7 @@
                                         <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                                             <div class="text-sm text-gray-600 dark:text-gray-400">
                                                 <i class="fas fa-info-circle mr-1"></i>
-                                                <strong>Total:</strong> <%= p.getAsignaciones().size() %> asignación<%= p.getAsignaciones().size() > 1 ? "es" : "" %>
+                                                <strong>Total:</strong> <%= p.getAsignaciones().size() %> asignacion<%= p.getAsignaciones().size() > 1 ? "es" : "" %>
 
                                                 <% 
                                                 List<String> nivelesUnicos = p.getNivelesDistintos();
@@ -1239,7 +1227,7 @@
                                         </div>
                                     <% 
                                     } else {
-                                        // Fallback: mostrar área antigua si no hay asignaciones
+                                        // Fallback: mostrar area antigua si no hay asignaciones
                                     %>
                                         <div class="text-gray-500 italic p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                                             <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i>
@@ -1247,7 +1235,7 @@
                                             <% if (p.getAreaNombre() != null) { %>
                                                 <br>
                                                 <span class="text-sm mt-2 block">
-                                                    (Área registrada anteriormente: <strong><%= p.getAreaNombre() %></strong>)
+                                                    (Area registrada anteriormente: <strong><%= p.getAreaNombre() %></strong>)
                                                 </span>
                                             <% } %>
                                         </div>
@@ -1263,7 +1251,7 @@
                                 <i class="fas fa-calendar-check"></i>
                             </div>
                             <div class="info-content">
-                                <div class="info-label">Fecha de Contratación</div>
+                                <div class="info-label">Fecha de Contratacion</div>
                                 <div class="info-value">
                                     <%= p.getFechaContratacion() != null ? sdf.format(p.getFechaContratacion()) : "No registrada" %>
                                 </div>
@@ -1355,7 +1343,7 @@
         // Toast notifications
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
-            // Determinar estilo según tipo
+            // Determinar estilo segun tipo
             let bgClass = 'bg-blue-600';
             let iconClass = 'fa-info-circle';
 
@@ -1385,7 +1373,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('? Perfil del profesor cargado');
             
-            // Navegación por teclado
+            // Navegacion por teclado
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     const panel = document.querySelector('.accessibility-panel');

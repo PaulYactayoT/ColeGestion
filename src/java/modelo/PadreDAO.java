@@ -16,6 +16,7 @@ public class PadreDAO {
                 p.correo,
                 p.dni,
                 p.telefono,
+                p.foto, 
                 u.rol,
                 u.username,
                 rf.alumno_id,
@@ -54,6 +55,7 @@ public class PadreDAO {
                     padre.setCorreo(rs.getString("correo"));
                     padre.setDni(rs.getString("dni"));
                     padre.setTelefono(rs.getString("telefono"));
+                    padre.setFoto(rs.getString("foto")); 
                     padre.setRol(rs.getString("rol"));
                     padre.setUsername(rs.getString("username"));
                     

@@ -287,7 +287,7 @@
                     </div>
                 </div>
                 
-                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
+                 <nav class="flex flex-col gap-2" aria-label="Navegación principal">
                     <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
                        href="DocenteDashboardServlet"
                        aria-current="page">
@@ -339,27 +339,40 @@
                 </div>
                 
                 <div class="flex items-center gap-4 ml-8">
+                    <!-- Botón Dark Mode -->
+                    <button onclick="toggleDarkMode()" 
+                            class="p-2 text-[#616f89] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                            aria-label="Cambiar tema">
+                        <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+                        <span class="material-symbols-outlined hidden dark:inline">light_mode</span>
+                    </button>
+                    
                     <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
                             aria-label="Notificaciones">
                         <span class="material-symbols-outlined">notifications</span>
                         <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
                     </button>
                     
-                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                            aria-label="Configuración">
-                        <span class="material-symbols-outlined">settings</span>
-                    </button>
-                    
                     <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
                     
                     <div class="flex items-center gap-3">
-                        <p class="text-sm font-medium hidden md:block">
-                            <%= docente.getNombres()%> <%= docente.getApellidos()%>
-                        </p>
-                        <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
-                             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCO64ytW7WFj5YJ0XxtUSKDLHtMumvYdpNUpuyZfiJ1u2v-o-ZSRqiNGLyx6pmhB7nZDuPBYTD_VLKKCEUg0atLHJC4hTrMG5QjAfNlLQdzKId6L3tl2-QhmWJUVQVRr4hk7ODNpJ2OomnFQx_u6WT5QgxJRWLtvZ2I5ecv8WfcR1-MoMfF485fYSxo5s9ErvyApFtN9ro0oew7DMrNHFDQJp1zE9Dtyls43R9C7cnQa5HNlhDoiFBsEBf8CYKzebhaA6Yfuad3vcM');"
-                             aria-label="Foto de perfil del docente">
+                        <div class="hidden md:block text-right">
+                            <p class="text-sm font-medium text-[#111318] dark:text-white">
+                                <%= docente.getNombres()%> <%= docente.getApellidos()%>
+                            </p>
+                            <p class="text-xs text-[#616f89] dark:text-gray-400">Docente</p>
                         </div>
+                        <% if (docente.getFoto() != null && !docente.getFoto().isEmpty()) { %>
+                            <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
+                                 style="background-image: url('uploads/<%= docente.getFoto() %>');"
+                                 aria-label="Foto de perfil del docente">
+                            </div>
+                        <% } else { %>
+                            <div class="size-10 rounded-full border-2 border-primary/20 bg-primary flex items-center justify-center text-white font-bold" 
+                                 aria-label="Foto de perfil del docente">
+                                <%= docente.getNombres().substring(0, 1) %><%= docente.getApellidos().substring(0, 1) %>
+                            </div>
+                        <% } %>
                     </div>
                 </div>
             </header>

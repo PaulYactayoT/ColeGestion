@@ -84,30 +84,34 @@
                 </div>
             </div>
             
-            <nav class="space-y-1">
-                <a href="docenteDashboard.jsp" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">dashboard</span>
-                    <span class="font-medium text-sm">Inicio</span>
-                </a>
-                <a href="asistenciasDocente.jsp" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">checklist</span>
-                    <span class="font-medium text-sm">Asistencias</span>
-                </a>
-                <a href="notasDocente.jsp" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">grade</span>
-                    <span class="font-medium text-sm">Notas</span>
-                </a>
-                
-                <a href="MaterialServlet?accion=seleccionarCurso" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
-                    <span class="material-symbols-outlined fill-1">folder_open</span>
-                    <span class="font-medium text-sm">Material de Apoyo</span>
-                </a>
-                
-                <a href="revisarJustificaciones.jsp" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">assignment_late</span>
-                    <span class="font-medium text-sm">Justificaciones</span>
-                </a>
-            </nav>
+            <nav class="flex flex-col gap-2" aria-label="Navegación principal">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors" 
+               href="DocenteDashboardServlet">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-sm">Dashboard</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors" 
+               href="AsistenciaServlet?accion=registrar">
+                <i class="fas fa-clipboard-check"></i>
+                <span class="text-sm">Asistencias</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors" 
+               href="revisarJustificaciones.jsp">
+                <i class="fas fa-clock"></i>
+                <span class="text-sm">Justificaciones</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
+               href="MaterialServlet?accion=seleccionarCurso"
+               aria-current="page">
+                <i class="fas fa-folder"></i>
+                <span class="text-sm">Material de Apoyo</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors" 
+               href="DisponibilidadServlet">
+                <span class="material-symbols-outlined text-[20px]">event_available</span>
+                <span class="text-sm">Mi Disponibilidad</span>
+            </a>
+        </nav>
         </div>
         
         <div class="p-4 border-t border-gray-100">
@@ -133,16 +137,21 @@
                 </button>
                 <div class="h-8 w-[1px] bg-slate-200 mx-2 hidden md:block"></div>
                 <div class="flex items-center gap-4">
-                    <div class="hidden md:flex flex-col items-end">
-                        <span class="text-sm font-semibold text-slate-700"><%= docente.getNombres() %> <%= docente.getApellidos() %></span>
-                        <span class="text-xs text-slate-500 flex items-center gap-1">
-                            <i class="fas fa-chalkboard-teacher text-[10px]"></i> Docente
-                        </span>
-                    </div>
-                    <div class="size-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-sm">
-                        <%= docente.getNombres().substring(0,1) %>
-                    </div>
+                <div class="hidden md:flex flex-col items-end">
+                    <span class="text-sm font-semibold text-slate-700"><%= docente.getNombres() %> <%= docente.getApellidos() %></span>
+                    <span class="text-xs text-slate-500 flex items-center gap-1">
+                    </span>
                 </div>
+
+                <% if (docente.getFoto() != null && !docente.getFoto().isEmpty()) { %>
+                    <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20 shadow-sm" 
+                         style="background-image: url('uploads/<%= docente.getFoto() %>');"></div>
+                <% } else { %>
+                    <div class="size-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-primary font-bold shadow-sm">
+                        <%= docente.getNombres().substring(0,1) %><%= docente.getApellidos().substring(0,1) %>
+                    </div>
+                <% } %>
+            </div>
             </div>
         </header>
 
@@ -293,12 +302,6 @@
             <% } %>
 
         </div>
-        
-        <footer class="mt-auto py-6 text-center text-xs text-slate-400 border-t border-slate-100 bg-white">
-            <span class="flex items-center justify-center gap-1">
-                &copy; 2025 Colegio San Antonio <i class="fas fa-circle text-[4px] text-slate-300"></i> Todos los derechos reservados.
-            </span>
-        </footer>
     </main>
 
 </body>
