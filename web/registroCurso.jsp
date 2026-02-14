@@ -37,19 +37,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Curso - Sistema Escolar</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
-    <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     
     <script id="tailwind-config">
@@ -79,43 +70,121 @@
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
         
-        .dia-checkbox input[type="checkbox"] { display: none; }
-        
-        .dia-checkbox label {
-            display: block;
-            padding: 1rem;
-            background: #dbeafe;
-            border: 2px solid #93c5fd;
-            border-radius: 0.75rem;
-            text-align: center;
+        /* =========================================
+           DISEÑO MODELO 1: GLASS & GRADIENT (MODIFICADO)
+           ========================================= */
+        .dia-card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Ocultamos el checkbox real */
+        .dia-card-input {
+            display: none; 
+        }
+
+        /* Estilo de la tarjeta (Label) - GLASS STYLE */
+        .dia-card-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* Fondo degradado suave "Glass" */
+            background: linear-gradient(145deg, #ffffff, #f0f4f8);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 16px; /* Bordes más redondeados */
+            padding: 1.5rem 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-weight: 600;
+            /* Sombra suave 3D */
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.05), -5px -5px 15px rgba(255,255,255,0.8);
+            color: #64748b;
+            text-align: center;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
         }
-        
-        .dia-checkbox input[type="checkbox"]:checked + label {
-            background: linear-gradient(135deg, #135bec, #0d47a1);
-            color: white;
-            border-color: #135bec;
-            transform: scale(1.05);
+
+        /* Detalle decorativo lateral */
+        .dia-card-label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: transparent;
+            transition: background 0.3s;
         }
-        
-        .dia-checkbox input[type="checkbox"]:disabled + label {
-            opacity: 0.5;
+
+        .dia-card-label i {
+            font-size: 1.8rem;
+            margin-bottom: 0.8rem;
+            color: #94a3b8;
+            transition: all 0.3s;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .dia-card-label span {
+            font-weight: 700; /* Texto un poco más grueso */
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Hover Effect - Elevación */
+        .dia-card-label:hover {
+            transform: translateY(-5px);
+            box-shadow: 8px 8px 20px rgba(0,0,0,0.1), -8px -8px 20px rgba(255,255,255,0.9);
+        }
+
+        /* ESTADO ACTIVO (CHECKED) - GRADIENT AZUL */
+        .dia-card-input:checked + .dia-card-label {
+            background: linear-gradient(135deg, #135bec, #60a5fa);
+            border: 1px solid transparent;
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(19, 91, 236, 0.4); /* Resplandor azul */
+        }
+
+        .dia-card-input:checked + .dia-card-label::before {
+            background: rgba(255,255,255,0.3); /* Pequeño brillo lateral */
+        }
+
+        .dia-card-input:checked + .dia-card-label i {
+            color: #ffffff;
+            transform: scale(1.1); /* Icono crece un poco */
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        /* ESTADO DESHABILITADO */
+        .dia-card-input:disabled + .dia-card-label {
+            opacity: 0.6;
+            background: #f1f5f9;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05); /* Hundido */
             cursor: not-allowed;
+            transform: none;
+            border-color: #e2e8f0;
         }
         
+        /* Estilos items horario (Lista agregada) */
         .horario-item {
-            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-            border: 2px solid #93c5fd;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 0.75rem;
-            padding: 1.25rem;
-            margin-bottom: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            transition: all 0.2s;
         }
         
+        .horario-item:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        /* Alertas */
         .alert-modern {
             border-radius: 0.75rem;
             padding: 1rem 1.25rem;
@@ -126,19 +195,18 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             border-left: 4px solid;
         }
-        
         .alert-danger {
             background: linear-gradient(135deg, #fee2e2, #fecaca);
             color: #991b1b;
             border-left-color: #ef4444;
         }
-        
         .alert-success {
             background: linear-gradient(135deg, #d1fae5, #a7f3d0);
             color: #065f46;
             border-left-color: #10b981;
         }
         
+        /* Títulos y Pasos */
         .section-title {
             color: #135bec;
             font-weight: 600;
@@ -148,15 +216,26 @@
             align-items: center;
             gap: 0.5rem;
         }
+        
+        /* Animación de pasos */
+        .step-content {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hidden-step {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-[#f6f6f8] text-[#111318] min-h-screen">
     
     <div class="flex h-screen overflow-hidden">
-        <!-- Left SideNavBar -->
         <aside class="w-64 flex-shrink-0 bg-white border-r border-[#dbdfe6] flex flex-col justify-between">
             <div class="flex flex-col gap-8 p-6">
-                <!-- Brand -->
                 <div class="flex items-center gap-3">
                     <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white">
                         <span class="material-symbols-outlined">school</span>
@@ -167,7 +246,6 @@
                     </div>
                 </div>
                 
-                <!-- Navigation -->
                 <nav class="flex flex-col gap-2">
                     <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100" 
                        href="dashboard.jsp">
@@ -197,7 +275,6 @@
                 </nav>
             </div>
             
-            <!-- Footer Sidebar -->
             <div class="p-6 border-t border-[#dbdfe6]">
                 <a href="LogoutServlet" 
                    class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold hover:bg-blue-700">
@@ -207,9 +284,7 @@
             </div>
         </aside>
         
-        <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- TopNavBar -->
             <header class="flex items-center justify-between bg-white border-b border-[#f0f2f4] px-8 py-3 sticky top-0 z-10">
                 <div class="flex items-center gap-4 flex-1">
                     <h1 class="text-xl font-bold text-[#111318]">Registro de Curso</h1>
@@ -228,9 +303,7 @@
                 </div>
             </header>
             
-            <!-- Main Content -->
             <div class="p-8">
-                <!-- Alertas -->
                 <% if (error != null) { %>
                 <div class="alert-modern alert-danger">
                     <i class="fas fa-exclamation-circle text-xl"></i>
@@ -245,187 +318,212 @@
                 </div>
                 <% } %>
                 
-                <!-- Formulario -->
+                <div class="mb-6 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                    <div class="bg-primary h-2.5 rounded-full transition-all duration-500" style="width: 20%" id="progressBar"></div>
+                </div>
+
                 <div class="bg-white rounded-xl border border-[#dbdfe6] shadow-sm p-6">
                     <form id="formRegistroCurso" action="RegistroCursoServlet" method="post">
                         <input type="hidden" name="accion" value="registrar">
                         
-                        <!-- PASO 1: NIVEL Y GRADO -->
-                        <div class="section-title">
-                            <i class="fas fa-layer-group"></i>
-                            Paso 1: Seleccionar Nivel y Grado
+                        <div id="step1" class="step-content">
+                            <div class="section-title">
+                                <i class="fas fa-layer-group"></i> Paso 1: Seleccionar Nivel y Grado
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Nivel Educativo <span class="text-red-600">*</span></label>
+                                    <select id="selectNivel" name="nivel" class="w-full p-3 border border-gray-300 rounded-lg" required>
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="INICIAL">Inicial</option>
+                                        <option value="PRIMARIA">Primaria</option> 
+                                        <option value="SECUNDARIA">Secundaria</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Grado <span class="text-red-600">*</span></label>
+                                    <select name="grado" id="selectGrado" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                        <option value="">Seleccione primero un nivel</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between pt-6 border-t border-gray-200">
+                                <a href="CursoServlet" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
+                                    <i class="fas fa-arrow-left"></i> Volver al Panel de Cursos
+                                </a>
+                                <button type="button" onclick="irPaso(2)" class="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700">
+                                    Siguiente <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
                         </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Nivel Educativo <span class="text-red-600">*</span></label>
-                                <select id="selectNivel" name="nivel" class="w-full p-3 border border-gray-300 rounded-lg" required>
-                                    <option value="">-- Seleccione --</option>
-                                    <option value="INICIAL">Inicial</option>
-                                    <option value="PRIMARIA">Primaria</option> 
-                                    <option value="SECUNDARIA">Secundaria</option>
+
+                        <div id="step2" class="step-content hidden-step">
+                            <div class="section-title">
+                                <i class="fas fa-clock"></i> Paso 2: Seleccionar Turno
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium mb-2">Turno <span class="text-red-600">*</span></label>
+                                <select name="turno" id="selectTurno" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                    <option value="">Seleccione primero un grado</option>
+                                    <% for (Map<String, Object> turno : turnos) { %>
+                                        <option value="<%= turno.get("id") %>" 
+                                                data-inicio="<%= turno.get("hora_inicio") %>"
+                                                data-fin="<%= turno.get("hora_fin") %>">
+                                            <%= turno.get("nombre") %> (<%= turno.get("hora_inicio") %> - <%= turno.get("hora_fin") %>)
+                                        </option>
+                                    <% } %>
                                 </select>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Grado <span class="text-red-600">*</span></label>
-                                <select name="grado" id="selectGrado" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
-                                    <option value="">Seleccione primero un nivel</option>
-                                </select>
+                            <div class="flex justify-between pt-6 border-t border-gray-200">
+                                <button type="button" onclick="irPaso(1)" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
+                                    <i class="fas fa-arrow-left"></i> Volver Atrás
+                                </button>
+                                <button type="button" onclick="irPaso(3)" class="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700">
+                                    Siguiente <i class="fas fa-arrow-right"></i>
+                                </button>
                             </div>
                         </div>
 
-                        <!-- PASO 2: TURNO -->
-                        <div class="section-title">
-                            <i class="fas fa-clock"></i>
-                            Paso 2: Seleccionar Turno
-                        </div>
-
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium mb-2">Turno <span class="text-red-600">*</span></label>
-                            <select name="turno" id="selectTurno" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
-                                <option value="">Seleccione primero un grado</option>
-                                <% for (Map<String, Object> turno : turnos) { %>
-                                    <option value="<%= turno.get("id") %>" 
-                                            data-inicio="<%= turno.get("hora_inicio") %>"
-                                            data-fin="<%= turno.get("hora_fin") %>">
-                                        <%= turno.get("nombre") %> (<%= turno.get("hora_inicio") %> - <%= turno.get("hora_fin") %>)
-                                    </option>
-                                <% } %>
-                            </select>
-                        </div>
-
-                        <!-- PASO 3: ÁREA Y CURSO -->
-                        <div class="section-title">
-                            <i class="fas fa-book"></i>
-                            Paso 3: Seleccionar Área y Curso
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Área Académica <span class="text-red-600">*</span></label>
-                                <select id="selectArea" name="area" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
-                                    <option value="">Seleccione primero un turno</option>
-                                </select>
+                        <div id="step3" class="step-content hidden-step">
+                            <div class="section-title">
+                                <i class="fas fa-book"></i> Paso 3: Seleccionar Área y Curso
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Nombre del Curso <span class="text-red-600">*</span></label>
-                                <select name="curso" id="selectCurso" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
-                                    <option value="">Seleccione primero un área</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- PASO 4: PROFESOR Y DETALLES -->
-                        <div class="section-title">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                            Paso 4: Profesor y Detalles
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Profesor <span class="text-red-600">*</span></label>
-                                <select name="profesor" id="selectProfesor" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
-                                    <option value="">Seleccione primero un curso</option>
-                                </select>
-                                <div id="infoDisponibilidad"></div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Créditos <span class="text-red-600">*</span></label>
-                                <input type="number" name="creditos" id="inputCreditos" 
-                                       class="w-full p-3 border border-gray-300 rounded-lg" 
-                                       min="1" max="10" value="1" required>
-                            </div>
-
-                            <div class="col-span-2">
-                                <label class="block text-sm font-medium mb-2">Descripción del Curso</label>
-                                <textarea name="descripcion" id="inputDescripcion" 
-                                          class="w-full p-3 border border-gray-300 rounded-lg" 
-                                          rows="3" placeholder="Breve descripción..."></textarea>
-                            </div>
-                        </div>
-
-                        <!-- PASO 5: DÍAS Y HORARIOS -->
-                        <div class="section-title">
-                            <i class="fas fa-calendar-alt"></i>
-                            Paso 5: Seleccionar Días y Horarios
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-3">Días disponibles del profesor</label>
-                            <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="diasSemana">
-                                <div class="dia-checkbox">
-                                    <input type="checkbox" id="diaLunes" value="LUNES" disabled>
-                                    <label for="diaLunes">
-                                        <i class="fas fa-calendar-day"></i><br>
-                                        <strong>Lunes</strong>
-                                    </label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Área Académica <span class="text-red-600">*</span></label>
+                                    <select id="selectArea" name="area" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                        <option value="">Seleccione primero un turno</option>
+                                    </select>
                                 </div>
-                                <div class="dia-checkbox">
-                                    <input type="checkbox" id="diaMartes" value="MARTES" disabled>
-                                    <label for="diaMartes">
-                                        <i class="fas fa-calendar-day"></i><br>
-                                        <strong>Martes</strong>
-                                    </label>
-                                </div>
-                                <div class="dia-checkbox">
-                                    <input type="checkbox" id="diaMiercoles" value="MIERCOLES" disabled>
-                                    <label for="diaMiercoles">
-                                        <i class="fas fa-calendar-day"></i><br>
-                                        <strong>Miércoles</strong>
-                                    </label>
-                                </div>
-                                <div class="dia-checkbox">
-                                    <input type="checkbox" id="diaJueves" value="JUEVES" disabled>
-                                    <label for="diaJueves">
-                                        <i class="fas fa-calendar-day"></i><br>
-                                        <strong>Jueves</strong>
-                                    </label>
-                                </div>
-                                <div class="dia-checkbox">
-                                    <input type="checkbox" id="diaViernes" value="VIERNES" disabled>
-                                    <label for="diaViernes">
-                                        <i class="fas fa-calendar-day"></i><br>
-                                        <strong>Viernes</strong>
-                                    </label>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Nombre del Curso <span class="text-red-600">*</span></label>
+                                    <select name="curso" id="selectCurso" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                        <option value="">Seleccione primero un área</option>
+                                    </select>
                                 </div>
                             </div>
+
+                            <div class="flex justify-between pt-6 border-t border-gray-200">
+                                <button type="button" onclick="irPaso(2)" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
+                                    <i class="fas fa-arrow-left"></i> Volver Atrás
+                                </button>
+                                <button type="button" onclick="irPaso(4)" class="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700">
+                                    Siguiente <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Horarios agregados -->
-                        <div id="horariosContainer" class="mb-4">
-                            <p class="text-gray-500 text-sm">
-                                <i class="fas fa-info-circle"></i> No hay horarios agregados aún
-                            </p>
+                        <div id="step4" class="step-content hidden-step">
+                            <div class="section-title">
+                                <i class="fas fa-chalkboard-teacher"></i> Paso 4: Profesor y Detalles
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-4 mb-6"> <div>
+                                    <label class="block text-sm font-medium mb-2">Profesor <span class="text-red-600">*</span></label>
+                                    <select name="profesor" id="selectProfesor" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                        <option value="">Seleccione primero un curso</option>
+                                    </select>
+                                    <div id="infoDisponibilidad"></div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Descripción del Curso</label>
+                                    <textarea name="descripcion" id="inputDescripcion" 
+                                              class="w-full p-3 border border-gray-300 rounded-lg" 
+                                              rows="3" placeholder="Breve descripción..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between pt-6 border-t border-gray-200">
+                                <button type="button" onclick="irPaso(3)" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
+                                    <i class="fas fa-arrow-left"></i> Volver Atrás
+                                </button>
+                                <button type="button" onclick="irPaso(5)" class="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700">
+                                    Siguiente <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Botón agregar horario -->
-                        <button type="button" id="btnAgregarHorario" 
-                                class="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" 
-                                disabled>
-                            <i class="fas fa-plus"></i> Agregar Horario
-                        </button>
+                        <div id="step5" class="step-content hidden-step">
+                            <div class="section-title">
+                                <i class="fas fa-calendar-alt"></i> Paso 5: Seleccionar Días y Horarios
+                            </div>
 
-                        <!-- BOTONES DE ACCIÓN -->
-                        <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
-                            <a href="CursoServlet" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
-                                <i class="fas fa-times"></i> Cancelar
-                            </a>
-                            <button type="submit" id="btnSubmit" 
-                                    class="px-6 py-3 bg-success text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" 
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium mb-3">Días disponibles del profesor</label>
+                                
+                                <div class="dia-card-container" id="diasSemana">
+                                    <div>
+                                        <input type="checkbox" id="diaLunes" value="LUNES" class="dia-card-input" disabled>
+                                        <label for="diaLunes" class="dia-card-label">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <span>Lunes</span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <input type="checkbox" id="diaMartes" value="MARTES" class="dia-card-input" disabled>
+                                        <label for="diaMartes" class="dia-card-label">
+                                            <i class="fas fa-calendar-day"></i>
+                                            <span>Martes</span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <input type="checkbox" id="diaMiercoles" value="MIERCOLES" class="dia-card-input" disabled>
+                                        <label for="diaMiercoles" class="dia-card-label">
+                                            <i class="fas fa-calendar-week"></i>
+                                            <span>Miércoles</span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <input type="checkbox" id="diaJueves" value="JUEVES" class="dia-card-input" disabled>
+                                        <label for="diaJueves" class="dia-card-label">
+                                            <i class="far fa-calendar-plus"></i>
+                                            <span>Jueves</span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <input type="checkbox" id="diaViernes" value="VIERNES" class="dia-card-input" disabled>
+                                        <label for="diaViernes" class="dia-card-label">
+                                            <i class="far fa-calendar-check"></i>
+                                            <span>Viernes</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                </div>
+
+                            <div id="horariosContainer" class="mb-4">
+                                <p class="text-gray-500 text-sm"><i class="fas fa-info-circle"></i> No hay horarios agregados aún</p>
+                            </div>
+
+                            <button type="button" id="btnAgregarHorario" 
+                                    class="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" 
                                     disabled>
-                                <i class="fas fa-save"></i> Registrar Curso
+                                <i class="fas fa-plus"></i> Agregar Horario
                             </button>
+
+                            <div class="flex justify-between pt-6 border-t border-gray-200 mt-8">
+                                <button type="button" onclick="irPaso(4)" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
+                                    <i class="fas fa-arrow-left"></i> Volver Atrás
+                                </button>
+                                <button type="submit" id="btnSubmit" 
+                                        class="px-6 py-3 bg-success text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                        disabled>
+                                    <i class="fas fa-save"></i> Registrar Curso
+                                </button>
+                            </div>
                         </div>
+
                     </form>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
@@ -448,6 +546,52 @@
             <% } %>
         ];
         
+        // ========== FUNCIONES DE WIZARD (TARJETAS) ==========
+        function irPaso(paso) {
+            // Validaciones antes de avanzar
+            if (paso === 2) {
+                const nivel = document.getElementById('selectNivel').value;
+                const grado = document.getElementById('selectGrado').value;
+                if (!nivel || !grado) {
+                    mostrarMensaje('Debe seleccionar Nivel y Grado', 'warning');
+                    return;
+                }
+            }
+            if (paso === 3) {
+                const turno = document.getElementById('selectTurno').value;
+                if (!turno) {
+                    mostrarMensaje('Debe seleccionar un Turno', 'warning');
+                    return;
+                }
+            }
+            if (paso === 4) {
+                const area = document.getElementById('selectArea').value;
+                const curso = document.getElementById('selectCurso').value;
+                if (!area || !curso) {
+                    mostrarMensaje('Debe seleccionar Área y Nombre del Curso', 'warning');
+                    return;
+                }
+            }
+            if (paso === 5) {
+                const profesor = document.getElementById('selectProfesor').value;
+                // NOTA: Se eliminó la validación de créditos aquí
+                if (!profesor) {
+                    mostrarMensaje('Debe seleccionar Profesor', 'warning');
+                    return;
+                }
+            }
+
+            // Ocultar todos los pasos
+            document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden-step'));
+            
+            // Mostrar paso actual
+            document.getElementById('step' + paso).classList.remove('hidden-step');
+            
+            // Actualizar barra de progreso
+            const porcentaje = paso * 20;
+            document.getElementById('progressBar').style.width = porcentaje + '%';
+        }
+
         // ========== INICIALIZAR ==========
         document.addEventListener('DOMContentLoaded', function() {
             console.log('✅ Sistema inicializado');
@@ -460,6 +604,7 @@
             document.getElementById('selectProfesor').addEventListener('change', cambioProfesor);
             document.getElementById('btnAgregarHorario').addEventListener('click', mostrarModalHorario);
             
+            // Selector ajustado para las nuevas tarjetas (mantiene funcionalidad)
             document.querySelectorAll('#diasSemana input[type="checkbox"]').forEach(checkbox => {
                 checkbox.addEventListener('change', verificarHabilitarAgregar);
             });
@@ -815,9 +960,9 @@
             const area = document.getElementById('selectArea').value;
             const curso = document.getElementById('selectCurso').value;
             const profesor = document.getElementById('selectProfesor').value;
-            const creditos = document.getElementById('inputCreditos').value;
+            // creditos eliminados de la validacion
             
-            document.getElementById('btnSubmit').disabled = !(nivel && grado && turno && area && curso && profesor && creditos && horariosAgregados.length > 0);
+            document.getElementById('btnSubmit').disabled = !(nivel && grado && turno && area && curso && profesor && horariosAgregados.length > 0);
         }
 
         function enviarFormulario(e) {
