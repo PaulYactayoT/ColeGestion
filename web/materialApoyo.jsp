@@ -86,7 +86,7 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-bold leading-tight text-slate-900">San Antonio</h1>
-                    <p class="text-xs text-slate-500 font-medium">Panel Docente</p>
+                    <p class="text-xs text-slate-500 font-medium">Profesor</p>
                 </div>
             </div>
             
@@ -127,7 +127,7 @@
             <div class="flex items-center gap-4">
             <div class="hidden md:flex flex-col items-end">
                 <span class="text-sm font-semibold text-slate-700"><%= docente.getNombres() %> <%= docente.getApellidos() %></span>
-                <span class="text-xs text-slate-500">Docente</span>
+                <span class="text-xs text-slate-500">Profesor</span>
             </div>
 
             <% if (docente.getFoto() != null && !docente.getFoto().isEmpty()) { %>

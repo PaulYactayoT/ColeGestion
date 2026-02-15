@@ -94,7 +94,7 @@
                     </div>
                     <div class="flex flex-col">
                         <h1 class="text-gray-900 text-lg font-bold leading-tight">San Antonio</h1>
-                        <p class="text-gray-500 text-xs font-normal">Panel del Docente</p>
+                        <p class="text-gray-500 text-xs font-normal">Profesor</p>
                     </div>
                 </div>
                 <!-- Navegación -->

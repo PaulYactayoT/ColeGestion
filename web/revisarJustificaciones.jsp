@@ -324,7 +324,7 @@
                 </div>
                 <div class="flex flex-col">
                     <h1 class="text-gray-900 dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
-                    <p class="text-gray-500 dark:text-gray-400 text-xs font-normal">Panel del Docente</p>
+                    <p class="text-gray-500 dark:text-gray-400 text-xs font-normal">Profesor</p>
                 </div>
             </div>
             
@@ -399,7 +399,7 @@
                 <div class="flex items-center gap-3">
                     <div class="hidden md:block">
                         <span class="text-sm font-medium text-gray-900 dark:text-white text-right block"><%= nombreUsuario %></span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400 block text-right">(<%= rol %>)</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 block text-right"> Profesor </span>
                     </div>
                     <% if (docente != null && docente.getFoto() != null && !docente.getFoto().isEmpty()) { %>
                         <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 

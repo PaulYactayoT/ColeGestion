@@ -88,7 +88,7 @@
     <div class="container mt-5 mb-5">
         <div class="form-container">
             <h2 class="mb-4 text-center fw-bold text-primary">
-                <%= editar ? "📝 Editar Alumno" : "➕ Registrar Alumno"%>
+                <%= editar ? "📝 Editar Alumno" : "Registrar Alumno"%>
             </h2>
             
             <!-- Mensajes de éxito/error -->
@@ -117,14 +117,14 @@
                         <label class="form-label required-field">Nombres:</label>
                         <input type="text" class="form-control" name="nombres" 
                                value="<%= editar && a.getNombres() != null ? a.getNombres() : "" %>" 
-                               required maxlength="100" placeholder="Ingrese los nombres">
+                               required maxlength="100" placeholder="Ingrese los nombres (ej: Renato Augusto)">
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Apellidos:</label>
                         <input type="text" class="form-control" name="apellidos" 
                                value="<%= editar && a.getApellidos() != null ? a.getApellidos() : "" %>" 
-                               required maxlength="100" placeholder="Ingrese los apellidos">
+                               required maxlength="100" placeholder="Ingrese los apellidos(ej: Balboa Nuñez)">
                     </div>
                 </div>
 
@@ -150,14 +150,15 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Fecha de Nacimiento:</label>
                         <input type="date" class="form-control" name="fecha_nacimiento" 
-                               value="<%= fechaNacimientoStr %>" required>
+                               value="<%= fechaNacimientoStr %>" max="9999-12-31" onblur="validarAnio(this)" >
+                        <div class="text-xs text-red-500 mt-1 hidden" id="error-fecha">Seleccione una fecha válida</div>
                     </div>
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Teléfono:</label>
                         <input type="tel" class="form-control" name="telefono" 
                                value="<%= editar && a.getTelefono() != null ? a.getTelefono() : "" %>" 
-                               maxlength="20" placeholder="987654321">
+                               maxlength="9" placeholder="Solo se aceptan 9 dígitos y que empiecen con 9 (ej:987654321)">
                     </div>
                 </div>
 

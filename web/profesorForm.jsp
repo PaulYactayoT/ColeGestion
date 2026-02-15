@@ -278,9 +278,10 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Contratación</label>
-                                    <input type="date" class="input-figma w-full p-3" name="fecha_contratacion" 
+                                    <label class="block text-sm font-bold text-gray-700 mb-1 required-field">Fecha de Contratación</label>
+                                    <input type="date" class="input-figma w-full p-3" name="fecha_contratacion" id="fecha_contratacion"
                                            value="<%= fechaContratacionStr %>"max="9999-12-31" onblur="validarAnio(this)">
+                                    <div class="text-xs text-red-500 mt-1 hidden" id="error-fecha-contratacion">Seleccione una fecha válida</div>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-1">Estado</label>
@@ -298,7 +299,7 @@
                                     <i class="fas fa-arrow-left"></i> ATRÁS
                                 </button>
                                 
-                                <button type="submit" class="bg-green-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-600 transition shadow-lg flex items-center gap-2">
+                                <button type="button" onclick="validarYEnviar()" class="bg-green-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-600 transition shadow-lg flex items-center gap-2">
                                     <i class="fas fa-check"></i> <%= editar ? "ACTUALIZAR" : "REGISTRAR PROFESOR" %>
                                 </button>
                             </div>
@@ -429,6 +430,49 @@
             document.getElementById('step2').classList.remove('active');
             document.getElementById('step1').classList.add('active');
             window.scrollTo(0, 0);
+        }
+        
+        // ==========================================
+        // VALIDAR Y ENVIAR FORMULARIO (PASO 2)
+        // ==========================================
+        function validarYEnviar() {
+            const fechaContratacion = document.getElementById('fecha_contratacion');
+            let valido = true;
+            
+            // Reset error
+            document.getElementById('error-fecha-contratacion').classList.add('hidden');
+            fechaContratacion.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+
+            // 1. Validar fecha contratación (Obligatorio)
+            if (!fechaContratacion.value) {
+                document.getElementById('error-fecha-contratacion').classList.remove('hidden');
+                fechaContratacion.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                valido = false;
+            }
+
+            // 2. Validar que exista al menos una asignación
+            const asignaciones = document.querySelectorAll('#asignaciones-container .asignacion-item');
+            if (asignaciones.length === 0) {
+                alert("Debe asignar al menos un Nivel y Área al profesor.");
+                valido = false;
+            } else {
+                // Verificar que las asignaciones no estén vacías
+                let completas = true;
+                asignaciones.forEach(item => {
+                    const nivel = item.querySelector('.nivel-select').value;
+                    const area = item.querySelector('.area-select').value;
+                    if(!nivel || !area) completas = false;
+                });
+                
+                if(!completas) {
+                    alert("Por favor seleccione Nivel y Área en todas las asignaciones.");
+                    valido = false;
+                }
+            }
+
+            if (valido) {
+                document.getElementById('profesorForm').submit();
+            }
         }
 
         // ==========================================

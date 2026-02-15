@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.util.*" %>
 <%@ page import="modelo.EstadisticasDAO" %>
@@ -11,7 +12,7 @@
         return;
     }
     
-    // OBTENER ESTADÕSTICAS REALES
+    // OBTENER ESTAD√çSTICAS REALES
     EstadisticasDAO estadisticasDAO = new EstadisticasDAO();
     Map<String, Integer> estadisticas = estadisticasDAO.obtenerEstadisticasGenerales();
     
@@ -19,52 +20,6 @@
     int totalProfesores = estadisticas.get("totalProfesores");
     int totalCursos = estadisticas.get("totalCursos");
     int totalGrados = estadisticas.get("totalGrados");
-    
-    // Datos de ejemplo para grados
-    List<Map<String, String>> grados = new ArrayList<>();
-    Map<String, String> g1 = new HashMap<>();
-    g1.put("nombre", "Primer Grado");
-    g1.put("seccion", "A");
-    g1.put("estudiantes", "30");
-    grados.add(g1);
-    
-    Map<String, String> g2 = new HashMap<>();
-    g2.put("nombre", "Segundo Grado");
-    g2.put("seccion", "B");
-    g2.put("estudiantes", "28");
-    grados.add(g2);
-    
-    Map<String, String> g3 = new HashMap<>();
-    g3.put("nombre", "Tercer Grado");
-    g3.put("seccion", "C");
-    g3.put("estudiantes", "32");
-    grados.add(g3);
-    
-    Map<String, String> g4 = new HashMap<>();
-    g4.put("nombre", "Cuarto Grado");
-    g4.put("seccion", "A");
-    g4.put("estudiantes", "25");
-    grados.add(g4);
-    
-    Map<String, String> g5 = new HashMap<>();
-    g5.put("nombre", "Quinto Grado");
-    g5.put("seccion", "B");
-    g5.put("estudiantes", "29");
-    grados.add(g5);
-    
-    // Obtener par·metro de b˙squeda
-    String busqueda = request.getParameter("busqueda");
-    List<Map<String, String>> resultados = new ArrayList<>();
-    
-    if (busqueda != null && !busqueda.trim().isEmpty()) {
-        String busquedaLower = busqueda.toLowerCase();
-        for (Map<String, String> grado : grados) {
-            if (grado.get("nombre").toLowerCase().contains(busquedaLower) || 
-                grado.get("seccion").toLowerCase().contains(busquedaLower)) {
-                resultados.add(grado);
-            }
-        }
-    }
 %>
 
 <!DOCTYPE html>
@@ -109,7 +64,7 @@
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
         
-        /* Mejoras de accesibilidad del primer dashboard */
+        /* Mejoras de accesibilidad */
         .reduce-motion * { 
             animation-duration: 0.01ms !important; 
             animation-iteration-count: 1 !important; 
@@ -125,15 +80,9 @@
         .beige-background { 
             background-color: #f5f5dc !important; 
         }
-        .large-text { 
-            font-size: 20px !important; 
-        }
-        .larger-text { 
-            font-size: 24px !important; 
-        }
-        .largest-text { 
-            font-size: 28px !important; 
-        }
+        .large-text { font-size: 20px !important; }
+        .larger-text { font-size: 24px !important; }
+        .largest-text { font-size: 28px !important; }
         .dyslexia-font { 
             font-family: Arial !important; 
             font-size: 1.1em !important; 
@@ -184,11 +133,11 @@
         
         <div class="space-y-4">
             <div class="space-y-2">
-                <h4 class="font-medium">TamaÒo de texto</h4>
+                <h4 class="font-medium">Tama√±o de texto</h4>
                 <div class="flex gap-2">
                     <button onclick="setTextSize('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
                     <button onclick="setTextSize('large')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Grande</button>
-                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">M·s Grande</button>
+                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">M√°s Grande</button>
                 </div>
             </div>
             
@@ -232,6 +181,7 @@
     </button>
     
     <div class="flex h-screen overflow-hidden">
+        
         <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
             <div class="flex flex-col gap-8 p-6">
                 <div class="flex items-center gap-3">
@@ -244,7 +194,7 @@
                     </div>
                 </div>
                 
-                <nav class="flex flex-col gap-2" aria-label="NavegaciÛn principal">
+                <nav class="flex flex-col gap-2" aria-label="Navegaci√≥n principal">
                     <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
                        href="#" 
                        aria-current="page">
@@ -287,28 +237,14 @@
                 <a href="LogoutServlet" 
                    class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
                     <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
-                    <span>Cerrar SesiÛn</span>
+                    <span>Cerrar Sesi√≥n</span>
                 </a>
             </div>
         </aside>
         
         <main class="flex-1 flex flex-col overflow-y-auto">
             <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
-                <div class="flex items-center gap-4 flex-1">
-                    <form action="dashboard.jsp" method="get" class="w-full max-w-md">
-                        <label for="search-input" class="sr-only">Buscar</label>
-                        <div class="flex items-center bg-[#f0f2f4] dark:bg-gray-800 rounded-lg px-3 py-1.5 w-full">
-                            <span class="material-symbols-outlined text-[#616f89]" aria-hidden="true">search</span>
-                            <input id="search-input"
-                                   name="busqueda"
-                                   class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-[#616f89] dark:text-white" 
-                                   placeholder="Buscar grados, estudiantes, cursos..." 
-                                   type="text"
-                                   value="<%= busqueda != null ? busqueda : "" %>"
-                                   aria-label="Campo de b˙squeda"/>
-                        </div>
-                    </form>
-                </div>
+                <div class="flex-1"></div>
                 
                 <div class="flex items-center gap-4 ml-8">
                     <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
@@ -318,7 +254,7 @@
                     </button>
                     
                     <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                            aria-label="ConfiguraciÛn">
+                            aria-label="Configuraci√≥n">
                         <span class="material-symbols-outlined">settings</span>
                     </button>
                     
@@ -340,78 +276,72 @@
                 <div class="relative rounded-xl overflow-hidden min-h-[180px] bg-primary flex flex-col justify-center px-8 shadow-lg shadow-primary/20" 
                      style="background-image: linear-gradient(90deg, rgba(19, 91, 236, 0.95) 0%, rgba(19, 91, 236, 0.6) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuB_3LXerE1vpUAm_1-q-D4EMXN-i8c-idTTZtPpQ58USnatUubEWaEA7NNTJhGtxA9glVNSU_OMWawnGSq4XX5HQvmUwfenKc6i66zaj2YSDXBn3IKNZQ4rkpfpv8Dvq_7FB1vCbkRfa3B33h-wF109oSVddHtKvBQS_mmEBKEorF9YbpZ5S1_tjrrkkRqaIgmrorMQiVIBf6m59RTKJhwF44UqJ3IBTkBBl-ch6fp8z52Qm823GZAMO-ZKdgXwLhe_q9AMTD-k4rs'); background-size: cover; background-position: center;">
                     <h2 class="text-white text-3xl font-bold tracking-tight">Bienvenido de nuevo, Administrador</h2>
-                    <p class="text-blue-100 mt-2 max-w-md">AquÌ tienes el resumen de lo que est· sucediendo hoy en el Instituto San Antonio.</p>
+                    <p class="text-blue-100 mt-2 max-w-md">Aqu√≠ tienes el resumen de lo que est√° sucediendo hoy en el Instituto San Antonio.</p>
                 </div>
                 
-                <% if (busqueda != null && !busqueda.trim().isEmpty()) { %>
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-xl font-bold">Resultados de b˙squeda para "<%= busqueda %>"</h3>
-                            <a href="dashboard.jsp" class="text-primary hover:underline">Limpiar b˙squeda</a>
-                        </div>
-                        
-                        <% if (resultados.isEmpty()) { %>
-                            <p class="text-gray-500">No se encontraron grados que coincidan con tu b˙squeda.</p>
-                        <% } else { %>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <% for (Map<String, String> grado : resultados) { %>
-                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                        <h4 class="font-bold text-lg"><%= grado.get("nombre") %></h4>
-                                        <p class="text-gray-600 dark:text-gray-400">SecciÛn: <%= grado.get("seccion") %></p>
-                                        <p class="text-gray-600 dark:text-gray-400">Estudiantes: <%= grado.get("estudiantes") %></p>
-                                    </div>
-                                <% } %>
-                            </div>
-                        <% } %>
-                    </div>
-                <% } %>
-                
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
-                        <div class="flex justify-between items-start">
-                            <p class="text-[#616f89] text-sm font-medium">Total Estudiantes</p>
-                            <span class="material-symbols-outlined text-primary" aria-hidden="true">groups</span>
-                        </div>
-                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white"><%= totalEstudiantes %></h3>
-                        <div class="flex items-center gap-1 mt-2">
-                            <span class="text-[#07883b] text-sm font-semibold">Activos</span>
-                            <p class="text-[#616f89] text-xs">en el sistema</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
-                        <div class="flex justify-between items-start">
-                            <p class="text-[#616f89] text-sm font-medium">Profesores Activos</p>
-                            <span class="material-symbols-outlined text-primary" aria-hidden="true">school</span>
-                        </div>
-                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white"><%= totalProfesores %></h3>
-                        <div class="flex items-center gap-1 mt-2">
-                            <span class="text-[#07883b] text-sm font-semibold">Activos</span>
-                            <p class="text-[#616f89] text-xs">en el sistema</p>
+                    
+                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 p-6 text-white shadow-lg shadow-sky-300/50 hover:-translate-y-1 transition-all duration-300">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
+                        <div class="relative flex items-center justify-between">
+                            <div>
+                                <p class="text-sky-100 text-sm font-medium">Total Estudiantes</p>
+                                <h3 class="text-3xl font-bold mt-1"><%= totalEstudiantes %></h3>
+                                <div class="mt-2 inline-flex items-center rounded-full bg-white/20 px-2 py-1 text-xs backdrop-blur-sm">
+                                    <span class="mr-1">‚óè</span> Activos
+                                </div>
+                            </div>
+                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+                                <span class="material-symbols-outlined text-3xl">groups</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
-                        <div class="flex justify-between items-start">
-                            <p class="text-[#616f89] text-sm font-medium">Total Cursos</p>
-                            <span class="material-symbols-outlined text-orange-500" aria-hidden="true">book</span>
-                        </div>
-                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white"><%= totalCursos %></h3>
-                        <div class="flex items-center gap-1 mt-2">
-                            <span class="text-[#07883b] text-sm font-semibold">Activos</span>
-                            <p class="text-[#616f89] text-xs">en el sistema</p>
+                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 p-6 text-white shadow-lg shadow-sky-300/50 hover:-translate-y-1 transition-all duration-300">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
+                        <div class="relative flex items-center justify-between">
+                            <div>
+                                <p class="text-sky-100 text-sm font-medium">Profesores</p>
+                                <h3 class="text-3xl font-bold mt-1"><%= totalProfesores %></h3>
+                                <div class="mt-2 inline-flex items-center rounded-full bg-white/20 px-2 py-1 text-xs backdrop-blur-sm">
+                                    <span class="mr-1">‚óè</span> Activos
+                                </div>
+                            </div>
+                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+                                <span class="material-symbols-outlined text-3xl">school</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm flex flex-col gap-1">
-                        <div class="flex justify-between items-start">
-                            <p class="text-[#616f89] text-sm font-medium">Grados Activos</p>
-                            <span class="material-symbols-outlined text-purple-500" aria-hidden="true">layers</span>
+                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 p-6 text-white shadow-lg shadow-sky-300/50 hover:-translate-y-1 transition-all duration-300">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
+                        <div class="relative flex items-center justify-between">
+                            <div>
+                                <p class="text-sky-100 text-sm font-medium">Total Cursos</p>
+                                <h3 class="text-3xl font-bold mt-1"><%= totalCursos %></h3>
+                                <div class="mt-2 inline-flex items-center rounded-full bg-white/20 px-2 py-1 text-xs backdrop-blur-sm">
+                                    <span class="mr-1">‚óè</span> Registrados
+                                </div>
+                            </div>
+                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+                                <span class="material-symbols-outlined text-3xl">book</span>
+                            </div>
                         </div>
-                        <h3 class="text-2xl font-bold text-[#111318] dark:text-white"><%= totalGrados %></h3>
-                        <div class="flex items-center gap-1 mt-2">
-                            <span class="text-[#07883b] text-sm font-semibold">Activos</span>
-                            <p class="text-[#616f89] text-xs">en el sistema</p>
+                    </div>
+
+                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 p-6 text-white shadow-lg shadow-sky-300/50 hover:-translate-y-1 transition-all duration-300">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
+                        <div class="relative flex items-center justify-between">
+                            <div>
+                                <p class="text-sky-100 text-sm font-medium">Grados</p>
+                                <h3 class="text-3xl font-bold mt-1"><%= totalGrados %></h3>
+                                <div class="mt-2 inline-flex items-center rounded-full bg-white/20 px-2 py-1 text-xs backdrop-blur-sm">
+                                    <span class="mr-1">‚óè</span> Niveles
+                                </div>
+                            </div>
+                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+                                <span class="material-symbols-outlined text-3xl">layers</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -419,13 +349,13 @@
                 <h3 class="font-bold text-xl text-[#111318] dark:text-white mb-4">Accesos Directos</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-l-4 border-yellow-500 border-y border-r border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-yellow-500 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center" aria-hidden="true">
                                 <i class="fas fa-calendar-check text-yellow-600 dark:text-yellow-500 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">EvaluaciÛn de Disponibilidad</h3>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Evaluaci√≥n de Disponibilidad</h3>
                                 <p class="text-sm text-[#616f89] dark:text-gray-400">Revisar solicitudes pendientes</p>
                             </div>
                         </div>
@@ -433,14 +363,15 @@
                             <i class="fas fa-eye me-2"></i> Ver Solicitudes
                         </a>
                     </div>
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-blue-600 dark:border-blue-600 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center" aria-hidden="true">
                                 <i class="fas fa-user-graduate text-blue-600 dark:text-blue-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÛn de Alumnos</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar informaciÛn acadÈmica</p>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gesti√≥n de Alumnos</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar informaci√≥n acad√©mica</p>
                             </div>
                         </div>
                         <a href="AlumnoServlet" class="block w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-blue-500">
@@ -448,13 +379,13 @@
                         </a>
                     </div>
                     
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-green-600 dark:border-green-600 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center" aria-hidden="true">
                                 <i class="fas fa-chalkboard-teacher text-green-600 dark:text-green-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÛn de Profesores</h3>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gesti√≥n de Profesores</h3>
                                 <p class="text-sm text-[#616f89] dark:text-gray-400">Personal docente y asignaciones</p>
                             </div>
                         </div>
@@ -463,29 +394,29 @@
                         </a>
                     </div>
                     
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-purple-600 dark:border-purple-600 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
-                            <div class="size-12 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center" aria-hidden="true">
-                                <i class="fas fa-book text-orange-600 dark:text-orange-400 text-xl"></i>
+                            <div class="size-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center" aria-hidden="true">
+                                <i class="fas fa-book text-purple-600 dark:text-purple-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÛn de Cursos</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Configurar cursos acadÈmicos</p>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gesti√≥n de Cursos</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Configurar cursos acad√©micos</p>
                             </div>
                         </div>
-                        <a href="CursoServlet" class="block w-full py-3 bg-orange-600 hover:bg-orange-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-orange-500">
+                        <a href="CursoServlet" class="block w-full py-3 bg-purple-600 hover:bg-purple-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-purple-500">
                             Gestionar Cursos
                         </a>
                     </div>
                     
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-red-600 dark:border-red-600 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center" aria-hidden="true">
                                 <i class="fas fa-layer-group text-red-600 dark:text-red-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÛn de Grados</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar grados acadÈmicos</p>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gesti√≥n de Grados</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Administrar grados acad√©micos</p>
                             </div>
                         </div>
                         <a href="GradoServlet" class="block w-full py-3 bg-red-600 hover:bg-red-700 text-white text-center rounded-lg font-medium transition-colors focus:outline focus:outline-3 focus:outline-red-500">
@@ -493,13 +424,13 @@
                         </a>
                     </div>
                     
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-gray-600 dark:border-gray-600 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="size-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center" aria-hidden="true">
                                 <i class="fas fa-users-cog text-gray-600 dark:text-gray-400 text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">GestiÛn de Usuarios</h3>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Gesti√≥n de Usuarios</h3>
                                 <p class="text-sm text-[#616f89] dark:text-gray-400">Permisos y roles de acceso</p>
                             </div>
                         </div>
@@ -587,13 +518,6 @@
                 }
             }
         });
-        
-        // Auto-focus search input when search results are shown
-        <% if (busqueda != null && !busqueda.trim().isEmpty()) { %>
-            window.addEventListener('load', function() {
-                document.getElementById('search-input').focus();
-            });
-        <% } %>
     </script>
 </body>
 </html>

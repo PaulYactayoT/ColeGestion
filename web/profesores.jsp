@@ -512,7 +512,7 @@
                                     <th>Nombres</th>
                                     <th>Apellidos</th>
                                     <th>Correo</th>
-                                    <th>Área</th>
+                                    <th>Área Principal</th>
                                     <th>Nivel</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>

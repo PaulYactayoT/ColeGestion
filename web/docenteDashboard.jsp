@@ -49,7 +49,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel del Docente - San Antonio</title>
+    <title>Panel de Profesor - San Antonio</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
@@ -283,7 +283,7 @@
                     </div>
                     <div class="flex flex-col">
                         <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
-                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Panel del Docente</p>
+                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Panel de Profesor</p>
                     </div>
                 </div>
                 
@@ -333,7 +333,7 @@
                     <div class="flex items-center gap-3">
                         <h1 class="text-xl font-bold text-[#111318] dark:text-white">
                             <span class="material-symbols-outlined align-middle mr-2">speed</span>
-                            Panel del Docente
+                            Panel de Profesor
                         </h1>
                     </div>
                 </div>
@@ -360,7 +360,7 @@
                             <p class="text-sm font-medium text-[#111318] dark:text-white">
                                 <%= docente.getNombres()%> <%= docente.getApellidos()%>
                             </p>
-                            <p class="text-xs text-[#616f89] dark:text-gray-400">Docente</p>
+                            <p class="text-xs text-[#616f89] dark:text-gray-400">Profesor</p>
                         </div>
                         <% if (docente.getFoto() != null && !docente.getFoto().isEmpty()) { %>
                             <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
