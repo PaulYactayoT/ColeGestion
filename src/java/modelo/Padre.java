@@ -7,7 +7,8 @@ public class Padre {
     private String correo;
     private String dni;
     private String telefono;
-    private String foto; 
+    private String foto;      
+    private String alumnoFoto;
     private String rol;
     private String username;
     
@@ -38,6 +39,7 @@ public class Padre {
     public Integer getPersonaId() { 
         return this.id; 
     }
+    
     public String getNombres() { return nombres; }
     public void setNombres(String nombres) { this.nombres = nombres; }
     
@@ -57,8 +59,13 @@ public class Padre {
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
     
+    // Foto del padre
     public String getFoto() { return foto; } 
     public void setFoto(String foto) { this.foto = foto; }
+
+    // Foto del alumno (hijo)
+    public String getAlumnoFoto() { return alumnoFoto; }
+    public void setAlumnoFoto(String alumnoFoto) { this.alumnoFoto = alumnoFoto; }
 
     public String getRol() { return rol; }
     public void setRol(String rol) { this.rol = rol; }

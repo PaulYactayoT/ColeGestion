@@ -16,6 +16,13 @@ public class Alumno {
     private String codigoAlumno;
     private String estado;
     private LocalDate fechaIngreso;
+    private String foto;
+    
+    private int turnoId;
+    private String turnoNombre;
+    
+    private String gradoNivel;
+
     
     // Constructores
     public Alumno() {}
@@ -77,11 +84,21 @@ public class Alumno {
     public String getCodigoAlumno() { return codigoAlumno; }
     public void setCodigoAlumno(String codigoAlumno) { this.codigoAlumno = codigoAlumno; }
     
+    public String getFoto() { return foto; }
+    public void setFoto(String foto) { this.foto = foto; }
+    
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
     
     public LocalDate getFechaIngreso() { return fechaIngreso; }
     public void setFechaIngreso(LocalDate fechaIngreso) { this.fechaIngreso = fechaIngreso; }
+    
+    // NUEVO: Getters y Setters para turno
+    public int getTurnoId() { return turnoId; }
+    public void setTurnoId(int turnoId) { this.turnoId = turnoId; }
+    
+    public String getTurnoNombre() { return turnoNombre; }
+    public void setTurnoNombre(String turnoNombre) { this.turnoNombre = turnoNombre; }
     
     // Método auxiliar para obtener nombre completo
     public String getNombreCompleto() {
@@ -97,6 +114,9 @@ public class Alumno {
         return "Sin nombre";
     }
     
+    public String getGradoNivel() { return gradoNivel; }
+    public void setGradoNivel(String gradoNivel) { this.gradoNivel = gradoNivel; }
+
     /**
      * Setter para nombre completo (usado por AlumnoDAO)
      * Este método solo se usa para compatibilidad con el DAO

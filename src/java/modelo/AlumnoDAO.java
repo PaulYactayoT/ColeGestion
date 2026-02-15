@@ -73,18 +73,42 @@ public class AlumnoDAO {
                                  "-" + 
                                  String.format("%03d", personaId);
             
-            String sqlAlumno = "INSERT INTO alumno (persona_id, grado_id, codigo_alumno, " +
-                              "fecha_ingreso, estado, activo) " +
-                              "VALUES (?, ?, ?, CURDATE(), 'ACTIVO', 1)";
+            String sqlAlumno = "INSERT INTO alumno (persona_id, grado_id, turno_id, codigo_alumno, " +
+                              "foto, fecha_ingreso, estado, activo) " +
+                              "VALUES (?, ?, ?, ?, ?, CURDATE(), ?, 1)";
             
             psAlumno = con.prepareStatement(sqlAlumno);
             psAlumno.setInt(1, personaId);
             psAlumno.setInt(2, alumno.getGradoId());
-            psAlumno.setString(3, codigoAlumno);
             
+            // Insertar turno_id
+            if (alumno.getTurnoId() > 0) {
+                psAlumno.setInt(3, alumno.getTurnoId());
+            } else {
+                psAlumno.setNull(3, Types.INTEGER);
+            }
+            
+            psAlumno.setString(4, codigoAlumno);
+           
+            // Insertar foto
+            if (alumno.getFoto() != null && !alumno.getFoto().isEmpty()) {
+                psAlumno.setString(5, alumno.getFoto());
+            } else {
+                psAlumno.setNull(5, Types.VARCHAR);
+            }
+            
+            // Insertar estado
+            if (alumno.getEstado() != null && !alumno.getEstado().isEmpty()) {
+                psAlumno.setString(6, alumno.getEstado());
+            } else {
+                psAlumno.setString(6, "ACTIVO");
+            }
+
             int filasAlumno = psAlumno.executeUpdate();
-            
+
             con.commit(); // Confirmar transacción
+            
+            System.out.println("Alumno agregado correctamente - Turno ID: " + alumno.getTurnoId());
             return filasAlumno > 0;
             
         } catch (SQLException e) {
@@ -106,16 +130,117 @@ public class AlumnoDAO {
         }
     }
     
+    // Método para actualizar un alumno existente
+    public boolean actualizar(Alumno alumno) {
+        Connection con = null;
+        PreparedStatement psPersona = null;
+        PreparedStatement psAlumno = null;
+        
+        try {
+            con = Conexion.getConnection();
+            con.setAutoCommit(false);
+            
+            // 1. ACTUALIZAR TABLA PERSONA
+            String sqlPersona = "UPDATE persona SET nombres = ?, apellidos = ?, correo = ?, " +
+                               "telefono = ?, dni = ?, fecha_nacimiento = ?, direccion = ? " +
+                               "WHERE id = ?";
+            
+            psPersona = con.prepareStatement(sqlPersona);
+            psPersona.setString(1, alumno.getNombres());
+            psPersona.setString(2, alumno.getApellidos());
+            psPersona.setString(3, alumno.getCorreo());
+            
+            if (alumno.getTelefono() != null && !alumno.getTelefono().isEmpty()) {
+                psPersona.setString(4, alumno.getTelefono());
+            } else {
+                psPersona.setNull(4, Types.VARCHAR);
+            }
+            
+            if (alumno.getDni() != null && !alumno.getDni().isEmpty()) {
+                psPersona.setString(5, alumno.getDni());
+            } else {
+                psPersona.setNull(5, Types.VARCHAR);
+            }
+            
+            if (alumno.getFechaNacimiento() != null) {
+                psPersona.setDate(6, Date.valueOf(alumno.getFechaNacimiento()));
+            } else {
+                psPersona.setNull(6, Types.DATE);
+            }
+            
+            if (alumno.getDireccion() != null && !alumno.getDireccion().isEmpty()) {
+                psPersona.setString(7, alumno.getDireccion());
+            } else {
+                psPersona.setNull(7, Types.VARCHAR);
+            }
+            
+            psPersona.setInt(8, alumno.getPersonaId());
+            psPersona.executeUpdate();
+            
+            // 2. ACTUALIZAR TABLA ALUMNO
+            String sqlAlumno = "UPDATE alumno SET grado_id = ?, turno_id = ?, foto = ?, estado = ? WHERE id = ?";
+            
+            psAlumno = con.prepareStatement(sqlAlumno);
+            psAlumno.setInt(1, alumno.getGradoId());
+            
+            // Actualizar turno_id
+            if (alumno.getTurnoId() > 0) {
+                psAlumno.setInt(2, alumno.getTurnoId());
+            } else {
+                psAlumno.setNull(2, Types.INTEGER);
+            }
+            
+            // Actualizar foto
+            if (alumno.getFoto() != null && !alumno.getFoto().isEmpty()) {
+                psAlumno.setString(3, alumno.getFoto());
+            } else {
+                psAlumno.setNull(3, Types.VARCHAR);
+            }
+            
+            // Actualizar estado
+            if (alumno.getEstado() != null && !alumno.getEstado().isEmpty()) {
+                psAlumno.setString(4, alumno.getEstado());
+            } else {
+                psAlumno.setString(4, "ACTIVO");
+            }
+            
+            psAlumno.setInt(5, alumno.getId()); 
+            
+            int filas = psAlumno.executeUpdate();
+            
+            con.commit();
+            
+            System.out.println("Alumno actualizado correctamente - Turno ID: " + alumno.getTurnoId());
+            return filas > 0;
+            
+        } catch (SQLException e) {
+            try {
+                if (con != null) con.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            System.err.println("Error al actualizar alumno: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            try { if (psPersona != null) psPersona.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (psAlumno != null) psAlumno.close(); } catch (SQLException e) { e.printStackTrace(); }
+            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
+        }
+    }
+    
     // Método para listar todos los alumnos
     public List<Alumno> listar() {
         List<Alumno> lista = new ArrayList<>();
         String sql = "SELECT a.id, a.persona_id, p.nombres, p.apellidos, p.correo, " +
                      "p.dni, p.telefono, p.direccion, p.fecha_nacimiento, " +
-                     "a.grado_id, g.nombre as grado_nombre, " +
-                     "a.codigo_alumno, a.estado, a.fecha_ingreso " +
+                     "a.grado_id, g.nombre as grado_nombre, g.nivel as grado_nivel, " +
+                     "a.turno_id, t.nombre as turno_nombre, " +
+                     "a.codigo_alumno, a.foto, a.estado, a.fecha_ingreso " +
                      "FROM alumno a " +
                      "JOIN persona p ON a.persona_id = p.id " +
                      "LEFT JOIN grado g ON a.grado_id = g.id " +
+                     "LEFT JOIN turno t ON a.turno_id = t.id " +
                      "WHERE a.eliminado = 0 AND a.activo = 1 " +
                      "ORDER BY p.apellidos, p.nombres";
         
@@ -141,11 +266,13 @@ public class AlumnoDAO {
         List<Alumno> lista = new ArrayList<>();
         String sql = "SELECT a.id, a.persona_id, p.nombres, p.apellidos, p.correo, " +
                      "p.dni, p.telefono, p.direccion, p.fecha_nacimiento, " +
-                     "a.grado_id, g.nombre as grado_nombre, " +
-                     "a.codigo_alumno, a.estado, a.fecha_ingreso " +
+                     "a.grado_id, g.nombre as grado_nombre, g.nivel as grado_nivel, " +
+                     "a.turno_id, t.nombre as turno_nombre, " +
+                     "a.codigo_alumno, a.foto, a.estado, a.fecha_ingreso " +
                      "FROM alumno a " +
                      "JOIN persona p ON a.persona_id = p.id " +
                      "LEFT JOIN grado g ON a.grado_id = g.id " +
+                     "LEFT JOIN turno t ON a.turno_id = t.id " +
                      "WHERE a.grado_id = ? AND a.eliminado = 0 AND a.activo = 1 " +
                      "ORDER BY p.apellidos, p.nombres";
         
@@ -172,11 +299,13 @@ public class AlumnoDAO {
     public Alumno obtenerPorId(int id) {
         String sql = "SELECT a.id, a.persona_id, p.nombres, p.apellidos, p.correo, " +
                      "p.dni, p.telefono, p.direccion, p.fecha_nacimiento, " +
-                     "a.grado_id, g.nombre as grado_nombre, " +
-                     "a.codigo_alumno, a.estado, a.fecha_ingreso " +
+                     "a.grado_id, g.nombre as grado_nombre, g.nivel as grado_nivel, " +
+                     "a.turno_id, t.nombre as turno_nombre, " +
+                     "a.codigo_alumno, a.foto, a.estado, a.fecha_ingreso " +
                      "FROM alumno a " +
                      "JOIN persona p ON a.persona_id = p.id " +
                      "LEFT JOIN grado g ON a.grado_id = g.id " +
+                     "LEFT JOIN turno t ON a.turno_id = t.id " +
                      "WHERE a.id = ? AND a.eliminado = 0";
         
         try (Connection con = Conexion.getConnection();
@@ -197,85 +326,7 @@ public class AlumnoDAO {
         return null;
     }
     
-    // Método para actualizar alumno
-    public boolean actualizar(Alumno alumno) {
-        Connection con = null;
-        PreparedStatement psPersona = null;
-        PreparedStatement psAlumno = null;
-        
-        try {
-            con = Conexion.getConnection();
-            con.setAutoCommit(false);
-            
-            // 1. Actualizar tabla PERSONA
-            String sqlPersona = "UPDATE persona SET nombres = ?, apellidos = ?, correo = ?, " +
-                               "dni = ?, telefono = ?, direccion = ?, fecha_nacimiento = ? " +
-                               "WHERE id = ?";
-            
-            psPersona = con.prepareStatement(sqlPersona);
-            psPersona.setString(1, alumno.getNombres());
-            psPersona.setString(2, alumno.getApellidos());
-            psPersona.setString(3, alumno.getCorreo());
-            
-            // Campos opcionales
-            if (alumno.getDni() != null && !alumno.getDni().isEmpty()) {
-                psPersona.setString(4, alumno.getDni());
-            } else {
-                psPersona.setNull(4, Types.VARCHAR);
-            }
-            
-            if (alumno.getTelefono() != null && !alumno.getTelefono().isEmpty()) {
-                psPersona.setString(5, alumno.getTelefono());
-            } else {
-                psPersona.setNull(5, Types.VARCHAR);
-            }
-            
-            if (alumno.getDireccion() != null && !alumno.getDireccion().isEmpty()) {
-                psPersona.setString(6, alumno.getDireccion());
-            } else {
-                psPersona.setNull(6, Types.VARCHAR);
-            }
-            
-            if (alumno.getFechaNacimiento() != null) {
-                psPersona.setDate(7, Date.valueOf(alumno.getFechaNacimiento()));
-            } else {
-                psPersona.setNull(7, Types.DATE);
-            }
-            
-            psPersona.setInt(8, alumno.getPersonaId());
-            
-            int filasPersona = psPersona.executeUpdate();
-            
-            // 2. Actualizar tabla ALUMNO
-            String sqlAlumno = "UPDATE alumno SET grado_id = ? WHERE id = ?";
-            
-            psAlumno = con.prepareStatement(sqlAlumno);
-            psAlumno.setInt(1, alumno.getGradoId());
-            psAlumno.setInt(2, alumno.getId());
-            
-            int filasAlumno = psAlumno.executeUpdate();
-            
-            con.commit();
-            return (filasPersona > 0 && filasAlumno > 0);
-            
-        } catch (SQLException e) {
-            try {
-                if (con != null) con.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-            System.err.println("Error al actualizar alumno: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        } finally {
-            // Cerrar recursos
-            try { if (psPersona != null) psPersona.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (psAlumno != null) psAlumno.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
-        }
-    }
-    
-    // Método para eliminar alumno (eliminación lógica)
+    // Método para eliminar (borrado lógico)
     public boolean eliminar(int id) {
         String sql = "UPDATE alumno SET eliminado = 1, activo = 0 WHERE id = ?";
         
@@ -283,7 +334,8 @@ public class AlumnoDAO {
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
+            int filas = ps.executeUpdate();
+            return filas > 0;
             
         } catch (SQLException e) {
             System.err.println("Error al eliminar alumno: " + e.getMessage());
@@ -295,8 +347,26 @@ public class AlumnoDAO {
     // Método auxiliar para mapear ResultSet a objeto Alumno
     private Alumno mapearResultSet(ResultSet rs) throws SQLException {
         Alumno a = new Alumno();
+        
+        // Datos de alumno
         a.setId(rs.getInt("id"));
         a.setPersonaId(rs.getInt("persona_id"));
+        a.setGradoId(rs.getInt("grado_id"));
+        a.setTurnoId(rs.getInt("turno_id"));
+        
+        a.setCodigoAlumno(rs.getString("codigo_alumno"));
+        a.setFoto(rs.getString("foto")); 
+        a.setEstado(rs.getString("estado"));
+        
+        // Fechas
+        if (rs.getDate("fecha_ingreso") != null) {
+            a.setFechaIngreso(rs.getDate("fecha_ingreso").toLocalDate());
+        }
+        if (rs.getDate("fecha_nacimiento") != null) {
+            a.setFechaNacimiento(rs.getDate("fecha_nacimiento").toLocalDate());
+        }
+        
+        // Datos de persona
         a.setNombres(rs.getString("nombres"));
         a.setApellidos(rs.getString("apellidos"));
         a.setCorreo(rs.getString("correo"));
@@ -304,48 +374,37 @@ public class AlumnoDAO {
         a.setTelefono(rs.getString("telefono"));
         a.setDireccion(rs.getString("direccion"));
         
-        java.sql.Date fechaNac = rs.getDate("fecha_nacimiento");
-        if (fechaNac != null) {
-            a.setFechaNacimiento(fechaNac.toLocalDate());
-        }
-        
-        a.setGradoId(rs.getInt("grado_id"));
+        // Grado
         a.setGradoNombre(rs.getString("grado_nombre"));
-        a.setCodigoAlumno(rs.getString("codigo_alumno"));
-        a.setEstado(rs.getString("estado"));
+        a.setGradoNivel(rs.getString("grado_nivel"));
         
-        java.sql.Date fechaIng = rs.getDate("fecha_ingreso");
-        if (fechaIng != null) {
-            a.setFechaIngreso(fechaIng.toLocalDate());
-        }
+        // Turno
+        a.setTurnoNombre(rs.getString("turno_nombre"));
         
         return a;
     }
     
-    // Método mejorado para obtener alumnos por curso usando la tabla matricula
+    // Método para obtener alumnos por curso (para asistencias/notas)
     public List<Alumno> obtenerAlumnosPorCurso(int cursoId) {
         List<Alumno> lista = new ArrayList<>();
         
-        String sql = "SELECT DISTINCT a.id, a.persona_id, p.nombres, p.apellidos, " +
-                     "a.codigo_alumno, g.nombre as grado_nombre, g.nivel, " +
-                     "p.correo, p.dni, p.telefono " +
+        String sql = "SELECT DISTINCT a.id, a.persona_id, p.nombres, p.apellidos, p.correo, " +
+                     "p.dni, p.telefono, p.direccion, p.fecha_nacimiento, " +
+                     "a.grado_id, g.nombre as grado_nombre, " +
+                     "a.codigo_alumno, a.estado " +
                      "FROM alumno a " +
                      "JOIN persona p ON a.persona_id = p.id " +
                      "JOIN grado g ON a.grado_id = g.id " +
-                     "JOIN curso c ON g.id = c.grado_id " +
-                     "JOIN matricula m ON a.id = m.alumno_id AND c.id = m.curso_id " +
-                     "WHERE c.id = ? AND a.eliminado = 0 AND a.activo = 1 " +
-                     "AND p.eliminado = 0 AND p.activo = 1 " +
-                     "AND c.eliminado = 0 AND c.activo = 1 " +
-                     "AND m.estado = 'INSCRITO' " +
+                     "JOIN curso c ON c.grado_id = a.grado_id " +
+                     "WHERE c.id = ? " +
+                     "AND a.eliminado = 0 AND a.activo = 1 " +
+                     "AND c.activo = 1 " +
                      "ORDER BY p.apellidos, p.nombres";
         
         try (Connection con = Conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             
             ps.setInt(1, cursoId);
-            System.out.println("Buscando alumnos para curso ID: " + cursoId);
-            
             ResultSet rs = ps.executeQuery();
             
             while (rs.next()) {
@@ -357,14 +416,19 @@ public class AlumnoDAO {
                 a.setCorreo(rs.getString("correo"));
                 a.setDni(rs.getString("dni"));
                 a.setTelefono(rs.getString("telefono"));
+                a.setDireccion(rs.getString("direccion"));
+                
+                if (rs.getDate("fecha_nacimiento") != null) {
+                    a.setFechaNacimiento(rs.getDate("fecha_nacimiento").toLocalDate());
+                }
+                
+                a.setGradoId(rs.getInt("grado_id"));
+                a.setGradoNombre(rs.getString("grado_nombre"));
                 a.setCodigoAlumno(rs.getString("codigo_alumno"));
-                a.setGradoNombre(rs.getString("grado_nombre") + " - " + rs.getString("nivel"));
+                a.setEstado(rs.getString("estado"));
                 
                 lista.add(a);
-                System.out.println("Alumno encontrado: " + a.getNombres() + " " + a.getApellidos());
             }
-            
-            System.out.println("Total alumnos encontrados para curso " + cursoId + ": " + lista.size());
             
         } catch (SQLException e) {
             System.err.println("Error al obtener alumnos por curso: " + e.getMessage());
@@ -413,151 +477,136 @@ public class AlumnoDAO {
         return lista;
     }
     
-     /**
+    /**
      * OBTENER ALUMNO POR ID (Alias para obtenerPorId)
-     * Este método es llamado desde justificarAusencia.jsp
      */
     public Alumno obtenerAlumnoPorId(int id) {
         return obtenerPorId(id);
     }
     
     /**
-    * OBTENER ALUMNO POR ID DEL PADRE (usando relacion_familiar)
-    * 
-    * @param padrePersonaId ID de la persona del padre/madre/tutor
-    * @return Objeto Alumno o null si no se encuentra
-    */
-    
-   
-   /**
- * MÉTODO PARA AGREGAR A AlumnoDAO.java
- * OBTENER ALUMNO POR ID DEL PADRE
- */
-
-public Alumno obtenerAlumnoPorPadreId(int padreId) {
-    String sql = "SELECT a.*, " +
-                 "CONCAT(p.nombres, ' ', p.apellidos) as nombre_completo, " +
-                 "g.nombre as grado_nombre, " +
-                 "g.nivel as grado_nivel " +
-                 "FROM alumno a " +
-                 "INNER JOIN persona p ON a.persona_id = p.id " +
-                 "INNER JOIN relacion_familiar rf ON a.id = rf.alumno_id " +
-                 "LEFT JOIN grado g ON a.grado_id = g.id " +
-                 "WHERE rf.persona_id = ? " +
-                 "AND rf.parentesco IN ('PADRE', 'MADRE', 'TUTOR') " +
-                 "AND a.activo = 1 " +
-                 "AND a.eliminado = 0 " +
-                 "AND rf.activo = 1 " +
-                 "AND rf.eliminado = 0 " +
-                 "LIMIT 1";
-    
-    try (Connection con = Conexion.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
+     * OBTENER ALUMNO POR ID DEL PADRE
+     */
+    public Alumno obtenerAlumnoPorPadreId(int padreId) {
+        String sql = "SELECT a.*, " +
+                     "CONCAT(p.nombres, ' ', p.apellidos) as nombre_completo, " +
+                     "g.nombre as grado_nombre, " +
+                     "g.nivel as grado_nivel " +
+                     "FROM alumno a " +
+                     "INNER JOIN persona p ON a.persona_id = p.id " +
+                     "INNER JOIN relacion_familiar rf ON a.id = rf.alumno_id " +
+                     "LEFT JOIN grado g ON a.grado_id = g.id " +
+                     "WHERE rf.persona_id = ? " +
+                     "AND rf.parentesco IN ('PADRE', 'MADRE', 'TUTOR') " +
+                     "AND a.activo = 1 " +
+                     "AND a.eliminado = 0 " +
+                     "AND rf.activo = 1 " +
+                     "AND rf.eliminado = 0 " +
+                     "LIMIT 1";
         
-        ps.setInt(1, padreId);
-        
-        System.out.println("🔍 Buscando alumno para padreId: " + padreId);
-        
-        ResultSet rs = ps.executeQuery();
-        
-        if (rs.next()) {
-            Alumno alumno = new Alumno();
-            alumno.setId(rs.getInt("id"));
-            alumno.setPersonaId(rs.getInt("persona_id"));
-            alumno.setGradoId(rs.getInt("grado_id"));
-            alumno.setCodigoAlumno(rs.getString("codigo_alumno"));
-            alumno.setEstado(rs.getString("estado"));
-            alumno.setNombreCompleto(rs.getString("nombre_completo"));
-            alumno.setGradoNombre(rs.getString("grado_nombre"));
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
             
-            System.out.println("✅ Alumno encontrado: " + alumno.getNombreCompleto());
+            ps.setInt(1, padreId);
             
-            return alumno;
-        } else {
-            System.out.println("❌ No se encontró alumno para padreId: " + padreId);
+            System.out.println("Buscando alumno para padreId: " + padreId);
+            
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                Alumno alumno = new Alumno();
+                alumno.setId(rs.getInt("id"));
+                alumno.setPersonaId(rs.getInt("persona_id"));
+                alumno.setGradoId(rs.getInt("grado_id"));
+                alumno.setCodigoAlumno(rs.getString("codigo_alumno"));
+                alumno.setEstado(rs.getString("estado"));
+                alumno.setNombreCompleto(rs.getString("nombre_completo"));
+                alumno.setGradoNombre(rs.getString("grado_nombre"));
+                
+                System.out.println("Alumno encontrado: " + alumno.getNombreCompleto());
+                
+                return alumno;
+            } else {
+                System.out.println("No se encontró alumno para padreId: " + padreId);
+            }
+            
+        } catch (SQLException e) {
+            System.out.println("Error al obtener alumno por padre: " + e.getMessage());
+            e.printStackTrace();
         }
         
-    } catch (SQLException e) {
-        System.out.println("❌ Error al obtener alumno por padre: " + e.getMessage());
-        e.printStackTrace();
+        return null;
     }
-    
-    return null;
-}
 
-   /**
-    * OBTENER LISTA DE HIJOS POR PADRE (usando relacion_familiar)
-    * Retorna todos los alumnos asociados a un padre/madre/tutor
-    * 
-    * @param padrePersonaId ID de la persona del padre/madre/tutor
-    * @return Lista de alumnos (hijos del padre)
-    */
-   public List<Alumno> obtenerHijosPorPadre(int padrePersonaId) {
-       List<Alumno> lista = new ArrayList<>();
+    /**
+     * OBTENER LISTA DE HIJOS POR PADRE
+     */
+    public List<Alumno> obtenerHijosPorPadre(int padrePersonaId) {
+        List<Alumno> lista = new ArrayList<>();
 
-       String sql = "SELECT a.id, a.persona_id, a.grado_id, a.codigo_alumno, " +
-                    "a.fecha_ingreso, a.estado, " +
-                    "p.nombres, p.apellidos, p.correo, p.dni, p.telefono, " +
-                    "p.direccion, p.fecha_nacimiento, " +
-                    "g.nombre as grado_nombre, " +
-                    "rf.parentesco, rf.es_contacto_principal " +
-                    "FROM alumno a " +
-                    "INNER JOIN persona p ON a.persona_id = p.id " +
-                    "LEFT JOIN grado g ON a.grado_id = g.id " +
-                    "INNER JOIN relacion_familiar rf ON a.id = rf.alumno_id " +
-                    "WHERE rf.persona_id = ? " +
-                    "AND rf.activo = 1 " +
-                    "AND rf.eliminado = 0 " +
-                    "AND a.activo = 1 " +
-                    "AND a.eliminado = 0 " +
-                    "ORDER BY rf.es_contacto_principal DESC, p.apellidos, p.nombres";
+        String sql = "SELECT a.id, a.persona_id, a.grado_id, a.codigo_alumno, " +
+                     "a.fecha_ingreso, a.estado, " +
+                     "p.nombres, p.apellidos, p.correo, p.dni, p.telefono, " +
+                     "p.direccion, p.fecha_nacimiento, " +
+                     "g.nombre as grado_nombre, " +
+                     "rf.parentesco, rf.es_contacto_principal " +
+                     "FROM alumno a " +
+                     "INNER JOIN persona p ON a.persona_id = p.id " +
+                     "LEFT JOIN grado g ON a.grado_id = g.id " +
+                     "INNER JOIN relacion_familiar rf ON a.id = rf.alumno_id " +
+                     "WHERE rf.persona_id = ? " +
+                     "AND rf.activo = 1 " +
+                     "AND rf.eliminado = 0 " +
+                     "AND a.activo = 1 " +
+                     "AND a.eliminado = 0 " +
+                     "ORDER BY rf.es_contacto_principal DESC, p.apellidos, p.nombres";
 
-       try (Connection con = Conexion.getConnection();
-            PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-           ps.setInt(1, padrePersonaId);
-           ResultSet rs = ps.executeQuery();
+            ps.setInt(1, padrePersonaId);
+            ResultSet rs = ps.executeQuery();
 
-           while (rs.next()) {
-               Alumno alumno = new Alumno();
+            while (rs.next()) {
+                Alumno alumno = new Alumno();
 
-               // Datos de alumno
-               alumno.setId(rs.getInt("id"));
-               alumno.setPersonaId(rs.getInt("persona_id"));
-               alumno.setGradoId(rs.getInt("grado_id"));
-               alumno.setCodigoAlumno(rs.getString("codigo_alumno"));
-               alumno.setEstado(rs.getString("estado"));
+                // Datos de alumno
+                alumno.setId(rs.getInt("id"));
+                alumno.setPersonaId(rs.getInt("persona_id"));
+                alumno.setGradoId(rs.getInt("grado_id"));
+                alumno.setCodigoAlumno(rs.getString("codigo_alumno"));
+                alumno.setEstado(rs.getString("estado"));
 
-               // Fechas
-               if (rs.getDate("fecha_ingreso") != null) {
-                   alumno.setFechaIngreso(rs.getDate("fecha_ingreso").toLocalDate());
-               }
-               if (rs.getDate("fecha_nacimiento") != null) {
-                   alumno.setFechaNacimiento(rs.getDate("fecha_nacimiento").toLocalDate());
-               }
+                // Fechas
+                if (rs.getDate("fecha_ingreso") != null) {
+                    alumno.setFechaIngreso(rs.getDate("fecha_ingreso").toLocalDate());
+                }
+                if (rs.getDate("fecha_nacimiento") != null) {
+                    alumno.setFechaNacimiento(rs.getDate("fecha_nacimiento").toLocalDate());
+                }
 
-               // Datos de persona
-               alumno.setNombres(rs.getString("nombres"));
-               alumno.setApellidos(rs.getString("apellidos"));
-               alumno.setCorreo(rs.getString("correo"));
-               alumno.setDni(rs.getString("dni"));
-               alumno.setTelefono(rs.getString("telefono"));
-               alumno.setDireccion(rs.getString("direccion"));
+                // Datos de persona
+                alumno.setNombres(rs.getString("nombres"));
+                alumno.setApellidos(rs.getString("apellidos"));
+                alumno.setCorreo(rs.getString("correo"));
+                alumno.setDni(rs.getString("dni"));
+                alumno.setTelefono(rs.getString("telefono"));
+                alumno.setDireccion(rs.getString("direccion"));
 
-               // Grado
-               alumno.setGradoNombre(rs.getString("grado_nombre"));
+                // Grado
+                alumno.setGradoNombre(rs.getString("grado_nombre"));
 
-               lista.add(alumno);
-           }
+                lista.add(alumno);
+            }
 
-           System.out.println("✅ Hijos encontrados para padre " + padrePersonaId + ": " + lista.size());
+            System.out.println("Hijos encontrados para padre " + padrePersonaId + ": " + lista.size());
 
-       } catch (SQLException e) {
-           System.err.println("❌ Error al obtener hijos por padre: " + e.getMessage());
-           e.printStackTrace();
-       }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener hijos por padre: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-       return lista;
-   }
+        return lista;
+    }
 
 }

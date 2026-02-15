@@ -1,9 +1,15 @@
 package controlador;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.*;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -11,6 +17,11 @@ import modelo.Alumno;
 import modelo.AlumnoDAO;
 import modelo.GradoDAO;
 
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
+    maxFileSize = 1024 * 1024 * 10,       // 10MB
+    maxRequestSize = 1024 * 1024 * 50     // 50MB
+)
 public class AlumnoServlet extends HttpServlet {
 
     // DAO para operaciones con la tabla de alumnos
@@ -129,6 +140,18 @@ public class AlumnoServlet extends HttpServlet {
                         response.sendRedirect("AlumnoServlet");
                     }
                     break;
+                case "ver":
+                    // Ver detalle del alumno
+                    int idVer = Integer.parseInt(request.getParameter("id"));
+                    Alumno alumnoDetalle = dao.obtenerPorId(idVer);
+                    if (alumnoDetalle != null) {
+                        request.setAttribute("alumno", alumnoDetalle);
+                        request.getRequestDispatcher("alumnoDetalle.jsp").forward(request, response);
+                    } else {
+                        session.setAttribute("error", "Alumno no encontrado");
+                        response.sendRedirect("AlumnoServlet");
+                    }
+                    break;
 
                 case "eliminar":
                     // Eliminar alumno del sistema
@@ -209,6 +232,38 @@ public class AlumnoServlet extends HttpServlet {
                 }
             }
             
+            // NUEVO: Capturar turno_id desde el formulario
+            String turnoIdStr = request.getParameter("turno_id");
+            if (turnoIdStr != null && !turnoIdStr.isEmpty()) {
+                a.setTurnoId(Integer.parseInt(turnoIdStr));
+                System.out.println("Turno ID capturado: " + turnoIdStr);
+            }
+            
+            // NUEVO: Capturar estado desde el formulario
+            String estado = request.getParameter("estado");
+            if (estado != null && !estado.isEmpty()) {
+                a.setEstado(estado);
+                System.out.println("Estado capturado: " + estado);
+            } else {
+                // Si no viene estado, establecer ACTIVO por defecto
+                a.setEstado("ACTIVO");
+            }
+            
+            // NUEVO: Procesar foto si se subió
+            Part fotoPart = request.getPart("foto");
+            if (fotoPart != null && fotoPart.getSize() > 0) {
+                String nombreArchivo = guardarFoto(fotoPart, request);
+                if (nombreArchivo != null) {
+                    a.setFoto(nombreArchivo);
+                    System.out.println("Foto guardada: " + nombreArchivo);
+                }
+            } else if (id > 0) {  // Si estamos EDITANDO (id > 0) y no se subió nueva foto
+                Alumno alumnoExistente = dao.obtenerPorId(id);
+                if (alumnoExistente != null && alumnoExistente.getFoto() != null) {
+                    a.setFoto(alumnoExistente.getFoto());
+                }
+            }
+            
             a.setGradoId(Integer.parseInt(request.getParameter("grado_id")));
 
             // Validar datos obligatorios
@@ -232,7 +287,7 @@ public class AlumnoServlet extends HttpServlet {
             // Ejecutar operación en base de datos
             boolean resultado;
             if (id == 0) {
-                System.out.println("Creando nuevo alumno: " + a.getNombres() + " " + a.getApellidos());
+                System.out.println("Creando nuevo alumno: " + a.getNombres() + " " + a.getApellidos() + " - Turno ID: " + a.getTurnoId());
                 resultado = dao.agregar(a);
                 if (resultado) {
                     System.out.println("Nuevo alumno creado por admin: " + a.getNombres() + " " + a.getApellidos());
@@ -246,7 +301,7 @@ public class AlumnoServlet extends HttpServlet {
                 if (alumnoExistente != null) {
                     a.setId(id);
                     a.setPersonaId(alumnoExistente.getPersonaId()); // IMPORTANTE: setear persona_id
-                    System.out.println("Actualizando alumno ID " + id + ": " + a.getNombres() + " " + a.getApellidos());
+                    System.out.println("Actualizando alumno ID " + id + ": " + a.getNombres() + " " + a.getApellidos() + " - Turno ID: " + a.getTurnoId());
                     resultado = dao.actualizar(a);
                     if (resultado) {
                         System.out.println("Alumno actualizado por admin: " + a.getNombres() + " " + a.getApellidos());
@@ -405,5 +460,53 @@ public class AlumnoServlet extends HttpServlet {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");
+    }
+    
+    /**
+     * MÉTODO PARA GUARDAR FOTO DEL ALUMNO
+     */
+    private String guardarFoto(Part fotoPart, HttpServletRequest request) {
+        try {
+            // Obtener nombre original del archivo
+            String nombreOriginal = Paths.get(fotoPart.getSubmittedFileName()).getFileName().toString();
+            
+            // Validar extensión
+            String extension = "";
+            int i = nombreOriginal.lastIndexOf('.');
+            if (i > 0) {
+                extension = nombreOriginal.substring(i);
+            }
+            
+            if (!extension.matches("\\.(jpg|jpeg|png|gif|webp)")) {
+                System.out.println("Formato de imagen no válido: " + extension);
+                return null;
+            }
+            
+            // Generar nombre único
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            String nombreArchivo = "alumno_" + timestamp + extension;
+            
+            // Ruta donde se guardará (webapp/uploads)
+            String uploadPath = request.getServletContext().getRealPath("") + File.separator + "uploads";
+            
+            // Crear directorio si no existe
+            File uploadDir = new File(uploadPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+            
+            // Guardar archivo
+            Path rutaArchivo = Paths.get(uploadPath + File.separator + nombreArchivo);
+            Files.copy(fotoPart.getInputStream(), rutaArchivo, StandardCopyOption.REPLACE_EXISTING);
+            
+            System.out.println("Foto guardada en: " + rutaArchivo.toString());
+            
+            return nombreArchivo;
+            
+        } catch (Exception e) {
+            System.err.println(" Error al guardar foto: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 }

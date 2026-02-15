@@ -8,6 +8,7 @@ public class PadreDAO {
     
     public Padre obtenerPorUsername(String username) {
         Padre padre = null;
+        // ✅ AGREGADO: pa.foto as alumno_foto para obtener la foto del hijo (alumno)
         String sql = """
             SELECT 
                 p.id as persona_id,
@@ -24,6 +25,7 @@ public class PadreDAO {
                 rf.es_contacto_principal,
                 a.codigo_alumno,
                 a.estado as alumno_estado,
+                a.foto as alumno_foto,
                 CONCAT(pa.nombres, ' ', pa.apellidos) as alumno_nombre_completo,
                 g.nombre as grado_nombre,
                 g.nivel as grado_nivel
@@ -65,6 +67,9 @@ public class PadreDAO {
                     padre.setAlumnoNombre(rs.getString("alumno_nombre_completo"));
                     padre.setGradoNombre(rs.getString("grado_nombre"));
                     
+                    // ✅ NUEVO: guardar la foto del alumno (hijo)
+                    padre.setAlumnoFoto(rs.getString("alumno_foto"));
+                    
                     // Información de la relación familiar
                     padre.setParentesco(rs.getString("parentesco"));
                     padre.setEsContactoPrincipal(rs.getBoolean("es_contacto_principal"));
@@ -86,6 +91,7 @@ public class PadreDAO {
             SELECT 
                 a.id as alumno_id,
                 a.codigo_alumno,
+                a.foto as alumno_foto,
                 CONCAT(pa.nombres, ' ', pa.apellidos) as alumno_nombre,
                 g.nombre as grado_nombre,
                 g.nivel as grado_nivel,
@@ -114,6 +120,7 @@ public class PadreDAO {
                     hijo.put("alumno_id", rs.getInt("alumno_id"));
                     hijo.put("codigo_alumno", rs.getString("codigo_alumno"));
                     hijo.put("alumno_nombre", rs.getString("alumno_nombre"));
+                    hijo.put("alumno_foto", rs.getString("alumno_foto")); // ✅ NUEVO
                     hijo.put("grado_nombre", rs.getString("grado_nombre"));
                     hijo.put("grado_nivel", rs.getString("grado_nivel"));
                     hijo.put("parentesco", rs.getString("parentesco"));

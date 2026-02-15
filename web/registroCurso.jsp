@@ -29,7 +29,11 @@
     String error = (String) session.getAttribute("error");
     session.removeAttribute("mensaje");
     session.removeAttribute("error");
+    
+    // Título para el header dinámico
+    request.setAttribute("pageTitle", "Registro de Curso");
 %>
+
 <!DOCTYPE html>
 <html class="light" lang="es">
 <head>
@@ -37,39 +41,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Curso - Sistema Escolar</title>
     
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <%-- ✅ Incluir HEAD común (Tailwind, fuentes, estilos globales) --%>
+    <%@ include file="includes/head.jsp" %>
+    
+    <!-- SweetAlert2 para modales -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#135bec",
-                        "primary-dark": "#0d47a1",
-                        "success": "#10b981",
-                        "danger": "#ef4444",
-                        "warning": "#f59e0b",
-                        "info": "#3b82f6",
-                    },
-                    fontFamily: {
-                        "display": ["Lexend"]
-                    },
-                },
-            },
-        }
-    </script>
-    
     <style>
-        body { font-family: 'Lexend', sans-serif; }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        
         /* =========================================
            DISEÑO MODELO 1: GLASS & GRADIENT (MODIFICADO)
            ========================================= */
@@ -184,28 +162,6 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         
-        /* Alertas */
-        .alert-modern {
-            border-radius: 0.75rem;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-left: 4px solid;
-        }
-        .alert-danger {
-            background: linear-gradient(135deg, #fee2e2, #fecaca);
-            color: #991b1b;
-            border-left-color: #ef4444;
-        }
-        .alert-success {
-            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-            color: #065f46;
-            border-left-color: #10b981;
-        }
-        
         /* Títulos y Pasos */
         .section-title {
             color: #135bec;
@@ -231,77 +187,17 @@
         }
     </style>
 </head>
-<body class="bg-[#f6f6f8] text-[#111318] min-h-screen">
+<body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen">
     
     <div class="flex h-screen overflow-hidden">
-        <aside class="w-64 flex-shrink-0 bg-white border-r border-[#dbdfe6] flex flex-col justify-between">
-            <div class="flex flex-col gap-8 p-6">
-                <div class="flex items-center gap-3">
-                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white">
-                        <span class="material-symbols-outlined">school</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <h1 class="text-[#111318] text-lg font-bold">San Antonio</h1>
-                        <p class="text-[#616f89] text-xs">Gestión Académica</p>
-                    </div>
-                </div>
-                
-                <nav class="flex flex-col gap-2">
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100" 
-                       href="dashboard.jsp">
-                        <span class="material-symbols-outlined">dashboard</span>
-                        <span class="text-sm">Dashboard</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100" 
-                       href="AlumnoServlet">
-                        <i class="fas fa-user-graduate"></i>
-                        <span class="text-sm">Estudiantes</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100" 
-                       href="ProfesorServlet">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <span class="text-sm">Profesores</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
-                       href="CursoServlet">
-                        <i class="fas fa-book"></i>
-                        <span class="text-sm">Cursos</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100" 
-                       href="GradoServlet">
-                        <i class="fas fa-layer-group"></i>
-                        <span class="text-sm">Grados</span>
-                    </a>
-                </nav>
-            </div>
-            
-            <div class="p-6 border-t border-[#dbdfe6]">
-                <a href="LogoutServlet" 
-                   class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold hover:bg-blue-700">
-                    <span class="material-symbols-outlined text-[18px]">logout</span>
-                    <span>Cerrar Sesión</span>
-                </a>
-            </div>
-        </aside>
+        
+        <%-- ✅ SIDEBAR: barra lateral con navegación y roles --%>
+        <%@ include file="includes/sidebar.jsp" %>
         
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <header class="flex items-center justify-between bg-white border-b border-[#f0f2f4] px-8 py-3 sticky top-0 z-10">
-                <div class="flex items-center gap-4 flex-1">
-                    <h1 class="text-xl font-bold text-[#111318]">Registro de Curso</h1>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                    <button class="p-2 text-[#616f89] hover:bg-gray-100 rounded-lg">
-                        <span class="material-symbols-outlined">notifications</span>
-                    </button>
-                    <div class="flex items-center gap-3">
-                        <p class="text-sm font-medium"><%= session.getAttribute("usuario") %></p>
-                        <div class="size-10 rounded-full bg-primary flex items-center justify-center text-white">
-                            <%= session.getAttribute("usuario").toString().substring(0,1).toUpperCase() %>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            
+            <%-- ✅ HEADER: barra superior con foto dinámica del usuario --%>
+            <%@ include file="includes/header.jsp" %>
             
             <div class="p-8">
                 <% if (error != null) { %>
@@ -322,7 +218,7 @@
                     <div class="bg-primary h-2.5 rounded-full transition-all duration-500" style="width: 20%" id="progressBar"></div>
                 </div>
 
-                <div class="bg-white rounded-xl border border-[#dbdfe6] shadow-sm p-6">
+                <div class="bg-white dark:bg-card-dark rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm p-6">
                     <form id="formRegistroCurso" action="RegistroCursoServlet" method="post">
                         <input type="hidden" name="accion" value="registrar">
                         
@@ -334,7 +230,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Nivel Educativo <span class="text-red-600">*</span></label>
-                                    <select id="selectNivel" name="nivel" class="w-full p-3 border border-gray-300 rounded-lg" required>
+                                    <select id="selectNivel" name="nivel" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800" required>
                                         <option value="">-- Seleccione --</option>
                                         <option value="INICIAL">Inicial</option>
                                         <option value="PRIMARIA">Primaria</option> 
@@ -343,13 +239,13 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Grado <span class="text-red-600">*</span></label>
-                                    <select name="grado" id="selectGrado" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                    <select name="grado" id="selectGrado" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800" required disabled>
                                         <option value="">Seleccione primero un nivel</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="flex justify-between pt-6 border-t border-gray-200">
+                            <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
                                 <a href="CursoServlet" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
                                     <i class="fas fa-arrow-left"></i> Volver al Panel de Cursos
                                 </a>
@@ -366,7 +262,7 @@
 
                             <div class="mb-6">
                                 <label class="block text-sm font-medium mb-2">Turno <span class="text-red-600">*</span></label>
-                                <select name="turno" id="selectTurno" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                <select name="turno" id="selectTurno" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800" required disabled>
                                     <option value="">Seleccione primero un grado</option>
                                     <% for (Map<String, Object> turno : turnos) { %>
                                         <option value="<%= turno.get("id") %>" 
@@ -378,7 +274,7 @@
                                 </select>
                             </div>
 
-                            <div class="flex justify-between pt-6 border-t border-gray-200">
+                            <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
                                 <button type="button" onclick="irPaso(1)" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
                                     <i class="fas fa-arrow-left"></i> Volver Atrás
                                 </button>
@@ -396,19 +292,19 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Área Académica <span class="text-red-600">*</span></label>
-                                    <select id="selectArea" name="area" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                    <select id="selectArea" name="area" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800" required disabled>
                                         <option value="">Seleccione primero un turno</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Nombre del Curso <span class="text-red-600">*</span></label>
-                                    <select name="curso" id="selectCurso" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                    <select name="curso" id="selectCurso" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800" required disabled>
                                         <option value="">Seleccione primero un área</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="flex justify-between pt-6 border-t border-gray-200">
+                            <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
                                 <button type="button" onclick="irPaso(2)" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
                                     <i class="fas fa-arrow-left"></i> Volver Atrás
                                 </button>
@@ -423,9 +319,10 @@
                                 <i class="fas fa-chalkboard-teacher"></i> Paso 4: Profesor y Detalles
                             </div>
 
-                            <div class="grid grid-cols-1 gap-4 mb-6"> <div>
+                            <div class="grid grid-cols-1 gap-4 mb-6">
+                                <div>
                                     <label class="block text-sm font-medium mb-2">Profesor <span class="text-red-600">*</span></label>
-                                    <select name="profesor" id="selectProfesor" class="w-full p-3 border border-gray-300 rounded-lg" required disabled>
+                                    <select name="profesor" id="selectProfesor" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800" required disabled>
                                         <option value="">Seleccione primero un curso</option>
                                     </select>
                                     <div id="infoDisponibilidad"></div>
@@ -434,12 +331,12 @@
                                 <div>
                                     <label class="block text-sm font-medium mb-2">Descripción del Curso</label>
                                     <textarea name="descripcion" id="inputDescripcion" 
-                                              class="w-full p-3 border border-gray-300 rounded-lg" 
+                                              class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800" 
                                               rows="3" placeholder="Breve descripción..."></textarea>
                                 </div>
                             </div>
 
-                            <div class="flex justify-between pt-6 border-t border-gray-200">
+                            <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
                                 <button type="button" onclick="irPaso(3)" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
                                     <i class="fas fa-arrow-left"></i> Volver Atrás
                                 </button>
@@ -494,10 +391,10 @@
                                         </label>
                                     </div>
                                 </div>
-                                </div>
+                            </div>
 
                             <div id="horariosContainer" class="mb-4">
-                                <p class="text-gray-500 text-sm"><i class="fas fa-info-circle"></i> No hay horarios agregados aún</p>
+                                <p class="text-gray-500 dark:text-gray-400 text-sm"><i class="fas fa-info-circle"></i> No hay horarios agregados aún</p>
                             </div>
 
                             <button type="button" id="btnAgregarHorario" 
@@ -506,7 +403,7 @@
                                 <i class="fas fa-plus"></i> Agregar Horario
                             </button>
 
-                            <div class="flex justify-between pt-6 border-t border-gray-200 mt-8">
+                            <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700 mt-8">
                                 <button type="button" onclick="irPaso(4)" class="px-6 py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
                                     <i class="fas fa-arrow-left"></i> Volver Atrás
                                 </button>
@@ -574,7 +471,6 @@
             }
             if (paso === 5) {
                 const profesor = document.getElementById('selectProfesor').value;
-                // NOTA: Se eliminó la validación de créditos aquí
                 if (!profesor) {
                     mostrarMensaje('Debe seleccionar Profesor', 'warning');
                     return;
@@ -604,7 +500,6 @@
             document.getElementById('selectProfesor').addEventListener('change', cambioProfesor);
             document.getElementById('btnAgregarHorario').addEventListener('click', mostrarModalHorario);
             
-            // Selector ajustado para las nuevas tarjetas (mantiene funcionalidad)
             document.querySelectorAll('#diasSemana input[type="checkbox"]').forEach(checkbox => {
                 checkbox.addEventListener('change', verificarHabilitarAgregar);
             });
@@ -799,7 +694,7 @@
                 });
             });
             
-            let html = '<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">';
+            let html = '<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-3">';
             html += '<h6 class="font-semibold text-sm mb-2"><i class="fas fa-calendar-check"></i> Disponibilidad:</h6>';
             html += '<ul class="text-sm space-y-1">';
             
@@ -869,7 +764,6 @@
                         }
                     });
                     
-                    // Trigger inicial
                     document.getElementById('modalDia').dispatchEvent(new Event('change'));
                 },
                 preConfirm: () => {
@@ -928,7 +822,7 @@
             container.innerHTML = '';
             
             if (horariosAgregados.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-sm"><i class="fas fa-info-circle"></i> No hay horarios agregados</p>';
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm"><i class="fas fa-info-circle"></i> No hay horarios agregados</p>';
                 return;
             }
             
@@ -960,7 +854,6 @@
             const area = document.getElementById('selectArea').value;
             const curso = document.getElementById('selectCurso').value;
             const profesor = document.getElementById('selectProfesor').value;
-            // creditos eliminados de la validacion
             
             document.getElementById('btnSubmit').disabled = !(nivel && grado && turno && area && curso && profesor && horariosAgregados.length > 0);
         }

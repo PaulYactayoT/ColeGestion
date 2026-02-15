@@ -1,10 +1,11 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.*, java.sql.*, modelo.Curso, modelo.Grado, conexion.Conexion" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
+
 <%
     String nivelSeleccionado = (String) request.getAttribute("nivelSeleccionado");
     String turnoSeleccionado = (String) request.getAttribute("turnoSeleccionado");
-%>
-<%
+    
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response.setHeader("Pragma", "no-cache");
     response.setDateHeader("Expires", 0);
@@ -19,10 +20,13 @@
     
     String mensaje = (String) session.getAttribute("mensaje");
     String error = (String) session.getAttribute("error");
+    
+    // TÃ­tulo para el header dinÃ¡mico
+    request.setAttribute("pageTitle", "GestiÃ³n de Cursos");
 %>
 
 <%!
-    // Método para obtener horarios de un curso
+    // MÃ©todo para obtener horarios de un curso
     private String obtenerHorarios(int cursoId) {
         StringBuilder resultado = new StringBuilder();
         try (Connection conn = conexion.Conexion.getConnection()) {
@@ -44,7 +48,7 @@
         return resultado.toString();
     }
     
-    // Método para obtener nivel de un grado
+    // MÃ©todo para obtener nivel de un grado
     private String obtenerNivel(int gradoId) {
         try (Connection conn = conexion.Conexion.getConnection()) {
             String sql = "SELECT nivel FROM grado WHERE id = ?";
@@ -58,7 +62,7 @@
         return "-";
     }
     
-    // Método para obtener grado_id de un curso
+    // MÃ©todo para obtener grado_id de un curso
     private int obtenerGradoId(int cursoId) {
         try (Connection conn = conexion.Conexion.getConnection()) {
             String sql = "SELECT grado_id FROM curso WHERE id = ?";
@@ -80,54 +84,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Listado de Cursos - San Antonio</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#135bec",
-                        "primary-dark": "#0d47a1",
-                        "success": "#10b981",
-                        "danger": "#ef4444",
-                        "warning": "#f59e0b",
-                        "info": "#3b82f6",
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#101622",
-                        "card-light": "#ffffff",
-                        "card-dark": "#1a2233",
-                        "border-light": "#e5e7eb",
-                        "border-dark": "#374151",
-                    },
-                    fontFamily: {
-                        "display": ["Lexend"]
-                    },
-                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-                },
-            },
-        }
-    </script>
+    <%-- âœ… Incluir HEAD comÃºn (Tailwind, fuentes, estilos globales) --%>
+    <%@ include file="includes/head.jsp" %>
     
     <style>
-        body {
-            font-family: 'Lexend', sans-serif;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        
         /* Mejoras de accesibilidad */
         .reduce-motion * { 
             animation-duration: 0.01ms !important; 
@@ -145,7 +105,7 @@
             background-color: #f5f5dc !important; 
         }
         
-        /* Tamaños de texto - Afectar a toda la página */
+        /* TamaÃ±os de texto - Afectar a toda la pÃ¡gina */
         .large-text { 
             font-size: 18px !important; 
         }
@@ -550,11 +510,11 @@
         
         <div class="space-y-4">
             <div class="space-y-2">
-                <h4 class="font-medium">Tamaño de texto</h4>
+                <h4 class="font-medium">TamaÃ±o de texto</h4>
                 <div class="flex gap-2">
                     <button onclick="setTextSize('normal')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Normal</button>
                     <button onclick="setTextSize('large')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Grande</button>
-                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">Más Grande</button>
+                    <button onclick="setTextSize('larger')" class="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm">MÃ¡s Grande</button>
                 </div>
             </div>
             
@@ -599,110 +559,22 @@
     </button>
     
     <div class="flex h-screen overflow-hidden">
-        <!-- Left SideNavBar -->
-        <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
-            <div class="flex flex-col gap-8 p-6">
-                <!-- Brand -->
-                <div class="flex items-center gap-3">
-                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
-                        <span class="material-symbols-outlined">school</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
-                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Gestión Académica</p>
-                    </div>
-                </div>
-                
-                <!-- Navigation -->
-                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="dashboard.jsp">
-                        <span class="material-symbols-outlined">dashboard</span>
-                        <span class="text-sm">Dashboard</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="AlumnoServlet">
-                        <i class="fas fa-user-graduate" aria-hidden="true"></i>
-                        <span class="text-sm">Estudiantes</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="ProfesorServlet">
-                        <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
-                        <span class="text-sm">Profesores</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
-                       href="CursoServlet"
-                       aria-current="page">
-                        <i class="fas fa-book" aria-hidden="true"></i>
-                        <span class="text-sm">Cursos</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="GradoServlet">
-                        <i class="fas fa-layer-group" aria-hidden="true"></i>
-                        <span class="text-sm">Grados</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="UsuarioServlet">
-                        <i class="fas fa-users-cog" aria-hidden="true"></i>
-                        <span class="text-sm">Usuarios</span>
-                    </a>
-                </nav>
-            </div>
-            
-            <!-- Footer Sidebar -->
-            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
-                <a href="LogoutServlet" 
-                   class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
-                    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
-                    <span>Cerrar Sesión</span>
-                </a>
-            </div>
-        </aside>
+        
+        <%-- âœ… SIDEBAR: barra lateral con navegaciÃ³n y roles --%>
+        <%@ include file="includes/sidebar.jsp" %>
         
         <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- TopNavBar -->
-            <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
-                <div class="flex items-center gap-4 flex-1">
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-xl font-bold text-[#111318] dark:text-white">
-                            Gestión de Cursos
-                        </h1>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-4 ml-8">
-                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
-                            aria-label="Notificaciones">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
-                    </button>
-                    
-                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                            aria-label="Configuración">
-                        <span class="material-symbols-outlined">settings</span>
-                    </button>
-                    
-                    <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
-                    
-                    <div class="flex items-center gap-3">
-                        <p class="text-sm font-medium hidden md:block">
-                            <%= session.getAttribute("usuario") != null ? session.getAttribute("usuario") : "Administrador" %>
-                        </p>
-                        <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
-                             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCO64ytW7WFj5YJ0XxtUSKDLHtMumvYdpNUpuyZfiJ1u2v-o-ZSRqiNGLyx6pmhB7nZDuPBYTD_VLKKCEUg0atLHJC4hTrMG5QjAfNlLQdzKId6L3tl2-QhmWJUVQVRr4hk7ODNpJ2OomnFQx_u6WT5QgxJRWLtvZ2I5ecv8WfcR1-MoMfF485fYSxo5s9ErvyApFtN9ro0oew7DMrNHFDQJp1zE9Dtyls43R9C7cnQa5HNlhDoiFBsEBf8CYKzebhaA6Yfuad3vcM');"
-                             aria-label="Foto de perfil del administrador">
-                        </div>
-                    </div>
-                </div>
-            </header>
+            
+            <%-- âœ… HEADER: barra superior con foto dinÃ¡mica del usuario --%>
+            <%@ include file="includes/header.jsp" %>
             
             <!-- Main Content -->
             <div class="p-8">
-                <!-- Header con título -->
+                <!-- Header con tÃ­tulo -->
                 <div class="mb-6">
                     <h2 class="text-2xl font-bold text-[#111318] dark:text-white">Listado de Cursos</h2>
-                    <p class="text-[#616f89] dark:text-gray-400 mt-1">Consulta y gestiona los cursos académicos</p>
+                    <p class="text-[#616f89] dark:text-gray-400 mt-1">Consulta y gestiona los cursos acadÃ©micos</p>
                 </div>
                 
                 <!-- Alertas -->
@@ -723,17 +595,17 @@
                 <div class="alert-modern alert-success mb-6" role="alert">
                     <i class="fas fa-check-circle"></i>
                     <div>
-                        <strong>Éxito:</strong> <%= mensaje %>
+                        <strong>Ã‰xito:</strong> <%= mensaje %>
                     </div>
                 </div>
                 <% } %>
                 
-                <!-- SECCIÓN: FILTROS -->
+                <!-- SECCIÃ“N: FILTROS -->
                 <div class="bg-white dark:bg-card-dark rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm overflow-hidden mb-8">
                     <div class="border-b border-[#f0f2f4] dark:border-gray-700 p-6" style="background: linear-gradient(135deg, #135bec, #0d47a1);">
                         <h3 class="text-xl font-bold text-white flex items-center gap-2">
                             <i class="fas fa-filter"></i>
-                            Filtros de Búsqueda
+                            Filtros de BÃºsqueda
                         </h3>
                     </div>
                     
@@ -767,7 +639,7 @@
      
                                         <select name="turno" id="turno" class="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary focus:border-transparent">
                                             <option value="">Todos los turnos</option>
-                                            <option value="MAÑANA" <%= "MAÑANA".equals(turnoSeleccionado) ? "selected" : "" %>>MAÑANA</option>
+                                            <option value="MAÃ‘ANA" <%= "MAÃ‘ANA".equals(turnoSeleccionado) ? "selected" : "" %>>MAÃ‘ANA</option>
                                             <option value="TARDE" <%= "TARDE".equals(turnoSeleccionado) ? "selected" : "" %>>TARDE</option>
                                         </select>
                                     </div>
@@ -792,7 +664,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Botón Filtrar -->
+                                <!-- BotÃ³n Filtrar -->
                                 <div class="flex items-end">
                                     <button type="submit" class="btn-modern btn-primary-modern w-full">
                                         <i class="fas fa-search"></i> Filtrar Cursos
@@ -803,7 +675,7 @@
                     </div>
                 </div>
                 
-                <!-- BOTÓN REGISTRAR -->
+                <!-- BOTÃ“N REGISTRAR -->
                 <div class="flex justify-between items-center mb-8">
                     <div></div>
                     <a href="RegistroCursoServlet?accion=cargarFormulario" class="btn-modern btn-success-modern">
@@ -901,7 +773,7 @@
                                 </a>
                                 <a href="CursoServlet?accion=eliminar&id=<%= c.getId()%>" 
                                    class="btn-modern btn-danger-modern btn-sm"
-                                   onclick="return confirm('¿Está seguro de eliminar este curso?')">
+                                   onclick="return confirm('Â¿EstÃ¡ seguro de eliminar este curso?')">
                                     <i class="fas fa-trash"></i> Eliminar
                                 </a>
                             </div>
@@ -999,7 +871,7 @@
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
 
-            // Determinar estilo según tipo
+            // Determinar estilo segÃºn tipo
             let bgClass = 'bg-blue-600';
             let iconClass = 'fa-info-circle';
 
@@ -1028,9 +900,9 @@
         
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('? Listado de cursos cargado');
+            console.log('ðŸ“š Listado de cursos cargado');
             
-            // Navegación por teclado
+            // NavegaciÃ³n por teclado
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     const panel = document.querySelector('.accessibility-panel');

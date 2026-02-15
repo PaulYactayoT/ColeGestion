@@ -1,17 +1,11 @@
-<%-- 
-    Document   : alumnoForm
-    Created on : 1 may. 2025, 8:09:43 p. m.
-    Author     : Paul
---%>
-
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="modelo.Alumno" %>
 <%@ page import="modelo.Grado" %>
 <%@ page import="java.util.List" %>
 <%@ page import="javax.servlet.http.HttpSession" %>
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
-
+<%@ page import="java.text.SimpleDateFormat" %>
 <%
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response.setHeader("Pragma", "no-cache");
@@ -26,286 +20,501 @@
     List<Grado> grados = (List<Grado>) request.getAttribute("grados");
     boolean editar = (a != null);
     
-    // Formatear fecha para input date (yyyy-MM-dd)
     String fechaNacimientoStr = "";
-    if (editar && a.getFechaNacimiento() != null) {
-        fechaNacimientoStr = a.getFechaNacimiento().toString();
+    if (editar) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        if (a.getFechaNacimiento() != null) {
+            fechaNacimientoStr = sdf.format(java.sql.Date.valueOf(a.getFechaNacimiento()));
+        }
     }
+    
+    // Configurar título de la página
+    request.setAttribute("pageTitle", editar ? "Editar Estudiante" : "Nuevo Estudiante");
 %>
 
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= editar ? "Editar Alumno" : "Registrar Alumno"%></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/estilos.css?v=1.4">
+    <title><%= editar ? "Editar Alumno" : "Registrar Alumno" %> - San Antonio</title>
+    
+    <%@ include file="includes/head.jsp" %>
+    
     <style>
-        .form-container {
-            max-width: 800px;
-            margin: 0 auto;
+        .step-section { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .step-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .input-figma { background-color: #ffffff; border: 1px solid #d1d5db; border-radius: 0.5rem; transition: all 0.2s; }
+        .input-figma:focus { border-color: #135bec; box-shadow: 0 0 0 3px rgba(19, 91, 236, 0.1); }
+        .required-field::after { content: " *"; color: #ef4444; font-weight: bold; }
+        
+        .radio-option {
+            position: relative;
+            cursor: pointer;
+            border: 2px solid #d1d5db;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.2s;
+            background: white;
         }
-        .section-title {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-            font-weight: 600;
+        .radio-option:hover {
+            border-color: #135bec;
+            background: #f0f7ff;
         }
-        .required-field::after {
-            content: " *";
-            color: #e74c3c;
+        .radio-option input[type="radio"]:checked ~ .check-icon {
+            display: flex;
         }
-        .form-card {
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 10px;
-            overflow: hidden;
+        .check-icon {
+            display: none;
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: #135bec;
+            border-radius: 50%;
+            color: white;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
         }
-        .btn-submit {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            border: none;
-            padding: 12px 30px;
-            font-weight: 600;
-            transition: all 0.3s;
+        .status-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
         }
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
-        }
-        .btn-cancel {
-            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-            border: none;
-            padding: 12px 30px;
-            font-weight: 600;
-        }
+        .status-active-bg   { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
+        .status-inactive-bg { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #991b1b; }
+        .status-graduated-bg{ background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e40af; }
+        .status-retired-bg  { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
     </style>
 </head>
-<body class="dashboard-page">
-    <jsp:include page="header.jsp" />
+<body class="bg-gray-100 min-h-screen">
 
-    <div class="container mt-5 mb-5">
-        <div class="form-container">
-            <h2 class="mb-4 text-center fw-bold text-primary">
-                <%= editar ? "📝 Editar Alumno" : "Registrar Alumno"%>
-            </h2>
+    <div class="flex h-screen overflow-hidden">
+        
+        <%-- ✅ SIDEBAR: barra lateral de navegación --%>
+        <%@ include file="includes/sidebar.jsp" %>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
             
-            <!-- Mensajes de éxito/error -->
-            <% if (request.getAttribute("error") != null) { %>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <%= request.getAttribute("error") %>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            <% } %>
-            
-            <% if (request.getAttribute("mensaje") != null) { %>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <%= request.getAttribute("mensaje") %>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            <% } %>
+            <%-- ✅ HEADER: barra superior con usuario y foto --%>
+            <%@ include file="includes/header.jsp" %>
 
-            <form action="AlumnoServlet" method="post" class="p-4 form-card bg-white">
-                <input type="hidden" name="id" value="<%= editar ? a.getId() : "" %>">
+            <!-- CONTENIDO DEL FORMULARIO -->
+            <div class="p-4 md:p-8 max-w-5xl mx-auto w-full">
                 
-                <!-- SECCIÓN: INFORMACIÓN PERSONAL -->
-                <h4 class="section-title">📋 Información Personal</h4>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Nombres:</label>
-                        <input type="text" class="form-control" name="nombres" 
-                               value="<%= editar && a.getNombres() != null ? a.getNombres() : "" %>" 
-                               required maxlength="100" placeholder="Ingrese los nombres (ej: Renato Augusto)">
+                <!-- Alertas -->
+                <% 
+                    String error = (String) session.getAttribute("error");
+                    String mensaje = (String) session.getAttribute("mensaje");
+                    if (error != null) { session.removeAttribute("error"); %>
+                    <div class="alert-modern alert-danger mb-4" role="alert">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div><strong>Error:</strong> <%= error %></div>
                     </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Apellidos:</label>
-                        <input type="text" class="form-control" name="apellidos" 
-                               value="<%= editar && a.getApellidos() != null ? a.getApellidos() : "" %>" 
-                               required maxlength="100" placeholder="Ingrese los apellidos(ej: Balboa Nuñez)">
+                <% } if (mensaje != null) { session.removeAttribute("mensaje"); %>
+                    <div class="alert-modern alert-success mb-4" role="alert">
+                        <i class="fas fa-check-circle"></i>
+                        <div><strong>Éxito:</strong> <%= mensaje %></div>
                     </div>
-                </div>
+                <% } %>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Correo Electrónico:</label>
-                        <input type="email" class="form-control" name="correo" 
-                               value="<%= editar && a.getCorreo() != null ? a.getCorreo() : "" %>" 
-                               required maxlength="100" placeholder="ejemplo@email.com">
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">DNI:</label>
-                        <input type="text" class="form-control" name="dni" 
-                               value="<%= editar && a.getDni() != null ? a.getDni() : "" %>" 
-                               maxlength="8" pattern="[0-9]{8}" 
-                               placeholder="8 dígitos (ej: 12345678)">
-                        <small class="form-text text-muted">Opcional, 8 dígitos numéricos</small>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Fecha de Nacimiento:</label>
-                        <input type="date" class="form-control" name="fecha_nacimiento" 
-                               value="<%= fechaNacimientoStr %>" max="9999-12-31" onblur="validarAnio(this)" >
-                        <div class="text-xs text-red-500 mt-1 hidden" id="error-fecha">Seleccione una fecha válida</div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Teléfono:</label>
-                        <input type="tel" class="form-control" name="telefono" 
-                               value="<%= editar && a.getTelefono() != null ? a.getTelefono() : "" %>" 
-                               maxlength="9" placeholder="Solo se aceptan 9 dígitos y que empiecen con 9 (ej:987654321)">
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Dirección:</label>
-                    <textarea class="form-control" name="direccion" rows="3" maxlength="255" 
-                              placeholder="Av. Principal 123, Distrito, Ciudad"><%= editar && a.getDireccion() != null ? a.getDireccion() : "" %></textarea>
-                </div>
-
-                <!-- SECCIÓN: INFORMACIÓN ACADÉMICA -->
-                <h4 class="section-title mt-4">🎓 Información Académica</h4>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Grado/Salón:</label>
-                        <select name="grado_id" class="form-select" required>
-                            <option value="">-- Selecciona un grado --</option>
-                            <% for (Grado g : grados) { 
-                                boolean selected = editar && a.getGradoId() == g.getId();
-                            %>
-                            <option value="<%= g.getId() %>" <%= selected ? "selected" : "" %>>
-                                <%= g.getNombre() %> - <%= g.getNivel() %>
-                            </option>
-                            <% } %>
-                        </select>
-                    </div>
+                <form action="AlumnoServlet" method="post" id="alumnoForm" novalidate enctype="multipart/form-data">
+                    <input type="hidden" name="id" value="<%= editar ? a.getId() : "" %>">
+                    <input type="hidden" name="codigo_alumno" value="<%= (editar && a.getCodigoAlumno() != null) ? a.getCodigoAlumno() : "" %>">
                     
-                    <% if (editar && a.getCodigoAlumno() != null) { %>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Código de Alumno:</label>
-                        <input type="text" class="form-control" value="<%= a.getCodigoAlumno() %>" readonly>
-                        <small class="form-text text-muted">Código generado automáticamente</small>
-                    </div>
-                    <% } %>
-                </div>
+                    <div id="step1" class="step-section active">
+                        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+                            
+                            <%-- Cabecera del formulario con foto --%>
+                            <div class="bg-primary text-white p-6 flex items-center gap-6">
+                                
+                                <div class="relative group cursor-pointer" onclick="document.getElementById('inputFoto').click()">
+                                    <input type="file" name="foto" id="inputFoto" class="hidden" accept="image/*" onchange="previsualizarImagen(this)">
+                                    
+                                    <div class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-white/30 overflow-hidden hover:bg-white/30 transition shadow-lg relative">
+                                        
+                                        <img id="imgPreview" 
+                                             src="<%= (editar && a.getFoto() != null && !a.getFoto().isEmpty()) ? "uploads/" + a.getFoto() : "" %>" 
+                                             class="w-full h-full object-cover <%= (editar && a.getFoto() != null && !a.getFoto().isEmpty()) ? "" : "hidden" %>">
+                                        
+                                        <div id="placeholderIcon" class="<%= (editar && a.getFoto() != null && !a.getFoto().isEmpty()) ? "hidden" : "flex" %> flex-col items-center justify-center text-white">
+                                            <% if (editar) { %>
+                                                <span class="text-3xl font-bold">
+                                                    <%= a.getNombres().substring(0,1) %><%= a.getApellidos().substring(0,1) %>
+                                                </span>
+                                            <% } else { %>
+                                                <i class="fas fa-camera text-4xl mb-1"></i>
+                                                <span class="text-xs">Subir foto</span>
+                                            <% } %>
+                                        </div>
 
-                <!-- BOTONES -->
-                <div class="d-flex justify-content-between mt-4">
-                    <div>
-                        <button type="submit" class="btn btn-submit text-white me-2">
-                            <%= editar ? "💾 Actualizar Alumno" : "✅ Registrar Alumno" %>
-                        </button>
-                        <a href="AlumnoServlet" class="btn btn-cancel text-white">❌ Cancelar</a>
+                                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <i class="fas fa-pen text-white"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex-1">
+                                    <h2 class="text-3xl font-bold mb-2">
+                                        <%= editar ? "Editar Alumno" : "Nuevo Alumno" %>
+                                    </h2>
+                                    <p class="text-white/80 text-sm">
+                                        <%= editar ? "Actualiza la información del estudiante" : "Complete los datos del nuevo estudiante" %>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="p-8 space-y-6">
+                                
+                                <%-- INFORMACIÓN PERSONAL --%>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                        <i class="fas fa-user text-primary"></i> Información Personal
+                                    </h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Nombres</label>
+                                            <input type="text" name="nombres" 
+                                                   value="<%= editar && a.getNombres() != null ? a.getNombres() : "" %>"
+                                                   class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
+                                                   placeholder="Ej: Juan Carlos" 
+                                                   required maxlength="100">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Apellidos</label>
+                                            <input type="text" name="apellidos" 
+                                                   value="<%= editar && a.getApellidos() != null ? a.getApellidos() : "" %>"
+                                                   class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
+                                                   placeholder="Ej: Pérez García" 
+                                                   required maxlength="100">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Correo Electrónico</label>
+                                            <input type="email" name="correo" 
+                                                   value="<%= editar && a.getCorreo() != null ? a.getCorreo() : "" %>"
+                                                   class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
+                                                   placeholder="estudiante@ejemplo.com" 
+                                                   required maxlength="100">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">DNI</label>
+                                            <input type="text" name="dni" id="dniInput"
+                                                   value="<%= editar && a.getDni() != null ? a.getDni() : "" %>"
+                                                   class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
+                                                   placeholder="8 dígitos" 
+                                                   maxlength="8" pattern="[0-9]{8}">
+                                            <p class="text-xs text-gray-500 mt-1">Opcional, 8 dígitos numéricos</p>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Fecha de Nacimiento</label>
+                                            <input type="date" name="fecha_nacimiento" id="fechaNacimiento"
+                                                   value="<%= fechaNacimientoStr %>"
+                                                   class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
+                                                   required max="9999-12-31">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                                            <input type="tel" name="telefono" id="telefonoInput"
+                                                   value="<%= editar && a.getTelefono() != null ? a.getTelefono() : "" %>"
+                                                   class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
+                                                   placeholder="987654321" 
+                                                   maxlength="9">
+                                            <p class="text-xs text-gray-500 mt-1">9 dígitos, inicia con 9</p>
+                                        </div>
+
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                                            <textarea name="direccion" rows="3" 
+                                                      class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none resize-none" 
+                                                      placeholder="Av. Principal 123, Distrito, Ciudad" 
+                                                      maxlength="255"><%= editar && a.getDireccion() != null ? a.getDireccion() : "" %></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="border-gray-300">
+
+                                <%-- INFORMACIÓN ACADÉMICA --%>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                        <i class="fas fa-graduation-cap text-primary"></i> Información Académica
+                                    </h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Turno</label>
+                                            <select name="turno_id" id="turnoSelect" 
+                                                    class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
+                                                    required onchange="filtrarNiveles()">
+                                                <option value="">-- Seleccione turno --</option>
+                                                <option value="1" <%= editar && a.getTurnoId() == 1 ? "selected" : "" %>>Mañana</option>
+                                                <option value="2" <%= editar && a.getTurnoId() == 2 ? "selected" : "" %>>Tarde</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Nivel</label>
+                                            <select name="nivel" id="nivelSelect" 
+                                                    class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
+                                                    required disabled onchange="filtrarGrados()">
+                                                <option value="">Primero seleccione turno</option>
+                                                <option value="INICIAL">Inicial</option>
+                                                <option value="PRIMARIA">Primaria</option>
+                                                <option value="SECUNDARIA">Secundaria</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Grado/Salón</label>
+                                            <select name="grado_id" id="gradoSelect" 
+                                                    class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
+                                                    required disabled>
+                                                <option value="">Primero seleccione nivel</option>
+                                                <% if (grados != null) { for (Grado g : grados) { 
+                                                    boolean selected = editar && a.getGradoId() == g.getId();
+                                                %>
+                                                <option value="<%= g.getId() %>" 
+                                                        data-nivel="<%= g.getNivel() %>" 
+                                                        <%= selected ? "selected" : "" %>>
+                                                    <%= g.getNombre() %>
+                                                </option>
+                                                <% } } %>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="border-gray-300">
+
+                                <%-- ESTADO DEL ALUMNO --%>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                        <i class="fas fa-info-circle text-primary"></i> Estado del Estudiante
+                                    </h3>
+                                    
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <label class="radio-option">
+                                            <input type="radio" name="estado" value="ACTIVO" class="hidden"
+                                                   <%= (!editar || a.getEstado() == null || a.getEstado().equals("ACTIVO")) ? "checked" : "" %>>
+                                            <div class="radio-content flex flex-col items-center text-center p-4">
+                                                <div class="status-icon status-active-bg">
+                                                    <i class="fas fa-circle-check"></i>
+                                                </div>
+                                                <span class="font-semibold text-gray-900">Activo</span>
+                                                <span class="text-xs text-gray-500 mt-1">Estudiante regular</span>
+                                            </div>
+                                            <div class="check-icon"><i class="fas fa-check"></i></div>
+                                        </label>
+
+                                        <label class="radio-option">
+                                            <input type="radio" name="estado" value="INACTIVO" class="hidden"
+                                                   <%= editar && "INACTIVO".equals(a.getEstado()) ? "checked" : "" %>>
+                                            <div class="radio-content flex flex-col items-center text-center p-4">
+                                                <div class="status-icon status-inactive-bg">
+                                                    <i class="fas fa-circle-xmark"></i>
+                                                </div>
+                                                <span class="font-semibold text-gray-900">Inactivo</span>
+                                                <span class="text-xs text-gray-500 mt-1">Temporalmente fuera</span>
+                                            </div>
+                                            <div class="check-icon"><i class="fas fa-check"></i></div>
+                                        </label>
+
+                                        <label class="radio-option">
+                                            <input type="radio" name="estado" value="EGRESADO" class="hidden"
+                                                   <%= editar && "EGRESADO".equals(a.getEstado()) ? "checked" : "" %>>
+                                            <div class="radio-content flex flex-col items-center text-center p-4">
+                                                <div class="status-icon status-graduated-bg">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                </div>
+                                                <span class="font-semibold text-gray-900">Egresado</span>
+                                                <span class="text-xs text-gray-500 mt-1">Completó estudios</span>
+                                            </div>
+                                            <div class="check-icon"><i class="fas fa-check"></i></div>
+                                        </label>
+
+                                        <label class="radio-option">
+                                            <input type="radio" name="estado" value="RETIRADO" class="hidden"
+                                                   <%= editar && "RETIRADO".equals(a.getEstado()) ? "checked" : "" %>>
+                                            <div class="radio-content flex flex-col items-center text-center p-4">
+                                                <div class="status-icon status-retired-bg">
+                                                    <i class="fas fa-door-open"></i>
+                                                </div>
+                                                <span class="font-semibold text-gray-900">Retirado</span>
+                                                <span class="text-xs text-gray-500 mt-1">Abandonó colegio</span>
+                                            </div>
+                                            <div class="check-icon"><i class="fas fa-check"></i></div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <%-- Código de alumno (solo en edición) --%>
+                                <% if (editar && a.getCodigoAlumno() != null) { %>
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fas fa-id-card text-blue-600 text-xl"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-700">Código de Alumno</p>
+                                            <p class="text-lg font-bold text-blue-600"><%= a.getCodigoAlumno() %></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% } %>
+
+                            </div>
+
+                            <%-- Botones de acción --%>
+                            <div class="bg-gray-50 px-8 py-6 flex justify-between items-center border-t border-gray-200">
+                                <a href="AlumnoServlet" class="btn-modern btn-secondary-modern">
+                                    <i class="fas fa-arrow-left"></i> Cancelar
+                                </a>
+                                <button type="submit" onclick="return validarFormulario()" class="btn-modern btn-primary-modern shadow-lg">
+                                    <i class="fas fa-save"></i>
+                                    <%= editar ? "Actualizar Alumno" : "Guardar Alumno" %>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <% if (editar) { %>
-                    <div>
-                        <a href="AlumnoServlet?accion=eliminar&id=<%= a.getId() %>" 
-                           class="btn btn-outline-danger"
-                           onclick="return confirm('¿Está seguro de eliminar este alumno?')">
-                            🗑️ Eliminar Alumno
-                        </a>
-                    </div>
-                    <% } %>
-                </div>
-            </form>
-        </div>
+                </form>
+            </div>
+        </main>
     </div>
 
-    <footer class="bg-dark text-white py-2">
-        <div class="container text-center text-md-start">
-            <div class="row">
-
-                <div class="col-md-4 mb-0">
-                    <div class="logo-container text-center">
-                        <img src="assets/img/logosa.png" alt="Logo" class="img-fluid mb-1" width="80" height="auto">
-                        <p class="fs-6">"Líderes en educación de calidad al más alto nivel"</p>
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-0">
-                    <h5 class="fs-8">Contacto:</h5>
-                    <p class="fs-6">Dirección: Av. El Sol 461, San Juan de Lurigancho 15434</p>
-                    <p class="fs-6">Teléfono: 987654321</p>
-                    <p class="fs-6">Correo: colegiosanantonio@gmail.com</p>
-                </div>
-
-                <div class="col-md-4 mb-0">
-                    <h5 class="fs-8">Síguenos:</h5>
-                    <a href="https://www.facebook.com/" class="text-white d-block fs-6">Facebook</a>
-                    <a href="https://www.instagram.com/" class="text-white d-block fs-6">Instagram</a>
-                    <a href="https://twitter.com/" class="text-white d-block fs-6">Twitter</a>
-                    <a href="https://www.youtube.com/" class="text-white d-block fs-6">YouTube</a>
-                </div>
-            </div>
-
-            <div class="text-center mt-0">
-                <p class="fs-6">&copy; 2025 Colegio SA - Todos los derechos reservados</p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        // Establecer fecha por defecto (hace 10 años) si no estamos editando
-        document.addEventListener('DOMContentLoaded', function() {
-            const fechaInput = document.querySelector('input[name="fecha_nacimiento"]');
-            
-            if (!<%= editar %> && (!fechaInput.value || fechaInput.value === '')) {
-                const hoy = new Date();
-                const hace10Anios = new Date(hoy.getFullYear() - 10, hoy.getMonth(), hoy.getDate());
-                const fechaFormateada = hace10Anios.toISOString().split('T')[0];
-                fechaInput.value = fechaFormateada;
-            }
-            
-            // Validación del DNI (solo números, 8 dígitos)
-            const dniInput = document.querySelector('input[name="dni"]');
-            if (dniInput) {
-                dniInput.addEventListener('input', function() {
-                    this.value = this.value.replace(/[^0-9]/g, '');
-                    if (this.value.length > 8) {
-                        this.value = this.value.slice(0, 8);
-                    }
-                });
-            }
-            
-            // Validación del teléfono (solo números)
-            const telefonoInput = document.querySelector('input[name="telefono"]');
-            if (telefonoInput) {
-                telefonoInput.addEventListener('input', function() {
-                    this.value = this.value.replace(/[^0-9]/g, '');
-                });
-            }
-            
-            // Confirmación antes de enviar el formulario
-            const form = document.querySelector('form');
-            form.addEventListener('submit', function(event) {
-                const nombres = document.querySelector('input[name="nombres"]').value.trim();
-                const apellidos = document.querySelector('input[name="apellidos"]').value.trim();
-                const correo = document.querySelector('input[name="correo"]').value.trim();
-                const fecha = document.querySelector('input[name="fecha_nacimiento"]').value;
-                const grado = document.querySelector('select[name="grado_id"]').value;
-                
-                let errores = [];
-                
-                if (nombres === '') errores.push('Nombres es obligatorio');
-                if (apellidos === '') errores.push('Apellidos es obligatorio');
-                if (correo === '' || !correo.includes('@')) errores.push('Correo electrónico válido es obligatorio');
-                if (fecha === '') errores.push('Fecha de nacimiento es obligatoria');
-                if (grado === '') errores.push('Debe seleccionar un grado');
-                
-                if (errores.length > 0) {
-                    event.preventDefault();
-                    alert('Por favor corrija los siguientes errores:\n\n• ' + errores.join('\n• '));
-                }
+        // Solo números en DNI
+        const dniInput = document.getElementById('dniInput');
+        if (dniInput) {
+            dniInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 8) this.value = this.value.slice(0, 8);
             });
+        }
+        
+        // Solo números en teléfono
+        const telefonoInput = document.getElementById('telefonoInput');
+        if (telefonoInput) {
+            telefonoInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 9) this.value = this.value.slice(0, 9);
+            });
+        }
+
+        function filtrarNiveles() {
+            const turnoSelect = document.getElementById('turnoSelect');
+            const nivelSelect = document.getElementById('nivelSelect');
+            const gradoSelect = document.getElementById('gradoSelect');
+            
+            if (turnoSelect.value) {
+                nivelSelect.disabled = false;
+                nivelSelect.innerHTML = '<option value="">-- Seleccione nivel --</option>' +
+                                       '<option value="INICIAL">Inicial</option>' +
+                                       '<option value="PRIMARIA">Primaria</option>' +
+                                       '<option value="SECUNDARIA">Secundaria</option>';
+            } else {
+                nivelSelect.disabled = true;
+                nivelSelect.innerHTML = '<option value="">Primero seleccione turno</option>';
+                gradoSelect.disabled = true;
+                gradoSelect.value = '';
+            }
+        }
+
+        function filtrarGrados() {
+            const nivelSelect = document.getElementById('nivelSelect');
+            const gradoSelect = document.getElementById('gradoSelect');
+            const nivelSeleccionado = nivelSelect.value;
+            const opciones = gradoSelect.querySelectorAll('option');
+            
+            if (nivelSeleccionado) {
+                gradoSelect.disabled = false;
+                opciones.forEach((opcion, index) => {
+                    if (index === 0) {
+                        opcion.textContent = '-- Seleccione grado --';
+                        return;
+                    }
+                    const nivelOpcion = opcion.getAttribute('data-nivel');
+                    opcion.style.display = nivelOpcion === nivelSeleccionado ? 'block' : 'none';
+                });
+                gradoSelect.value = '';
+            } else {
+                gradoSelect.disabled = true;
+                gradoSelect.value = '';
+                if (opciones[0]) opciones[0].textContent = 'Primero seleccione nivel';
+            }
+        }
+
+        function validarFormulario() {
+            const nombres = document.querySelector('input[name="nombres"]').value.trim();
+            const apellidos = document.querySelector('input[name="apellidos"]').value.trim();
+            const correo = document.querySelector('input[name="correo"]').value.trim();
+            const fechaNacimiento = document.getElementById('fechaNacimiento').value;
+            const turno = document.getElementById('turnoSelect').value;
+            const nivel = document.getElementById('nivelSelect').value;
+            const grado = document.getElementById('gradoSelect').value;
+            const estado = document.querySelector('input[name="estado"]:checked');
+            
+            if (!nombres || !apellidos || !correo || !correo.includes('@') || 
+                !fechaNacimiento || !turno || !nivel || !grado || !estado) {
+                alert('Por favor complete todos los campos obligatorios');
+                return false;
+            }
+            return true;
+        }
+
+        // Previsualizar imagen seleccionada
+        function previsualizarImagen(input) {
+            const imgPreview = document.getElementById('imgPreview');
+            const placeholderIcon = document.getElementById('placeholderIcon');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imgPreview.src = e.target.result;
+                    imgPreview.classList.remove('hidden');
+                    placeholderIcon.classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            <% if (editar) { %>
+                // En edición: restaurar selects de turno, nivel y grado
+                const turnoSelect = document.getElementById('turnoSelect');
+                if (turnoSelect.value) {
+                    filtrarNiveles();
+                    setTimeout(function() {
+                        const gradoSeleccionado = document.getElementById('gradoSelect')
+                                                          .querySelector('option[selected]');
+                        if (gradoSeleccionado) {
+                            const nivelDelGrado = gradoSeleccionado.getAttribute('data-nivel');
+                            document.getElementById('nivelSelect').value = nivelDelGrado;
+                            filtrarGrados();
+                            setTimeout(function() {
+                                document.getElementById('gradoSelect').value = '<%= a.getGradoId() %>';
+                            }, 100);
+                        }
+                    }, 100);
+                }
+            <% } else { %>
+                // En nuevo: poner fecha por defecto hace 10 años
+                const fechaInput = document.getElementById('fechaNacimiento');
+                if (!fechaInput.value) {
+                    const hoy = new Date();
+                    const hace10Anios = new Date(hoy.getFullYear() - 10, hoy.getMonth(), hoy.getDate());
+                    fechaInput.value = hace10Anios.toISOString().split('T')[0];
+                }
+            <% } %>
         });
     </script>
 </body>

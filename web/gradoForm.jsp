@@ -14,6 +14,9 @@
 
     Grado g = (Grado) request.getAttribute("grado");
     boolean esEditar = g != null;
+    
+    // Título para el header dinámico
+    request.setAttribute("pageTitle", esEditar ? "Editar Grado" : "Registrar Nuevo Grado");
 %>
 
 <!DOCTYPE html>
@@ -23,45 +26,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= esEditar ? "Editar Grado" : "Registrar Grado" %> - San Antonio</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#135bec",
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#101622",
-                    },
-                    fontFamily: {
-                        "display": ["Lexend"]
-                    },
-                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-                },
-            },
-        }
-    </script>
+    <%-- ✅ Incluir HEAD común (Tailwind, fuentes, estilos globales) --%>
+    <%@ include file="includes/head.jsp" %>
     
     <style>
-        body {
-            font-family: 'Lexend', sans-serif;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        
         /* Mejoras de accesibilidad */
         .reduce-motion * { 
             animation-duration: 0.01ms !important; 
@@ -188,111 +156,26 @@
     </button>
     
     <div class="flex h-screen overflow-hidden">
-        <!-- Left SideNavBar -->
-        <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
-            <div class="flex flex-col gap-8 p-6">
-                <!-- Brand -->
-                <div class="flex items-center gap-3">
-                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
-                        <span class="material-symbols-outlined">school</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
-                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Gestión Académica</p>
-                    </div>
-                </div>
-                
-                <!-- Navigation -->
-                <nav class="flex flex-col gap-2" aria-label="Navegación principal">
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="dashboard.jsp">
-                        <span class="material-symbols-outlined">dashboard</span>
-                        <span class="text-sm">Dashboard</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="AlumnoServlet">
-                        <i class="fas fa-user-graduate" aria-hidden="true"></i>
-                        <span class="text-sm">Estudiantes</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="ProfesorServlet">
-                        <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
-                        <span class="text-sm">Profesores</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="CursoServlet">
-                        <i class="fas fa-book" aria-hidden="true"></i>
-                        <span class="text-sm">Cursos</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
-                       href="GradoServlet"
-                       aria-current="page">
-                        <i class="fas fa-layer-group" aria-hidden="true"></i>
-                        <span class="text-sm">Grados</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="UsuarioServlet">
-                        <i class="fas fa-users-cog" aria-hidden="true"></i>
-                        <span class="text-sm">Usuarios</span>
-                    </a>
-                </nav>
-            </div>
-            
-            <!-- Footer Sidebar -->
-            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
-                <form action="LogoutServlet" method="post" class="w-full">
-                    <button type="submit" 
-                            class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
-                        <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
-                        <span>Cerrar Sesión</span>
-                    </button>
-                </form>
-            </div>
-        </aside>
+        
+        <%-- ✅ SIDEBAR: barra lateral con navegación y roles --%>
+        <%@ include file="includes/sidebar.jsp" %>
         
         <!-- Main Content -->
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- TopNavBar -->
-            <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
-                <div class="flex items-center gap-4 flex-1">
-                    <div class="flex items-center gap-3">
-                        <a href="GradoServlet" class="text-primary hover:underline">
-                            <span class="material-symbols-outlined">arrow_back</span>
-                        </a>
-                        <h1 class="text-xl font-bold text-[#111318] dark:text-white">
-                            <%= esEditar ? "Editar Grado" : "Registrar Nuevo Grado" %>
-                        </h1>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-4 ml-8">
-                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
-                            aria-label="Notificaciones">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
-                    </button>
-                    
-                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                            aria-label="Configuración">
-                        <span class="material-symbols-outlined">settings</span>
-                    </button>
-                    
-                    <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
-                    
-                    <div class="flex items-center gap-3">
-                        <p class="text-sm font-medium hidden md:block">
-                            <%= session.getAttribute("usuario") != null ? session.getAttribute("usuario") : "Administrador" %>
-                        </p>
-                        <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
-                             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCO64ytW7WFj5YJ0XxtUSKDLHtMumvYdpNUpuyZfiJ1u2v-o-ZSRqiNGLyx6pmhB7nZDuPBYTD_VLKKCEUg0atLHJC4hTrMG5QjAfNlLQdzKId6L3tl2-QhmWJUVQVRr4hk7ODNpJ2OomnFQx_u6WT5QgxJRWLtvZ2I5ecv8WfcR1-MoMfF485fYSxo5s9ErvyApFtN9ro0oew7DMrNHFDQJp1zE9Dtyls43R9C7cnQa5HNlhDoiFBsEBf8CYKzebhaA6Yfuad3vcM');"
-                             aria-label="Foto de perfil del administrador">
-                        </div>
-                    </div>
-                </div>
-            </header>
+            
+            <%-- ✅ HEADER: barra superior con foto dinámica del usuario --%>
+            <%@ include file="includes/header.jsp" %>
             
             <!-- Form Content -->
             <div class="p-8 max-w-4xl mx-auto w-full">
+                <!-- Breadcrumb / Back Button -->
+                <div class="mb-6">
+                    <a href="GradoServlet" class="inline-flex items-center gap-2 text-primary hover:text-blue-700 transition-colors">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                        <span>Volver a Grados</span>
+                    </a>
+                </div>
+                
                 <!-- Form Card -->
                 <div class="bg-white dark:bg-[#1a2233] rounded-xl border border-[#dbdfe6] dark:border-gray-700 shadow-sm p-8">
                     <div class="flex items-center gap-4 mb-8">
@@ -361,7 +244,7 @@
                                             Educación Secundaria
                                         </option>
                                     </select>
-                                    <span class="absolute right-3 top-3 material-symbols-outlined text-gray-400">
+                                    <span class="absolute right-3 top-3 material-symbols-outlined text-gray-400 pointer-events-none">
                                         arrow_drop_down
                                     </span>
                                 </div>
@@ -409,8 +292,6 @@
                     </div>
                 </div>
             </div>
-            
-            
         </main>
     </div>
 
