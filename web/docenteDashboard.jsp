@@ -39,10 +39,13 @@
     if (error != null) {
         session.removeAttribute("error");
     }
-%>
 
-<!DOCTYPE html>
-<html class="light" lang="es">
+    // --- VARIABLES AGREGADAS PARA EL NUEVO DASHBOARD ---
+    int dashTotalCursos = (cursos != null) ? cursos.size() : 0;
+    int dashTotalAlumnos = (request.getAttribute("totalAlumnos") != null) ? (Integer)request.getAttribute("totalAlumnos") : 0;
+    int dashJustificaciones = (request.getAttribute("totalJustificaciones") != null) ? (Integer)request.getAttribute("totalJustificaciones") : 0;
+    int dashMateriales = (request.getAttribute("totalMateriales") != null) ? (Integer)request.getAttribute("totalMateriales") : 0;
+%>
 
 <!DOCTYPE html>
 <html class="light" lang="es">
@@ -339,7 +342,6 @@
                 </div>
                 
                 <div class="flex items-center gap-4 ml-8">
-                    <!-- Botón Dark Mode -->
                     <button onclick="toggleDarkMode()" 
                             class="p-2 text-[#616f89] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                             aria-label="Cambiar tema">
@@ -396,41 +398,148 @@
                 </div>
                 <% } %>
                 
-                <div class="bg-gradient-to-r from-primary to-blue-600 rounded-xl p-6 mb-6 shadow-lg">
-                    <h3 class="text-white text-xl font-bold mb-4 flex items-center gap-2">
-                        <span class="material-symbols-outlined">fact_check</span>
-                        Módulo de Gestión Académica
-                    </h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        
-                        <a href="AsistenciaServlet?accion=registrar" 
-                           class="flex items-center justify-center gap-2 px-4 py-3 bg-white text-primary font-medium rounded-lg hover:bg-gray-50 transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-white">
-                            <span class="material-symbols-outlined">add_circle</span>
-                            <span>Tomar Asistencia</span>
-                        </a>
-                        
-                        <a href="revisarJustificaciones.jsp" 
-                           class="flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 text-gray-900 font-medium rounded-lg hover:bg-yellow-300 transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-white">
-                            <span class="material-symbols-outlined">schedule</span>
-                            <span>Justificaciones</span>
-                        </a>
-                        
-                        <a href="MaterialServlet?accion=seleccionarCurso" 
-                           class="flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-white">
-                            <span class="material-symbols-outlined">folder</span>
-                            <span>Material Apoyo</span>
-                        </a>
-
-                        <a href="DisponibilidadServlet" 
-                           class="flex items-center justify-center gap-2 px-4 py-3 bg-teal-500 text-white font-medium rounded-lg hover:bg-teal-600 transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-white">
-                            <span class="material-symbols-outlined">event_available</span>
-                            <span>Mi Disponibilidad</span>
-                        </a>
-
+                <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 mb-8 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform origin-bottom-left"></div>
+                    <div class="relative z-10">
+                        <h2 class="text-2xl font-bold">Bienvenido de nuevo, <%= docente.getNombres() %></h2>
+                        <p class="text-blue-100 mt-1 max-w-xl">Aquí tienes el resumen de tu actividad académica y tus cursos asignados para el periodo actual.</p>
                     </div>
                 </div>
                 
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl p-6 shadow-lg shadow-blue-500/30 text-white hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl"></div>
+                        
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <p class="text-blue-100 text-sm font-medium opacity-90">Cursos Asignados</p>
+                                <h3 class="text-4xl font-bold mt-2"><%= dashTotalCursos %></h3>
+                                <span class="inline-flex mt-3 px-2 py-1 bg-white/20 rounded-lg text-xs font-semibold backdrop-blur-sm border border-white/10">
+                                    Activos
+                                </span>
+                            </div>
+                            <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm shadow-inner">
+                                <span class="material-symbols-outlined text-2xl">book</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl p-6 shadow-lg shadow-blue-500/30 text-white hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl"></div>
+                        
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <p class="text-blue-100 text-sm font-medium opacity-90">Total Estudiantes</p>
+                                <h3 class="text-4xl font-bold mt-2"><%= dashTotalAlumnos %></h3>
+                                <span class="inline-flex mt-3 px-2 py-1 bg-white/20 rounded-lg text-xs font-semibold backdrop-blur-sm border border-white/10">
+                                    En tus aulas
+                                </span>
+                            </div>
+                            <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm shadow-inner">
+                                <span class="material-symbols-outlined text-2xl">groups</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl p-6 shadow-lg shadow-blue-500/30 text-white hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl"></div>
+                        
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <p class="text-blue-100 text-sm font-medium opacity-90">Justificaciones</p>
+                                <h3 class="text-4xl font-bold mt-2"><%= dashJustificaciones %></h3>
+                                <span class="inline-flex mt-3 px-2 py-1 bg-white/20 rounded-lg text-xs font-semibold backdrop-blur-sm border border-white/10">
+                                    Pendientes
+                                </span>
+                            </div>
+                            <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm shadow-inner">
+                                <span class="material-symbols-outlined text-2xl">warning</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl p-6 shadow-lg shadow-blue-500/30 text-white hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl"></div>
+                        
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <p class="text-blue-100 text-sm font-medium opacity-90">Material Didáctico</p>
+                                <h3 class="text-4xl font-bold mt-2"><%= dashMateriales %></h3>
+                                <span class="inline-flex mt-3 px-2 py-1 bg-white/20 rounded-lg text-xs font-semibold backdrop-blur-sm border border-white/10">
+                                    Subidos
+                                </span>
+                            </div>
+                            <div class="p-3 bg-white/20 rounded-xl backdrop-blur-sm shadow-inner">
+                                <span class="material-symbols-outlined text-2xl">folder_open</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-xl text-[#111318] dark:text-white mb-4">Accesos Directos</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-blue-600 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl">add_circle</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Asistencias</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Control diario</p>
+                            </div>
+                        </div>
+                        <a href="AsistenciaServlet?accion=registrar" class="block w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg font-bold transition-colors">
+                            Registrar Asistencia
+                        </a>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-yellow-500 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-500 text-xl">schedule</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Justificaciones</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Revisar solicitudes</p>
+                            </div>
+                        </div>
+                        <a href="revisarJustificaciones.jsp" class="block w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white text-center rounded-lg font-bold transition-colors">
+                            Ver Justificaciones
+                        </a>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-xl">folder</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Material Apoyo</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Subir archivos</p>
+                            </div>
+                        </div>
+                        <a href="MaterialServlet?accion=seleccionarCurso" class="block w-full py-3 bg-purple-600 hover:bg-purple-700 text-white text-center rounded-lg font-bold transition-colors">
+                            Gestionar Materiales
+                        </a>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-teal-500 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="size-12 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-teal-600 dark:text-teal-400 text-xl">event_available</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Horarios</h3>
+                                <p class="text-sm text-[#616f89] dark:text-gray-400">Mi disponibilidad</p>
+                            </div>
+                        </div>
+                        <a href="DisponibilidadServlet" class="block w-full py-3 bg-teal-500 hover:bg-teal-600 text-white text-center rounded-lg font-bold transition-colors">
+                            Configurar Horario
+                        </a>
+                    </div>
+                </div>
                 <%
                     if (cursos != null && !cursos.isEmpty()) {
                 %>

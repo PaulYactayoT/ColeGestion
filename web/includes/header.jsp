@@ -75,7 +75,7 @@
                     <%= usuarioHeader %>
                 </p>
                 <p class="text-xs text-[#616f89] dark:text-gray-400 capitalize">
-                    <%= rolHeader != null ? rolHeader : "" %>
+                    <%= "Administrador" %>
                 </p>
             </div>
             

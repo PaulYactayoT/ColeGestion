@@ -11,6 +11,7 @@ import javax.servlet.http.HttpSession;
 import modelo.Profesor;
 import modelo.Curso;
 import modelo.CursoDAO;
+import modelo.MaterialDAO; // <--- IMPORTACIÓN NUEVA
 
 @WebServlet("/DocenteDashboardServlet")
 public class DocenteDashboardServlet extends HttpServlet {
@@ -64,6 +65,17 @@ public class DocenteDashboardServlet extends HttpServlet {
             }
             
             request.setAttribute("misCursos", cursos);
+
+            // =================================================================
+            // INICIO CÓDIGO NUEVO: Obtener conteo de materiales
+            // =================================================================
+            MaterialDAO materialDAO = new MaterialDAO();
+            int totalMateriales = materialDAO.contarMaterialesPorDocente(docente.getId());
+            request.setAttribute("totalMateriales", totalMateriales);
+            System.out.println("✅ Total materiales cargados para dashboard: " + totalMateriales);
+            // =================================================================
+            // FIN CÓDIGO NUEVO
+            // =================================================================
             
             System.out.println("📊 Estado de sesión:");
             System.out.println("   - personaId: " + session.getAttribute("personaId"));

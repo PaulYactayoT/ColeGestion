@@ -118,77 +118,79 @@
 
             <div class="p-8 space-y-8 max-w-[1200px] mx-auto w-full">
 
-                <%-- Banner de bienvenida --%>
-                <div class="relative rounded-xl overflow-hidden min-h-[180px] bg-primary flex flex-col justify-center px-8 shadow-lg shadow-primary/20"
-                     style="background-image: linear-gradient(90deg, rgba(19,91,236,0.95) 0%, rgba(19,91,236,0.6) 100%), url('https://lh3.googleusercontent.com/aida-public/AB6AXuB_3LXerE1vpUAm_1-q-D4EMXN-i8c-idTTZtPpQ58USnatUubEWaEA7NNTJhGtxA9glVNSU_OMWawnGSq4XX5HQvmUwfenKc6i66zaj2YSDXBn3IKNZQ4rkpfpv8Dvq_7FB1vCbkRfa3B33h-wF109oSVddHtKvBQS_mmEBKEorF9YbpZ5S1_tjrrkkRqaIgmrorMQiVIBf6m59RTKJhwF44UqJ3IBTkBBl-ch6fp8z52Qm823GZAMO-ZKdgXwLhe_q9AMTD-k4rs'); background-size: cover; background-position: center;">
-                    <h2 class="text-white text-3xl font-bold tracking-tight">
-                        Bienvenido, <%= usuarioDash != null ? usuarioDash : "Administrador" %>
-                    </h2>
-                    <p class="text-blue-100 mt-2 max-w-md">Aquí tienes el resumen de lo que está sucediendo hoy en el Instituto San Antonio.</p>
+                <%-- Banner de bienvenida (Estilo Azul Profundo Degradado) --%>
+                <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 mb-8 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute right-0 top-0 h-full w-1/3 bg-white/10 skew-x-12 transform origin-bottom-left"></div>
+                    <div class="relative z-10">
+                        <h2 class="text-3xl font-bold tracking-tight">
+                            Bienvenido, <%= usuarioDash != null ? usuarioDash : "Administrador" %>
+                        </h2>
+                        <p class="text-blue-100 mt-2 max-w-md">Aquí tienes el resumen de lo que está sucediendo hoy en el Instituto San Antonio.</p>
+                    </div>
                 </div>
 
-                <%-- Tarjetas de estadísticas --%>
+                <%-- Tarjetas de estadísticas (Estilo Azul Uniforme del Profesor) --%>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 
-                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 p-6 text-white shadow-lg shadow-sky-300/50 hover:-translate-y-1 transition-all duration-300">
-                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
-                        <div class="relative flex items-center justify-between">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl p-6 shadow-lg shadow-blue-500/30 text-white hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl"></div>
+                        <div class="relative flex items-center justify-between z-10">
                             <div>
-                                <p class="text-sky-100 text-sm font-medium">Total Estudiantes</p>
+                                <p class="text-blue-100 text-sm font-medium">Total Estudiantes</p>
                                 <h3 class="text-3xl font-bold mt-1"><%= totalEstudiantes %></h3>
-                                <div class="mt-2 inline-flex items-center rounded-full bg-white/20 px-2 py-1 text-xs backdrop-blur-sm">
-                                    <span class="mr-1">●</span> Activos
-                                </div>
+                                <span class="inline-flex mt-2 items-center rounded-lg bg-white/20 px-2 py-1 text-xs backdrop-blur-sm font-semibold border border-white/10">
+                                    Activos
+                                </span>
                             </div>
-                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm shadow-inner">
                                 <span class="material-symbols-outlined text-3xl">groups</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 p-6 text-white shadow-lg shadow-sky-300/50 hover:-translate-y-1 transition-all duration-300">
-                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
-                        <div class="relative flex items-center justify-between">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl p-6 shadow-lg shadow-blue-500/30 text-white hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl"></div>
+                        <div class="relative flex items-center justify-between z-10">
                             <div>
-                                <p class="text-sky-100 text-sm font-medium">Profesores</p>
+                                <p class="text-blue-100 text-sm font-medium">Profesores</p>
                                 <h3 class="text-3xl font-bold mt-1"><%= totalProfesores %></h3>
-                                <div class="mt-2 inline-flex items-center rounded-full bg-white/20 px-2 py-1 text-xs backdrop-blur-sm">
-                                    <span class="mr-1">●</span> Activos
-                                </div>
+                                <span class="inline-flex mt-2 items-center rounded-lg bg-white/20 px-2 py-1 text-xs backdrop-blur-sm font-semibold border border-white/10">
+                                    Activos
+                                </span>
                             </div>
-                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm shadow-inner">
                                 <span class="material-symbols-outlined text-3xl">school</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 p-6 text-white shadow-lg shadow-sky-300/50 hover:-translate-y-1 transition-all duration-300">
-                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
-                        <div class="relative flex items-center justify-between">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl p-6 shadow-lg shadow-blue-500/30 text-white hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl"></div>
+                        <div class="relative flex items-center justify-between z-10">
                             <div>
-                                <p class="text-sky-100 text-sm font-medium">Total Cursos</p>
+                                <p class="text-blue-100 text-sm font-medium">Total Cursos</p>
                                 <h3 class="text-3xl font-bold mt-1"><%= totalCursos %></h3>
-                                <div class="mt-2 inline-flex items-center rounded-full bg-white/20 px-2 py-1 text-xs backdrop-blur-sm">
-                                    <span class="mr-1">●</span> Registrados
-                                </div>
+                                <span class="inline-flex mt-2 items-center rounded-lg bg-white/20 px-2 py-1 text-xs backdrop-blur-sm font-semibold border border-white/10">
+                                    Registrados
+                                </span>
                             </div>
-                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm shadow-inner">
                                 <span class="material-symbols-outlined text-3xl">book</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 p-6 text-white shadow-lg shadow-sky-300/50 hover:-translate-y-1 transition-all duration-300">
-                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
-                        <div class="relative flex items-center justify-between">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-700 rounded-xl p-6 shadow-lg shadow-blue-500/30 text-white hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+                        <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl"></div>
+                        <div class="relative flex items-center justify-between z-10">
                             <div>
-                                <p class="text-sky-100 text-sm font-medium">Grados</p>
+                                <p class="text-blue-100 text-sm font-medium">Grados</p>
                                 <h3 class="text-3xl font-bold mt-1"><%= totalGrados %></h3>
-                                <div class="mt-2 inline-flex items-center rounded-full bg-white/20 px-2 py-1 text-xs backdrop-blur-sm">
-                                    <span class="mr-1">●</span> Niveles
-                                </div>
+                                <span class="inline-flex mt-2 items-center rounded-lg bg-white/20 px-2 py-1 text-xs backdrop-blur-sm font-semibold border border-white/10">
+                                    Niveles
+                                </span>
                             </div>
-                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm">
+                            <div class="rounded-xl bg-white/20 p-3 backdrop-blur-sm shadow-inner">
                                 <span class="material-symbols-outlined text-3xl">layers</span>
                             </div>
                         </div>

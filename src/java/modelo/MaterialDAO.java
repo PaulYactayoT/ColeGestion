@@ -300,4 +300,29 @@ public class MaterialDAO {
         
         return lista;
     }
+
+    /**
+     * ==========================================
+     * NUEVO MÉTODO: CONTAR MATERIALES POR DOCENTE
+     * ==========================================
+     */
+    public int contarMaterialesPorDocente(int idDocente) {
+        int total = 0;
+        String sql = "SELECT COUNT(*) FROM curso_material WHERE profesor_id = ? AND activo = 1 AND eliminado = 0";
+
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idDocente);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    total = rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al contar materiales por docente: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return total;
+    }
 }

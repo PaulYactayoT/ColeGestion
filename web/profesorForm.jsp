@@ -243,13 +243,17 @@
                                         <div class="text-xs text-red-500 mt-1 hidden" id="error-fecha-contratacion">Seleccione una fecha válida</div>
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-1">Estado</label>
-                                        <select name="estado" class="input-figma w-full p-3">
+                                        <%-- 🔥 CAMBIO 1: Agregué required-field al label y un ID al select --%>
+                                        <label class="block text-sm font-bold text-gray-700 mb-1 required-field">Estado</label>
+                                        <select name="estado" id="estado" class="input-figma w-full p-3">
+                                            <option value="">-- Seleccione --</option>
                                             <option value="ACTIVO"   <%= (editar && "ACTIVO".equals(p.getEstado()))   ? "selected" : "" %>>ACTIVO</option>
                                             <option value="INACTIVO" <%= (editar && "INACTIVO".equals(p.getEstado())) ? "selected" : "" %>>INACTIVO</option>
                                             <option value="LICENCIA" <%= (editar && "LICENCIA".equals(p.getEstado())) ? "selected" : "" %>>LICENCIA</option>
                                             <option value="JUBILADO" <%= (editar && "JUBILADO".equals(p.getEstado())) ? "selected" : "" %>>JUBILADO</option>
                                         </select>
+                                        <%-- 🔥 CAMBIO 2: Agregué el div de error para estado --%>
+                                        <div class="text-xs text-red-500 mt-1 hidden" id="error-estado">Este campo es obligatorio</div>
                                     </div>
                                 </div>
 
@@ -381,14 +385,26 @@
 
         function validarYEnviar() {
             const fechaContratacion = document.getElementById('fecha_contratacion');
+            const estado = document.getElementById('estado'); // 🔥 CAMBIO 3: Capturamos el select estado
             let valido = true;
 
+            // Reset errores
             document.getElementById('error-fecha-contratacion').classList.add('hidden');
             fechaContratacion.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+            
+            document.getElementById('error-estado').classList.add('hidden'); // 🔥 CAMBIO 4: Reset error estado
+            estado.classList.remove('border-red-500', 'ring-2', 'ring-red-200'); // 🔥 CAMBIO 5: Reset estilo estado
 
             if (!fechaContratacion.value) {
                 document.getElementById('error-fecha-contratacion').classList.remove('hidden');
                 fechaContratacion.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                valido = false;
+            }
+
+            // 🔥 CAMBIO 6: Validar si el estado está vacío
+            if (!estado.value) {
+                document.getElementById('error-estado').classList.remove('hidden');
+                estado.classList.add('border-red-500', 'ring-2', 'ring-red-200');
                 valido = false;
             }
 
