@@ -6,6 +6,7 @@ public class Tarea {
     private String nombre;
     private String descripcion;
     private String fechaEntrega;
+    private String horaEntrega; // ✅ Campo existente
     private boolean activo;
     private String tipo;
     private double peso;
@@ -14,6 +15,11 @@ public class Tarea {
     private String cursoNombre;
     private String gradoNombre;
     
+    // ✅ NUEVOS CAMPOS (Necesarios para la lógica del DAO y el JSP)
+    // Estos campos no se guardan en la tabla, solo sirven para mostrar info calculada
+    private String estadoCalculado; 
+    private long segundosRestantes; 
+
     // Constructor vacío
     public Tarea() {
         this.activo = true;
@@ -32,7 +38,7 @@ public class Tarea {
         this.peso = 1.0;
     }
     
-    // Getters y Setters
+    // Getters y Setters Originales
     public int getId() {
         return id;
     }
@@ -71,6 +77,14 @@ public class Tarea {
 
     public void setFechaEntrega(String fechaEntrega) {
         this.fechaEntrega = fechaEntrega;
+    }
+
+    public String getHoraEntrega() {
+        return horaEntrega;
+    }
+
+    public void setHoraEntrega(String horaEntrega) {
+        this.horaEntrega = horaEntrega;
     }
 
     public boolean isActivo() {
@@ -129,6 +143,24 @@ public class Tarea {
         this.gradoNombre = gradoNombre;
     }
     
+    // ✅ NUEVOS GETTERS Y SETTERS (Para que el DAO no de error)
+    public String getEstadoCalculado() {
+        return estadoCalculado;
+    }
+
+    public void setEstadoCalculado(String estadoCalculado) {
+        this.estadoCalculado = estadoCalculado;
+    }
+
+    public long getSegundosRestantes() {
+        return segundosRestantes;
+    }
+
+    public void setSegundosRestantes(long segundosRestantes) {
+        this.segundosRestantes = segundosRestantes;
+    }
+    // ---------------------------------------------------------
+
     @Override
     public String toString() {
         return "Tarea{" +
@@ -137,6 +169,7 @@ public class Tarea {
                 ", nombre='" + nombre + '\'' +
                 ", descripcion='" + descripcion + '\'' +
                 ", fechaEntrega='" + fechaEntrega + '\'' +
+                ", horaEntrega='" + horaEntrega + '\'' +
                 ", activo=" + activo +
                 ", tipo='" + tipo + '\'' +
                 ", peso=" + peso +

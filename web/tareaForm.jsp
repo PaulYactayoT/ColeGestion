@@ -20,718 +20,386 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= editar ? "Editar Tarea" : "Registrar Tarea"%> - Colegio SA</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        :root { --primary-blue: #0d6efd; --dark-blue: #0b4eb8; --bg-light: #f4f7fc; --text-dark: #333; --sidebar-width: 260px; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); margin: 0; display: flex; min-height: 100vh; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+        /* SIDEBAR */
+        .sidebar { width: var(--sidebar-width); background-color: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); position: fixed; height: 100vh; z-index: 100; display: flex; flex-direction: column; }
+        .brand { padding: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eee; }
+        .brand-logo { width: 40px; height: 40px; background-color: var(--primary-blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; }
+        .brand-text h4 { margin: 0; font-size: 16px; font-weight: 700; color: #1a1a1a; }
+        .brand-text span { font-size: 12px; color: #777; }
+        .sidebar-menu { padding: 20px 10px; flex-grow: 1; }
+        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: #666; text-decoration: none; border-radius: 8px; margin-bottom: 5px; transition: all 0.3s; font-size: 14px; font-weight: 500; }
+        .menu-item i { margin-right: 12px; width: 20px; text-align: center; }
+        .menu-item:hover { background-color: #eef2ff; color: var(--primary-blue); }
+        .menu-item.active { background-color: #e0eaff; color: var(--primary-blue); font-weight: 600; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid #eee; }
 
-        /* HEADER - NUEVO DISEÑO */
-        .main-header {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            padding: 12px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
+        /* CONTENT */
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 0; display: flex; flex-direction: column; }
+        .top-header { background-color: #fff; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
+        .page-title { font-size: 18px; font-weight: 600; color: #333; margin: 0; }
+        .user-profile { display: flex; align-items: center; gap: 15px; }
+        .user-info { text-align: right; line-height: 1.2; }
+        .user-name { font-size: 14px; font-weight: 600; display: block; }
+        .user-role { font-size: 12px; color: #777; }
+        .user-avatar { width: 40px; height: 40px; background-color: var(--primary-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .content-wrapper { padding: 30px; max-width: 1000px; margin: 0 auto; width: 100%; }
+
+        /* FORM */
+        .form-card { background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.03); border: 1px solid #eee; overflow: hidden; }
+        .form-header { background-color: #fff; padding: 20px 30px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .form-header h5 { margin: 0; font-weight: 600; color: var(--primary-blue); font-size: 16px; }
+        .form-body { padding: 30px; }
+        .form-label { font-weight: 500; font-size: 13px; color: #555; margin-bottom: 8px; }
+        .form-label i { margin-right: 5px; color: var(--primary-blue); }
+        .required { color: #dc3545; margin-left: 3px; font-weight: bold; }
+        .form-control, .form-select { border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 15px; font-size: 14px; color: #333; transition: all 0.2s; background-color: #fcfcfc; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1); background-color: #fff; }
+        .form-control:disabled { background-color: #f0f2f5; color: #666; cursor: not-allowed; }
+        textarea.form-control { resize: vertical; min-height: 120px; }
+
+        /* ARCHIVOS */
+        .file-upload-box { border: 2px dashed #dde2e5; border-radius: 8px; padding: 20px; text-align: center; background-color: #fafbfc; cursor: pointer; transition: all 0.2s; position: relative; margin-top: 10px; }
+        .file-upload-box:hover { border-color: var(--primary-blue); background-color: #f0f7ff; }
+        .file-upload-box input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+        .upload-icon { font-size: 24px; color: var(--primary-blue); margin-bottom: 10px; }
+        .upload-text { font-size: 13px; color: #555; font-weight: 500; }
+        .upload-hint { font-size: 11px; color: #888; display: block; margin-top: 5px; }
+
+        /* LISTAS DE ARCHIVOS */
+        #fileName, #existingFilesList { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
         
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .file-item { padding: 10px 15px; background-color: #e7f1ff; border-radius: 6px; align-items: center; justify-content: space-between; display: flex; font-size: 13px; color: var(--primary-blue); border: 1px solid #cce5ff; animation: fadeIn 0.3s ease; }
+        /* Estilo para archivos ya guardados (Verde) */
+        .existing-file-item { background-color: #d1e7dd; border: 1px solid #badbcc; color: #0f5132; }
         
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .file-info-content { display: flex; align-items: center; gap: 10px; }
         
-        .logo-img {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-        }
-        
-        .header-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #ffffff;
-        }
-        
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .header-user {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #ffffff;
-        }
-        
-        .btn-logout {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background-color: transparent;
-            border: 1px solid #ffffff;
-            color: #ffffff;
-            padding: 6px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-logout:hover {
-            background-color: #ffffff;
-            color: #1a1a1a;
-        }
+        .btn-remove-file { background: none; border: none; color: #dc3545; font-size: 16px; cursor: pointer; padding: 5px; line-height: 1; transition: all 0.2s; border-radius: 4px; }
+        .btn-remove-file:hover { background-color: rgba(220, 53, 69, 0.1); color: #a71d2a; transform: scale(1.1); }
 
-        /* MAIN CONTAINER */
-        .main-container {
-            flex: 1;
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px;
-            width: 100%;
-        }
-
-        /* PAGE HEADER CON BOTÓN DE VOLVER */
-        .page-header {
-            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .page-header-left h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .page-header-left p {
-            font-size: 15px;
-            opacity: 0.95;
-            margin: 0;
-        }
-        
-        .btn-back {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background-color: rgba(255, 255, 255, 0.2);
-            color: #ffffff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .btn-back:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            color: #ffffff;
-        }
-
-        /* CARD */
-        .form-card {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            overflow: hidden;
-        }
-
-        .form-card-header {
-            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .form-card-header h2 {
-            margin: 0;
-            font-size: 2rem;
-            font-weight: 600;
-        }
-
-        .form-card-header p {
-            margin: 10px 0 0 0;
-            opacity: 0.95;
-            font-size: 1rem;
-        }
-
-        .form-card-body {
-            padding: 40px;
-        }
-
-        /* FORM STYLES */
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-label {
-            color: #1a1a1a;
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .form-label .required {
-            color: #f44336;
-            margin-left: 3px;
-        }
-
-        .form-control, .form-select {
-            border: 2px solid #E0E0E0;
-            border-radius: 10px;
-            padding: 12px 15px;
-            font-size: 1rem;
-            color: #1a1a1a;
-            transition: all 0.3s ease;
-            background: #FAFAFA;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #2196F3;
-            box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.15);
-            background: white;
-        }
-
-        .form-control:disabled {
-            background: #F5F5F5;
-            color: #757575;
-            cursor: not-allowed;
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        /* FILE INPUT CUSTOM */
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .file-input-wrapper input[type=file] {
-            position: absolute;
-            left: -9999px;
-        }
-
-        .file-input-label {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: #FAFAFA;
-            border: 2px dashed #BDBDBD;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #1a1a1a;
-        }
-
-        .file-input-label:hover {
-            background: #F5F5F5;
-            border-color: #2196F3;
-        }
-
-        .file-input-label i {
-            font-size: 2rem;
-            color: #2196F3;
-        }
-
-        .file-input-text {
-            flex: 1;
-        }
-
-        .file-input-text strong {
-            display: block;
-            margin-bottom: 5px;
-            color: #1a1a1a;
-        }
-
-        .file-input-text small {
-            color: #757575;
-        }
-
-        .file-name {
-            margin-top: 10px;
-            padding: 10px;
-            background: #E3F2FD;
-            border-radius: 8px;
-            color: #1976D2;
-            font-size: 0.9rem;
-            display: none;
-        }
-
-        .file-name i {
-            margin-right: 8px;
-        }
-
-        /* CURRENT FILE DISPLAY */
-        .current-file {
-            margin-top: 10px;
-            padding: 12px;
-            background: #E8F5E9;
-            border-left: 4px solid #4CAF50;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .current-file i {
-            color: #4CAF50;
-            font-size: 1.2rem;
-        }
-
-        .current-file a {
-            color: #2E7D32;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .current-file a:hover {
-            text-decoration: underline;
-        }
-
-        /* ROW FOR TWO COLUMNS */
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* BUTTONS */
-        .form-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: flex-end;
-            margin-top: 35px;
-            padding-top: 25px;
-            border-top: 2px solid #F5F5F5;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-weight: 600;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
-        }
-
-        .btn-secondary {
-            background: #E0E0E0;
-            color: #424242;
-        }
-
-        .btn-secondary:hover {
-            background: #BDBDBD;
-            color: #1a1a1a;
-        }
-
-        /* FOOTER */
-        .footer {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            color: white;
-            padding: 30px 0;
-            margin-top: auto;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-        }
-
-        .footer-section h5 {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .footer-section p, .footer-section a {
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-            color: rgba(255,255,255,0.8);
-            text-decoration: none;
-            display: block;
-        }
-
-        .footer-section a:hover {
-            color: white;
-        }
-
-        .footer-logo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 15px;
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 20px;
-            margin-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.85rem;
-            opacity: 0.7;
-        }
-
-        /* LOADING ANIMATION */
-        .btn-primary:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        /* RESPONSIVO */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-            
-            .page-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-        }
+        .form-actions { margin-top: 30px; display: flex; gap: 15px; justify-content: flex-end; padding-top: 20px; border-top: 1px solid #eee; }
+        .btn-cancel { background-color: white; color: #666; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; font-weight: 500; text-decoration: none; font-size: 14px; transition: all 0.2s; }
+        .btn-cancel:hover { background-color: #f8f9fa; color: #333; border-color: #ccc; }
+        .btn-save { background-color: var(--primary-blue); color: white; border: none; padding: 10px 25px; border-radius: 6px; font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2); transition: all 0.2s; }
+        .btn-save:hover { background-color: var(--dark-blue); transform: translateY(-1px); }
+        .main-footer { text-align: center; padding: 20px; color: #888; font-size: 12px; margin-top: auto; }
     </style>
 </head>
 <body>
-    <!-- HEADER -->
-    <header class="main-header">
-        <div class="header-content">
-            <div class="header-left">
-                <img src="assets/img/logosa.png" alt="Logo" class="logo-img">
-                <span class="header-title">Colegio SA</span>
+
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-logo"><i class="fas fa-graduation-cap"></i></div>
+            <div class="brand-text"><h4>San Antonio</h4><span>Gestión Académica</span></div>
+        </div>
+        <div class="sidebar-menu">
+            <a href="docenteDashboard.jsp" class="menu-item"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="#" class="menu-item active"><i class="fas fa-book"></i> Mis Cursos</a>
+            <a href="#" class="menu-item"><i class="fas fa-chalkboard-teacher"></i> Asistencias</a>
+            <a href="#" class="menu-item"><i class="fas fa-star"></i> Calificaciones</a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="LogoutServlet" class="btn btn-danger w-100 btn-sm"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <header class="top-header">
+            <h2 class="page-title"><%= editar ? "Editar Tarea" : "Registrar Nueva Tarea"%></h2>
+            <div class="user-profile">
+                <div class="user-info"><span class="user-name"><%= docente.getNombres() %> <%= docente.getApellidos() %></span><span class="user-role">Docente</span></div>
+                <div class="user-avatar"><%= docente.getNombres().substring(0,1) %><%= docente.getApellidos().substring(0,1) %></div>
             </div>
-            <div class="header-right">
-                <div class="header-user">
-                    <i class="bi bi-person-circle"></i>
-                    <span><%= docente.getNombres()%> <%= docente.getApellidos()%></span>
+        </header>
+
+        <div class="content-wrapper">
+            <div class="form-card">
+                <div class="form-header">
+                    <h5><i class="fas fa-pen-fancy me-2"></i> Detalles de la Tarea</h5>
+                    <a href="TareaServlet?accion=ver&curso_id=<%= curso.getId()%>" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left"></i> Volver al listado</a>
                 </div>
-                <a href="LogoutServlet" class="btn-logout">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Cerrar sesión</span>
-                </a>
-            </div>
-        </div>
-    </header>
 
-    <!-- PAGE HEADER CON BOTÓN VOLVER -->
-    <div class="main-container">
-        <div class="page-header">
-            <div class="page-header-left">
-                <h1>
-                    <i class="fas fa-<%= editar ? "edit" : "plus-circle" %>"></i>
-                    <%= editar ? "Editar Tarea" : "Registrar Nueva Tarea"%>
-                </h1>
-                <p>
-                    <i class="fas fa-book"></i> <%= curso.getNombre()%> - <%= curso.getGradoNombre()%>
-                </p>
-            </div>
-            <a href="TareaServlet?accion=ver&curso_id=<%= curso.getId()%>" class="btn-back">
-                <i class="bi bi-arrow-left-circle"></i>
-                <span>Volver a Tareas</span>
-            </a>
-        </div>
+                <div class="form-body">
+                    <form action="TareaServlet" method="post" enctype="multipart/form-data" id="tareaForm">
+                        <input type="hidden" name="curso_id" value="<%= curso.getId()%>">
+                        <% if (editar) {%>
+                            <input type="hidden" name="accion" value="actualizar">
+                            <input type="hidden" name="id" value="<%= tarea.getId()%>">
+                        <% } else { %>
+                            <input type="hidden" name="accion" value="guardar">
+                        <% }%>
 
-        <!-- MAIN CONTENT -->
-        <div class="form-card">
-            <div class="form-card-body">
-                <form action="TareaServlet" method="post" enctype="multipart/form-data" id="tareaForm">
-                    <input type="hidden" name="curso_id" value="<%= curso.getId()%>">
-                    
-                    <%-- MODO EDICIÓN O CREACIÓN --%>
-                    <% if (editar) {%>
-                        <input type="hidden" name="accion" value="actualizar">
-                        <input type="hidden" name="id" value="<%= tarea.getId()%>">
-                    <% } else { %>
-                        <input type="hidden" name="accion" value="guardar">
-                    <% }%>
+                        <input type="hidden" name="archivos_a_eliminar" id="archivos_a_eliminar" value="">
 
-                    <!-- CURSO (SOLO LECTURA) -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-book"></i> Curso Asignado
-                        </label>
-                        <input type="text" class="form-control" value="<%= curso.getNombre()%> - <%= curso.getGradoNombre()%>" disabled>
-                    </div>
-
-                    <!-- NOMBRE DE LA TAREA -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-heading"></i> Nombre de la Tarea<span class="required">*</span>
-                        </label>
-                        <input type="text" name="nombre" class="form-control" 
-                               placeholder="Ej: Trabajo de investigación sobre células"
-                               value="<%= editar ? tarea.getNombre() : ""%>" 
-                               required maxlength="100">
-                    </div>
-
-                    <!-- DESCRIPCIÓN -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-align-left"></i> Descripción<span class="required">*</span>
-                        </label>
-                        <textarea name="descripcion" class="form-control" 
-                                  placeholder="Describa detalladamente en qué consiste la tarea..."
-                                  required><%= editar ? tarea.getDescripcion() : ""%></textarea>
-                    </div>
-
-                    <!-- ROW: FECHA Y TIPO -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-calendar-alt"></i> Fecha de Entrega<span class="required">*</span>
-                            </label>
-                            <input type="date" name="fecha_entrega" class="form-control" 
-                                   value="<%= editar ? tarea.getFechaEntrega() : ""%>" required>
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fas fa-book"></i> Curso Asignado</label>
+                            <input type="text" class="form-control" value="<%= curso.getNombre()%> - <%= curso.getGradoNombre()%>" disabled>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-tasks"></i> Tipo de Tarea<span class="required">*</span>
-                            </label>
-                            <select name="tipo" class="form-select" required>
-                                <option value="TAREA" <%= (editar && "TAREA".equals(tarea.getTipo())) ? "selected" : "" %>>Tarea</option>
-                                <option value="EXAMEN" <%= (editar && "EXAMEN".equals(tarea.getTipo())) ? "selected" : "" %>>Examen</option>
-                                <option value="PROYECTO" <%= (editar && "PROYECTO".equals(tarea.getTipo())) ? "selected" : "" %>>Proyecto</option>
-                                <option value="TRABAJO" <%= (editar && "TRABAJO".equals(tarea.getTipo())) ? "selected" : "" %>>Trabajo</option>
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fas fa-heading"></i> Nombre de la Tarea <span class="required">*</span></label>
+                            <input type="text" name="nombre" class="form-control" placeholder="Ej: Trabajo de investigación sobre células" value="<%= editar ? tarea.getNombre() : ""%>" required maxlength="100">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fas fa-align-left"></i> Descripción <span class="required">*</span></label>
+                            <textarea name="descripcion" class="form-control" placeholder="Describa detalladamente en qué consiste la tarea..." required><%= editar ? tarea.getDescripcion() : ""%></textarea>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label"><i class="fas fa-calendar-alt"></i> Fecha de Entrega <span class="required">*</span></label>
+                                <input type="date" name="fecha_entrega" id="fecha_entrega" class="form-control" value="<%= editar ? tarea.getFechaEntrega() : ""%>" required max="9999-12-31" onblur="validarAnio(this)">
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label"><i class="fas fa-clock"></i> Hora Vencimiento <span class="required">*</span></label>
+                                <input type="time" name="hora_entrega" class="form-control" value="<%= (editar && tarea.getHoraEntrega() != null) ? tarea.getHoraEntrega() : "00:00" %>" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label"><i class="fas fa-tasks"></i> Tipo de Tarea <span class="required">*</span></label>
+                                <select name="tipo" class="form-select" required>
+                                    <option value="TAREA" <%= (editar && "TAREA".equals(tarea.getTipo())) ? "selected" : "" %>>Tarea</option>
+                                    <option value="EXAMEN" <%= (editar && "EXAMEN".equals(tarea.getTipo())) ? "selected" : "" %>>Examen</option>
+                                    <option value="PROYECTO" <%= (editar && "PROYECTO".equals(tarea.getTipo())) ? "selected" : "" %>>Proyecto</option>
+                                    <option value="TRABAJO" <%= (editar && "TRABAJO".equals(tarea.getTipo())) ? "selected" : "" %>>Trabajo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fas fa-percentage"></i> Peso en la Nota Final (%) <span class="required">*</span></label>
+                            <% 
+                               int[] porcentajes = {10, 20, 30, 40, 50, 60};
+                               double pesoActual = (editar && tarea.getPeso() > 0) ? tarea.getPeso() : 0;
+                            %>
+                            <select name="peso" class="form-select" required>
+                                <option value="" disabled <%= (pesoActual == 0) ? "selected" : "" %>>Seleccione un porcentaje...</option>
+                                <% for(int p : porcentajes) { String selected = ((int)pesoActual == p) ? "selected" : ""; %>
+                                    <option value="<%= p %>" <%= selected %>><%= p %>%</option>
+                                <% } %>
+                                <% boolean esValorEstandar = false; for(int p : porcentajes) { if((int)pesoActual == p) esValorEstandar = true; } if(pesoActual > 0 && !esValorEstandar) { %>
+                                    <option value="<%= pesoActual %>" selected><%= (int)pesoActual %>% (Personalizado)</option>
+                                <% } %>
                             </select>
                         </div>
-                    </div>
 
-                    <!-- PESO -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-percentage"></i> Peso en la Nota Final (%)
-                        </label>
-                        <input type="number" name="peso" class="form-control" 
-                               placeholder="Ej: 10"
-                               value="<%= editar && tarea.getPeso() > 0 ? tarea.getPeso() : ""%>" 
-                               min="0" max="100" step="0.01">
-                        <small class="text-muted">Valor entre 0 y 100</small>
-                    </div>
-
-                    <!-- INSTRUCCIONES -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-clipboard-list"></i> Instrucciones Adicionales
-                        </label>
-                        <textarea name="instrucciones" class="form-control" 
-                                  placeholder="Instrucciones específicas para completar la tarea..."
-                                  rows="4"><%= editar && tarea.getInstrucciones() != null ? tarea.getInstrucciones() : ""%></textarea>
-                    </div>
-
-                    <!-- ARCHIVO ADJUNTO -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-paperclip"></i> Archivo Adjunto (PDF)
-                        </label>
-                        
-                        <% if (editar && tarea.getArchivoAdjunto() != null && !tarea.getArchivoAdjunto().isEmpty()) { %>
-                            <div class="current-file">
-                                <i class="fas fa-file-pdf"></i>
-                                <span>Archivo actual: 
-                                    <a href="uploads/<%= tarea.getArchivoAdjunto()%>" target="_blank">
-                                        <%= tarea.getArchivoAdjunto()%>
-                                    </a>
-                                </span>
-                            </div>
-                        <% } %>
-
-                        <div class="file-input-wrapper">
-                            <input type="file" name="archivo" id="archivoInput" accept=".pdf">
-                            <label for="archivoInput" class="file-input-label">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <div class="file-input-text">
-                                    <strong>Haga clic para seleccionar un archivo</strong>
-                                    <small>o arrastre y suelte aquí (Solo archivos PDF, máx. 10MB)</small>
-                                </div>
-                            </label>
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fas fa-list-ul"></i> Instrucciones <span class="required">*</span></label>
+                            <textarea name="instrucciones" class="form-control" placeholder="Instrucciones específicas para completar la tarea..." rows="3" required><%= editar && tarea.getInstrucciones() != null ? tarea.getInstrucciones() : ""%></textarea>
                         </div>
-                        <div class="file-name" id="fileName"></div>
-                    </div>
 
-                    <!-- BOTONES -->
-                    <div class="form-actions">
-                        <a href="TareaServlet?accion=ver&curso_id=<%= curso.getId()%>" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-primary" id="submitBtn">
-                            <i class="fas fa-<%= editar ? "save" : "check" %>"></i>
-                            <%= editar ? "Actualizar Tarea" : "Registrar Tarea"%>
-                        </button>
-                    </div>
-                </form>
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fas fa-paperclip"></i> Archivos Adjuntos <span class="required">*</span></label>
+                            
+                            <div id="existingFilesList">
+                                <% 
+                                if (editar && tarea.getArchivoAdjunto() != null && !tarea.getArchivoAdjunto().isEmpty()) { 
+                                    // Java: Separar por comas
+                                    String[] archivosGuardados = tarea.getArchivoAdjunto().split(",");
+                                    
+                                    for(String archivo : archivosGuardados) {
+                                        if(archivo != null && !archivo.trim().isEmpty()) {
+                                            String limpio = archivo.trim();
+                                            String rowId = "file-row-" + Math.abs(limpio.hashCode());
+                                %>
+                                    <div class="file-item existing-file-item" id="<%= rowId %>">
+                                        <div class="file-info-content">
+                                            <i class="fas fa-file-download"></i>
+                                            <strong><%= limpio %></strong>
+                                        </div>
+                                        <button type="button" class="btn-remove-file" onclick="markFileForDeletion('<%= limpio %>', '<%= rowId %>')" title="Eliminar este archivo">
+                                            <i class="fas fa-times-circle"></i>
+                                        </button>
+                                    </div>
+                                <% 
+                                        }
+                                    }
+                                } 
+                                %>
+                            </div>
+
+                            <div class="file-upload-box">
+                                <input type="file" name="archivo" id="archivoInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple
+                                       <%= (editar && tarea.getArchivoAdjunto() != null && !tarea.getArchivoAdjunto().isEmpty()) ? "" : "required" %>> 
+                                <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                                <div class="upload-text">Haga clic o arrastre archivos aquí</div>
+                                <span class="upload-hint">Puede seleccionar varios archivos (Máx 10MB c/u)</span>
+                            </div>
+                            
+                            <div id="fileName"></div>
+                        </div>
+
+                        <div class="form-actions">
+                            <a href="TareaServlet?accion=ver&curso_id=<%= curso.getId()%>" class="btn-cancel">Cancelar</a>
+                            <button type="submit" class="btn-save" id="submitBtn">
+                                <i class="fas fa-<%= editar ? "save" : "check" %>"></i>
+                                <%= editar ? "Guardar Cambios" : "Registrar Tarea"%>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
+
+        <footer class="main-footer">© 2026 Colegio San Antonio - Todos los derechos reservados</footer>
     </div>
 
-    <!-- FOOTER -->
-    <div class="footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <img src="assets/img/logosa.png" alt="Logo" class="footer-logo">
-                <p>"Líderes en educación de calidad al más alto nivel"</p>
-            </div>
-            
-            <div class="footer-section">
-                <h5><i class="fas fa-map-marker-alt"></i> Contacto</h5>
-                <p>Av. El Sol 461, San Juan de Lurigancho 15434</p>
-                <p><i class="fas fa-phone"></i> 987654321</p>
-                <p><i class="fas fa-envelope"></i> colegiosanantonio@gmail.com</p>
-            </div>
-            
-            <div class="footer-section">
-                <h5><i class="fas fa-share-alt"></i> Síguenos</h5>
-                <a href="https://www.facebook.com/"><i class="fab fa-facebook"></i> Facebook</a>
-                <a href="https://www.instagram.com/"><i class="fab fa-instagram"></i> Instagram</a>
-                <a href="https://twitter.com/"><i class="fab fa-twitter"></i> Twitter</a>
-                <a href="https://www.youtube.com/"><i class="fab fa-youtube"></i> YouTube</a>
-            </div>
-        </div>
-        
-        <div class="footer-bottom">
-            <p>&copy; 2025 Colegio SA - Todos los derechos reservados</p>
-        </div>
-    </div>
-
-    <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Mostrar nombre del archivo seleccionado
-        document.getElementById('archivoInput').addEventListener('change', function(e) {
-            const fileName = e.target.files[0] ? e.target.files[0].name : '';
-            const fileNameDiv = document.getElementById('fileName');
-            
-            if (fileName) {
-                // Validar tamaño del archivo (10MB)
-                const fileSize = e.target.files[0].size / 1024 / 1024; // en MB
-                if (fileSize > 10) {
-                    alert('El archivo es demasiado grande. El tamaño máximo es 10MB.');
-                    e.target.value = '';
-                    fileNameDiv.style.display = 'none';
-                    return;
+        // --- FUNCIÓN NUEVA PARA VALIDAR AÑO DE 4 DÍGITOS ---
+        function validarAnio(input) {
+            if (input.value) {
+                const partes = input.value.split('-'); // Divide YYYY-MM-DD
+                const anio = partes[0];
+                if (anio.length > 4) {
+                    // Si el año tiene más de 4 dígitos, corta a los primeros 4
+                    input.value = anio.substring(0, 4) + '-' + partes[1] + '-' + partes[2];
                 }
-                
-                // Validar extensión
-                if (!fileName.toLowerCase().endsWith('.pdf')) {
-                    alert('Solo se permiten archivos PDF.');
-                    e.target.value = '';
-                    fileNameDiv.style.display = 'none';
-                    return;
-                }
-                
-                fileNameDiv.innerHTML = '<i class="fas fa-file-pdf"></i> ' + fileName;
-                fileNameDiv.style.display = 'block';
-            } else {
-                fileNameDiv.style.display = 'none';
             }
+        }
+
+        // Lógica para MÚLTIPLES ARCHIVOS
+        const archivoInput = document.getElementById('archivoInput');
+        const fileNameContainer = document.getElementById('fileName');
+        const filesToDeleteInput = document.getElementById('archivos_a_eliminar');
+        
+        let fileStore = new DataTransfer();
+
+        // 1. Verificar si hay archivos (para el 'required')
+        function verificarEstadoArchivos() {
+            const archivosNuevos = fileStore.files.length;
+            let archivosExistentesVisibles = 0;
+            document.querySelectorAll('.existing-file-item').forEach(el => {
+                if (el.style.display !== 'none') archivosExistentesVisibles++;
+            });
+            const total = archivosNuevos + archivosExistentesVisibles;
+            if (total === 0) {
+                archivoInput.required = true;
+            } else {
+                archivoInput.required = false;
+            }
+        }
+
+        // 2. Manejo de Nuevos Archivos
+        archivoInput.addEventListener('change', function(e) {
+            const newFiles = Array.from(e.target.files);
+            newFiles.forEach(file => {
+                if (file.size > 10 * 1024 * 1024) { alert('El archivo "' + file.name + '" es demasiado grande.'); return; }
+                const validExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+                const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+                if (!validExtensions.includes(fileExtension)) { alert('Formato no permitido para "' + file.name + '".'); return; }
+                fileStore.items.add(file);
+            });
+            archivoInput.files = fileStore.files;
+            renderNewFileList();
+            verificarEstadoArchivos(); 
         });
 
-        // Validación del formulario antes de enviar
+        function renderNewFileList() {
+            fileNameContainer.innerHTML = '';
+            if (fileStore.files.length > 0) {
+                fileNameContainer.style.display = 'flex';
+                Array.from(fileStore.files).forEach((file, index) => {
+                    let iconClass = 'fa-file';
+                    const name = file.name.toLowerCase();
+                    if (name.endsWith('.pdf')) iconClass = 'fa-file-pdf';
+                    else if (name.endsWith('.doc') || name.endsWith('.docx')) iconClass = 'fa-file-word';
+                    else if (name.endsWith('.jpg') || name.endsWith('.png')) iconClass = 'fa-file-image';
+
+                    const itemHtml = 
+                        '<div class="file-item">' +
+                            '<div class="file-info-content"><i class="fas ' + iconClass + '"></i><strong>' + file.name + '</strong></div>' +
+                            '<button type="button" class="btn-remove-file" onclick="removeNewFile(' + index + ')" title="Quitar"><i class="fas fa-times-circle"></i></button>' +
+                        '</div>';
+                    fileNameContainer.insertAdjacentHTML('beforeend', itemHtml);
+                });
+            } else {
+                fileNameContainer.style.display = 'none';
+            }
+        }
+
+        window.removeNewFile = function(index) {
+            const newStore = new DataTransfer();
+            Array.from(fileStore.files).forEach((file, i) => { if (i !== index) newStore.items.add(file); });
+            fileStore = newStore;
+            archivoInput.files = fileStore.files;
+            renderNewFileList();
+            verificarEstadoArchivos(); 
+        };
+
+        // 3. Manejo de Archivos Existentes
+        window.markFileForDeletion = function(fileName, rowId) {
+            if(confirm('¿Eliminar el archivo "' + fileName + '"? Este cambio se aplicará al guardar.')) {
+                document.getElementById(rowId).style.display = 'none';
+                let currentToDelete = filesToDeleteInput.value;
+                if(currentToDelete) {
+                    filesToDeleteInput.value = currentToDelete + "," + fileName;
+                } else {
+                    filesToDeleteInput.value = fileName;
+                }
+                verificarEstadoArchivos();
+            }
+        };
+
+        verificarEstadoArchivos();
+
+        // 4. VALIDACIÓN DE FECHA Y HORA
         document.getElementById('tareaForm').addEventListener('submit', function(e) {
-            const fechaEntrega = document.querySelector('input[name="fecha_entrega"]').value;
-            const hoy = new Date().toISOString().split('T')[0];
-            
-            if (fechaEntrega < hoy) {
+            // Aseguramos que el año esté corregido antes de validar
+            const fechaField = document.getElementById('fecha_entrega');
+            validarAnio(fechaField);
+
+            const fechaInput = fechaField.value;
+            // ✅ ACTUALIZADO: Buscamos por name="hora_entrega"
+            const horaInput = document.querySelector('input[name="hora_entrega"]').value;
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hoy = year + '-' + month + '-' + day; // YYYY-MM-DD
+
+            const horaActual = String(now.getHours()).padStart(2, '0') + ':' + 
+                               String(now.getMinutes()).padStart(2, '0'); // HH:MM
+
+            // REGLA 1: No fechas pasadas
+            if (fechaInput < hoy) {
                 e.preventDefault();
                 alert('La fecha de entrega no puede ser anterior a hoy.');
                 return false;
             }
 
-            // Deshabilitar botón para evitar doble envío
+            // REGLA 2: Si es HOY, la hora debe ser ESTRICTAMENTE MAYOR
+            if (fechaInput === hoy) {
+                if (horaInput <= horaActual) { 
+                    e.preventDefault();
+                    alert('Si la entrega es hoy, la hora debe ser posterior a la actual (' + horaActual + ').');
+                    return false;
+                }
+            }
+            
+            // Validación archivos
+            verificarEstadoArchivos();
+            if(archivoInput.required && archivoInput.files.length === 0) {
+                 e.preventDefault();
+                 alert('Debes adjuntar al menos un archivo.');
+                 return false;
+            }
+
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-        });
-
-        // Drag and drop para archivos
-        const fileLabel = document.querySelector('.file-input-label');
-        
-        fileLabel.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileLabel.style.borderColor = '#2196F3';
-            fileLabel.style.background = '#E3F2FD';
-        });
-        
-        fileLabel.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            fileLabel.style.borderColor = '#BDBDBD';
-            fileLabel.style.background = '#FAFAFA';
-        });
-        
-        fileLabel.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileLabel.style.borderColor = '#BDBDBD';
-            fileLabel.style.background = '#FAFAFA';
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                document.getElementById('archivoInput').files = files;
-                document.getElementById('archivoInput').dispatchEvent(new Event('change'));
-            }
         });
     </script>
 </body>
