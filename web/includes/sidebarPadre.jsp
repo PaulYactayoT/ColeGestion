@@ -50,6 +50,19 @@
 
         <!-- Navegación dinámica -->
         <nav class="space-y-1">
+            <%
+                boolean dashboardActivo = currentPagePadre.contains("padreDashboard");
+                String dashboardCls = dashboardActivo
+                    ? "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium transition-colors w-full"
+                    : "flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-800 transition-colors group w-full";
+            %>
+            <a href="<%= request.getContextPath() %>/PadreDashboardServlet"
+               class="<%= dashboardCls %>"
+                <%= dashboardActivo ? "aria-current='page'" : "" %>>
+                <span class="material-symbols-outlined w-5 text-center flex-shrink-0 text-[20px]">home</span>
+                <span class="text-sm font-medium whitespace-nowrap">Inicio</span>
+            </a>
+
             <% if (modulosPadre.isEmpty()) { %>
                 <div class="flex flex-col items-center gap-2 py-8 text-center text-slate-400">
                     <i class="fas fa-lock text-3xl opacity-30"></i>
