@@ -6,7 +6,7 @@ public class Tarea {
     private String nombre;
     private String descripcion;
     private String fechaEntrega;
-    private String horaEntrega; // ✅ Campo existente
+    private String horaEntrega; 
     private boolean activo;
     private String tipo;
     private double peso;

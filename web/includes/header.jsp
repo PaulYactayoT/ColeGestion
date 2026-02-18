@@ -23,27 +23,28 @@
                            ? usuarioHeader.substring(0, 1).toUpperCase() 
                            : "U";
     
-    // SI ES PADRE: Mostrar información del ALUMNO (hijo)
+    // SI ES PADRE: Mostrar nombre completo del PADRE (no del alumno)
     if ("padre".equals(rolHeader)) {
         Padre padre = (Padre) session.getAttribute("padre");
-        if (padre != null && padre.getAlumnoId() > 0) {
-            // CORREGIDO: Usar getAlumnoNombre() que debe devolver "Milagros Candela"
-            nombreMostrar = padre.getAlumnoNombre() != null ? padre.getAlumnoNombre() : "Sin alumno";
-            subtituloMostrar = padre.getGradoNombre() != null ? padre.getGradoNombre() : "";
-            
-            // Obtener foto del alumno
-            try {
-                AlumnoDAO alumnoDAO = new AlumnoDAO();
-                Alumno alumno = alumnoDAO.obtenerPorId(padre.getAlumnoId());
-                if (alumno != null && alumno.getFoto() != null && !alumno.getFoto().isEmpty()) {
-                    fotoMostrar = alumno.getFoto();
-                    // CORREGIDO: Usar el nombre completo del alumno para la inicial
-                    if (alumno.getNombreCompleto() != null && !alumno.getNombreCompleto().isEmpty()) {
-                        inicialMostrar = alumno.getNombreCompleto().substring(0, 1).toUpperCase();
+        if (padre != null) {
+            // CORREGIDO: Mostrar nombre completo del PADRE
+            String nombres   = padre.getNombres()   != null ? padre.getNombres()   : "";
+            String apellidos = padre.getApellidos() != null ? padre.getApellidos() : "";
+            nombreMostrar    = (nombres + " " + apellidos).trim();
+            subtituloMostrar = padre.getParentesco() != null ? padre.getParentesco() : "Padre/Madre";
+            inicialMostrar   = !nombreMostrar.isEmpty() ? nombreMostrar.substring(0, 1).toUpperCase() : "P";
+
+            // Foto del alumno (hijo) si está disponible
+            if (padre.getAlumnoId() > 0) {
+                try {
+                    AlumnoDAO alumnoDAO = new AlumnoDAO();
+                    Alumno alumno = alumnoDAO.obtenerPorId(padre.getAlumnoId());
+                    if (alumno != null && alumno.getFoto() != null && !alumno.getFoto().isEmpty()) {
+                        fotoMostrar = alumno.getFoto();
                     }
+                } catch (Exception e) {
+                    System.err.println("Error obteniendo foto del alumno: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                System.err.println("Error obteniendo foto del alumno: " + e.getMessage());
             }
         }
     } 
@@ -74,7 +75,7 @@
         }
     }
 %>
-<!-- Header Superior - CON CLASES DARK CORRECTAS -->
+<!-- Header Superior -->
 <header class="flex items-center justify-between bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark px-8 py-3 sticky top-0 z-10 transition-colors duration-200">
     <div class="flex items-center gap-4 flex-1">
         <div class="flex items-center gap-3">
@@ -105,18 +106,18 @@
         <!-- Separador -->
         <div class="h-8 w-[1px] bg-border-light dark:bg-border-dark mx-2" aria-hidden="true"></div>
         
-        <!-- Información del ALUMNO (hijo) -->
+        <!-- Información del PADRE -->
         <div class="flex items-center gap-3">
             <div class="text-right hidden md:block">
                 <p class="text-sm font-medium text-slate-900 dark:text-white">
-                    <%= nombreMostrar %> <!-- Ahora debe ser "Milagros Candela" -->
+                    <%= nombreMostrar %>
                 </p>
                 <p class="text-xs text-slate-500 dark:text-slate-400">
-                    <%= subtituloMostrar %> <!-- Aquí va el grado -->
+                    <%= subtituloMostrar %>
                 </p>
             </div>
             
-            <%-- Avatar con foto o inicial del ALUMNO --%>
+            <%-- Avatar con foto o inicial --%>
             <% if (tieneFoto) { %>
                 <div class="size-10 rounded-full border-2 border-primary/20 overflow-hidden dark:border-primary/40">
                     <img src="<%= fotoUrl %>" 
@@ -128,7 +129,7 @@
                 <div class="size-10 rounded-full border-2 border-primary/20 bg-blue-600 
                             flex items-center justify-center text-white font-bold text-sm
                             dark:border-primary/40">
-                    <%= inicialMostrar %> <!-- Inicial del alumno -->
+                    <%= inicialMostrar %>
                 </div>
             <% } %>
         </div>
@@ -136,7 +137,6 @@
 </header>
 
 <script>
-// Función para cambiar el tema
 function toggleTheme() {
     const html = document.documentElement;
     const themeIcon = document.getElementById('themeIcon');
@@ -153,7 +153,6 @@ function toggleTheme() {
     }
 }
 
-// Función para establecer cookie
 function setCookie(name, value, days) {
     const date = new Date();
     date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -161,7 +160,6 @@ function setCookie(name, value, days) {
     document.cookie = name + "=" + value + ";" + expires + ";path=/";
 }
 
-// Función para obtener cookie
 function getCookie(name) {
     const cookieName = name + "=";
     const cookies = document.cookie.split(';');
@@ -174,7 +172,6 @@ function getCookie(name) {
     return "";
 }
 
-// Aplicar tema guardado al cargar la página
 document.addEventListener('DOMContentLoaded', function() {
     const theme = getCookie('theme');
     const html = document.documentElement;

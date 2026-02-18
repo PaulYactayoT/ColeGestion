@@ -176,8 +176,7 @@
 
             <!-- Sección de Bienvenida o Información Adicional (opcional) -->
             <div class="bg-white dark:bg-card-dark rounded-xl p-6 shadow-sm border border-slate-100 dark:border-border-dark mb-6">
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Bienvenido, <%= padre.getAlumnoNombre() %></h3>
-                <p class="text-slate-600 dark:text-slate-400">
+<h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Bienvenido, <%= padre.getNombres() %> <%= padre.getApellidos() %></h3>                <p class="text-slate-600 dark:text-slate-400">
                     Aquí puedes monitorear el progreso académico y la asistencia de tu hijo. 
                     Utiliza el menú lateral para acceder a las diferentes secciones.
                 </p>
