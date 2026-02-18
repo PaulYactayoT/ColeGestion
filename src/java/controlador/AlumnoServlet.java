@@ -52,12 +52,7 @@ public class AlumnoServlet extends HttpServlet {
         try {
             // Acción por defecto: listar todos los alumnos con filtros de grado
             if (accion == null || accion.isEmpty()) {
-                // Solo admin puede listar todos los alumnos
-                if (!"admin".equals(rol)) {
-                    response.sendRedirect("acceso_denegado.jsp");
-                    return;
-                }
-                
+                // Admin y docente pueden listar alumnos
                 // Cargar grados para el filtro
                 GradoDAO gradoDAO = new GradoDAO();
                 List<modelo.Grado> grados = gradoDAO.listar();
@@ -75,11 +70,6 @@ public class AlumnoServlet extends HttpServlet {
 
             // Filtrar alumnos por grado específico (SOLO ADMIN)
             if ("filtrar".equals(accion)) {
-                if (!"admin".equals(rol)) {
-                    response.sendRedirect("acceso_denegado.jsp");
-                    return;
-                }
-
                 String gradoStr = request.getParameter("grado_id");
                 GradoDAO gradoDAO = new GradoDAO();
                 request.setAttribute("grados", gradoDAO.listar());
@@ -110,7 +100,21 @@ public class AlumnoServlet extends HttpServlet {
                 return;
             }
 
-            // Las siguientes acciones SOLO para ADMIN
+            // Ver detalle: permitido también para docente
+            if ("ver".equals(accion)) {
+                int idVer = Integer.parseInt(request.getParameter("id"));
+                Alumno alumnoDetalle = dao.obtenerPorId(idVer);
+                if (alumnoDetalle != null) {
+                    request.setAttribute("alumno", alumnoDetalle);
+                    request.getRequestDispatcher("alumnoDetalle.jsp").forward(request, response);
+                } else {
+                    session.setAttribute("error", "Alumno no encontrado");
+                    response.sendRedirect("AlumnoServlet");
+                }
+                return;
+            }
+
+            // Las siguientes acciones SOLO para ADMIN (nuevo, editar, eliminar)
             if (!"admin".equals(rol)) {
                 response.sendRedirect("acceso_denegado.jsp");
                 return;
@@ -140,19 +144,6 @@ public class AlumnoServlet extends HttpServlet {
                         response.sendRedirect("AlumnoServlet");
                     }
                     break;
-                case "ver":
-                    // Ver detalle del alumno
-                    int idVer = Integer.parseInt(request.getParameter("id"));
-                    Alumno alumnoDetalle = dao.obtenerPorId(idVer);
-                    if (alumnoDetalle != null) {
-                        request.setAttribute("alumno", alumnoDetalle);
-                        request.getRequestDispatcher("alumnoDetalle.jsp").forward(request, response);
-                    } else {
-                        session.setAttribute("error", "Alumno no encontrado");
-                        response.sendRedirect("AlumnoServlet");
-                    }
-                    break;
-
                 case "eliminar":
                     // Eliminar alumno del sistema
                     int idEliminar = Integer.parseInt(request.getParameter("id"));
@@ -333,15 +324,18 @@ public class AlumnoServlet extends HttpServlet {
 
         switch (rol) {
             case "admin":
-                // Admin tiene acceso completo
                 return true;
 
             case "docente":
-                // Docente solo puede usar obtenerPorCurso (AJAX)
-                return "obtenerPorCurso".equals(accion);
+                // Docente puede listar, filtrar, ver y obtener alumnos por curso (AJAX)
+                // NO puede crear, editar ni eliminar
+                return accion == null
+                    || accion.isEmpty()
+                    || "filtrar".equals(accion)
+                    || "ver".equals(accion)
+                    || "obtenerPorCurso".equals(accion);
 
             case "padre":
-                // Padre NO tiene acceso a AlumnoServlet
                 return false;
 
             default:

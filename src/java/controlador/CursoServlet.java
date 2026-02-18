@@ -30,8 +30,14 @@ public class CursoServlet extends HttpServlet {
         System.out.println("CursoServlet - Acción: " + accion + ", Rol: " + rol);
 
         // VALIDACIÓN: Solo admin puede gestionar cursos (crear, editar, eliminar)
-        if (("nuevo".equals(accion) || "editar".equals(accion) || "eliminar".equals(accion)) 
-            && !"admin".equals(rol)) {
+        // Solo admin puede eliminar; admin y administrativo pueden crear/editar
+        if ("eliminar".equals(accion) && !"admin".equals(rol)) {
+            System.out.println("ACCESO DENEGADO: Solo admin puede eliminar cursos");
+            response.sendRedirect("acceso_denegado.jsp");
+            return;
+        }
+        if (("nuevo".equals(accion) || "editar".equals(accion))
+            && !"admin".equals(rol) && !"administrativo".equals(rol)) {
             System.out.println("ACCESO DENEGADO: Rol " + rol + " intentó acción administrativa");
             response.sendRedirect("acceso_denegado.jsp");
             return;
@@ -63,8 +69,8 @@ public class CursoServlet extends HttpServlet {
 
         // Acción por defecto: listar todos los cursos
         if (accion == null || accion.equals("listar")) {
-            // Si es docente, mostrar solo sus cursos
             if ("docente".equals(rol)) {
+                // Docente ve solo sus cursos
                 Profesor docente = (Profesor) session.getAttribute("docente");
                 if (docente != null) {
                     request.setAttribute("lista", dao.listarPorProfesor(docente.getId()));
@@ -72,8 +78,12 @@ public class CursoServlet extends HttpServlet {
                     request.setAttribute("error", "No se pudo cargar información del profesor");
                     request.setAttribute("lista", new java.util.ArrayList<>());
                 }
+            } else if ("padre".equals(rol)) {
+                // Padre NO puede ver cursos → redirigir
+                response.sendRedirect("acceso_denegado.jsp");
+                return;
             } else {
-                // Admin ve todos los cursos
+                // Admin y administrativo ven todos los cursos
                 request.setAttribute("grados", new GradoDAO().listar());
                 request.setAttribute("lista", dao.listar());
             }
@@ -87,7 +97,7 @@ public class CursoServlet extends HttpServlet {
 
         // Filtrar cursos por grado (SOLO ADMIN)
         if (accion.equals("filtrar")) {
-            if (!"admin".equals(rol)) {
+            if (!"admin".equals(rol) && !"administrativo".equals(rol)) {
                 response.sendRedirect("acceso_denegado.jsp");
                 return;
             }
@@ -127,7 +137,7 @@ public class CursoServlet extends HttpServlet {
             }
         // Formulario para nuevo curso (SOLO ADMIN)
         if (accion.equals("nuevo")) {
-            if (!"admin".equals(rol)) {
+            if (!"admin".equals(rol) && !"administrativo".equals(rol)) {
                 response.sendRedirect("acceso_denegado.jsp");
                 return;
             }
@@ -169,19 +179,19 @@ public class CursoServlet extends HttpServlet {
                 boolean resultado = dao.eliminar(idEliminar);
                 
                 if (resultado) {
-                    System.out.println("✅ Curso eliminado exitosamente: ID " + idEliminar);
+                    System.out.println("Curso eliminado exitosamente: ID " + idEliminar);
                     session.setAttribute("mensaje", "Curso eliminado correctamente");
                 } else {
-                    System.out.println("❌ ERROR: No se pudo eliminar el curso " + idEliminar);
+                    System.out.println(" ERROR: No se pudo eliminar el curso " + idEliminar);
                     session.setAttribute("error", "No se pudo eliminar el curso. Es posible que no exista o ya esté eliminado.");
                 }
                 
             } catch (NumberFormatException e) {
-                System.out.println("❌ ERROR: ID de curso inválido para eliminar");
+                System.out.println("ERROR: ID de curso inválido para eliminar");
                 session.setAttribute("error", "ID de curso inválido.");
                 e.printStackTrace();
             } catch (Exception e) {
-                System.out.println("❌ ERROR inesperado al eliminar curso: " + e.getMessage());
+                System.out.println("ERROR inesperado al eliminar curso: " + e.getMessage());
                 session.setAttribute("error", "Error al eliminar el curso: " + e.getMessage());
                 e.printStackTrace();
             }
@@ -191,7 +201,7 @@ public class CursoServlet extends HttpServlet {
         }
 
         // Acción desconocida
-        System.out.println("⚠️ ADVERTENCIA: Acción desconocida: " + accion);
+        System.out.println("ADVERTENCIA: Acción desconocida: " + accion);
         response.sendRedirect("CursoServlet?accion=listar");
     }
 
@@ -203,7 +213,7 @@ public class CursoServlet extends HttpServlet {
         String rol = (String) session.getAttribute("rol");
 
         // Solo admin puede crear/editar cursos
-        if (!"admin".equals(rol)) {
+        if (!"admin".equals(rol) && !"administrativo".equals(rol)) {
             System.out.println("ACCESO DENEGADO POST: Rol " + rol + " intentó modificar cursos");
             response.sendRedirect("acceso_denegado.jsp");
             return;

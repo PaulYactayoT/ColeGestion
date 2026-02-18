@@ -43,129 +43,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tareas Pendientes - San Antonio</title>
     
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#135bec",
-                        "primary-dark": "#0d47a1",
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#101622",
-                    },
-                    fontFamily: { "display": ["Lexend"] },
-                },
-            },
-        }
-    </script>
+    <!-- INCLUIR HEAD.JSP CON TODAS LAS CONFIGURACIONES -->
+    <jsp:include page="includes/head.jsp" />
     
     <style>
-        body { font-family: 'Lexend', sans-serif; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        
         .table-row-hover:hover td {
             background-color: #f8fafc;
         }
+        .dark .table-row-hover:hover td {
+            background-color: #1e293b;
+        }
     </style>
 </head>
-<body class="bg-background-light text-slate-800 min-h-screen flex">
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 min-h-screen flex transition-colors duration-200">
 
-    <aside class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col justify-between fixed h-full z-20">
-        <div class="p-6">
-            <div class="flex items-center gap-3 mb-8">
-                <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white shadow-md">
-                    <span class="material-symbols-outlined">school</span>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold leading-tight text-slate-900">San Antonio</h1>
-                    <p class="text-xs text-slate-500 font-medium">Panel de Padre</p>
-                </div>
-            </div>
-            
-            <nav class="space-y-1">
-                <a href="padreDashboard.jsp" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">dashboard</span>
-                    <span class="text-sm font-medium">Dashboard</span>
-                </a>
-                
-                <a href="notasPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">grade</span>
-                    <span class="text-sm font-medium">Notas del Alumno</span>
-                </a>
-                
-                <a href="observacionesPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">chat_bubble</span>
-                    <span class="text-sm font-medium">Observaciones</span>
-                </a>
-                
-                <a href="tareasPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
-                    <span class="material-symbols-outlined fill-1">assignment</span>
-                    <span class="text-sm font-medium">Tareas</span>
-                </a>
-                
-                <a href="MaterialPadreServlet?accion=seleccionarCurso" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">folder_open</span>
-                    <span class="text-sm font-medium">Material de Apoyo</span>
-                </a>
-                <a href="albumPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">photo_library</span>
-                    <span class="text-sm font-medium">Álbums</span>
-                </a>
-                <a href="asistenciasPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">calendar_month</span>
-                    <span class="text-sm font-medium">Asistencias</span>
-                </a>
-            </nav>
-        </div>
-        
-        <div class="p-4 border-t border-gray-100">
-            <a href="LogoutServlet" class="flex items-center justify-center gap-2 w-full py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-red-600 transition-colors">
-                <span class="material-symbols-outlined text-[18px]">logout</span>
-                Cerrar Sesión
-            </a>
-        </div>
-    </aside>
-
+    <!-- INCLUIR SIDEBAR PARA PADRE -->
+    <jsp:include page="includes/sidebarPadre.jsp" />
+    
     <main class="flex-1 md:ml-64 flex flex-col min-h-screen">
         
-        <header class="bg-white border-b border-gray-200 sticky top-0 z-10 px-8 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <a href="padreDashboard.jsp" class="md:hidden p-2 text-slate-400 hover:bg-slate-50 rounded-lg">
-                    <span class="material-symbols-outlined">menu</span>
-                </a>
-                <div class="flex items-center gap-2 text-slate-800">
-                    <span class="material-symbols-outlined text-primary text-2xl">assignment</span>
-                    <h1 class="text-xl font-bold">Tareas Pendientes</h1>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <button class="p-2 text-slate-400 hover:bg-slate-50 rounded-full relative">
-                    <span class="material-symbols-outlined">notifications</span>
-                    <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
-                </button>
-                <div class="h-8 w-[1px] bg-slate-200 mx-2 hidden md:block"></div>
-                <div class="flex items-center gap-3">
-                    <div class="text-right hidden md:block">
-                        <p class="text-sm font-semibold text-slate-800"><%= tieneAlumno ? padre.getAlumnoNombre() : "Sin alumno" %></p>
-                        <p class="text-xs text-slate-500"><%= tieneAlumno ? padre.getGradoNombre() : "Pendiente" %></p>
-                    </div>
-                    <div class="size-10 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-500">
-                        <span class="material-symbols-outlined">person</span>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <!-- INCLUIR HEADER -->
+        <jsp:include page="includes/header.jsp" />
 
         <div class="p-6 md:p-8 max-w-7xl mx-auto w-full">
             
+            <!-- Banner principal - se mantiene igual porque es gradiente -->
             <div class="bg-gradient-to-r from-primary to-blue-600 rounded-2xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
                 
@@ -181,23 +83,24 @@
 
                 <div class="relative z-10 flex gap-2">
                     <a href="ExportServlet?report=tareas&type=pdf&alumno_id=<%= alumnoId%>" 
-                       class="bg-white text-primary hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-sm transition-all">
+                       class="bg-white text-primary hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-sm transition-all dark:bg-card-dark dark:text-white dark:hover:bg-gray-800">
                         <i class="fas fa-file-pdf"></i> Exportar PDF
                     </a>
                     
                     <a href="ExportServlet?report=tareas&type=xlsx&alumno_id=<%= alumnoId%>"
-                       class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-sm transition-all">
+                       class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-sm transition-all dark:bg-green-600 dark:hover:bg-green-700">
                         <i class="fas fa-file-excel"></i> Exportar Excel
                     </a>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <!-- Tarjeta de tareas - CON DARK MODE -->
+            <div class="bg-white dark:bg-card-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark overflow-hidden">
                 
-                <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 class="font-bold text-slate-700">Listado de Actividades</h3>
+                <div class="p-4 border-b border-gray-100 dark:border-border-dark flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+                    <h3 class="font-bold text-slate-700 dark:text-slate-300">Listado de Actividades</h3>
                     <div class="flex gap-2">
-                        <span class="text-xs text-slate-500 bg-white border px-2 py-1 rounded flex items-center gap-1">
+                        <span class="text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-card-dark border px-2 py-1 rounded flex items-center gap-1 dark:border-border-dark">
                             <span class="size-2 rounded-full bg-green-500"></span> Activas
                         </span>
                     </div>
@@ -206,7 +109,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-slate-500 font-bold tracking-wider">
+                            <tr class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-border-dark text-xs uppercase text-slate-500 dark:text-slate-400 font-bold tracking-wider">
                                 <th class="px-6 py-4">Curso</th>
                                 <th class="px-6 py-4">Tarea</th>
                                 <th class="px-6 py-4 w-1/3">Descripción</th>
@@ -214,29 +117,29 @@
                                 <th class="px-6 py-4 text-center">Estado</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 text-sm text-slate-700">
+                        <tbody class="divide-y divide-gray-100 dark:divide-border-dark text-sm text-slate-700 dark:text-slate-300">
                             
                             <% if (tareas != null && !tareas.isEmpty()) { 
                                 for (Tarea tarea : tareas) {
-                                    // Determinar estilo según estado
-                                    // Usamos badges de color para estado, pero el resto es limpio
-                                    String badgeClass = tarea.isActivo() ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200";
+                                    String badgeClass = tarea.isActivo() 
+                                        ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800" 
+                                        : "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800";
                                     String textoEstado = tarea.isActivo() ? "Pendiente" : "Cerrada";
                                     String icon = tarea.isActivo() ? "schedule" : "lock";
                             %>
-                            <tr class="table-row-hover transition-colors group">
-                                <td class="px-6 py-4 font-medium text-slate-900">
+                            <tr class="table-row-hover transition-colors">
+                                <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">
                                     <%= tarea.getCursoNombre() %>
                                 </td>
-                                <td class="px-6 py-4 font-semibold text-primary">
+                                <td class="px-6 py-4 font-semibold text-primary dark:text-blue-400">
                                     <%= tarea.getNombre() %>
                                 </td>
-                                <td class="px-6 py-4 text-slate-600">
+                                <td class="px-6 py-4 text-slate-600 dark:text-slate-400">
                                     <p class="line-clamp-2" title="<%= tarea.getDescripcion() %>">
                                         <%= tarea.getDescripcion() %>
                                     </p>
                                 </td>
-                                <td class="px-6 py-4 text-slate-500 whitespace-nowrap">
+                                <td class="px-6 py-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                                     <div class="flex items-center gap-1">
                                         <i class="far fa-calendar-alt text-xs"></i>
                                         <%= tarea.getFechaEntrega() %>
@@ -253,13 +156,13 @@
                                } else { %>
                             
                             <tr>
-                                <td colspan="5" class="px-6 py-16 text-center text-slate-500">
+                                <td colspan="5" class="px-6 py-16 text-center text-slate-500 dark:text-slate-400">
                                     <div class="flex flex-col items-center justify-center">
-                                        <div class="bg-green-50 p-4 rounded-full mb-3">
-                                            <span class="material-symbols-outlined text-4xl text-green-300">task_alt</span>
+                                        <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-full mb-3">
+                                            <span class="material-symbols-outlined text-4xl text-green-300 dark:text-green-600">task_alt</span>
                                         </div>
-                                        <h3 class="text-lg font-bold text-slate-700">¡Todo al día!</h3>
-                                        <p class="text-sm mt-1 max-w-sm">
+                                        <h3 class="text-lg font-bold text-slate-700 dark:text-slate-300">¡Todo al día!</h3>
+                                        <p class="text-sm mt-1 max-w-sm text-slate-500 dark:text-slate-400">
                                             No hay tareas pendientes registradas para este alumno en este momento.
                                         </p>
                                     </div>
@@ -271,14 +174,14 @@
                     </table>
                 </div>
                 
-                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center text-xs text-slate-500">
+                <div class="px-6 py-4 border-t border-gray-200 dark:border-border-dark bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
                     <span>Ordenado por fecha de entrega más próxima</span>
                 </div>
             </div>
 
         </div>
         
-        <footer class="mt-auto py-6 text-center text-xs text-slate-400 border-t border-slate-100 bg-white">
+        <footer class="mt-auto py-6 text-center text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-border-dark bg-white dark:bg-card-dark">
             &copy; 2025 Colegio San Antonio - Todos los derechos reservados.
         </footer>
     </main>

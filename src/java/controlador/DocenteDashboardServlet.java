@@ -11,7 +11,7 @@ import javax.servlet.http.HttpSession;
 import modelo.Profesor;
 import modelo.Curso;
 import modelo.CursoDAO;
-import modelo.MaterialDAO; // <--- IMPORTACIÓN NUEVA
+import modelo.MaterialDAO; 
 
 @WebServlet("/DocenteDashboardServlet")
 public class DocenteDashboardServlet extends HttpServlet {

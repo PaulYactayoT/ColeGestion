@@ -45,118 +45,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Álbum de Fotos - San Antonio</title>
     
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- INCLUIR HEAD.JSP CON TODAS LAS CONFIGURACIONES -->
+    <jsp:include page="includes/head.jsp" />
     
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#135bec",
-                        "primary-dark": "#0d47a1",
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#101622",
-                    },
-                    fontFamily: { "display": ["Lexend"] },
-                },
-            },
+    <style>
+        .dark .group:hover .dark\:bg-card-dark {
+            background-color: #1a2233;
         }
-    </script>
+    </style>
 </head>
-<body class="bg-background-light text-slate-800 min-h-screen flex">
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 min-h-screen flex transition-colors duration-200">
 
-    <aside class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col justify-between fixed h-full z-20">
-        <div class="p-6">
-            <div class="flex items-center gap-3 mb-8">
-                <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white shadow-md">
-                    <span class="material-symbols-outlined">school</span>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold leading-tight text-slate-900">San Antonio</h1>
-                    <p class="text-xs text-slate-500 font-medium">Panel de Padre</p>
-                </div>
-            </div>
-            
-            <nav class="space-y-1">
-                <a href="padreDashboard.jsp" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">dashboard</span>
-                    <span class="text-sm font-medium">Dashboard</span>
-                </a>
-                
-                <a href="notasPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">grade</span>
-                    <span class="text-sm font-medium">Notas del Alumno</span>
-                </a>
-                
-                <a href="observacionesPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">chat_bubble</span>
-                    <span class="text-sm font-medium">Observaciones</span>
-                </a>
-                
-                <a href="tareasPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">assignment</span>
-                    <span class="text-sm font-medium">Tareas</span>
-                </a>
-                
-                <a href="MaterialPadreServlet?accion=seleccionarCurso" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">folder_open</span>
-                    <span class="text-sm font-medium">Material de Apoyo</span>
-                </a>
-                
-                <a href="albumPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
-                    <span class="material-symbols-outlined fill-1">photo_library</span>
-                    <span class="text-sm font-medium">Álbums</span>
-                </a>
-                
-                <a href="asistenciasPadre.jsp?alumno_id=<%= alumnoId %>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
-                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">calendar_month</span>
-                    <span class="text-sm font-medium">Asistencias</span>
-                </a>
-            </nav>
-        </div>
-        
-        <div class="p-4 border-t border-gray-100">
-            <a href="LogoutServlet" class="flex items-center justify-center gap-2 w-full py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-red-600 transition-colors">
-                <span class="material-symbols-outlined text-[18px]">logout</span>
-                Cerrar Sesión
-            </a>
-        </div>
-    </aside>
-
+    <!-- INCLUIR SIDEBAR PARA PADRE -->
+    <jsp:include page="includes/sidebarPadre.jsp" />
+    
     <main class="flex-1 md:ml-64 flex flex-col min-h-screen">
         
-        <header class="bg-white border-b border-gray-200 sticky top-0 z-10 px-8 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <a href="padreDashboard.jsp" class="md:hidden p-2 text-slate-400 hover:bg-slate-50 rounded-lg">
-                    <span class="material-symbols-outlined">menu</span>
-                </a>
-                <div class="flex items-center gap-2 text-slate-800">
-                    <span class="material-symbols-outlined text-primary text-2xl">photo_library</span>
-                    <h1 class="text-xl font-bold">Álbum Escolar</h1>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="h-8 w-[1px] bg-slate-200 mx-2 hidden md:block"></div>
-                <div class="flex items-center gap-3">
-                    <div class="text-right hidden md:block">
-                        <p class="text-sm font-semibold text-slate-800"><%= tieneAlumno ? padre.getAlumnoNombre() : "Sin alumno" %></p>
-                        <p class="text-xs text-slate-500"><%= tieneAlumno ? padre.getGradoNombre() : "Pendiente" %></p>
-                    </div>
-                    <div class="size-10 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-500">
-                        <span class="material-symbols-outlined">person</span>
-                    </div>
-                </div>
-            </div>
-        </header>
+        <!-- INCLUIR HEADER -->
+        <jsp:include page="includes/header.jsp" />
 
         <div class="p-6 md:p-8 max-w-7xl mx-auto w-full">
             
+            <!-- Banner principal - se mantiene igual porque es gradiente -->
             <div class="bg-gradient-to-r from-primary to-blue-600 rounded-2xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
                 
@@ -171,7 +81,7 @@
                 </div>
 
                 <div class="relative z-10 flex gap-2">
-                    <a href="uploadImage.jsp" class="bg-white text-primary hover:bg-blue-50 px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-all">
+                    <a href="uploadImage.jsp" class="bg-white text-primary hover:bg-blue-50 px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-all dark:bg-card-dark dark:text-white dark:hover:bg-gray-800">
                         <i class="fas fa-cloud-upload-alt"></i> Subir Foto
                     </a>
                 </div>
@@ -181,20 +91,20 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     <% for (Imagen img : imagenes) { %>
                     
-                    <div class="relative group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 h-64">
+                    <div class="relative group bg-white dark:bg-card-dark rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 dark:border-border-dark h-64">
                         
                         <img src="<%= img.getRuta() %>" alt="Foto escolar" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                         
                         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                             
                             <div class="flex justify-between items-center">
-                                <a href="<%= img.getRuta() %>" target="_blank" class="text-white hover:text-blue-300 transition-colors" title="Ver tamaño completo">
+                                <a href="<%= img.getRuta() %>" target="_blank" class="text-white hover:text-blue-300 transition-colors dark:hover:text-blue-400" title="Ver tamaño completo">
                                     <i class="fas fa-expand-alt"></i>
                                 </a>
                                 
                                 <form action="DeleteImageServlet" method="post" onsubmit="return confirm('¿Estás seguro de eliminar esta foto?');" class="m-0">
                                     <input type="hidden" name="id" value="<%= img.getId() %>"/>
-                                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white size-8 rounded-lg flex items-center justify-center transition-colors shadow-md" title="Eliminar foto">
+                                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white size-8 rounded-lg flex items-center justify-center transition-colors shadow-md dark:bg-red-700 dark:hover:bg-red-800" title="Eliminar foto">
                                         <i class="fas fa-trash-alt text-xs"></i>
                                     </button>
                                 </form>
@@ -205,15 +115,15 @@
                 </div>
             <% } else { %>
                 
-                <div class="bg-white rounded-xl border-2 border-dashed border-gray-200 p-16 text-center max-w-lg mx-auto mt-10">
-                    <div class="bg-blue-50 size-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span class="material-symbols-outlined text-5xl text-blue-300">add_a_photo</span>
+                <div class="bg-white dark:bg-card-dark rounded-xl border-2 border-dashed border-gray-200 dark:border-border-dark p-16 text-center max-w-lg mx-auto mt-10">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 size-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="material-symbols-outlined text-5xl text-blue-300 dark:text-blue-600">add_a_photo</span>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 mb-2">Álbum Vacío</h3>
-                    <p class="text-slate-500 mb-6">
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Álbum Vacío</h3>
+                    <p class="text-slate-500 dark:text-slate-400 mb-6">
                         Aún no hay fotos en el álbum de este alumno. ¡Sube la primera!
                     </p>
-                    <a href="uploadImage.jsp" class="inline-flex items-center gap-2 bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all shadow hover:shadow-md">
+                    <a href="uploadImage.jsp" class="inline-flex items-center gap-2 bg-primary hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all shadow hover:shadow-md dark:bg-primary-dark dark:hover:bg-blue-800">
                         <i class="fas fa-upload"></i>
                         Subir Imagen
                     </a>
@@ -223,7 +133,7 @@
 
         </div>
         
-        <footer class="mt-auto py-6 text-center text-xs text-slate-400 border-t border-slate-100 bg-white">
+        <footer class="mt-auto py-6 text-center text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-border-dark bg-white dark:bg-card-dark">
             &copy; 2025 Colegio San Antonio - Todos los derechos reservados.
         </footer>
     </main>

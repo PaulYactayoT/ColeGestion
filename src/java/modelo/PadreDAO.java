@@ -8,7 +8,7 @@ public class PadreDAO {
     
     public Padre obtenerPorUsername(String username) {
         Padre padre = null;
-        // ✅ AGREGADO: pa.foto as alumno_foto para obtener la foto del hijo (alumno)
+        // pa.foto as alumno_foto para obtener la foto del hijo (alumno)
         String sql = """
             SELECT 
                 p.id as persona_id,
@@ -17,7 +17,6 @@ public class PadreDAO {
                 p.correo,
                 p.dni,
                 p.telefono,
-                p.foto, 
                 u.rol,
                 u.username,
                 rf.alumno_id,
@@ -57,7 +56,6 @@ public class PadreDAO {
                     padre.setCorreo(rs.getString("correo"));
                     padre.setDni(rs.getString("dni"));
                     padre.setTelefono(rs.getString("telefono"));
-                    padre.setFoto(rs.getString("foto")); 
                     padre.setRol(rs.getString("rol"));
                     padre.setUsername(rs.getString("username"));
                     

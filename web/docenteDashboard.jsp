@@ -278,57 +278,7 @@
     </button>
     
     <div class="flex h-screen overflow-hidden">
-        <aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2233] border-r border-[#dbdfe6] dark:border-gray-700 flex flex-col justify-between">
-            <div class="flex flex-col gap-8 p-6">
-                <div class="flex items-center gap-3">
-                    <div class="bg-primary size-10 rounded-lg flex items-center justify-center text-white" aria-hidden="true">
-                        <span class="material-symbols-outlined">school</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <h1 class="text-[#111318] dark:text-white text-lg font-bold leading-tight">San Antonio</h1>
-                        <p class="text-[#616f89] dark:text-gray-400 text-xs font-normal">Panel de Profesor</p>
-                    </div>
-                </div>
-                
-                 <nav class="flex flex-col gap-2" aria-label="Navegación principal">
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary font-medium" 
-                       href="DocenteDashboardServlet"
-                       aria-current="page">
-                        <span class="material-symbols-outlined">dashboard</span>
-                        <span class="text-sm">Dashboard</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="AsistenciaServlet?accion=registrar">
-                        <i class="fas fa-clipboard-check" aria-hidden="true"></i>
-                        <span class="text-sm">Asistencias</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="revisarJustificaciones.jsp">
-                        <i class="fas fa-clock" aria-hidden="true"></i>
-                        <span class="text-sm">Justificaciones</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="MaterialServlet?accion=seleccionarCurso">
-                        <i class="fas fa-folder" aria-hidden="true"></i>
-                        <span class="text-sm">Material de Apoyo</span>
-                    </a>
-                    
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" 
-                       href="DisponibilidadServlet">
-                        <span class="material-symbols-outlined text-[20px]">event_available</span>
-                        <span class="text-sm">Mi Disponibilidad</span>
-                    </a>
-                </nav>
-            </div>
-            
-            <div class="p-6 border-t border-[#dbdfe6] dark:border-gray-700">
-                <a href="LogoutServlet" 
-                   class="flex w-full items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-blue-700 transition-colors">
-                    <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
-                    <span>Cerrar Sesión</span>
-                </a>
-            </div>
-        </aside>
+        <%@ include file="includes/sidebarDocente.jsp" %>
         
         <main class="flex-1 flex flex-col overflow-y-auto">
             <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">

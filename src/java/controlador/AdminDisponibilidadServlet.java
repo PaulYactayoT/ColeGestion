@@ -29,6 +29,14 @@ public class AdminDisponibilidadServlet extends HttpServlet {
             response.sendRedirect("index.jsp");
             return;
         }
+
+        // VALIDACION DE ROL: Solo admin y administrativo pueden acceder
+        String rol = (String) session.getAttribute("rol");
+        if (!"admin".equals(rol) && !"administrativo".equals(rol)) {
+            System.out.println("ACCESO DENEGADO: Rol '" + rol + "' intentó acceder a AdminDisponibilidadServlet");
+            response.sendRedirect("acceso_denegado.jsp");
+            return;
+        }
         
         String accion = request.getParameter("accion");
         if (accion == null) accion = "listar";

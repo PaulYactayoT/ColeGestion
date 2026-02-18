@@ -3,6 +3,7 @@
     Author     : Ocelot
 --%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="modelo.Padre, modelo.Alumno, modelo.AlumnoDAO, modelo.Usuario" %>
 <%
     // Verificar sesión
     if (session == null || session.getAttribute("usuario") == null) {
@@ -14,16 +15,54 @@
     String rolHeader     = (String) session.getAttribute("rol");
     String fotoHeader    = (String) session.getAttribute("fotoUsuario");
     
-    // Determinar si tiene foto válida
-    boolean tieneFoto = fotoHeader != null && !fotoHeader.trim().isEmpty();
-    String fotoUrl = tieneFoto ? request.getContextPath() + "/uploads/" + fotoHeader : "";
-    
-    // Inicial para el avatar de respaldo (cuando no hay foto)
-    String inicialAvatar = (usuarioHeader != null && !usuarioHeader.isEmpty()) 
+    // Variables para mostrar en el header
+    String nombreMostrar = usuarioHeader;
+    String subtituloMostrar = "";
+    String fotoMostrar = fotoHeader;
+    String inicialMostrar = usuarioHeader != null && !usuarioHeader.isEmpty() 
                            ? usuarioHeader.substring(0, 1).toUpperCase() 
                            : "U";
     
-    // Obtener preferencia de tema de la cookie (si existe)
+    // SI ES PADRE: Mostrar información del ALUMNO (hijo)
+    if ("padre".equals(rolHeader)) {
+        Padre padre = (Padre) session.getAttribute("padre");
+        if (padre != null && padre.getAlumnoId() > 0) {
+            // CORREGIDO: Usar getAlumnoNombre() que debe devolver "Milagros Candela"
+            nombreMostrar = padre.getAlumnoNombre() != null ? padre.getAlumnoNombre() : "Sin alumno";
+            subtituloMostrar = padre.getGradoNombre() != null ? padre.getGradoNombre() : "";
+            
+            // Obtener foto del alumno
+            try {
+                AlumnoDAO alumnoDAO = new AlumnoDAO();
+                Alumno alumno = alumnoDAO.obtenerPorId(padre.getAlumnoId());
+                if (alumno != null && alumno.getFoto() != null && !alumno.getFoto().isEmpty()) {
+                    fotoMostrar = alumno.getFoto();
+                    // CORREGIDO: Usar el nombre completo del alumno para la inicial
+                    if (alumno.getNombreCompleto() != null && !alumno.getNombreCompleto().isEmpty()) {
+                        inicialMostrar = alumno.getNombreCompleto().substring(0, 1).toUpperCase();
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error obteniendo foto del alumno: " + e.getMessage());
+            }
+        }
+    } 
+    // SI ES DOCENTE: Mostrar información del profesor
+    else if ("docente".equals(rolHeader)) {
+        nombreMostrar = usuarioHeader;
+        subtituloMostrar = "Docente";
+    }
+    // SI ES ADMIN: Mostrar información del administrador
+    else if ("admin".equals(rolHeader) || "administrativo".equals(rolHeader)) {
+        nombreMostrar = usuarioHeader;
+        subtituloMostrar = "Administrador";
+    }
+    
+    // Determinar si tiene foto válida
+    boolean tieneFoto = fotoMostrar != null && !fotoMostrar.trim().isEmpty();
+    String fotoUrl = tieneFoto ? request.getContextPath() + "/uploads/" + fotoMostrar : "";
+    
+    // Obtener preferencia de tema de la cookie
     String theme = "light";
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {
@@ -35,11 +74,11 @@
         }
     }
 %>
-<!-- Header Superior -->
-<header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
+<!-- Header Superior - CON CLASES DARK CORRECTAS -->
+<header class="flex items-center justify-between bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark px-8 py-3 sticky top-0 z-10 transition-colors duration-200">
     <div class="flex items-center gap-4 flex-1">
         <div class="flex items-center gap-3">
-            <h1 class="text-xl font-bold text-[#111318] dark:text-white">
+            <h1 class="text-xl font-bold text-slate-900 dark:text-white">
                 <%= request.getAttribute("pageTitle") != null ? request.getAttribute("pageTitle") : "San Antonio" %>
             </h1>
         </div>
@@ -48,7 +87,7 @@
     <div class="flex items-center gap-4 ml-8">
         <!-- Botón de Tema Oscuro/Claro -->
         <button id="themeToggle" 
-                class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                class="p-2 text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 aria-label="Cambiar tema"
                 onclick="toggleTheme()">
             <span id="themeIcon" class="material-symbols-outlined">
@@ -56,45 +95,40 @@
             </span>
         </button>
         
-        <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
+        <!-- Botón de notificaciones -->
+        <button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
                 aria-label="Notificaciones">
             <span class="material-symbols-outlined">notifications</span>
-            <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
+            <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white dark:border-card-dark"></span>
         </button>
         
-        <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                aria-label="Configuración">
-            <span class="material-symbols-outlined">settings</span>
-        </button>
+        <!-- Separador -->
+        <div class="h-8 w-[1px] bg-border-light dark:bg-border-dark mx-2" aria-hidden="true"></div>
         
-        <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
-        
+        <!-- Información del ALUMNO (hijo) -->
         <div class="flex items-center gap-3">
             <div class="text-right hidden md:block">
-                <p class="text-sm font-medium text-[#111318] dark:text-white">
-                    <%= usuarioHeader %>
+                <p class="text-sm font-medium text-slate-900 dark:text-white">
+                    <%= nombreMostrar %> <!-- Ahora debe ser "Milagros Candela" -->
                 </p>
-                <p class="text-xs text-[#616f89] dark:text-gray-400 capitalize">
-                    <%= "Administrador" %>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    <%= subtituloMostrar %> <!-- Aquí va el grado -->
                 </p>
             </div>
             
-            <%-- Avatar: muestra foto si existe, o inicial si no --%>
+            <%-- Avatar con foto o inicial del ALUMNO --%>
             <% if (tieneFoto) { %>
-                <%-- Con foto: imagen del usuario --%>
-                <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20 overflow-hidden"
-                     aria-label="Foto de perfil de <%= usuarioHeader %>">
+                <div class="size-10 rounded-full border-2 border-primary/20 overflow-hidden dark:border-primary/40">
                     <img src="<%= fotoUrl %>" 
-                         alt="Foto de <%= usuarioHeader %>"
-                         style="width:100%; height:100%; object-fit:cover;"
-                         onerror="this.parentElement.innerHTML='<span style=\'display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#2563eb;color:white;font-weight:700;font-size:1rem;\'><%= inicialAvatar %></span>'">
+                         alt="Foto de <%= nombreMostrar %>"
+                         class="w-full h-full object-cover"
+                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm\'><%= inicialMostrar %></div>';">
                 </div>
             <% } else { %>
-                <%-- Sin foto: mostrar inicial del usuario --%>
                 <div class="size-10 rounded-full border-2 border-primary/20 bg-blue-600 
-                            flex items-center justify-center text-white font-bold text-sm"
-                     aria-label="Avatar de <%= usuarioHeader %>">
-                    <%= inicialAvatar %>
+                            flex items-center justify-center text-white font-bold text-sm
+                            dark:border-primary/40">
+                    <%= inicialMostrar %> <!-- Inicial del alumno -->
                 </div>
             <% } %>
         </div>

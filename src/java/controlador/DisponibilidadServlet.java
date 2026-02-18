@@ -26,8 +26,22 @@ public class DisponibilidadServlet extends HttpServlet {
         System.out.println("=".repeat(60));
         
         HttpSession session = request.getSession();
+
+        // ✅ VALIDACIÓN DE ROL: Solo docentes pueden acceder
+        String rol = (String) session.getAttribute("rol");
+        if (rol == null) {
+            System.out.println("❌ No hay sesión activa, redirigiendo...");
+            response.sendRedirect("index.jsp");
+            return;
+        }
+        if (!"docente".equals(rol)) {
+            System.out.println("❌ ACCESO DENEGADO: Rol '" + rol + "' intentó acceder a DisponibilidadServlet");
+            response.sendRedirect("acceso_denegado.jsp");
+            return;
+        }
+
         Profesor docente = (Profesor) session.getAttribute("docente");
-        
+
         if (docente == null) {
             System.out.println("❌ No hay sesión de docente, redirigiendo...");
             response.sendRedirect("index.jsp");
