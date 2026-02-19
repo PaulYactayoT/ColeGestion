@@ -36,17 +36,51 @@
 
         <!-- Navegación dinámica -->
         <nav class="flex flex-col gap-2" aria-label="Navegación principal">
+
+            <!-- Botón Inicio siempre visible -->
+            <%
+                boolean iniciActivo = currentPageDoc.contains("docenteDashboard");
+                String clsInicio = iniciActivo
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800";
+            %>
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg <%= clsInicio %> transition-colors"
+               href="<%= request.getContextPath() %>/DocenteDashboardServlet"
+               <%= iniciActivo ? "aria-current=\"page\"" : "" %>>
+                <span class="material-symbols-outlined text-[20px]">home</span>
+                <span class="text-sm">Inicio</span>
+            </a>
+
             <% if (modulosDocente.isEmpty()) { %>
                 <div class="flex flex-col items-center gap-2 py-8 text-center text-[#616f89]">
                     <i class="fas fa-lock text-3xl opacity-30"></i>
                     <p class="text-xs">Sin módulos asignados.<br>Contacta al administrador.</p>
                 </div>
             <% } else {
+                // Para detectar página activa también desde JSPs que usan el servlet
+                String currentURI = request.getRequestURI();
+                String currentServlet = currentPageDoc; // ej: /materialSeleccionCurso.jsp
+                
                 for (Modulo mod : modulosDocente) {
                     String urlMod  = mod.getUrl()   != null ? mod.getUrl()   : "#";
                     String icono   = mod.getIcono() != null ? mod.getIcono() : "fas fa-circle";
-                    String urlBase = urlMod.split("\\?")[0];
-                    boolean activo = currentPageDoc.contains(urlBase);
+                    String urlBase = urlMod.split("\\?")[0].trim(); // ej: MaterialServlet
+
+                    // Activo si: el path actual contiene el servlet, o la URI contiene el servlet
+                    boolean activo = currentServlet.contains(urlBase)
+                                  || currentURI.contains(urlBase);
+                    
+                    // Casos especiales: JSPs que son resultado de un servlet
+                    if (!activo) {
+                        if (urlBase.equals("MaterialServlet") && currentServlet.contains("material")) activo = true;
+                        if (urlBase.equals("AsistenciaServlet") && currentServlet.contains("asistencia")) activo = true;
+                        if (urlBase.equals("NotaServlet") && currentServlet.contains("nota")) activo = true;
+                        if (urlBase.equals("TareaServlet") && currentServlet.contains("tarea")) activo = true;
+                        if (urlBase.equals("ObservacionServlet") && currentServlet.contains("observacion")) activo = true;
+                        if (urlBase.equals("JustificacionServlet") && (currentServlet.contains("justificacion") || currentServlet.contains("revisarJustificaciones"))) activo = true;
+                        if (urlBase.equals("DisponibilidadServlet") && currentServlet.contains("disponibilidad")) activo = true;
+                    }
+                    
                     String cls = activo
                         ? "bg-primary/10 text-primary font-medium"
                         : "text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800";

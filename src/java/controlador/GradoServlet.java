@@ -17,10 +17,10 @@ public class GradoServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-        
-        // VALIDACIÓN CRÍTICA: Solo admin puede gestionar grados
         String rol = (String) session.getAttribute("rol");
-        if (!"admin".equals(rol)) {
+
+        if (!tieneAccesoModulo(session, rol)) {
+            System.out.println("ACCESO DENEGADO GET GradoServlet: Rol " + rol + " sin módulo asignado");
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -57,10 +57,10 @@ public class GradoServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-        
-        // VALIDACIÓN CRÍTICA: Solo admin puede gestionar grados
         String rol = (String) session.getAttribute("rol");
-        if (!"admin".equals(rol)) {
+
+        if (!tieneAccesoModulo(session, rol)) {
+            System.out.println("ACCESO DENEGADO POST GradoServlet: Rol " + rol + " sin módulo asignado");
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -80,5 +80,52 @@ public class GradoServlet extends HttpServlet {
         }
 
         response.sendRedirect("GradoServlet");
+    }
+
+    /**
+     * Verifica si el usuario tiene el módulo GradoServlet asignado en BD.
+     * Replica la lógica del SecurityFilter (hasModuleAccess).
+     * - Admin y administrativo: siempre permitido.
+     * - Otros roles: consulta usuario_modulo en BD.
+     */
+    private boolean tieneAccesoModulo(HttpSession session, String rol) {
+        if (rol == null) return false;
+        if ("admin".equals(rol) || "administrativo".equals(rol)) return true;
+
+        Object uidObj = session.getAttribute("usuarioId");
+        if (uidObj == null) {
+            System.out.println("GradoServlet: ERROR - usuarioId NULL en sesión");
+            return false;
+        }
+
+        int usuarioId;
+        try { usuarioId = Integer.parseInt(uidObj.toString()); }
+        catch (NumberFormatException e) { return false; }
+
+        String sql =
+            "SELECT m.url FROM modulo m " +
+            "INNER JOIN usuario_modulo um ON m.id = um.modulo_id " +
+            "WHERE um.usuario_id = ? AND um.activo = 1 AND m.activo = 1 AND m.eliminado = 0";
+
+        try (java.sql.Connection conn = conexion.Conexion.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, usuarioId);
+            java.sql.ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String modUrl = rs.getString("url");
+                if (modUrl != null && modUrl.contains("GradoServlet")) {
+                    System.out.println("GradoServlet: Módulo GradoServlet CONFIRMADO para usuarioId=" + usuarioId);
+                    return true;
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("GradoServlet: Error BD al verificar módulo: " + e.getMessage());
+        }
+
+        System.out.println("GradoServlet: Módulo GradoServlet NO asignado para usuarioId=" + usuarioId);
+        return false;
     }
 }

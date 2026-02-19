@@ -48,10 +48,29 @@
 %>
 
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
+<script>
+    // Aplicar tema guardado en cookie ANTES de renderizar
+    (function() {
+        function getCookie(name) {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }
+        if (getCookie('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+        }
+    })();
+</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function() {
+            function getCookie(n) { var m = document.cookie.match('(^|;) ?' + n + '=([^;]*)(;|$)'); return m ? m[2] : null; }
+            if (getCookie('theme') === 'dark') document.documentElement.classList.add('dark');
+        })();
+    </script>
     <title>Panel de Profesor - San Antonio</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -281,53 +300,8 @@
         <%@ include file="includes/sidebarDocente.jsp" %>
         
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <header class="flex items-center justify-between bg-white dark:bg-[#1a2233] border-b border-[#f0f2f4] dark:border-gray-700 px-8 py-3 sticky top-0 z-10">
-                <div class="flex items-center gap-4 flex-1">
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-xl font-bold text-[#111318] dark:text-white">
-                            <span class="material-symbols-outlined align-middle mr-2">speed</span>
-                            Panel de Profesor
-                        </h1>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-4 ml-8">
-                    <button onclick="toggleDarkMode()" 
-                            class="p-2 text-[#616f89] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                            aria-label="Cambiar tema">
-                        <span class="material-symbols-outlined dark:hidden">dark_mode</span>
-                        <span class="material-symbols-outlined hidden dark:inline">light_mode</span>
-                    </button>
-                    
-                    <button class="p-2 text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
-                            aria-label="Notificaciones">
-                        <span class="material-symbols-outlined">notifications</span>
-                        <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
-                    </button>
-                    
-                    <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
-                    
-                    <div class="flex items-center gap-3">
-                        <div class="hidden md:block text-right">
-                            <p class="text-sm font-medium text-[#111318] dark:text-white">
-                                <%= docente.getNombres()%> <%= docente.getApellidos()%>
-                            </p>
-                            <p class="text-xs text-[#616f89] dark:text-gray-400">Profesor</p>
-                        </div>
-                        <% if (docente.getFoto() != null && !docente.getFoto().isEmpty()) { %>
-                            <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary/20" 
-                                 style="background-image: url('uploads/<%= docente.getFoto() %>');"
-                                 aria-label="Foto de perfil del docente">
-                            </div>
-                        <% } else { %>
-                            <div class="size-10 rounded-full border-2 border-primary/20 bg-primary flex items-center justify-center text-white font-bold" 
-                                 aria-label="Foto de perfil del docente">
-                                <%= docente.getNombres().substring(0, 1) %><%= docente.getApellidos().substring(0, 1) %>
-                            </div>
-                        <% } %>
-                    </div>
-                </div>
-            </header>
+            <% request.setAttribute("pageTitle", "Panel de Profesor"); %>
+            <jsp:include page="includes/header.jsp" />
             
             <div class="p-8">
                 <% if (error != null) { %>
@@ -427,69 +401,6 @@
                     </div>
                 </div>
 
-                <h3 class="font-bold text-xl text-[#111318] dark:text-white mb-4">Accesos Directos</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-blue-600 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="size-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-xl">add_circle</span>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Asistencias</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Control diario</p>
-                            </div>
-                        </div>
-                        <a href="AsistenciaServlet?accion=registrar" class="block w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg font-bold transition-colors">
-                            Registrar Asistencia
-                        </a>
-                    </div>
-
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-yellow-500 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="size-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-500 text-xl">schedule</span>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Justificaciones</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Revisar solicitudes</p>
-                            </div>
-                        </div>
-                        <a href="revisarJustificaciones.jsp" class="block w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white text-center rounded-lg font-bold transition-colors">
-                            Ver Justificaciones
-                        </a>
-                    </div>
-
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-purple-600 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="size-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-xl">folder</span>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Material Apoyo</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Subir archivos</p>
-                            </div>
-                        </div>
-                        <a href="MaterialServlet?accion=seleccionarCurso" class="block w-full py-3 bg-purple-600 hover:bg-purple-700 text-white text-center rounded-lg font-bold transition-colors">
-                            Gestionar Materiales
-                        </a>
-                    </div>
-
-                    <div class="bg-white dark:bg-[#1a2233] p-6 rounded-xl border-2 border-teal-500 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="flex items-center gap-4 mb-4">
-                            <div class="size-12 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-teal-600 dark:text-teal-400 text-xl">event_available</span>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg text-[#111318] dark:text-white">Horarios</h3>
-                                <p class="text-sm text-[#616f89] dark:text-gray-400">Mi disponibilidad</p>
-                            </div>
-                        </div>
-                        <a href="DisponibilidadServlet" class="block w-full py-3 bg-teal-500 hover:bg-teal-600 text-white text-center rounded-lg font-bold transition-colors">
-                            Configurar Horario
-                        </a>
-                    </div>
-                </div>
                 <%
                     if (cursos != null && !cursos.isEmpty()) {
                 %>
@@ -684,7 +595,22 @@
         
         // Toggle dark mode
         function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            if (isDark) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                setCookie('theme', 'light', 365);
+            } else {
+                html.classList.add('dark');
+                html.classList.remove('light');
+                setCookie('theme', 'dark', 365);
+            }
+        }
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = name + "=" + value + ";expires=" + date.toUTCString() + ";path=/";
         }
     </script>
 </body>

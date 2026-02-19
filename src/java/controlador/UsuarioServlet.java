@@ -22,9 +22,9 @@ public class UsuarioServlet extends HttpServlet {
             return;
         }
 
-        // VALIDACIÓN CRÍTICA: Solo admin puede gestionar usuarios
         String rol = (String) session.getAttribute("rol");
-        if (!"admin".equals(rol)) {
+        if (!tieneAccesoModulo(session, rol)) {
+            System.out.println("ACCESO DENEGADO (GET): Rol '" + rol + "' sin modulo UsuarioServlet asignado");
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -40,18 +40,12 @@ public class UsuarioServlet extends HttpServlet {
         try {
             switch (accion) {
                 case "nuevo":
-                    // ✅ CARGAR PERSONAS SIN USUARIO
                     request.setAttribute("profesoresSinUsuario", dao.obtenerProfesoresSinUsuario());
                     request.setAttribute("alumnosSinUsuario", dao.obtenerAlumnosSinUsuario());
                     request.setAttribute("administrativosSinUsuario", dao.obtenerAdministrativosSinUsuario());
-                    
-                    System.out.println("✅ Profesores sin usuario: " + dao.obtenerProfesoresSinUsuario().size());
-                    System.out.println("✅ Alumnos sin usuario: " + dao.obtenerAlumnosSinUsuario().size());
-                    System.out.println("✅ Administrativos sin usuario: " + dao.obtenerAdministrativosSinUsuario().size());
-                    
                     request.getRequestDispatcher("usuarioForm.jsp").forward(request, response);
                     break;
-                    
+
                 case "editar":
                     int idEditar = Integer.parseInt(request.getParameter("id"));
                     Usuario u = dao.obtenerPorId(idEditar);
@@ -104,7 +98,7 @@ public class UsuarioServlet extends HttpServlet {
                     response.sendRedirect("UsuarioServlet");
             }
         } catch (NumberFormatException e) {
-            session.setAttribute("error", "ID de usuario inválido");
+            session.setAttribute("error", "ID de usuario invalido");
             response.sendRedirect("UsuarioServlet");
         } catch (Exception e) {
             session.setAttribute("error", "Error en el sistema: " + e.getMessage());
@@ -122,9 +116,9 @@ public class UsuarioServlet extends HttpServlet {
             return;
         }
 
-        // VALIDACIÓN CRÍTICA: Solo admin puede gestionar usuarios
         String rol = (String) session.getAttribute("rol");
-        if (!"admin".equals(rol)) {
+        if (!tieneAccesoModulo(session, rol)) {
+            System.out.println("ACCESO DENEGADO (POST): Rol '" + rol + "' sin modulo UsuarioServlet asignado");
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -135,18 +129,7 @@ public class UsuarioServlet extends HttpServlet {
         String rolUsuario = request.getParameter("rol");
         String personaIdParam = request.getParameter("persona_id");
 
-        System.out.println("========================================");
-        System.out.println("REGISTRO/ACTUALIZACIÓN DE USUARIO");
-        System.out.println("========================================");
-        System.out.println("ID: " + idParam);
-        System.out.println("Username: " + username);
-        System.out.println("Rol: " + rolUsuario);
-        System.out.println("Persona ID: " + personaIdParam);
-        System.out.println("Password recibido: " + (hashedPasswordFromFrontend != null && !hashedPasswordFromFrontend.isEmpty() ? "SÍ (encriptado)" : "NO"));
-        System.out.println("========================================");
-
-        // Validaciones básicas
-        if (username == null || username.trim().isEmpty() || 
+        if (username == null || username.trim().isEmpty() ||
             rolUsuario == null || rolUsuario.trim().isEmpty()) {
             session.setAttribute("error", "Nombre de usuario y rol son obligatorios");
             response.sendRedirect("UsuarioServlet");
@@ -158,7 +141,7 @@ public class UsuarioServlet extends HttpServlet {
             try {
                 id = Integer.parseInt(idParam);
             } catch (NumberFormatException e) {
-                session.setAttribute("error", "ID de usuario inválido");
+                session.setAttribute("error", "ID de usuario invalido");
                 response.sendRedirect("UsuarioServlet");
                 return;
             }
@@ -169,18 +152,14 @@ public class UsuarioServlet extends HttpServlet {
             try {
                 personaId = Integer.parseInt(personaIdParam);
             } catch (NumberFormatException e) {
-                System.out.println("⚠️ Persona ID no válido o no proporcionado");
+                System.out.println("Persona ID no valido o no proporcionado");
             }
         }
 
         try {
             if (id == 0) {
-                // ===================================================================
-                // CREAR NUEVO USUARIO
-                // ===================================================================
-                System.out.println("📝 CREANDO NUEVO USUARIO: " + username);
+                System.out.println("CREANDO NUEVO USUARIO: " + username);
 
-                // ✅ VALIDAR QUE SE HAYA SELECCIONADO UNA PERSONA
                 if (personaId <= 0) {
                     session.setAttribute("error", "Debe seleccionar una persona para asociar el usuario");
                     response.sendRedirect("UsuarioServlet?accion=nuevo");
@@ -188,49 +167,39 @@ public class UsuarioServlet extends HttpServlet {
                 }
 
                 if (dao.existeUsuario(username.trim())) {
-                    System.out.println("❌ Usuario ya existe: " + username);
                     session.setAttribute("error", "El nombre de usuario '" + username + "' ya existe");
                     response.sendRedirect("UsuarioServlet?accion=nuevo");
                     return;
                 }
 
                 if (hashedPasswordFromFrontend == null || hashedPasswordFromFrontend.trim().isEmpty()) {
-                    session.setAttribute("error", "La contraseña es obligatoria para nuevos usuarios");
+                    session.setAttribute("error", "La contrasena es obligatoria para nuevos usuarios");
                     response.sendRedirect("UsuarioServlet?accion=nuevo");
                     return;
                 }
 
-                // Crear nuevo objeto Usuario
                 Usuario nuevoUsuario = new Usuario();
                 nuevoUsuario.setPersonaId(personaId);
                 nuevoUsuario.setUsername(username.trim());
-                nuevoUsuario.setPassword(hashedPasswordFromFrontend.trim()); // Ya viene encriptado desde el frontend
+                nuevoUsuario.setPassword(hashedPasswordFromFrontend.trim());
                 nuevoUsuario.setRol(rolUsuario.trim());
                 nuevoUsuario.setActivo(true);
                 nuevoUsuario.setEliminado(false);
                 nuevoUsuario.setIntentosFallidos(0);
-                
-                // Establecer fechas
+
                 java.util.Date ahora = new java.util.Date();
                 nuevoUsuario.setFechaRegistro(ahora);
                 nuevoUsuario.setUltimaConexion(ahora);
 
                 if (dao.agregar(nuevoUsuario)) {
-                    System.out.println("✅ Usuario creado exitosamente: " + username);
-                    System.out.println("✅ Asociado a persona ID: " + personaId);
                     session.setAttribute("mensaje", "Usuario registrado exitosamente y asociado a la persona");
                 } else {
-                    System.out.println("❌ Error al crear usuario: " + username);
                     session.setAttribute("error", "No se pudo registrar el usuario");
                 }
 
             } else {
-                // ===================================================================
-                // ACTUALIZAR USUARIO EXISTENTE
-                // ===================================================================
-                System.out.println("📝 ACTUALIZANDO USUARIO ID: " + id);
+                System.out.println("ACTUALIZANDO USUARIO ID: " + id);
 
-                // Obtener usuario actual de la base de datos
                 Usuario usuarioActual = dao.obtenerPorId(id);
                 if (usuarioActual == null) {
                     session.setAttribute("error", "Usuario no encontrado");
@@ -238,44 +207,80 @@ public class UsuarioServlet extends HttpServlet {
                     return;
                 }
 
-                // Verificar si el username cambió
                 if (!usuarioActual.getUsername().equals(username.trim())) {
                     if (dao.existeUsuario(username.trim())) {
-                        System.out.println("❌ Nombre de usuario ya existe: " + username);
                         session.setAttribute("error", "El nombre de usuario '" + username + "' ya existe");
                         response.sendRedirect("UsuarioServlet?accion=editar&id=" + id);
                         return;
                     }
                 }
 
-                // Actualizar los campos
                 usuarioActual.setUsername(username.trim());
                 usuarioActual.setRol(rolUsuario.trim());
-                
-                // Manejar la contraseña (solo si se proporciona nueva)
+
                 if (hashedPasswordFromFrontend != null && !hashedPasswordFromFrontend.trim().isEmpty()) {
                     usuarioActual.setPassword(hashedPasswordFromFrontend.trim());
-                    System.out.println("✅ Actualizando contraseña para usuario: " + username);
                 }
-                
-                // Actualizar la última conexión
+
                 usuarioActual.setUltimaConexion(new java.util.Date());
 
                 if (dao.actualizar(usuarioActual)) {
-                    System.out.println("✅ Usuario actualizado exitosamente: " + username);
                     session.setAttribute("mensaje", "Usuario actualizado exitosamente");
                 } else {
-                    System.out.println("❌ Error al actualizar usuario: " + username);
                     session.setAttribute("error", "No se pudo actualizar el usuario");
                 }
             }
 
         } catch (Exception e) {
-            System.err.println("❌ ERROR EN EL SERVLET:");
             e.printStackTrace();
             session.setAttribute("error", "Error en el sistema: " + e.getMessage());
         }
 
         response.sendRedirect("UsuarioServlet");
+    }
+
+    /**
+     * Verifica si el usuario tiene el modulo UsuarioServlet asignado en BD.
+     * Replica la logica del SecurityFilter (hasModuleAccess).
+     */
+    private boolean tieneAccesoModulo(HttpSession session, String rol) {
+        if (rol == null) return false;
+        if ("admin".equals(rol) || "administrativo".equals(rol)) return true;
+
+        Object uidObj = session.getAttribute("usuarioId");
+        if (uidObj == null) {
+            System.out.println("UsuarioServlet: ERROR - usuarioId NULL en sesion");
+            return false;
+        }
+
+        int usuarioId;
+        try { usuarioId = Integer.parseInt(uidObj.toString()); }
+        catch (NumberFormatException e) { return false; }
+
+        String sql =
+            "SELECT m.url FROM modulo m " +
+            "INNER JOIN usuario_modulo um ON m.id = um.modulo_id " +
+            "WHERE um.usuario_id = ? AND um.activo = 1 AND m.activo = 1 AND m.eliminado = 0";
+
+        try (java.sql.Connection conn = conexion.Conexion.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, usuarioId);
+            java.sql.ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String modUrl = rs.getString("url");
+                if (modUrl != null && modUrl.contains("UsuarioServlet")) {
+                    System.out.println("UsuarioServlet: Modulo CONFIRMADO para usuarioId=" + usuarioId);
+                    return true;
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("UsuarioServlet: Error BD al verificar modulo: " + e.getMessage());
+        }
+
+        System.out.println("UsuarioServlet: Modulo NO asignado para usuarioId=" + usuarioId);
+        return false;
     }
 }

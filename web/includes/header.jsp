@@ -76,10 +76,10 @@
     }
 %>
 <!-- Header Superior -->
-<header class="flex items-center justify-between bg-white dark:bg-card-dark border-b border-border-light dark:border-border-dark px-8 py-3 sticky top-0 z-10 transition-colors duration-200">
+<header class="flex items-center justify-between bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-8 py-3 sticky top-0 z-10 transition-colors duration-200">
     <div class="flex items-center gap-4 flex-1">
         <div class="flex items-center gap-3">
-            <h1 class="text-xl font-bold text-slate-900 dark:text-white">
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">
                 <%= request.getAttribute("pageTitle") != null ? request.getAttribute("pageTitle") : "San Antonio" %>
             </h1>
         </div>
@@ -88,7 +88,7 @@
     <div class="flex items-center gap-4 ml-8">
         <!-- Botón de Tema Oscuro/Claro -->
         <button id="themeToggle" 
-                class="p-2 text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 aria-label="Cambiar tema"
                 onclick="toggleTheme()">
             <span id="themeIcon" class="material-symbols-outlined">
@@ -97,38 +97,38 @@
         </button>
         
         <!-- Botón de notificaciones -->
-        <button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative"
+        <button class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg relative"
                 aria-label="Notificaciones">
             <span class="material-symbols-outlined">notifications</span>
-            <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white dark:border-card-dark"></span>
+            <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
         </button>
         
         <!-- Separador -->
-        <div class="h-8 w-[1px] bg-border-light dark:bg-border-dark mx-2" aria-hidden="true"></div>
+        <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2" aria-hidden="true"></div>
         
-        <!-- Información del PADRE -->
+        <!-- Información del PADRE/DOCENTE/ADMIN -->
         <div class="flex items-center gap-3">
             <div class="text-right hidden md:block">
-                <p class="text-sm font-medium text-slate-900 dark:text-white">
+                <p class="text-sm font-medium text-gray-900 dark:text-white">
                     <%= nombreMostrar %>
                 </p>
-                <p class="text-xs text-slate-500 dark:text-slate-400">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
                     <%= subtituloMostrar %>
                 </p>
             </div>
             
             <%-- Avatar con foto o inicial --%>
             <% if (tieneFoto) { %>
-                <div class="size-10 rounded-full border-2 border-primary/20 overflow-hidden dark:border-primary/40">
+                <div class="size-10 rounded-full border-2 border-blue-500/20 overflow-hidden dark:border-blue-500/40">
                     <img src="<%= fotoUrl %>" 
                          alt="Foto de <%= nombreMostrar %>"
                          class="w-full h-full object-cover"
                          onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm\'><%= inicialMostrar %></div>';">
                 </div>
             <% } else { %>
-                <div class="size-10 rounded-full border-2 border-primary/20 bg-blue-600 
+                <div class="size-10 rounded-full border-2 border-blue-500/20 bg-blue-600 
                             flex items-center justify-center text-white font-bold text-sm
-                            dark:border-primary/40">
+                            dark:border-blue-500/40">
                     <%= inicialMostrar %>
                 </div>
             <% } %>

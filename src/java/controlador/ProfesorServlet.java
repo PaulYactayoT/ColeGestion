@@ -97,10 +97,7 @@ public class ProfesorServlet extends HttpServlet {
         HttpSession session = request.getSession();
         String rol = (String) session.getAttribute("rol");
 
-        if (!"admin".equals(rol)) {
-            response.sendRedirect("acceso_denegado.jsp");
-            return;
-        }
+        // Acceso controlado por SecurityFilter según módulos asignados
 
         String accion = request.getParameter("accion");
 
@@ -198,10 +195,7 @@ public class ProfesorServlet extends HttpServlet {
         
         request.setCharacterEncoding("UTF-8");
         
-        if (!"admin".equals(rol)) {
-            response.sendRedirect("acceso_denegado.jsp");
-            return;
-        }
+        // Acceso controlado por SecurityFilter según módulos asignados
 
         try {
             // ✅ USAMOS LA FUNCIÓN getParam() PARA ASEGURAR QUE SE LEAN LOS DATOS AUN CON FOTO

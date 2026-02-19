@@ -13,10 +13,7 @@
     }
 
     String rol = (String) session.getAttribute("rol");
-    if (!"admin".equals(rol)) {
-        response.sendRedirect("acceso_denegado.jsp");
-        return;
-    }
+    // Acceso controlado por SecurityFilter según módulos asignados
 
     // ========== OBTENER DATOS ==========
     List<Map<String, Object>> turnos = (List<Map<String, Object>>) request.getAttribute("turnos");
@@ -192,7 +189,16 @@
     <div class="flex h-screen overflow-hidden">
         
         <%-- ✅ SIDEBAR: barra lateral con navegación y roles --%>
-        <%@ include file="includes/sidebar.jsp" %>
+        <%
+            String rolPageRC = (String) session.getAttribute("rol");
+        %>
+        <% if ("docente".equals(rolPageRC)) { %>
+            <%@ include file="includes/sidebarDocente.jsp" %>
+        <% } else if ("padre".equals(rolPageRC)) { %>
+            <%@ include file="includes/sidebarPadre.jsp" %>
+        <% } else { %>
+            <%@ include file="includes/sidebar.jsp" %>
+        <% } %>
         
         <main class="flex-1 flex flex-col overflow-y-auto">
             

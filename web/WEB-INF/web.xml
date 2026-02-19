@@ -91,47 +91,7 @@
     </filter>
     <filter-mapping>
         <filter-name>SecurityFilter</filter-name>
-
-        <url-pattern>/admin/*</url-pattern>
-        <url-pattern>/padre/*</url-pattern>
-        <url-pattern>/docente/*</url-pattern>
-
-        <url-pattern>/dashboard.jsp</url-pattern>
-        <url-pattern>/usuarios.jsp</url-pattern>
-        <url-pattern>/cursos.jsp</url-pattern>
-        <url-pattern>/profesores.jsp</url-pattern>
-        <url-pattern>/docenteDashboard.jsp</url-pattern>
-        <url-pattern>/justificacionesPadre.jsp</url-pattern>
-        <url-pattern>/notasDocente.jsp</url-pattern>
-        <url-pattern>/notasPadre.jsp</url-pattern>
-        <url-pattern>/observacionesDocente.jsp</url-pattern>
-        <url-pattern>/observacionesPadre.jsp</url-pattern>
-        <url-pattern>/tareaDocente.jsp</url-pattern>
-        <url-pattern>/tareaPadre.jsp</url-pattern>
-        <url-pattern>/verAlumnos.jsp</url-pattern>
-        <url-pattern>/asistenciasDocente.jsp</url-pattern>
-        <url-pattern>/asistenciasCurso.jsp</url-pattern>
-        <url-pattern>/asistenciasPadre.jsp</url-pattern>
-        <url-pattern>/registrarAsistencia.jsp</url-pattern>
-        <url-pattern>/justificacionesPendientes.jsp</url-pattern>
-        <url-pattern>/justificarAusencia.jsp</url-pattern>
-        <url-pattern>/albumPadre.jsp</url-pattern>
-        <url-pattern>/reporteAsistencia.jsp</url-pattern>
-        <url-pattern>/grados.jsp</url-pattern>
-        <url-pattern>/gradoForm.jsp</url-pattern>
-        <url-pattern>/notaForm.jsp</url-pattern>
-        <url-pattern>/tareaForm.jsp</url-pattern>
-        <url-pattern>/uploadImage.jsp</url-pattern>
-
-        <url-pattern>/AlumnoServlet</url-pattern>
-        <url-pattern>/ProfesorServlet</url-pattern>
-        <url-pattern>/AsistenciaServlet</url-pattern>
-        <url-pattern>/TareaServlet</url-pattern>
-        <url-pattern>/ObservacionServlet</url-pattern>
-        <url-pattern>/JustificacionServlet</url-pattern>
-        <url-pattern>/NotasPadreServlet</url-pattern>
-        <url-pattern>/ObservacionesPadreServlet</url-pattern>
-        <url-pattern>/TareasPadreServlet</url-pattern>
+        <url-pattern>/*</url-pattern>
     </filter-mapping>
     
     <welcome-file-list>

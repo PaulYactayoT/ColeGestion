@@ -30,15 +30,9 @@ public class CursoServlet extends HttpServlet {
         System.out.println("CursoServlet - Acción: " + accion + ", Rol: " + rol);
 
         // VALIDACIÓN: Solo admin puede gestionar cursos (crear, editar, eliminar)
-        // Solo admin puede eliminar; admin y administrativo pueden crear/editar
-        if ("eliminar".equals(accion) && !"admin".equals(rol)) {
-            System.out.println("ACCESO DENEGADO: Solo admin puede eliminar cursos");
-            response.sendRedirect("acceso_denegado.jsp");
-            return;
-        }
-        if (("nuevo".equals(accion) || "editar".equals(accion))
-            && !"admin".equals(rol) && !"administrativo".equals(rol)) {
-            System.out.println("ACCESO DENEGADO: Rol " + rol + " intentó acción administrativa");
+        // Acceso controlado por SecurityFilter + usuario_modulo
+        // Solo docente tiene restricción: no puede editar/eliminar cursos de otros
+        if ("docente".equals(rol) && ("eliminar".equals(accion))) {
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -78,10 +72,6 @@ public class CursoServlet extends HttpServlet {
                     request.setAttribute("error", "No se pudo cargar información del profesor");
                     request.setAttribute("lista", new java.util.ArrayList<>());
                 }
-            } else if ("padre".equals(rol)) {
-                // Padre NO puede ver cursos → redirigir
-                response.sendRedirect("acceso_denegado.jsp");
-                return;
             } else {
                 // Admin y administrativo ven todos los cursos
                 request.setAttribute("grados", new GradoDAO().listar());
@@ -97,11 +87,6 @@ public class CursoServlet extends HttpServlet {
 
         // Filtrar cursos por grado (SOLO ADMIN)
         if (accion.equals("filtrar")) {
-            if (!"admin".equals(rol) && !"administrativo".equals(rol)) {
-                response.sendRedirect("acceso_denegado.jsp");
-                return;
-            }
-
             // Obtener parámetros de filtro
             String gradoIdStr = request.getParameter("grado_id");
             String nivel = request.getParameter("nivel");
@@ -137,11 +122,6 @@ public class CursoServlet extends HttpServlet {
             }
         // Formulario para nuevo curso (SOLO ADMIN)
         if (accion.equals("nuevo")) {
-            if (!"admin".equals(rol) && !"administrativo".equals(rol)) {
-                response.sendRedirect("acceso_denegado.jsp");
-                return;
-            }
-            
             response.sendRedirect("RegistroCursoServlet?accion=cargarFormulario");
             return;
         }
@@ -156,11 +136,7 @@ public class CursoServlet extends HttpServlet {
         // ELIMINAR CURSO - MÉTODO CORREGIDO
         // ============================================================
         if (accion.equals("eliminar")) {
-            if (!"admin".equals(rol)) {
-                System.out.println("ACCESO DENEGADO: Solo admin puede eliminar cursos");
-                response.sendRedirect("acceso_denegado.jsp");
-                return;
-            }
+
             
             try {
                 String idParam = request.getParameter("id");
@@ -213,11 +189,7 @@ public class CursoServlet extends HttpServlet {
         String rol = (String) session.getAttribute("rol");
 
         // Solo admin puede crear/editar cursos
-        if (!"admin".equals(rol) && !"administrativo".equals(rol)) {
-            System.out.println("ACCESO DENEGADO POST: Rol " + rol + " intentó modificar cursos");
-            response.sendRedirect("acceso_denegado.jsp");
-            return;
-        }
+
 
         // Determinar si es creación o actualización
         int id = 0;

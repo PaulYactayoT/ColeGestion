@@ -55,8 +55,20 @@
     }
 %>
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
+    <script>
+        // Detectar tema ANTES de renderizar
+        (function() {
+            function getCookie(name) {
+                const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+                return match ? match[2] : null;
+            }
+            if (getCookie('theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Asistencia - San Antonio</title>
@@ -309,342 +321,303 @@
         </div>
     </div>
     
-    <!-- Main Container -->
-    <div class="flex flex-col min-h-screen">
-        <!-- Header -->
-        <header class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40 transition-colors duration-300">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center gap-4">
-                        <!-- Botón de regreso -->
-                        <a href="DocenteDashboardServlet" 
-                           class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
-                           title="Volver al Panel">
-                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">arrow_back</span>
-                        </a>
-                        
-                        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                            <span class="material-symbols-outlined text-white text-xl">school</span>
-                        </div>
-                        <div>
-                            <h1 class="text-lg font-bold text-gray-900 dark:text-white">San Antonio</h1>
-                            <p class="text-xs text-gray-600 dark:text-gray-400">Registrar Asistencia</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-3">
-                        <!-- User Info -->
-                        <div class="hidden md:flex items-center gap-2">
-                            <span class="material-symbols-outlined text-gray-600 dark:text-gray-400">person</span>
-                            <span class="text-sm font-medium text-gray-900 dark:text-white"><%= nombreUsuario %></span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">(<%= rol %>)</span>
-                        </div>
-                        
-                        <!-- Dark Mode Toggle -->
-                        <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle dark mode">
-                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">dark_mode</span>
-                        </button>
-                        
-                        <!-- Accessibility Toggle -->
-                        <button onclick="toggleAccessibilityPanel()" class="accessibility-toggle p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" aria-label="Abrir panel de accesibilidad">
-                            <span class="material-symbols-outlined text-gray-700 dark:text-gray-300">accessibility</span>
-                        </button>
-                        
-                        <!-- Logout -->
-                        <a href="LogoutServlet" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
-                            <span class="material-symbols-outlined text-sm">logout</span>
-                            <span class="hidden sm:inline text-sm">Salir</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </header>
+    <!-- Main Container con Sidebar -->
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar - INCLUIDO -->
+        <jsp:include page="includes/sidebarDocente.jsp" />
         
-        <!-- Main Content -->
-        <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Alerts -->
-            <% if (mensaje != null) { %>
-                <div class="alert alert-success flex items-center gap-3 mb-6">
-                    <span class="material-symbols-outlined">check_circle</span>
-                    <span><%= mensaje %></span>
-                </div>
-            <% } %>
+        <!-- Main Content Wrapper -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <!-- Header - INCLUIDO -->
+            <% request.setAttribute("pageTitle", "Registrar Asistencia"); %>
+            <jsp:include page="includes/header.jsp" />
             
-            <% if (error != null) { %>
-                <div class="alert alert-danger flex items-center gap-3 mb-6">
-                    <span class="material-symbols-outlined">error</span>
-                    <span><%= error %></span>
-                </div>
-            <% } %>
-            
-            <% if (advertencia != null) { %>
-                <div class="alert alert-warning flex items-center gap-3 mb-6">
-                    <span class="material-symbols-outlined">warning</span>
-                    <span><%= advertencia %></span>
-                </div>
-            <% } %>
-            
-            <!-- Mensaje de límite de tiempo -->
-            <% if (!puedeEditar && mensajeLimite != null && !mensajeLimite.isEmpty()) { %>
-                <div class="alert alert-warning flex items-center gap-3 mb-6">
-                    <span class="material-symbols-outlined">schedule</span>
-                    <div>
-                        <div><%= mensajeLimite %></div>
-                        <small class="text-xs">El formulario está en modo solo lectura.</small>
+            <!-- Main Content -->
+            <div id="main-content" class="flex-1 px-8 py-8">
+                <!-- Alerts -->
+                <% if (mensaje != null) { %>
+                    <div class="alert alert-success flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        <span><%= mensaje %></span>
                     </div>
-                </div>
-            <% } %>
-            
-            <!-- Mensaje de Bloqueo Completo -->
-            <% if (cursoSeleccionado != null && !puedeEditar && mensajeLimite != null && mensajeLimite.contains("vencido")) { %>
-                <div class="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-800 rounded-xl p-8 mb-8 text-center">
-                    <div class="flex flex-col items-center justify-center">
-                        <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-6xl mb-4">
-                            lock
-                        </span>
-                        <h3 class="text-2xl font-bold text-red-800 dark:text-red-300 mb-2">Edición Bloqueada</h3>
-                        <p class="text-red-700 dark:text-red-400 mb-2"><%= mensajeLimite %></p>
-                        <p class="text-sm text-red-600 dark:text-red-500">Para modificar esta asistencia, contacta al administrador del sistema.</p>
-                    </div>
-                </div>
-            <% } %>
-            
-            <!-- Formulario de Filtros -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-colors duration-300">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">filter_list</span>
-                    Seleccionar Curso y Fecha
-                </h2>
+                <% } %>
                 
-                <form method="GET" action="AsistenciaServlet">
-                    <input type="hidden" name="accion" value="registrar">
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <% if (error != null) { %>
+                    <div class="alert alert-danger flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined">error</span>
+                        <span><%= error %></span>
+                    </div>
+                <% } %>
+                
+                <% if (advertencia != null) { %>
+                    <div class="alert alert-warning flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined">warning</span>
+                        <span><%= advertencia %></span>
+                    </div>
+                <% } %>
+                
+                <!-- Mensaje de límite de tiempo -->
+                <% if (!puedeEditar && mensajeLimite != null && !mensajeLimite.isEmpty()) { %>
+                    <div class="alert alert-warning flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined">schedule</span>
                         <div>
-                            <label for="curso_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-book text-primary"></i> Curso
-                            </label>
-                            <select name="curso_id" id="curso_id" required
-                                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
-                                <option value="">-- Seleccione un curso --</option>
-                                <% for (Curso c : cursos) { %>
-                                    <option value="<%= c.getId() %>" <%= c.getId() == (cursoSeleccionado != null ? cursoSeleccionado.getId() : 0) ? "selected" : "" %>>
-                                        <%= c.getNombre() %><%= c.getGradoNombre() != null ? " - " + c.getGradoNombre() : "" %>
-                                    </option>
-                                <% } %>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label for="turno_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-clock text-primary"></i> Turno
-                            </label>
-                            <select name="turno_id" id="turno_id" required
-                                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
-                                <option value="1" <%= "1".equals(turnoIdParam) ? "selected" : "" %>>Mañana</option>
-                                <option value="2" <%= "2".equals(turnoIdParam) ? "selected" : "" %>>Tarde</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label for="fecha" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-calendar text-primary"></i> Fecha
-                            </label>
-                            <input type="date" name="fecha" id="fecha" required
-                                   value="<%= fechaParam %>" 
-                                   max="<%= LocalDate.now() %>"
-                                   class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
-                        </div>
-                        
-                        <div>
-                            <label for="hora_clase" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-clock text-primary"></i> Hora de Clase
-                            </label>
-                            <input type="time" name="hora_clase" id="hora_clase" required
-                                   value="<%= horaClaseParam %>"
-                                   class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                            <div><%= mensajeLimite %></div>
+                            <small class="text-xs">El formulario está en modo solo lectura.</small>
                         </div>
                     </div>
-                    
-                    <button type="submit" class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-primary flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined">refresh</span>
-                        <span>Cargar Asistencia</span>
-                    </button>
-                </form>
-            </div>
-            
-            <!-- Tabla de Asistencias -->
-            <% if (cursoSeleccionado != null && alumnos != null && alumnos.size() > 0) { %>
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-colors duration-300">
-                    <!-- Header de la tabla -->
-                    <div class="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary">group</span>
-                            Lista de Alumnos - <%= cursoSeleccionado.getNombre() %>
-                        </h2>
+                <% } %>
+                
+                <!-- Mensaje de Bloqueo Completo -->
+                <% if (cursoSeleccionado != null && !puedeEditar && mensajeLimite != null && mensajeLimite.contains("vencido")) { %>
+                    <div class="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-800 rounded-xl p-8 mb-8 text-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-6xl mb-4">
+                                lock
+                            </span>
+                            <h3 class="text-2xl font-bold text-red-800 dark:text-red-300 mb-2">Edición Bloqueada</h3>
+                            <p class="text-red-700 dark:text-red-400 mb-2"><%= mensajeLimite %></p>
+                            <p class="text-sm text-red-600 dark:text-red-500">Para modificar esta asistencia, contacta al administrador del sistema.</p>
+                        </div>
                     </div>
+                <% } %>
+                
+                <!-- Formulario de Filtros -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-colors duration-300">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">filter_list</span>
+                        Seleccionar Curso y Fecha
+                    </h2>
                     
-                    <form method="POST" action="AsistenciaServlet">
-                        <input type="hidden" name="accion" value="registrarGrupal">
-                        <input type="hidden" name="cursoId" value="<%= cursoSeleccionado.getId() %>">
-                        <input type="hidden" name="turnoId" value="<%= turnoIdParam %>">
-                        <input type="hidden" name="fecha" value="<%= fechaParam %>">
-                        <input type="hidden" name="horaClase" value="<%= horaClaseParam %>">
+                    <form method="GET" action="AsistenciaServlet">
+                        <input type="hidden" name="accion" value="registrar">
                         
-                        <div class="table-scroll overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-900 dark:bg-gray-950">
-                                    <tr>
-                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">N°</th>
-                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">Alumno</th>
-                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">Estado Actual</th>
-                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">Marcar Asistencia</th>
-                                        <th class="px-6 py-4 text-left text-sm font-semibold text-white">Observaciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                    <% 
-                                    int contador = 1;
-                                    for (Alumno alumno : alumnos) { 
-                                        Asistencia asistExistente = mapaAsistencias.get(alumno.getId());
-                                        String estadoActual = asistExistente != null ? asistExistente.getEstadoString() : "Sin registro";
-                                        String observaciones = asistExistente != null && asistExistente.getObservaciones() != null ? asistExistente.getObservaciones() : "";
-                                    %>
-                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                            <td class="px-6 py-4 text-gray-900 dark:text-white font-medium"><%= contador++ %></td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center">
-                                                        <span class="material-symbols-outlined text-white text-xl">person</span>
-                                                    </div>
-                                                    <span class="font-semibold text-gray-900 dark:text-white"><%= alumno.getNombreCompleto() %></span>
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <% if (asistExistente != null) { %>
-                                                    <% if ("PRESENTE".equals(estadoActual)) { %>
-                                                        <span class="status-badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                                            <i class="fas fa-check-circle"></i> <%= estadoActual %>
-                                                        </span>
-                                                    <% } else if ("TARDANZA".equals(estadoActual)) { %>
-                                                        <span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                                            <i class="fas fa-clock"></i> <%= estadoActual %>
-                                                        </span>
-                                                    <% } else if ("AUSENTE".equals(estadoActual)) { %>
-                                                        <span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                                            <i class="fas fa-times-circle"></i> <%= estadoActual %>
-                                                        </span>
-                                                    <% } else { %>
-                                                        <span class="status-badge bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                                                            <%= estadoActual %>
-                                                        </span>
-                                                    <% } %>
-                                                <% } else { %>
-                                                    <span class="text-sm text-gray-500 dark:text-gray-400">Sin registro</span>
-                                                <% } %>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex flex-wrap gap-2">
-                                                    <label class="radio-option bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300">
-                                                        <input type="radio" name="estado_<%= alumno.getId() %>" 
-                                                               value="PRESENTE"
-                                                               <%= "PRESENTE".equals(estadoActual) ? "checked" : "" %>
-                                                               <%= !puedeEditar ? "disabled" : "" %>
-                                                               class="text-green-600 focus:ring-green-500">
-                                                        <i class="fas fa-check-circle"></i> Presente
-                                                    </label>
-                                                    <label class="radio-option bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">
-                                                        <input type="radio" name="estado_<%= alumno.getId() %>" 
-                                                               value="TARDANZA"
-                                                               <%= "TARDANZA".equals(estadoActual) ? "checked" : "" %>
-                                                               <%= !puedeEditar ? "disabled" : "" %>
-                                                               class="text-yellow-600 focus:ring-yellow-500">
-                                                        <i class="fas fa-clock"></i> Tardanza
-                                                    </label>
-                                                    <label class="radio-option bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300">
-                                                        <input type="radio" name="estado_<%= alumno.getId() %>" 
-                                                               value="AUSENTE"
-                                                               <%= ("AUSENTE".equals(estadoActual) || asistExistente == null) ? "checked" : "" %>
-                                                               <%= !puedeEditar ? "disabled" : "" %>
-                                                               class="text-red-600 focus:ring-red-500">
-                                                        <i class="fas fa-times-circle"></i> Ausente
-                                                    </label>
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <input type="text" name="observaciones_<%= alumno.getId() %>" 
-                                                       value="<%= observaciones %>"
-                                                       placeholder="Opcional"
-                                                       <%= !puedeEditar ? "disabled" : "" %>
-                                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed">
-                                            </td>
-                                        </tr>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                            <div>
+                                <label for="curso_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-book text-primary"></i> Curso
+                                </label>
+                                <select name="curso_id" id="curso_id" required
+                                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                    <option value="">-- Seleccione un curso --</option>
+                                    <% for (Curso c : cursos) { %>
+                                        <option value="<%= c.getId() %>" <%= c.getId() == (cursoSeleccionado != null ? cursoSeleccionado.getId() : 0) ? "selected" : "" %>>
+                                            <%= c.getNombre() %><%= c.getGradoNombre() != null ? " - " + c.getGradoNombre() : "" %>
+                                        </option>
                                     <% } %>
-                                </tbody>
-                            </table>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="turno_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-clock text-primary"></i> Turno
+                                </label>
+                                <select name="turno_id" id="turno_id" required
+                                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                    <option value="1" <%= "1".equals(turnoIdParam) ? "selected" : "" %>>Mañana</option>
+                                    <option value="2" <%= "2".equals(turnoIdParam) ? "selected" : "" %>>Tarde</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="fecha" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-calendar text-primary"></i> Fecha
+                                </label>
+                                <input type="date" name="fecha" id="fecha" required
+                                       value="<%= fechaParam %>" 
+                                       max="<%= LocalDate.now() %>"
+                                       class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                            </div>
+                            
+                            <div>
+                                <label for="hora_clase" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-clock text-primary"></i> Hora de Clase
+                                </label>
+                                <input type="time" name="hora_clase" id="hora_clase" required
+                                       value="<%= horaClaseParam %>"
+                                       class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                            </div>
                         </div>
                         
-                        <!-- Footer de la tabla -->
-                        <div class="bg-gray-50 dark:bg-gray-900 p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                            <button type="submit" 
-                                    <%= !puedeEditar ? "disabled" : "" %>
-                                    class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
-                                <span class="material-symbols-outlined">save</span>
-                                <span>Guardar Asistencias</span>
-                            </button>
-                        </div>
+                        <button type="submit" class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-primary flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">refresh</span>
+                            <span>Cargar Asistencia</span>
+                        </button>
                     </form>
                 </div>
-            <% } else if (cursoSeleccionado != null && (alumnos == null || alumnos.size() == 0)) { %>
-                <div class="alert alert-warning flex items-center gap-3">
-                    <span class="material-symbols-outlined">warning</span>
-                    <span>No hay alumnos registrados en este curso y turno.</span>
-                </div>
-            <% } %>
-            
-            <!-- Info Box -->
-            <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-                <div class="flex items-start gap-4">
-                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl mt-1">
-                        info
-                    </span>
-                    <div>
-                        <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-3">Información importante:</h4>
-                        <ul class="space-y-2 text-sm text-blue-700 dark:text-blue-400">
-                            <li class="flex items-start gap-2">
-                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
-                                <span>Selecciona el curso, turno, fecha y hora antes de cargar la lista de asistencia</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
-                                <span>Marca el estado de asistencia de cada alumno (Presente, Tardanza o Ausente)</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
-                                <span>Puedes agregar observaciones opcionales para cada alumno</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
-                                <span>El sistema puede bloquear la edición si ha pasado el tiempo límite establecido</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="material-symbols-outlined text-sm mt-0.5">check</span>
-                                <span>Revisa cuidadosamente antes de guardar, ya que las modificaciones pueden tener restricciones de tiempo</span>
-                            </li>
-                        </ul>
+                
+                <!-- Tabla de Asistencias -->
+                <% if (cursoSeleccionado != null && alumnos != null && alumnos.size() > 0) { %>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-colors duration-300">
+                        <!-- Header de la tabla -->
+                        <div class="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-6 border-b border-gray-200 dark:border-gray-700">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">group</span>
+                                Lista de Alumnos - <%= cursoSeleccionado.getNombre() %>
+                            </h2>
+                        </div>
+                        
+                        <form method="POST" action="AsistenciaServlet">
+                            <input type="hidden" name="accion" value="registrarGrupal">
+                            <input type="hidden" name="cursoId" value="<%= cursoSeleccionado.getId() %>">
+                            <input type="hidden" name="turnoId" value="<%= turnoIdParam %>">
+                            <input type="hidden" name="fecha" value="<%= fechaParam %>">
+                            <input type="hidden" name="horaClase" value="<%= horaClaseParam %>">
+                            
+                            <div class="table-scroll overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-900 dark:bg-gray-950">
+                                        <tr>
+                                            <th class="px-6 py-4 text-left text-sm font-semibold text-white">N°</th>
+                                            <th class="px-6 py-4 text-left text-sm font-semibold text-white">Alumno</th>
+                                            <th class="px-6 py-4 text-left text-sm font-semibold text-white">Estado Actual</th>
+                                            <th class="px-6 py-4 text-left text-sm font-semibold text-white">Marcar Asistencia</th>
+                                            <th class="px-6 py-4 text-left text-sm font-semibold text-white">Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                        <% 
+                                        int contador = 1;
+                                        for (Alumno alumno : alumnos) { 
+                                            Asistencia asistExistente = mapaAsistencias.get(alumno.getId());
+                                            String estadoActual = asistExistente != null ? asistExistente.getEstadoString() : "Sin registro";
+                                            String observaciones = asistExistente != null && asistExistente.getObservaciones() != null ? asistExistente.getObservaciones() : "";
+                                        %>
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                                <td class="px-6 py-4 text-gray-900 dark:text-white font-medium"><%= contador++ %></td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-10 h-10 bg-gradient-to-br from-primary to-blue-600 rounded-full flex items-center justify-center">
+                                                            <span class="material-symbols-outlined text-white text-xl">person</span>
+                                                        </div>
+                                                        <span class="font-semibold text-gray-900 dark:text-white"><%= alumno.getNombreCompleto() %></span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <% if (asistExistente != null) { %>
+                                                        <% if ("PRESENTE".equals(estadoActual)) { %>
+                                                            <span class="status-badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                                <i class="fas fa-check-circle"></i> <%= estadoActual %>
+                                                            </span>
+                                                        <% } else if ("TARDANZA".equals(estadoActual)) { %>
+                                                            <span class="status-badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                                <i class="fas fa-clock"></i> <%= estadoActual %>
+                                                            </span>
+                                                        <% } else if ("AUSENTE".equals(estadoActual)) { %>
+                                                            <span class="status-badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                                <i class="fas fa-times-circle"></i> <%= estadoActual %>
+                                                            </span>
+                                                        <% } else { %>
+                                                            <span class="status-badge bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                                                                <%= estadoActual %>
+                                                            </span>
+                                                        <% } %>
+                                                    <% } else { %>
+                                                        <span class="text-sm text-gray-500 dark:text-gray-400">Sin registro</span>
+                                                    <% } %>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <label class="radio-option bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300">
+                                                            <input type="radio" name="estado_<%= alumno.getId() %>" 
+                                                                   value="PRESENTE"
+                                                                   <%= "PRESENTE".equals(estadoActual) ? "checked" : "" %>
+                                                                   <%= !puedeEditar ? "disabled" : "" %>
+                                                                   class="text-green-600 focus:ring-green-500">
+                                                            <i class="fas fa-check-circle"></i> Presente
+                                                        </label>
+                                                        <label class="radio-option bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300">
+                                                            <input type="radio" name="estado_<%= alumno.getId() %>" 
+                                                                   value="TARDANZA"
+                                                                   <%= "TARDANZA".equals(estadoActual) ? "checked" : "" %>
+                                                                   <%= !puedeEditar ? "disabled" : "" %>
+                                                                   class="text-yellow-600 focus:ring-yellow-500">
+                                                            <i class="fas fa-clock"></i> Tardanza
+                                                        </label>
+                                                        <label class="radio-option bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300">
+                                                            <input type="radio" name="estado_<%= alumno.getId() %>" 
+                                                                   value="AUSENTE"
+                                                                   <%= ("AUSENTE".equals(estadoActual) || asistExistente == null) ? "checked" : "" %>
+                                                                   <%= !puedeEditar ? "disabled" : "" %>
+                                                                   class="text-red-600 focus:ring-red-500">
+                                                            <i class="fas fa-times-circle"></i> Ausente
+                                                        </label>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <input type="text" name="observaciones_<%= alumno.getId() %>" 
+                                                           value="<%= observaciones %>"
+                                                           placeholder="Opcional"
+                                                           <%= !puedeEditar ? "disabled" : "" %>
+                                                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed">
+                                                </td>
+                                            </tr>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Footer de la tabla -->
+                            <div class="bg-gray-50 dark:bg-gray-900 p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                                <button type="submit" 
+                                        <%= !puedeEditar ? "disabled" : "" %>
+                                        class="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                                    <span class="material-symbols-outlined">save</span>
+                                    <span>Guardar Asistencias</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                <% } else if (cursoSeleccionado != null && (alumnos == null || alumnos.size() == 0)) { %>
+                    <div class="alert alert-warning flex items-center gap-3">
+                        <span class="material-symbols-outlined">warning</span>
+                        <span>No hay alumnos registrados en este curso y turno.</span>
+                    </div>
+                <% } %>
+                
+                <!-- Info Box -->
+                <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+                    <div class="flex items-start gap-4">
+                        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl mt-1">
+                            info
+                        </span>
+                        <div>
+                            <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-3">Información importante:</h4>
+                            <ul class="space-y-2 text-sm text-blue-700 dark:text-blue-400">
+                                <li class="flex items-start gap-2">
+                                    <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                    <span>Selecciona el curso, turno, fecha y hora antes de cargar la lista de asistencia</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                    <span>Marca el estado de asistencia de cada alumno (Presente, Tardanza o Ausente)</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                    <span>Puedes agregar observaciones opcionales para cada alumno</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                    <span>El sistema puede bloquear la edición si ha pasado el tiempo límite establecido</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="material-symbols-outlined text-sm mt-0.5">check</span>
+                                    <span>Revisa cuidadosamente antes de guardar, ya que las modificaciones pueden tener restricciones de tiempo</span>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Footer -->
+            <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-12 transition-colors duration-300">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                        © 2025 Sistema de Asistencia Escolar - San Antonio. Todos los derechos reservados.
+                    </p>
+                </div>
+            </footer>
         </main>
-        
-        <!-- Footer -->
-        <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-12 transition-colors duration-300">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <p class="text-center text-sm text-gray-600 dark:text-gray-400">
-                    © 2025 Sistema de Asistencia Escolar - San Antonio. Todos los derechos reservados.
-                </p>
-            </div>
-        </footer>
     </div>
 
     <script>
@@ -723,11 +696,6 @@
                 }
             }
         });
-        
-        // Toggle dark mode
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-        }
     </script>
 </body>
 </html>

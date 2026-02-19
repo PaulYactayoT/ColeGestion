@@ -38,6 +38,27 @@ public class ModuloServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
+        // Verificar sesión y módulo para TODAS las acciones
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("usuario") == null) {
+            response.sendRedirect("index.jsp");
+            return;
+        }
+
+        String rol = (String) session.getAttribute("rol");
+        if (!tieneAccesoModulo(session, rol)) {
+            System.out.println("ACCESO DENEGADO: Rol '" + rol + "' sin modulo ModuloServlet asignado");
+            boolean isAjax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+            if (isAjax) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().print("{\"exito\":false,\"mensaje\":\"Acceso denegado\"}");
+            } else {
+                response.sendRedirect("acceso_denegado.jsp");
+            }
+            return;
+        }
+
         String accion = request.getParameter("accion");
 
         System.out.println("##################################################");
@@ -80,13 +101,7 @@ public class ModuloServlet extends HttpServlet {
             return;
         }
 
-        // VALIDACION DE ROL: Solo admin y administrativo pueden gestionar modulos
-        String rolSesionActual = (String) session.getAttribute("rol");
-        if (!"admin".equals(rolSesionActual) && !"administrativo".equals(rolSesionActual)) {
-            System.out.println("ACCESO DENEGADO: Rol '" + rolSesionActual + "' intento acceder a ModuloServlet");
-            response.sendRedirect("acceso_denegado.jsp");
-            return;
-        }
+        // La validación de módulo ya se hizo en processRequest
 
         String sql =
             "SELECT u.id, u.username, u.rol, u.activo, " +
@@ -257,5 +272,51 @@ public class ModuloServlet extends HttpServlet {
         error.put("exito", false);
         error.put("mensaje", mensaje);
         out.print(new Gson().toJson(error));
+    }
+
+    /**
+     * Verifica si el usuario tiene el modulo ModuloServlet asignado en BD.
+     * Admin y administrativo siempre tienen acceso.
+     * Otros roles consultan usuario_modulo en BD (igual que SecurityFilter).
+     */
+    private boolean tieneAccesoModulo(HttpSession session, String rol) {
+        if (rol == null) return false;
+        if ("admin".equals(rol) || "administrativo".equals(rol)) return true;
+
+        Object uidObj = session.getAttribute("usuarioId");
+        if (uidObj == null) {
+            System.out.println("ModuloServlet: ERROR - usuarioId NULL en sesion");
+            return false;
+        }
+
+        int usuarioId;
+        try { usuarioId = Integer.parseInt(uidObj.toString()); }
+        catch (NumberFormatException e) { return false; }
+
+        String sql =
+            "SELECT m.url FROM modulo m " +
+            "INNER JOIN usuario_modulo um ON m.id = um.modulo_id " +
+            "WHERE um.usuario_id = ? AND um.activo = 1 AND m.activo = 1 AND m.eliminado = 0";
+
+        try (java.sql.Connection conn = conexion.Conexion.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, usuarioId);
+            java.sql.ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String modUrl = rs.getString("url");
+                if (modUrl != null && modUrl.contains("ModuloServlet")) {
+                    System.out.println("ModuloServlet: Modulo CONFIRMADO para usuarioId=" + usuarioId);
+                    return true;
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("ModuloServlet: Error BD al verificar modulo: " + e.getMessage());
+        }
+
+        System.out.println("ModuloServlet: Modulo NO asignado para usuarioId=" + usuarioId);
+        return false;
     }
 }

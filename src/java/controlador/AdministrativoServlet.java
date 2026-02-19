@@ -50,10 +50,9 @@ public class AdministrativoServlet extends HttpServlet {
             return;
         }
 
-        // VALIDACION DE ROL: Solo admin puede gestionar personal administrativo
         String rol = (String) session.getAttribute("rol");
-        if (!"admin".equals(rol)) {
-            System.out.println("ACCESO DENEGADO (GET): Rol '" + rol + "' intentó acceder a AdministrativoServlet");
+        if (!tieneAccesoModulo(session, rol)) {
+            System.out.println("ACCESO DENEGADO (GET): Rol '" + rol + "' sin módulo AdministrativoServlet asignado");
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -104,10 +103,9 @@ public class AdministrativoServlet extends HttpServlet {
             return;
         }
 
-        // VALIDACION DE ROL: Solo admin puede gestionar personal administrativo
         String rol = (String) session.getAttribute("rol");
-        if (!"admin".equals(rol)) {
-            System.out.println("ACCESO DENEGADO (POST): Rol '" + rol + "' intentó acceder a AdministrativoServlet");
+        if (!tieneAccesoModulo(session, rol)) {
+            System.out.println("ACCESO DENEGADO (POST): Rol '" + rol + "' sin módulo AdministrativoServlet asignado");
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -422,20 +420,67 @@ public class AdministrativoServlet extends HttpServlet {
     }
     
     /**
- * MOSTRAR DETALLES del administrativo
- */
-private void mostrarDetalles(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException, SQLException {
+     * MOSTRAR DETALLES del administrativo
+     */
+    private void mostrarDetalles(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException, SQLException {
 
-    int id = Integer.parseInt(request.getParameter("id"));
-    Administrativo admin = dao.obtenerPorId(id);
+        int id = Integer.parseInt(request.getParameter("id"));
+        Administrativo admin = dao.obtenerPorId(id);
 
-    if (admin != null) {
-        request.setAttribute("administrativo", admin);
-        request.getRequestDispatcher("administrativoDetalle.jsp").forward(request, response);
-    } else {
-        request.getSession().setAttribute("error", "Administrativo no encontrado");
-        response.sendRedirect("AdministrativoServlet");
+        if (admin != null) {
+            request.setAttribute("administrativo", admin);
+            request.getRequestDispatcher("administrativoDetalle.jsp").forward(request, response);
+        } else {
+            request.getSession().setAttribute("error", "Administrativo no encontrado");
+            response.sendRedirect("AdministrativoServlet");
+        }
     }
-}
+
+    /**
+     * Verifica si el usuario tiene el módulo AdministrativoServlet asignado en BD.
+     * Replica la lógica del SecurityFilter (hasModuleAccess).
+     * - Admin y administrativo: siempre permitido.
+     * - Otros roles: consulta usuario_modulo en BD.
+     */
+    private boolean tieneAccesoModulo(HttpSession session, String rol) {
+        if (rol == null) return false;
+        if ("admin".equals(rol) || "administrativo".equals(rol)) return true;
+
+        Object uidObj = session.getAttribute("usuarioId");
+        if (uidObj == null) {
+            System.out.println("AdministrativoServlet: ERROR - usuarioId NULL en sesión");
+            return false;
+        }
+
+        int usuarioId;
+        try { usuarioId = Integer.parseInt(uidObj.toString()); }
+        catch (NumberFormatException e) { return false; }
+
+        String sql =
+            "SELECT m.url FROM modulo m " +
+            "INNER JOIN usuario_modulo um ON m.id = um.modulo_id " +
+            "WHERE um.usuario_id = ? AND um.activo = 1 AND m.activo = 1 AND m.eliminado = 0";
+
+        try (java.sql.Connection conn = conexion.Conexion.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, usuarioId);
+            java.sql.ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String modUrl = rs.getString("url");
+                if (modUrl != null && modUrl.contains("AdministrativoServlet")) {
+                    System.out.println("AdministrativoServlet: Módulo CONFIRMADO para usuarioId=" + usuarioId);
+                    return true;
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("AdministrativoServlet: Error BD al verificar módulo: " + e.getMessage());
+        }
+
+        System.out.println("AdministrativoServlet: Módulo NO asignado para usuarioId=" + usuarioId);
+        return false;
+    }
 }

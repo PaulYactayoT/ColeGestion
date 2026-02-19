@@ -30,10 +30,10 @@ public class AdminDisponibilidadServlet extends HttpServlet {
             return;
         }
 
-        // VALIDACION DE ROL: Solo admin y administrativo pueden acceder
+        // Verificar módulo asignado en BD (igual que SecurityFilter)
         String rol = (String) session.getAttribute("rol");
-        if (!"admin".equals(rol) && !"administrativo".equals(rol)) {
-            System.out.println("ACCESO DENEGADO: Rol '" + rol + "' intentó acceder a AdminDisponibilidadServlet");
+        if (!tieneAccesoModulo(session, rol)) {
+            System.out.println("ACCESO DENEGADO: Rol '" + rol + "' sin modulo AdminDisponibilidadServlet asignado");
             response.sendRedirect("acceso_denegado.jsp");
             return;
         }
@@ -157,5 +157,51 @@ public class AdminDisponibilidadServlet extends HttpServlet {
             throws ServletException, IOException {
         System.out.println("Método: POST");
         processRequest(request, response);
+    }
+
+    /**
+     * Verifica si el usuario tiene el modulo AdminDisponibilidadServlet asignado en BD.
+     * Admin y administrativo siempre tienen acceso.
+     * Otros roles consultan usuario_modulo en BD (igual que SecurityFilter).
+     */
+    private boolean tieneAccesoModulo(HttpSession session, String rol) {
+        if (rol == null) return false;
+        if ("admin".equals(rol) || "administrativo".equals(rol)) return true;
+
+        Object uidObj = session.getAttribute("usuarioId");
+        if (uidObj == null) {
+            System.out.println("AdminDisponibilidadServlet: ERROR - usuarioId NULL en sesion");
+            return false;
+        }
+
+        int usuarioId;
+        try { usuarioId = Integer.parseInt(uidObj.toString()); }
+        catch (NumberFormatException e) { return false; }
+
+        String sql =
+            "SELECT m.url FROM modulo m " +
+            "INNER JOIN usuario_modulo um ON m.id = um.modulo_id " +
+            "WHERE um.usuario_id = ? AND um.activo = 1 AND m.activo = 1 AND m.eliminado = 0";
+
+        try (java.sql.Connection conn = conexion.Conexion.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, usuarioId);
+            java.sql.ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String modUrl = rs.getString("url");
+                if (modUrl != null && modUrl.contains("AdminDisponibilidadServlet")) {
+                    System.out.println("AdminDisponibilidadServlet: Modulo CONFIRMADO para usuarioId=" + usuarioId);
+                    return true;
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("AdminDisponibilidadServlet: Error BD al verificar modulo: " + e.getMessage());
+        }
+
+        System.out.println("AdminDisponibilidadServlet: Modulo NO asignado para usuarioId=" + usuarioId);
+        return false;
     }
 }

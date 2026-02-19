@@ -50,6 +50,10 @@ public class DocenteDashboardServlet extends HttpServlet {
             if (session.getAttribute("rol") == null) {
                 session.setAttribute("rol", "docente");
             }
+            // Guardar foto en sesión para que header.jsp la muestre
+            if (docente.getFoto() != null && !docente.getFoto().isEmpty()) {
+                session.setAttribute("fotoUsuario", docente.getFoto());
+            }
             
             System.out.println("📋 Cargando cursos para profesor ID: " + docente.getId());
             

@@ -18,6 +18,10 @@ public class SecurityFilter implements Filter {
     String requestURI = httpRequest.getRequestURI();
     String contextPath = httpRequest.getContextPath();
     
+    System.out.println("@@@@@@@@@@@@@@@@@@@@@@");
+    System.out.println("@@ SECURITY FILTER @@");
+    System.out.println("@@ URI: " + requestURI);
+    System.out.println("@@@@@@@@@@@@@@@@@@@@@@");
     System.out.println("SecurityFilter: Processing URI: " + requestURI);
 
     // 🔥 DETECTAR PETICIONES AJAX/JSON
@@ -37,6 +41,12 @@ public class SecurityFilter implements Filter {
         return;
     }
 
+    // Excluir FORWARDS internos (servlet → JSP): ya fueron validados antes
+    if (httpRequest.getAttribute("javax.servlet.forward.request_uri") != null) {
+        chain.doFilter(request, response);
+        return;
+    }
+
     HttpSession session = httpRequest.getSession(false);
 
     // Verificar sesión
@@ -49,7 +59,7 @@ public class SecurityFilter implements Filter {
             httpResponse.getWriter().write("{\"exito\":false,\"mensaje\":\"Sesión no válida\"}");
             return;
         } else {
-            httpResponse.sendRedirect(contextPath + "/login.jsp");
+            httpResponse.sendRedirect(contextPath + "/index.jsp");
             return;
         }
     }
@@ -64,7 +74,7 @@ public class SecurityFilter implements Filter {
             httpResponse.getWriter().write("{\"exito\":false,\"mensaje\":\"Rol no encontrado\"}");
             return;
         } else {
-            httpResponse.sendRedirect(contextPath + "/login.jsp");
+            httpResponse.sendRedirect(contextPath + "/index.jsp");
             return;
         }
     }
@@ -104,7 +114,8 @@ public class SecurityFilter implements Filter {
      * VERIFICAR SI ES UN RECURSO PÚBLICO
      */
     private boolean isPublicResource(String requestURI) {
-        return requestURI.endsWith("login.jsp")
+        return requestURI.endsWith("/")
+                || requestURI.endsWith("login.jsp")
                 || requestURI.endsWith("index.jsp")
                 || requestURI.contains("/LoginServlet")
                 || requestURI.endsWith("acceso_denegado.jsp")
@@ -117,23 +128,119 @@ public class SecurityFilter implements Filter {
 
     /**
      * VERIFICAR ACCESO SEGÚN ROL
+     * Admin: acceso total. Resto: validación dinámica contra usuario_modulo en BD.
      */
     private boolean checkAccess(String rol, String requestURI, HttpServletRequest request) {
         System.out.println("SecurityFilter: Checking access for role " + rol + " to " + requestURI);
+        
+        if ("admin".equals(rol)) return true;
+        if (requestURI.contains("/LogoutServlet")) return true; 
 
-        switch (rol) {
-            case "admin":
-                return hasAdminAccess(requestURI);
-            case "docente":
-                return hasDocenteAccess(requestURI);
-            case "padre":
-                return hasPadreAccess(requestURI);
-            case "administrativo":
-                return hasAdministrativoAccess(requestURI);
-            default:
-                return false;
+        if (requestURI.contains("/uploads/") || requestURI.contains("/includes/")) return true;
+
+        // URLs derivadas: si el usuario tiene CursoServlet asignado,
+        // también puede acceder a RegistroCursoServlet (es parte del mismo módulo)
+        if (requestURI.contains("/RegistroCursoServlet") || requestURI.contains("/registroCurso.jsp")) {
+            return hasModuleAccess("CursoServlet", request);
         }
+
+        if ("docente".equals(rol) && (requestURI.contains("DocenteDashboardServlet") || requestURI.contains("docenteDashboard"))) return true;
+        if ("padre".equals(rol) && (requestURI.contains("padreDashboard") || requestURI.contains("PadreDashboardServlet"))) return true;
+        if ("administrativo".equals(rol) && requestURI.contains("administrativoDashboard")) return true;
+
+        // Padre: bloquear páginas exclusivas de admin/docente sin importar módulos
+        if ("padre".equals(rol)) {
+            if (requestURI.contains("/CursoServlet") || requestURI.contains("/RegistroCursoServlet")
+                || requestURI.contains("/ProfesorServlet") || requestURI.contains("/GradoServlet")
+                || requestURI.contains("/UsuarioServlet") || requestURI.contains("/AdministrativoServlet")
+                || requestURI.contains("/ModuloServlet") || requestURI.contains("/AdminDisponibilidadServlet")
+                || requestURI.contains("/AlumnoServlet")
+                || requestURI.endsWith("/dashboard.jsp") || requestURI.contains("/docenteDashboard")) {
+                return false;
+            }
+        }
+
+        // JSPs derivados de módulos base
+        if (requestURI.contains("/cursos.jsp") || requestURI.contains("/cursoForm.jsp")) {
+            return hasModuleAccess("CursoServlet", request);
+        }
+        if (requestURI.contains("/alumnos.jsp") || requestURI.contains("/alumnoForm.jsp") || requestURI.contains("/alumnoDetalle.jsp")) {
+            return hasModuleAccess("AlumnoServlet", request);
+        }
+        if (requestURI.contains("/profesores.jsp") || requestURI.contains("/profesorForm.jsp")) {
+            return hasModuleAccess("ProfesorServlet", request);
+        }
+        if (requestURI.contains("/grados.jsp") || requestURI.contains("/gradoForm.jsp")) {
+            return hasModuleAccess("GradoServlet", request);
+        }
+        if (requestURI.contains("/usuarios.jsp") || requestURI.contains("/usuarioForm.jsp")) {
+            return hasModuleAccess("UsuarioServlet", request);
+        }
+        if (requestURI.contains("/gestionModulos.jsp")) {
+            return hasModuleAccess("ModuloServlet", request);
+        }
+        if (requestURI.contains("/gestion_disponibilidad.jsp") || requestURI.contains("/disponibilidadDocente.jsp")) {
+            return hasModuleAccess("AdminDisponibilidadServlet", request);
+        }
+
+        if ("docente".equals(rol)) return hasDocenteAccess(requestURI);
+        if ("padre".equals(rol))   return hasPadreAccess(requestURI);
+        return hasModuleAccess(requestURI, request);
     }
+
+    /**
+     * Valida si la URL coincide con algún módulo asignado al usuario en BD.
+     */
+    private boolean hasModuleAccess(String requestURI, HttpServletRequest request) {
+        HttpSession sess = request.getSession(false);
+        if (sess == null) return false;
+
+        Object uidObj = sess.getAttribute("usuarioId");
+        if (uidObj == null) {
+            System.out.println("SecurityFilter: ERROR - usuarioId NULL en sesión. URI: " + requestURI);
+            return false;
+        }
+
+        int usuarioId;
+        try { usuarioId = Integer.parseInt(uidObj.toString()); }
+        catch (NumberFormatException e) { return false; }
+
+        String sql =
+            "SELECT m.url FROM modulo m " +
+            "INNER JOIN usuario_modulo um ON m.id = um.modulo_id " +
+            "WHERE um.usuario_id = ? AND um.activo = 1 AND m.activo = 1 AND m.eliminado = 0";
+
+        try (java.sql.Connection conn = conexion.Conexion.getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, usuarioId);
+            java.sql.ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String modUrl = rs.getString("url");
+                if (modUrl != null && !modUrl.isEmpty()) {
+                    String modBase = modUrl.split("\\?")[0].trim();
+                    if (!modBase.isEmpty() && requestURI.contains(modBase)) {
+                        System.out.println("SecurityFilter: GRANTED via módulo [" + modBase + "]");
+                        return true;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("SecurityFilter: Error BD: " + e.getMessage());
+            String r = (String) sess.getAttribute("rol");
+            if ("docente".equals(r))        return hasDocenteAccess(requestURI);
+            if ("padre".equals(r))          return hasPadreAccess(requestURI);
+            if ("administrativo".equals(r)) return hasAdministrativoAccess(requestURI);
+        }
+
+        System.out.println("SecurityFilter: ===== DENIED FINAL =====");
+        System.out.println("SecurityFilter: URL bloqueada: " + requestURI);
+        System.out.println("SecurityFilter: usuarioId: " + usuarioId);
+        return false;
+    }
+
 
     /**
      * PERMISOS PARA ADMIN - ACCESO COMPLETO
@@ -166,9 +273,15 @@ public class SecurityFilter implements Filter {
                 || requestURI.contains("/verAlumnos.jsp")
                 || requestURI.contains("/asistenciasCurso.jsp")
                 || requestURI.contains("/AsistenciaServlet")
+                || requestURI.contains("/MaterialServlet")             
+                || requestURI.contains("/materialApoyo.jsp")           
+                || requestURI.contains("/materialSeleccionCurso.jsp")
+                || requestURI.contains("/DisponibilidadServlet")      
+                || requestURI.contains("/disponibilidadDocente.jsp")
                 || requestURI.contains("/TareaServlet")
                 || requestURI.contains("/ObservacionServlet")
                 || requestURI.contains("/JustificacionServlet")
+                || requestURI.contains("/revisarJustificaciones.jsp") 
                 || requestURI.contains("/NotaServlet")
                 || requestURI.contains("/AlumnoServlet") // SOLO para obtenerPorCurso (AJAX)
                 || requestURI.contains("/CursoServlet")
@@ -205,12 +318,16 @@ public class SecurityFilter implements Filter {
                 || requestURI.contains("/notasPadre.jsp")
                 || requestURI.contains("/observacionesPadre.jsp")
                 || requestURI.contains("/tareaPadre.jsp")
+                || requestURI.contains("/tareasPadre.jsp")    
+                || requestURI.contains("/MaterialPadreServlet") 
+                || requestURI.contains("/LogoutServlet") 
                 || requestURI.contains("/uploadImage.jsp")
                 || requestURI.contains("/padreDashboard.jsp")
                 || requestURI.contains("/JustificacionServlet")
                 || requestURI.contains("/NotasPadreServlet")
                 || requestURI.contains("/ObservacionesPadreServlet")
                 || requestURI.contains("/TareasPadreServlet")
+                || requestURI.contains("/ExportServlet") 
                 || requestURI.contains("/AsistenciaServlet"); // Para ver asistencias de su hijo
 
         // URLs BLOQUEADAS para padre
