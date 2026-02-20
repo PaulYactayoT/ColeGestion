@@ -172,16 +172,13 @@
 <body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen">
     
     <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
         <%@ include file="includes/sidebarDocente.jsp" %>
         
         <main class="flex-1 flex flex-col overflow-y-auto">
-            <!-- Header -->
             <% request.setAttribute("pageTitle", "Gestión de Tareas - " + curso.getNombre()); %>
             <jsp:include page="includes/header.jsp" />
             
             <div class="p-8">
-                <!-- Mensajes -->
                 <% if (mensaje != null) { %>
                 <div class="alert alert-success mb-6" role="alert">
                     <div class="flex items-center gap-2">
@@ -200,7 +197,6 @@
                 </div>
                 <% } %>
                 
-                <!-- Encabezado -->
                 <div class="bg-gradient-to-r from-primary to-blue-600 rounded-xl p-6 mb-8 text-white shadow-lg">
                     <div class="relative z-10">
                         <h2 class="text-2xl font-bold">Gestión de Tareas</h2>
@@ -208,7 +204,6 @@
                     </div>
                 </div>
                 
-                <!-- Acciones -->
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-xl font-bold text-[#111318] dark:text-white">Listado de Tareas</h3>
                     <div class="flex gap-3">
@@ -221,7 +216,6 @@
                     </div>
                 </div>
                 
-                <!-- Tabla -->
                 <div class="table-container">
                     <div class="overflow-x-auto">
                         <table class="custom-table">
@@ -270,7 +264,7 @@
                                     <td class="text-center">
                                         <% if (esFinalizado) { %>
                                             <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full text-xs font-semibold">
-                                                <i class="fas fa-exclamation-triangle"></i> Finalizado
+                                                <i class="fas fa-exclamation-triangle"></i> Tiempo Finalizado
                                             </span>
                                         <% } else { %>
                                             <div class="countdown-timer inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full text-xs font-semibold"

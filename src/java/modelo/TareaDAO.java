@@ -39,12 +39,8 @@ public class TareaDAO {
 
     /**
      * ACTUALIZAR TAREA (EDITAR)
-     * Flujo: Si la tarea estaba vencida o inactiva, al editarla le ponemos activo = 1 
-     * para que vuelva a estar disponible con el nuevo tiempo.
      */
     public boolean actualizar(Tarea t) {
-        // ✅ AQUÍ ESTÁ LA LÓGICA QUE PIDES: ", activo = 1"
-        // Esto asegura que al guardar cambios, la tarea se reactive en la BD.
         String sql = "UPDATE tarea SET curso_id = ?, nombre = ?, descripcion = ?, fecha_entrega = ?, hora_entrega = ?, " +
                      "tipo = ?, peso = ?, instrucciones = ?, archivo_adjunto = ?, activo = 1 " + 
                      "WHERE id = ? AND eliminado = 0";
@@ -95,7 +91,6 @@ public class TareaDAO {
 
     /**
      * ELIMINAR TAREA (BORRADO LÓGICO)
-     * Flujo: Pone eliminado = 1 y activo = 0
      */
     public boolean eliminar(int id) {
         String sql = "UPDATE tarea SET eliminado = 1, activo = 0 WHERE id = ?";
@@ -118,8 +113,10 @@ public class TareaDAO {
      */
     public Tarea obtenerPorId(int id) {
         Tarea t = null;
-        String sql = "SELECT id, curso_id, nombre, descripcion, fecha_entrega, hora_entrega, activo, tipo, peso, instrucciones, archivo_adjunto " +
-                     "FROM tarea WHERE id = ? AND eliminado = 0";
+        String sql = "SELECT t.*, c.nombre as curso_nombre " +
+                     "FROM tarea t " +
+                     "INNER JOIN curso c ON t.curso_id = c.id " +
+                     "WHERE t.id = ? AND t.eliminado = 0";
 
         try (Connection con = Conexion.getConnection(); 
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -134,6 +131,7 @@ public class TareaDAO {
                 t.setFechaEntrega(rs.getString("fecha_entrega"));
                 t.setHoraEntrega(rs.getString("hora_entrega"));
                 t.setCursoId(rs.getInt("curso_id"));
+                t.setCursoNombre(rs.getString("curso_nombre")); 
                 t.setActivo(rs.getBoolean("activo"));
                 t.setTipo(rs.getString("tipo"));
                 t.setPeso(rs.getDouble("peso"));
@@ -148,7 +146,7 @@ public class TareaDAO {
 
     /**
      * LISTAR TAREAS POR ALUMNO
-     * Usa el SP para calcular si venció el tiempo
+     * Usa el SP original, pero intercepta en Java si el alumno ya entregó la tarea.
      */
     public List<Tarea> listarPorAlumno(int alumnoId) {
         List<Tarea> lista = new ArrayList<>();
@@ -162,11 +160,12 @@ public class TareaDAO {
 
             while (rs.next()) {
                 Tarea t = new Tarea();
-                t.setId(rs.getInt("id"));
+                int tareaId = rs.getInt("id"); // Capturamos el ID primero
+                
+                t.setId(tareaId);
                 t.setNombre(rs.getString("nombre"));
                 t.setDescripcion(rs.getString("descripcion"));
                 t.setFechaEntrega(rs.getString("fecha_entrega"));
-                t.setActivo(true); 
                 
                 try {
                     t.setHoraEntrega(rs.getString("hora_entrega")); 
@@ -175,10 +174,19 @@ public class TareaDAO {
                     t.setInstrucciones(rs.getString("instrucciones"));
                     t.setCursoNombre(rs.getString("curso_nombre"));
                     t.setArchivoAdjunto(rs.getString("archivo_adjunto"));
-                    
-                    // Recuperamos el estado calculado (ACTIVO o FINALIZADO)
-                    t.setEstadoCalculado(rs.getString("estado_calculado")); 
                     t.setSegundosRestantes(rs.getLong("segundos_restantes"));
+                    
+                    // Estado original que manda la base de datos
+                    String estadoSP = rs.getString("estado_calculado"); 
+                    
+                    // ✅ INTERCEPTOR EN JAVA: Verificamos en la tabla entrega
+                    if (verificarSiEntregada(tareaId, alumnoId)) {
+                        t.setEstadoCalculado("ENTREGADO"); // Forzamos el estado entregado
+                        t.setActivo(false); // Inhabilitamos el botón (candado)
+                    } else {
+                        t.setEstadoCalculado(estadoSP); // Mantenemos el estado normal
+                        t.setActivo("ACTIVO".equals(estadoSP));
+                    }
                     
                 } catch (SQLException e) {
                     System.out.println("Columna faltante: " + e.getMessage());
@@ -193,7 +201,6 @@ public class TareaDAO {
 
     /**
      * LISTAR TAREAS POR CURSO (PROFESOR)
-     * Aquí mostramos el estado calculado.
      */
     public List<Tarea> listarPorCurso(int cursoId) {
         List<Tarea> lista = new ArrayList<>();
@@ -223,13 +230,12 @@ public class TareaDAO {
                 t.setFechaEntrega(rs.getString("fecha_entrega"));
                 t.setHoraEntrega(rs.getString("hora_entrega")); 
                 t.setCursoId(rs.getInt("curso_id"));
-                t.setActivo(rs.getBoolean("activo")); // Esto viene de la BD (1 o 0)
+                t.setActivo(rs.getBoolean("activo")); 
                 t.setTipo(rs.getString("tipo"));
                 t.setPeso(rs.getDouble("peso"));
                 t.setInstrucciones(rs.getString("instrucciones"));
                 t.setArchivoAdjunto(rs.getString("archivo_adjunto")); 
                 
-                // Calculamos el estado visual
                 t.setEstadoCalculado(rs.getString("estado_calculado"));
                 t.setSegundosRestantes(rs.getLong("segundos_restantes"));
                 
@@ -239,5 +245,21 @@ public class TareaDAO {
             e.printStackTrace();
         }
         return lista;
+    }
+
+    // =====================================================================
+    // ✅ MÉTODO AUXILIAR PARA VERIFICAR ENTREGAS SIN TOCAR EL PROCEDIMIENTO
+    // =====================================================================
+    private boolean verificarSiEntregada(int tareaId, int alumnoId) {
+        String sql = "SELECT 1 FROM entrega WHERE tarea_id = ? AND alumno_id = ? AND activo = 1 AND eliminado = 0";
+        try (Connection con = Conexion.getConnection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, tareaId);
+            ps.setInt(2, alumnoId);
+            ResultSet rs = ps.executeQuery();
+            return rs.next(); // Retorna true si encontró al menos una entrega
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

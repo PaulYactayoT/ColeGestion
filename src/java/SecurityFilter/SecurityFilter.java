@@ -246,11 +246,6 @@ public class SecurityFilter implements Filter {
      * PERMISOS PARA ADMIN - ACCESO COMPLETO
      */
     private boolean hasAdminAccess(String requestURI) {
-    // Admin tiene acceso completo a todo
-    // Pero podemos ser explícitos para debug
-    if (requestURI.contains("ModuloServlet")) {
-        System.out.println("SecurityFilter: Admin access to ModuloServlet GRANTED");
-    }
     return true;
 }
 
@@ -273,7 +268,7 @@ public class SecurityFilter implements Filter {
                 || requestURI.contains("/verAlumnos.jsp")
                 || requestURI.contains("/asistenciasCurso.jsp")
                 || requestURI.contains("/AsistenciaServlet")
-                || requestURI.contains("/MaterialServlet")             
+                || requestURI.contains("/MaterialServlet")              
                 || requestURI.contains("/materialApoyo.jsp")           
                 || requestURI.contains("/materialSeleccionCurso.jsp")
                 || requestURI.contains("/DisponibilidadServlet")      
@@ -307,6 +302,7 @@ public class SecurityFilter implements Filter {
 
     /**
      * PERMISOS PARA PADRE
+     * Modificado para la HU-14: Se agregaron EntregaServlet, detalleTarea.jsp y DescargarServlet
      */
     private boolean hasPadreAccess(String requestURI) {
         // URLs PERMITIDAS para padre
@@ -318,7 +314,8 @@ public class SecurityFilter implements Filter {
                 || requestURI.contains("/notasPadre.jsp")
                 || requestURI.contains("/observacionesPadre.jsp")
                 || requestURI.contains("/tareaPadre.jsp")
-                || requestURI.contains("/tareasPadre.jsp")    
+                || requestURI.contains("/tareasPadre.jsp")
+                || requestURI.contains("/detalleTarea.jsp") 
                 || requestURI.contains("/MaterialPadreServlet") 
                 || requestURI.contains("/LogoutServlet") 
                 || requestURI.contains("/uploadImage.jsp")
@@ -327,8 +324,10 @@ public class SecurityFilter implements Filter {
                 || requestURI.contains("/NotasPadreServlet")
                 || requestURI.contains("/ObservacionesPadreServlet")
                 || requestURI.contains("/TareasPadreServlet")
+                || requestURI.contains("/EntregaServlet") 
                 || requestURI.contains("/ExportServlet") 
-                || requestURI.contains("/AsistenciaServlet"); // Para ver asistencias de su hijo
+                || requestURI.contains("/AsistenciaServlet")
+                || requestURI.contains("/DescargarServlet"); // ✅ NUEVO PERMISO AÑADIDO
 
         // URLs BLOQUEADAS para padre
         boolean isBlocked = requestURI.contains("/admin/")
@@ -362,15 +361,10 @@ public class SecurityFilter implements Filter {
 
     /**
      * PERMISOS PARA ADMINISTRATIVO
-     * Acceso a gestión general + módulos de docente y padre que le asignen
      */
     private boolean hasAdministrativoAccess(String requestURI) {
-        // Puede acceder a todo lo que puede docente y padre
-        // más las páginas administrativas
         boolean isAllowed =
-                // Dashboard administrativo
                 requestURI.contains("/administrativoDashboard")
-                // Gestión (mismos que admin)
                 || requestURI.contains("/AlumnoServlet")
                 || requestURI.contains("/ProfesorServlet")
                 || requestURI.contains("/CursoServlet")
@@ -379,7 +373,6 @@ public class SecurityFilter implements Filter {
                 || requestURI.contains("/AdministrativoServlet")
                 || requestURI.contains("/ModuloServlet")
                 || requestURI.contains("/AdminDisponibilidadServlet")
-                // Módulos de docente
                 || requestURI.contains("/AsistenciaServlet")
                 || requestURI.contains("/JustificacionServlet")
                 || requestURI.contains("/MaterialServlet")
@@ -388,14 +381,12 @@ public class SecurityFilter implements Filter {
                 || requestURI.contains("/TareaServlet")
                 || requestURI.contains("/ObservacionServlet")
                 || requestURI.contains("/revisarJustificaciones.jsp")
-                // JSPs de padre
                 || requestURI.contains("/notasPadre.jsp")
                 || requestURI.contains("/observacionesPadre.jsp")
                 || requestURI.contains("/albumPadre.jsp")
                 || requestURI.contains("/asistenciasPadre.jsp")
                 || requestURI.contains("/tareasPadre.jsp")
                 || requestURI.contains("/MaterialPadreServlet")
-                // JSPs generales admin
                 || requestURI.contains("/alumnos.jsp")
                 || requestURI.contains("/alumnoForm.jsp")
                 || requestURI.contains("/alumnoDetalle.jsp")
@@ -409,7 +400,6 @@ public class SecurityFilter implements Filter {
                 || requestURI.contains("/usuarioForm.jsp")
                 || requestURI.contains("/gestionModulos.jsp");
 
-        // Bloqueado: solo el admin puro puede hacer esto
         boolean isBlocked = requestURI.endsWith("/dashboard.jsp");
 
         return isAllowed && !isBlocked;

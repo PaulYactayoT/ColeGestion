@@ -22,7 +22,7 @@ import javax.servlet.http.*;
 )
 public class TareaServlet extends HttpServlet {
       
-    private static final String UPLOAD_DIR = "uploads";
+    private static final String UPLOAD_DIR = "uploads/tareas";
     TareaDAO dao = new TareaDAO();
     CursoDAO cursoDao = new CursoDAO();
 
