@@ -18,7 +18,6 @@
                 int uid = Integer.parseInt(idObj.toString());
                 modulosMenu = new ModuloDAO().listarPorUsuario(uid);
             } catch (Exception e) {
-                // Si falla, el menú queda vacío sin romper la página
                 System.err.println("Error cargando módulos sidebar: " + e.getMessage());
             }
         }
@@ -44,7 +43,7 @@
 
             <% if ("admin".equals(rolSidebar)) { %>
             <%-- ================================================= --%>
-            <%--  MENÚ FIJO PARA ADMIN (sin cambios)               --%>
+            <%--  MENÚ FIJO PARA ADMIN                             --%>
             <%-- ================================================= --%>
 
             <!-- Dashboard -->
@@ -74,8 +73,8 @@
             <!-- Administrativos -->
             <a class="flex items-center gap-3 px-3 py-2 rounded-lg <%= currentPage.contains("administrativo") || currentPage.contains("Administrativo") ? "bg-primary/10 text-primary font-medium" : "text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800" %> transition-colors" 
                href="<%= request.getContextPath() %>/AdministrativoServlet"
-               <%= currentPage.contains("Administrativo") || currentPage.contains("Administrativo") ? "aria-current=\"page\"" : "" %>>
-                <i class="fas fa-calendar-check" aria-hidden="true"></i>
+               <%= currentPage.contains("Administrativo") || currentPage.contains("administrativo") ? "aria-current=\"page\"" : "" %>>
+                <i class="fas fa-user-tie" aria-hidden="true"></i>
                 <span class="text-sm">Administrativo</span>
             </a>
 
@@ -111,6 +110,14 @@
                 <span class="text-sm">Disponibilidad</span>
             </a>
 
+            <!-- Master Table CRUD -->
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg <%= currentPage.contains("MasterTable") || currentPage.contains("masterTable") ? "bg-primary/10 text-primary font-medium" : "text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800" %> transition-colors" 
+               href="<%= request.getContextPath() %>/MasterTableServlet"
+               <%= currentPage.contains("MasterTable") || currentPage.contains("masterTable") ? "aria-current=\"page\"" : "" %>>
+                <i class="fas fa-table" aria-hidden="true"></i>
+                <span class="text-sm">Master Table CRUD</span>
+            </a>
+
             <!-- Módulos -->
             <a class="flex items-center gap-3 px-3 py-2 rounded-lg <%= currentPage.contains("Modulo") || currentPage.contains("modulo") ? "bg-primary/10 text-primary font-medium" : "text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800" %> transition-colors"
                href="<%= request.getContextPath() %>/ModuloServlet?accion=listar"
@@ -121,7 +128,7 @@
 
             <% } else if (modulosMenu.isEmpty()) { %>
             <%-- ================================================= --%>
-            <%--  SIN MÓDULOS ASIGNADOS (docente / padre / admin)  --%>
+            <%--  SIN MÓDULOS ASIGNADOS                           --%>
             <%-- ================================================= --%>
             <div class="flex flex-col items-center gap-2 py-8 text-center text-[#616f89]">
                 <i class="fas fa-lock text-3xl opacity-30"></i>
@@ -134,12 +141,11 @@
             <%-- ================================================= --%>
             <%
                 for (Modulo mod : modulosMenu) {
-                    String urlMod   = mod.getUrl() != null ? mod.getUrl() : "#";
-                    String icono    = mod.getIcono() != null ? mod.getIcono() : "fas fa-circle";
-                    // Toma el primer segmento de la URL para comparar con currentPage
-                    String urlBase  = urlMod.split("\\?")[0];
-                    boolean activo  = currentPage.contains(urlBase);
-                    String clsLink  = activo
+                    String urlMod  = mod.getUrl() != null ? mod.getUrl() : "#";
+                    String icono   = mod.getIcono() != null ? mod.getIcono() : "fas fa-circle";
+                    String urlBase = urlMod.split("\\?")[0];
+                    boolean activo = currentPage.contains(urlBase);
+                    String clsLink = activo
                         ? "bg-primary/10 text-primary font-medium"
                         : "text-[#616f89] hover:bg-gray-100 dark:hover:bg-gray-800";
             %>
