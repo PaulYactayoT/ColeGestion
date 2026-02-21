@@ -217,6 +217,17 @@ public class SecurityFilter implements Filter {
         if ("docente".equals(rol) && requestURI.contains("/DisponibilidadServlet")) {
             return true; // Servlet de disponibilidad del docente
         }
+        // revisarJustificaciones.jsp se protege con el módulo "JustificacionServlet" de la BD
+        // así solo docentes que tengan ese módulo asignado pueden acceder
+        if ("docente".equals(rol) && requestURI.contains("/revisarJustificaciones.jsp")) {
+            return hasModuleAccess("JustificacionServlet", request);
+        }
+
+        // PADRE: AsistenciaServlet es llamado internamente por asistenciasPadre.jsp (filtros).
+        // Se valida contra el módulo "asistenciasPadre.jsp" que el padre sí tiene en BD.
+        if ("padre".equals(rol) && requestURI.contains("/AsistenciaServlet")) {
+            return hasModuleAccess("asistenciasPadre.jsp", request);
+        }
 
         // ─────────────────────────────────────────────────────────────────────
         // PÁGINAS QUE REQUIEREN MÓDULO ASIGNADO EN BD
@@ -247,24 +258,6 @@ public class SecurityFilter implements Filter {
         // gestion_disponibilidad.jsp es del panel admin — AdminDisponibilidadServlet
         if (requestURI.contains("/gestion_disponibilidad.jsp")) {
             return hasModuleAccess("AdminDisponibilidadServlet", request);
-        }
-        
-        // Funcionalidades de curso del docente: siempre permitidas, no son módulos
-        if ("docente".equals(rol)) {
-            if (requestURI.contains("/ObservacionServlet")
-                    || requestURI.contains("/TareaServlet")
-                    || requestURI.contains("/NotaServlet")
-                    || requestURI.contains("/AlumnoServlet")
-                    || requestURI.contains("/CursoServlet")
-                    || requestURI.contains("/AsistenciaServlet")
-                    || requestURI.contains("/JustificacionServlet")
-                    || requestURI.contains("/observacionesDocente.jsp")
-                    || requestURI.contains("/notasDocente.jsp")
-                    || requestURI.contains("/asistenciasDocente.jsp")
-                    || requestURI.contains("/tareaDocente.jsp")
-                    || requestURI.contains("/verAlumnos.jsp")) {
-                return true;
-            }
         }
         // ─────────────────────────────────────────────────────────────────────
         // FALLBACK POR ROL

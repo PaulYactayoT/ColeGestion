@@ -28,6 +28,13 @@ public class JustificacionServlet extends HttpServlet {
         System.out.println("✅ JustificacionServlet inicializado");
     }
     
+    /**
+     * MANEJO DE PETICIONES GET
+     * Controla las acciones que solo muestran información (sin modificar datos):
+     * - "form"     → Muestra el formulario para que el padre justifique una ausencia
+     * - "historial"→ Muestra el historial de justificaciones enviadas por el padre
+     * - "listar"   → Muestra las justificaciones pendientes para el docente
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -41,7 +48,12 @@ public class JustificacionServlet extends HttpServlet {
         
         switch (accion) {
             case "form":
+                // Carga las ausencias del alumno para que el padre pueda justificarlas
                 mostrarFormulario(request, response);
+                break;
+            case "historial":
+                // Carga el historial de justificaciones enviadas por el padre
+                mostrarHistorialPadre(request, response);
                 break;
             case "listar":
             case "pending":
@@ -52,6 +64,13 @@ public class JustificacionServlet extends HttpServlet {
         }
     }
     
+    /**
+     * MANEJO DE PETICIONES POST
+     * Controla las acciones que modifican datos:
+     * - "crear"    → El padre envía una nueva justificación
+     * - "aprobar"  → El docente aprueba una justificación pendiente
+     * - "rechazar" → El docente rechaza una justificación pendiente
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -80,6 +99,11 @@ public class JustificacionServlet extends HttpServlet {
         }
     }
     
+    /**
+     * MOSTRAR FORMULARIO DE JUSTIFICACIÓN (panel del padre)
+     * Busca al alumno asociado al padre logueado y carga sus ausencias
+     * sin justificar para que el padre pueda seleccionar cuál justificar.
+     */
     private void mostrarFormulario(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
@@ -113,18 +137,6 @@ public class JustificacionServlet extends HttpServlet {
             
             System.out.println("Total de ausencias sin justificar: " + ausencias.size());
             
-            if (!ausencias.isEmpty()) {
-                System.out.println("   Detalles de ausencias encontradas:");
-                for (Asistencia a : ausencias) {
-                    System.out.println("   - ID: " + a.getId() + 
-                                     " | Fecha: " + a.getFecha() + 
-                                     " | Curso: " + a.getCursoNombre() + 
-                                     " | Estado: " + a.getEstadoString());
-                }
-            } else {
-                System.out.println("   No hay ausencias pendientes");
-            }
-            
             request.setAttribute("ausencias", ausencias);
             request.setAttribute("alumnoId", alumnoId);
             request.setAttribute("alumnoNombre", alumnoNombre);
@@ -134,7 +146,6 @@ public class JustificacionServlet extends HttpServlet {
                     "El estudiante " + alumnoNombre + " no tiene ausencias pendientes de justificación.");
             }
             
-            System.out.println("Redirigiendo al JSP con " + ausencias.size() + " ausencias");
             request.getRequestDispatcher("justificarAusencia.jsp").forward(request, response);
             
         } catch (Exception e) {
@@ -145,7 +156,51 @@ public class JustificacionServlet extends HttpServlet {
             request.getRequestDispatcher("justificarAusencia.jsp").forward(request, response);
         }
     }
+
+    /**
+     * MOSTRAR HISTORIAL DE JUSTIFICACIONES (panel del padre)
+     * Obtiene todas las justificaciones que el padre ha enviado para su hijo,
+     * incluyendo las PENDIENTES, APROBADAS y RECHAZADAS, y las manda
+     * a justificacionesPadre.jsp para mostrarlas con su estado actual.
+     */
+    private void mostrarHistorialPadre(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            HttpSession session = request.getSession();
+            Padre padre = (Padre) session.getAttribute("padre");
+
+            if (padre == null) {
+                System.out.println("❌ Padre no encontrado en sesión - Redirigiendo a login");
+                response.sendRedirect("index.jsp");
+                return;
+            }
+
+            int alumnoId = padre.getAlumnoId();
+            System.out.println("📋 Cargando historial de justificaciones para alumno ID: " + alumnoId);
+
+            // Obtiene todas las justificaciones del alumno (todos los estados)
+            List<Justificacion> justificaciones = justificacionDAO.obtenerHistorialPorAlumno(alumnoId);
+
+            System.out.println("✅ Justificaciones encontradas: " + justificaciones.size());
+
+            request.setAttribute("justificaciones", justificaciones);
+            request.getRequestDispatcher("justificacionesPadre.jsp").forward(request, response);
+
+        } catch (Exception e) {
+            System.out.println("❌ Error en mostrarHistorialPadre: " + e.getMessage());
+            e.printStackTrace();
+            request.setAttribute("justificaciones", new java.util.ArrayList<>());
+            request.setAttribute("error", "Error al cargar el historial: " + e.getMessage());
+            request.getRequestDispatcher("justificacionesPadre.jsp").forward(request, response);
+        }
+    }
     
+    /**
+     * CREAR JUSTIFICACIÓN (acción del padre)
+     * Recibe los datos del formulario de justificación enviado por el padre,
+     * guarda el archivo adjunto si existe, y registra la justificación en la BD
+     * con estado PENDIENTE para que el docente la revise.
+     */
     private void crearJustificacion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
@@ -179,7 +234,6 @@ public class JustificacionServlet extends HttpServlet {
             if (filePart != null && filePart.getSize() > 0) {
                 String fileName = getFileName(filePart);
                 
-                // Validar formato de archivo - Solo PDF, Word e Imágenes
                 String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
                 String[] allowedExtensions = {".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"};
                 boolean isValidFormat = false;
@@ -192,18 +246,15 @@ public class JustificacionServlet extends HttpServlet {
                 }
                 
                 if (!isValidFormat) {
-                    System.out.println("Formato de archivo no permitido: " + extension);
                     session.setAttribute("error", "Formato de archivo no permitido. Solo se aceptan: PDF, Word (.doc, .docx) e imágenes (JPG, PNG)");
                     response.sendRedirect("JustificacionServlet?accion=form");
                     return;
                 }
                 
-                // Validar tamaño (5MB máximo)
                 long fileSize = filePart.getSize();
-                long maxSize = 5 * 1024 * 1024; // 5MB en bytes
+                long maxSize = 5 * 1024 * 1024;
                 
                 if (fileSize > maxSize) {
-                    System.out.println("Archivo demasiado grande: " + (fileSize / 1024 / 1024) + "MB");
                     session.setAttribute("error", "El archivo es demasiado grande. Tamaño máximo: 5MB");
                     response.sendRedirect("JustificacionServlet?accion=form");
                     return;
@@ -215,7 +266,6 @@ public class JustificacionServlet extends HttpServlet {
                 File uploadDir = new File(uploadPath);
                 if (!uploadDir.exists()) {
                     uploadDir.mkdirs();
-                    System.out.println("Directorio creado: " + uploadPath);
                 }
                 
                 String timestamp = String.valueOf(System.currentTimeMillis());
@@ -226,18 +276,14 @@ public class JustificacionServlet extends HttpServlet {
                 
                 String relativePath = "uploads/justificaciones/" + newFileName;
                 justificacion.setDocumentoAdjunto(relativePath);
-                
-                System.out.println("Archivo guardado: " + relativePath + " (Tamaño: " + (fileSize / 1024) + "KB)");
             }
             
             int justificacionId = justificacionDAO.crearJustificacion(justificacion);
             
             if (justificacionId > 0) {
-                System.out.println("Justificación creada con ID: " + justificacionId);
                 session.setAttribute("mensaje", "Justificación enviada exitosamente. Será revisada por el docente.");
-                response.sendRedirect("AsistenciaServlet?accion=verPadre");
+                response.sendRedirect("JustificacionServlet?accion=historial");  // ← va al historial para ver el estado
             } else {
-                System.out.println("Error al crear justificación");
                 session.setAttribute("error", "Error al enviar la justificación. Intente nuevamente.");
                 response.sendRedirect("JustificacionServlet?accion=form");
             }
@@ -251,6 +297,11 @@ public class JustificacionServlet extends HttpServlet {
         }
     }
     
+    /**
+     * APROBAR JUSTIFICACIÓN (acción del docente)
+     * El docente aprueba una justificación pendiente. Actualiza el estado
+     * de la justificación a APROBADO y la asistencia correspondiente a JUSTIFICADO.
+     */
     private void aprobarJustificacion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
@@ -290,6 +341,11 @@ public class JustificacionServlet extends HttpServlet {
         }
     }
     
+    /**
+     * RECHAZAR JUSTIFICACIÓN (acción del docente)
+     * El docente rechaza una justificación indicando el motivo.
+     * Es obligatorio ingresar observaciones para poder rechazar.
+     */
     private void rechazarJustificacion(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
@@ -335,6 +391,11 @@ public class JustificacionServlet extends HttpServlet {
         }
     }
     
+    /**
+     * OBTENER NOMBRE DE ARCHIVO
+     * Método auxiliar que extrae el nombre del archivo del header
+     * de la parte multipart del formulario de subida de archivos.
+     */
     private String getFileName(Part part) {
         String contentDisp = part.getHeader("content-disposition");
         String[] tokens = contentDisp.split(";");

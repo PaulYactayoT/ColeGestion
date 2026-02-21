@@ -569,7 +569,12 @@ public class AsistenciaDAO {
             cs.setInt(3, mes);
             cs.setInt(4, anio);
             
-            ResultSet rs = cs.executeQuery();
+            boolean tieneResultados = cs.execute();
+            if (!tieneResultados) {
+                System.out.println("SP no devolvio ResultSet para alumno " + alumnoId);
+                return lista;
+            }
+            ResultSet rs = cs.getResultSet();
 
             while (rs.next()) {
                 Asistencia a = new Asistencia();
@@ -1531,7 +1536,59 @@ public class AsistenciaDAO {
         
         return lista;
     }
-    
+
+    /**
+     * LISTAR FECHAS CON ASISTENCIA REGISTRADA POR CURSO
+     * Retorna cada sesión con su resumen (presentes, ausentes, tardanzas, total, %)
+     */
+    public List<Map<String, Object>> listarFechasConAsistencia(int cursoId) {
+        List<Map<String, Object>> lista = new ArrayList<>();
+        String sql = "SELECT " +
+                     "a.fecha, a.hora_clase, " +
+                     "t.nombre as turno_nombre, " +
+                     "COUNT(*) as total, " +
+                     "SUM(CASE WHEN a.estado = 'PRESENTE'    THEN 1 ELSE 0 END) as presentes, " +
+                     "SUM(CASE WHEN a.estado = 'AUSENTE'     THEN 1 ELSE 0 END) as ausentes, " +
+                     "SUM(CASE WHEN a.estado = 'TARDANZA'    THEN 1 ELSE 0 END) as tardanzas, " +
+                     "SUM(CASE WHEN a.estado = 'JUSTIFICADO' THEN 1 ELSE 0 END) as justificados " +
+                     "FROM asistencia a " +
+                     "LEFT JOIN turno t ON a.turno_id = t.id " +
+                     "WHERE a.curso_id = ? AND a.eliminado = 0 AND a.activo = 1 " +
+                     "GROUP BY a.fecha, a.hora_clase, t.nombre " +
+                     "ORDER BY a.fecha DESC, a.hora_clase DESC";
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, cursoId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Map<String, Object> fila = new HashMap<>();
+                java.sql.Date sqlFecha = rs.getDate("fecha");
+                java.sql.Time sqlHora  = rs.getTime("hora_clase");
+                LocalDate fecha = sqlFecha != null ? sqlFecha.toLocalDate() : null;
+                LocalTime hora  = sqlHora  != null ? sqlHora.toLocalTime()  : null;
+                fila.put("fechaStr",     fecha != null ? fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "");
+                fila.put("fechaSQL",     fecha != null ? fecha.toString() : "");
+                fila.put("horaStr",      hora  != null ? hora.toString().substring(0, 5) : "");
+                fila.put("turnoNombre",  rs.getString("turno_nombre"));
+                fila.put("total",        rs.getInt("total"));
+                fila.put("presentes",    rs.getInt("presentes"));
+                fila.put("ausentes",     rs.getInt("ausentes"));
+                fila.put("tardanzas",    rs.getInt("tardanzas"));
+                fila.put("justificados", rs.getInt("justificados"));
+                int total   = rs.getInt("total");
+                int asistio = rs.getInt("presentes") + rs.getInt("tardanzas") + rs.getInt("justificados");
+                double pct  = total > 0 ? (asistio * 100.0 / total) : 0.0;
+                fila.put("porcentaje", String.format("%.0f", pct));
+                lista.add(fila);
+            }
+            System.out.println("✅ Fechas con asistencia para curso " + cursoId + ": " + lista.size());
+        } catch (SQLException e) {
+            System.err.println("❌ Error en listarFechasConAsistencia: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return lista;
+    }
+
     /**
  * OBTENER ESTADÍSTICAS DE ASISTENCIA HOY PARA UN CURSO
  * @param cursoId ID del curso

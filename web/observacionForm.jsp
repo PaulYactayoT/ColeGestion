@@ -2,6 +2,8 @@
 <%@page import="modelo.Alumno"%>
 <%@page import="java.util.List"%>
 <%@page import="modelo.Curso"%>
+<%@page import="modelo.Grado"%>
+<%@page import="java.util.List"%>
 <%
     Curso curso = (Curso) request.getAttribute("curso");
     List<Alumno> alumnos = (List<Alumno>) request.getAttribute("alumnos");
@@ -345,7 +347,7 @@
                         <div class="filtros-container">
                             <div class="step-indicator">
                                 <span class="step-number">1</span>
-                                <span class="step-text">Filtrar Alumnos por Salon</span>
+                                <span class="step-text">Información del Aula</span>
                             </div>
                             
                             <form action="ObservacionServlet" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -353,9 +355,11 @@
                                 <input type="hidden" name="curso_id" value="<%= curso != null ? curso.getId() : 0 %>">
                                 
                                 
-                                <div>
+                            <div>
                                 <label class="form-label">Nivel</label>
                                 <select name="nivel" class="form-select" disabled>
+                                    <option value="INICIAL"    <%= "INICIAL".equals(nivelSel)    ? "selected" : "" %>>Inicial</option>
+                                    <option value="PRIMARIA"   <%= "PRIMARIA".equals(nivelSel)   ? "selected" : "" %>>Primaria</option>
                                     <option value="SECUNDARIA" <%= "SECUNDARIA".equals(nivelSel) ? "selected" : "" %>>Secundaria</option>
                                 </select>
                             </div>
@@ -363,11 +367,19 @@
                                 <label class="form-label">Grado</label>
                                 <select name="grado_id" class="form-select" disabled>
                                     <option value="">-- Seleccionar --</option>
-                                    <option value="21" <%= gradoSel == 21 ? "selected" : "" %>>1° Año</option>
-                                    <option value="22" <%= gradoSel == 22 ? "selected" : "" %>>2° Año</option>
-                                    <option value="23" <%= gradoSel == 23 ? "selected" : "" %>>3° Año</option>
-                                    <option value="24" <%= gradoSel == 24 ? "selected" : "" %>>4° Año</option>
-                                    <option value="25" <%= gradoSel == 25 ? "selected" : "" %>>5° Año</option>
+                                    <%
+                                        List<Grado> listaGrados = (List<Grado>) request.getAttribute("listaGrados");
+                                        if (listaGrados != null) {
+                                            for (Grado g : listaGrados) {
+                                                String sel = (gradoSel == g.getId()) ? "selected" : "";
+                                    %>
+                                        <option value="<%= g.getId() %>" <%= sel %>>
+                                            <%= g.getNombre() %>
+                                        </option>
+                                    <%
+                                            }
+                                        }
+                                    %>
                                 </select>
                             </div>
                             <div>

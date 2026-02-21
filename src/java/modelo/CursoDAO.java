@@ -1047,6 +1047,34 @@ public List<Curso> listarPorAlumno(int alumnoId) {
         }
            
            /**
+            * OBTENER HORA DE INICIO DEL CURSO (desde su horario)
+            * Retorna la hora en formato "HH:mm", o "08:00" como default
+            */
+           public String obtenerHoraInicioPorCurso(int cursoId) {
+            String sql = "SELECT hora_inicio FROM horario_clase " +
+                         "WHERE curso_id = ? AND eliminado = 0 " +
+                         "ORDER BY hora_inicio ASC LIMIT 1";
+            try (Connection con = Conexion.getConnection();
+                 PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setInt(1, cursoId);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    java.sql.Time hora = rs.getTime("hora_inicio");
+                    if (hora != null) {
+                        // Formato HH:mm para el input type="time"
+                        String horaStr = hora.toString().substring(0, 5);
+                        System.out.println(">>> HORA INICIO desde horario: " + horaStr);
+                        return horaStr;
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error obteniendo hora de inicio: " + e.getMessage());
+            }
+            System.out.println(">>> HORA INICIO: usando default 08:00");
+            return "08:00";
+        }
+
+           /**
             * OBTENER TURNO_ID DEL CURSO (desde su horario)
             */
            public int obtenerTurnoIdPorCurso(int cursoId) {

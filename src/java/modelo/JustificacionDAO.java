@@ -6,7 +6,12 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class JustificacionDAO {
-    
+
+    /**
+     * CREAR JUSTIFICACIÓN
+     * Llamado cuando el padre envía una justificación desde el formulario.
+     * Inserta un nuevo registro en la tabla justificacion con estado PENDIENTE.
+     */
     public int crearJustificacion(Justificacion justificacion) {
         String sql = "INSERT INTO justificacion " +
                      "(asistencia_id, tipo_justificacion, descripcion, documento_adjunto, " +
@@ -41,7 +46,14 @@ public class JustificacionDAO {
         
         return 0;
     }
-    
+
+    /**
+     * APROBAR JUSTIFICACIÓN
+     * Llamado por el docente cuando aprueba una justificación pendiente.
+     * Actualiza el estado de la justificación a APROBADO y también actualiza
+     * la asistencia correspondiente a JUSTIFICADO, usando una transacción
+     * para garantizar que ambas operaciones se realicen correctamente.
+     */
     public boolean aprobarJustificacion(int justificacionId, int aprobadoPor, String observaciones) {
         Connection con = null;
         
@@ -98,7 +110,13 @@ public class JustificacionDAO {
             }
         }
     }
-    
+
+    /**
+     * RECHAZAR JUSTIFICACIÓN
+     * Llamado por el docente cuando rechaza una justificación.
+     * Actualiza el estado de la justificación a RECHAZADO y registra
+     * el motivo del rechazo en observaciones_aprobacion.
+     */
     public boolean rechazarJustificacion(int justificacionId, int aprobadoPor, String observaciones) {
         String sql = "UPDATE justificacion " +
                      "SET estado = 'RECHAZADO', aprobado_por = ?, " +
@@ -127,7 +145,12 @@ public class JustificacionDAO {
         
         return false;
     }
-    
+
+    /**
+     * OBTENER JUSTIFICACIONES PENDIENTES (para el docente)
+     * Retorna todas las justificaciones con estado PENDIENTE de un curso y turno específico.
+     * Es usada en el panel del docente para revisar y aprobar/rechazar justificaciones.
+     */
     public List<Justificacion> obtenerJustificacionesPendientes(int cursoId, int turnoId) {
         List<Justificacion> lista = new ArrayList<>();
         String sql = "SELECT j.*, " +
@@ -163,7 +186,12 @@ public class JustificacionDAO {
         
         return lista;
     }
-    
+
+    /**
+     * OBTENER JUSTIFICACIONES POR ASISTENCIA
+     * Retorna todas las justificaciones vinculadas a un registro de asistencia específico.
+     * Útil para ver el historial de justificaciones de una falta en particular.
+     */
     public List<Justificacion> obtenerJustificacionesPorAsistencia(int asistenciaId) {
         List<Justificacion> lista = new ArrayList<>();
         String sql = "SELECT j.*, " +
@@ -199,7 +227,12 @@ public class JustificacionDAO {
         
         return lista;
     }
-    
+
+    /**
+     * OBTENER JUSTIFICACIÓN POR ID
+     * Retorna una justificación específica con todos sus datos completos.
+     * Usado cuando se necesita ver el detalle de una sola justificación.
+     */
     public Justificacion obtenerJustificacionPorId(int id) {
         String sql = "SELECT j.*, " +
                      "CONCAT(p.nombres, ' ', p.apellidos) as alumno_nombre, " +
@@ -233,7 +266,12 @@ public class JustificacionDAO {
         
         return null;
     }
-    
+
+    /**
+     * VERIFICAR SI TIENE JUSTIFICACIÓN PENDIENTE
+     * Comprueba si una asistencia ya tiene una justificación en estado PENDIENTE.
+     * Evita que el padre envíe múltiples justificaciones para la misma falta.
+     */
     public boolean tieneJustificacionPendiente(int asistenciaId) {
         String sql = "SELECT COUNT(*) as total FROM justificacion " +
                      "WHERE asistencia_id = ? AND estado = 'PENDIENTE' AND activo = 1";
@@ -255,7 +293,58 @@ public class JustificacionDAO {
         
         return false;
     }
-    
+
+    /**
+     * OBTENER HISTORIAL DE JUSTIFICACIONES DEL ALUMNO (para el panel del padre)
+     * Retorna TODAS las justificaciones enviadas por el padre para su hijo,
+     * sin importar el estado (PENDIENTE, APROBADO o RECHAZADO).
+     * Es usado en justificacionesPadre.jsp para mostrar el historial completo
+     * con el estado actual de cada justificación enviada.
+     */
+    public List<Justificacion> obtenerHistorialPorAlumno(int alumnoId) {
+        List<Justificacion> lista = new ArrayList<>();
+        String sql = "SELECT j.*, " +
+                     "CONCAT(p.nombres, ' ', p.apellidos) as alumno_nombre, " +
+                     "c.nombre as curso_nombre, " +
+                     "CONCAT(pj.nombres, ' ', pj.apellidos) as justificador_nombre, " +
+                     "CONCAT(pa.nombres, ' ', pa.apellidos) as aprobador_nombre, " +
+                     "a.fecha as fecha_asistencia " +
+                     "FROM justificacion j " +
+                     "INNER JOIN asistencia a ON j.asistencia_id = a.id " +
+                     "INNER JOIN alumno al ON a.alumno_id = al.id " +
+                     "INNER JOIN persona p ON al.persona_id = p.id " +
+                     "INNER JOIN curso c ON a.curso_id = c.id " +
+                     "INNER JOIN persona pj ON j.justificado_por = pj.id " +
+                     "LEFT JOIN persona pa ON j.aprobado_por = pa.id " +
+                     "WHERE a.alumno_id = ? AND j.activo = 1 " +
+                     "ORDER BY j.fecha_justificacion DESC";
+
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, alumnoId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                lista.add(mapearJustificacion(rs));
+            }
+
+            System.out.println("✅ Historial de justificaciones para alumno " + alumnoId + ": " + lista.size());
+
+        } catch (SQLException e) {
+            System.out.println("❌ Error al obtener historial de justificaciones: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return lista;
+    }
+
+    /**
+     * MAPEAR RESULTADO DE BD A OBJETO JUSTIFICACION
+     * Método privado auxiliar que convierte una fila del ResultSet
+     * en un objeto Justificacion con todos sus atributos completos.
+     * Es reutilizado por todos los métodos de consulta de esta clase.
+     */
     private Justificacion mapearJustificacion(ResultSet rs) throws SQLException {
         Justificacion j = new Justificacion();
         j.setId(rs.getInt("id"));

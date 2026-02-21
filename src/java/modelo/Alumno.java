@@ -23,6 +23,14 @@ public class Alumno {
     
     private String gradoNivel;
 
+    // Campos del padre/apoderado (usados solo al registrar nuevo alumno)
+    private String padreNombres;
+    private String padreApellidos;
+    private String padreCorreo;
+    private String padreTelefono;
+    private String padreDni;
+    private String padreParentesco;
+
     
     // Constructores
     public Alumno() {}
@@ -116,6 +124,25 @@ public class Alumno {
     
     public String getGradoNivel() { return gradoNivel; }
     public void setGradoNivel(String gradoNivel) { this.gradoNivel = gradoNivel; }
+
+    // Getters y Setters del padre/apoderado
+    public String getPadreNombres() { return padreNombres; }
+    public void setPadreNombres(String padreNombres) { this.padreNombres = padreNombres; }
+
+    public String getPadreApellidos() { return padreApellidos; }
+    public void setPadreApellidos(String padreApellidos) { this.padreApellidos = padreApellidos; }
+
+    public String getPadreCorreo() { return padreCorreo; }
+    public void setPadreCorreo(String padreCorreo) { this.padreCorreo = padreCorreo; }
+
+    public String getPadreTelefono() { return padreTelefono; }
+    public void setPadreTelefono(String padreTelefono) { this.padreTelefono = padreTelefono; }
+
+    public String getPadreDni() { return padreDni; }
+    public void setPadreDni(String padreDni) { this.padreDni = padreDni; }
+
+    public String getPadreParentesco() { return padreParentesco; }
+    public void setPadreParentesco(String padreParentesco) { this.padreParentesco = padreParentesco; }
 
     /**
      * Setter para nombre completo (usado por AlumnoDAO)

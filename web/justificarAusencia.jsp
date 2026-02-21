@@ -4,7 +4,7 @@
 <%
     // DEBUG: Mostrar todos los atributos de sesión
     System.out.println("=== DEBUG justificarAusencia.jsp ===");
-    System.out.println("📝 URI solicitada: " + request.getRequestURI());
+    System.out.println(" URI solicitada: " + request.getRequestURI());
     
     java.util.Enumeration<String> sessionAttrs = session.getAttributeNames();
     while (sessionAttrs.hasMoreElements()) {
@@ -16,12 +16,12 @@
     // Verificar si hay padre en sesión
     Padre padre = (Padre) session.getAttribute("padre");
     if (padre != null) {
-        System.out.println("✅ PADRE EN SESIÓN: " + padre.getNombreCompleto());
-        System.out.println("📋 PADRE PersonaId: " + padre.getPersonaId());
-        System.out.println("👤 PADRE AlumnoId: " + padre.getAlumnoId());
-        System.out.println("🔑 PADRE Username: " + padre.getUsername());
+        System.out.println(" PADRE EN SESIÓN: " + padre.getNombreCompleto());
+        System.out.println(" PADRE PersonaId: " + padre.getPersonaId());
+        System.out.println(" PADRE AlumnoId: " + padre.getAlumnoId());
+        System.out.println(" PADRE Username: " + padre.getUsername());
     } else {
-        System.out.println("❌ NO HAY PADRE EN SESIÓN");
+        System.out.println(" NO HAY PADRE EN SESIÓN");
     }
     
     // Intentar obtener personaId de diferentes maneras
@@ -29,7 +29,7 @@
     if (personaId == null && padre != null) {
         personaId = padre.getPersonaId();
         session.setAttribute("personaId", personaId);
-        System.out.println("✅ PersonaId obtenido del objeto Padre: " + personaId);
+        System.out.println(" PersonaId obtenido del objeto Padre: " + personaId);
     }
     
     System.out.println("==================================");
@@ -523,7 +523,147 @@
     </main>
 
     <script>
-        // ... (todos tus scripts existentes se mantienen igual) ...
+        // ── Validación en tiempo real y habilitación del botón ──
+        const campos = ['asistenciaId', 'tipoJustificacion', 'descripcion'];
+
+        function validarFormulario() {
+            const ausencia    = document.getElementById('asistenciaId')?.value;
+            const tipo        = document.getElementById('tipoJustificacion')?.value;
+            const descripcion = document.getElementById('descripcion')?.value?.trim();
+            const btn         = document.getElementById('btn-enviar');
+
+            const valido = ausencia && tipo && descripcion && descripcion.length >= 20;
+            if (btn) {
+                btn.disabled = !valido;
+                btn.classList.toggle('opacity-50', !valido);
+                btn.classList.toggle('cursor-not-allowed', !valido);
+            }
+        }
+
+        // Contador de caracteres en textarea
+        const textarea = document.getElementById('descripcion');
+        if (textarea) {
+            textarea.addEventListener('input', function () {
+                const count = this.value.length;
+                const charCount = document.getElementById('charCount');
+                if (charCount) {
+                    charCount.textContent = '(' + count + ' caracteres)';
+                    charCount.style.color = count >= 20 ? '#16a34a' : '#ef4444';
+                }
+                validarFormulario();
+            });
+        }
+
+        // Escuchar cambios en los select
+        campos.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', validarFormulario);
+        });
+
+        // Ejecutar al cargar por si hay valores previos
+        validarFormulario();
+
+        // ── Manejo del archivo adjunto ──
+        function previewFileName(input) {
+            const preview  = document.getElementById('filePreview');
+            const fileName = document.getElementById('fileName');
+
+            if (input.files && input.files[0]) {
+                const file     = input.files[0];
+                const maxSize  = 5 * 1024 * 1024; // 5 MB
+                const allowed  = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+                const ext      = '.' + file.name.split('.').pop().toLowerCase();
+
+                // Validar formato
+                if (!allowed.includes(ext)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Formato no permitido',
+                        text: 'Solo se aceptan: PDF, Word (.doc, .docx) e imágenes (JPG, PNG)',
+                        confirmButtonColor: '#135bec'
+                    });
+                    input.value = '';
+                    if (preview) preview.classList.add('hidden');
+                    return;
+                }
+
+                // Validar tamaño
+                if (file.size > maxSize) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Archivo demasiado grande',
+                        text: 'El tamaño máximo permitido es 5 MB. El archivo seleccionado pesa ' +
+                              (file.size / 1024 / 1024).toFixed(2) + ' MB.',
+                        confirmButtonColor: '#135bec'
+                    });
+                    input.value = '';
+                    if (preview) preview.classList.add('hidden');
+                    return;
+                }
+
+                // Mostrar preview
+                if (fileName) fileName.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+                if (preview)  preview.classList.remove('hidden');
+            } else {
+                if (preview) preview.classList.add('hidden');
+            }
+        }
+
+        function clearFile() {
+            const input   = document.getElementById('archivo');
+            const preview = document.getElementById('filePreview');
+            if (input)   input.value = '';
+            if (preview) preview.classList.add('hidden');
+        }
+
+        // ── Drag & drop sobre el área de subida ──
+        const dropArea = document.querySelector('.file-upload-area');
+        if (dropArea) {
+            ['dragenter', 'dragover'].forEach(evt =>
+                dropArea.addEventListener(evt, e => { e.preventDefault(); dropArea.style.borderColor = '#135bec'; })
+            );
+            ['dragleave', 'drop'].forEach(evt =>
+                dropArea.addEventListener(evt, e => { e.preventDefault(); dropArea.style.borderColor = ''; })
+            );
+            dropArea.addEventListener('drop', function (e) {
+                const dt    = e.dataTransfer;
+                const input = document.getElementById('archivo');
+                if (dt.files.length && input) {
+                    input.files = dt.files;
+                    previewFileName(input);
+                }
+            });
+        }
+
+        // ── Envío del formulario con indicador de carga ──
+        const form = document.getElementById('formJustificacion');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                const btnText    = document.getElementById('btn-text');
+                const btnLoading = document.getElementById('btn-loading');
+                const btn        = document.getElementById('btn-enviar');
+
+                if (btnText)    btnText.classList.add('hidden');
+                if (btnLoading) btnLoading.classList.remove('hidden');
+                if (btn)        btn.disabled = true;
+            });
+        }
+
+        // ── Reset: limpiar preview al usar el botón Limpiar ──
+        const resetBtn = document.querySelector('[type="reset"]');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function () {
+                clearFile();
+                setTimeout(() => {
+                    validarFormulario();
+                    const charCount = document.getElementById('charCount');
+                    if (charCount) {
+                        charCount.textContent = '(0 caracteres)';
+                        charCount.style.color = '';
+                    }
+                }, 10);
+            });
+        }
     </script>
 </body>
 </html>

@@ -231,16 +231,6 @@
                                                    required max="9999-12-31">
                                         </div>
 
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
-                                            <input type="tel" name="telefono" id="telefonoInput"
-                                                   value="<%= editar && a.getTelefono() != null ? a.getTelefono() : "" %>"
-                                                   class="input-figma w-full px-4 py-3 text-gray-900 focus:outline-none" 
-                                                   placeholder="987654321" 
-                                                   maxlength="9">
-                                            <p class="text-xs text-gray-500 mt-1">9 dígitos, inicia con 9</p>
-                                        </div>
-
                                         <div class="md:col-span-2">
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
                                             <textarea name="direccion" rows="3" 
@@ -381,6 +371,71 @@
 
                             </div>
 
+                            <%-- SECCIÓN: Datos del Padre/Apoderado (solo en registro nuevo) --%>
+                            <% if (!editar) { %>
+                            <div class="px-8 py-6 border-t border-gray-200">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user-tie text-green-600 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-gray-900">Datos del Padre / Apoderado</h3>
+                                        <p class="text-xs text-gray-500">Se creará automáticamente un usuario para el padre con acceso al sistema</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1 required-field">Nombres del padre</label>
+                                        <input type="text" name="padre_nombres" id="padreNombres"
+                                               class="input-figma w-full px-4 py-3 text-sm focus:outline-none"
+                                               placeholder="Ej: Juan Carlos" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1 required-field">Apellidos del padre</label>
+                                        <input type="text" name="padre_apellidos" id="padreApellidos"
+                                               class="input-figma w-full px-4 py-3 text-sm focus:outline-none"
+                                               placeholder="Ej: García López" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1 required-field">Correo del padre</label>
+                                        <input type="email" name="padre_correo" id="padreCorreo"
+                                               class="input-figma w-full px-4 py-3 text-sm focus:outline-none"
+                                               placeholder="padre@correo.com" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono del padre</label>
+                                        <input type="tel" name="padre_telefono" id="padreTelefono"
+                                               class="input-figma w-full px-4 py-3 text-sm focus:outline-none"
+                                               placeholder="999999999" maxlength="9">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">DNI del padre</label>
+                                        <input type="text" name="padre_dni" id="padreDni"
+                                               class="input-figma w-full px-4 py-3 text-sm focus:outline-none"
+                                               placeholder="12345678" maxlength="8">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1 required-field">Parentesco</label>
+                                        <select name="padre_parentesco" class="input-figma w-full px-4 py-3 text-sm focus:outline-none" required>
+                                            <option value="PADRE">Padre</option>
+                                            <option value="MADRE">Madre</option>
+                                            <option value="TUTOR">Tutor</option>
+                                            <option value="APODERADO">Apoderado</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Info usuario generado -->
+                                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <p class="text-sm text-blue-800 flex items-start gap-2">
+                                        <i class="fas fa-info-circle mt-0.5 flex-shrink-0"></i>
+                                        <span>El <strong>usuario y contraseña</strong> del padre se generarán automáticamente usando su DNI. Si no tiene DNI, se usará su correo. Podrá cambiarlo después.</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <% } %>
+
                             <%-- Botones de acción --%>
                             <div class="bg-gray-50 px-8 py-6 flex justify-between items-center border-t border-gray-200">
                                 <a href="AlumnoServlet" class="btn-modern btn-secondary-modern">
@@ -408,15 +463,6 @@
             });
         }
         
-        // Solo números en teléfono
-        const telefonoInput = document.getElementById('telefonoInput');
-        if (telefonoInput) {
-            telefonoInput.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9]/g, '');
-                if (this.value.length > 9) this.value = this.value.slice(0, 9);
-            });
-        }
-
         function filtrarNiveles() {
             const turnoSelect = document.getElementById('turnoSelect');
             const nivelSelect = document.getElementById('nivelSelect');
@@ -472,9 +518,22 @@
             
             if (!nombres || !apellidos || !correo || !correo.includes('@') || 
                 !fechaNacimiento || !turno || !nivel || !grado || !estado) {
-                alert('Por favor complete todos los campos obligatorios');
+                alert('Por favor complete todos los campos obligatorios del alumno');
                 return false;
             }
+
+            // Validar campos del padre solo en registro nuevo
+            const padreNombres = document.getElementById('padreNombres');
+            if (padreNombres) {
+                const pNombres = padreNombres.value.trim();
+                const pApellidos = document.getElementById('padreApellidos').value.trim();
+                const pCorreo = document.getElementById('padreCorreo').value.trim();
+                if (!pNombres || !pApellidos || !pCorreo || !pCorreo.includes('@')) {
+                    alert('Por favor complete los datos obligatorios del padre/apoderado (Nombres, Apellidos y Correo)');
+                    return false;
+                }
+            }
+
             return true;
         }
 

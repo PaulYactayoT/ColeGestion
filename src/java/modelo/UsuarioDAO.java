@@ -120,6 +120,63 @@ public class UsuarioDAO {
     }
     
     /**
+     * Obtener todos los padres/apoderados (para asignar o reasignar usuario)
+     * Cada padre aparece UNA sola vez, con todos sus hijos concatenados
+     */
+    public List<PersonaSinUsuario> obtenerPadresSinUsuario() {
+        List<PersonaSinUsuario> personas = new ArrayList<>();
+        
+        String sql = "SELECT " +
+                    "p.id, " +
+                    "p.nombres, " +
+                    "p.apellidos, " +
+                    "p.correo, " +
+                    "p.dni, " +
+                    "MAX(rf.parentesco) as parentesco, " +
+                    "GROUP_CONCAT(CONCAT(pa.apellidos, ', ', pa.nombres) ORDER BY pa.apellidos SEPARATOR ' | ') as alumnos_nombres " +
+                    "FROM persona p " +
+                    "INNER JOIN relacion_familiar rf ON p.id = rf.persona_id " +
+                    "INNER JOIN alumno a ON rf.alumno_id = a.id " +
+                    "INNER JOIN persona pa ON a.persona_id = pa.id " +
+                    "LEFT JOIN usuario u ON p.id = u.persona_id AND u.eliminado = 0 " +
+                    "WHERE p.activo = 1 " +
+                    "AND p.eliminado = 0 " +
+                    "AND rf.activo = 1 " +
+                    "AND rf.eliminado = 0 " +
+                    "AND a.activo = 1 " +
+                    "AND a.eliminado = 0 " +
+                    "AND u.id IS NULL " +
+                    "GROUP BY p.id, p.nombres, p.apellidos, p.correo, p.dni " +
+                    "ORDER BY p.apellidos, p.nombres";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            while (rs.next()) {
+                PersonaSinUsuario persona = new PersonaSinUsuario();
+                persona.setPersonaId(rs.getInt("id"));
+                persona.setNombres(rs.getString("nombres"));
+                persona.setApellidos(rs.getString("apellidos"));
+                persona.setCorreo(rs.getString("correo"));
+                persona.setDni(rs.getString("dni"));
+                persona.setCodigo(rs.getString("parentesco"));
+                persona.setInformacionAdicional("Hijo: " + rs.getString("alumnos_nombres"));
+                persona.setTipoPersona("PADRE");
+                personas.add(persona);
+            }
+            
+            System.out.println("✅ Padres encontrados: " + personas.size());
+            
+        } catch (SQLException e) {
+            System.err.println("❌ Error al obtener padres: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return personas;
+    }
+    
+    /**
      * Obtener todos los administrativos que NO tienen usuario asignado
      */
     public List<PersonaSinUsuario> obtenerAdministrativosSinUsuario() {
@@ -277,7 +334,13 @@ public class UsuarioDAO {
 
     public List<Usuario> listar() {
         List<Usuario> usuarios = new ArrayList<>();
-        String sql = "SELECT * FROM usuario WHERE eliminado = 0";
+        String sql = "SELECT u.*, " +
+                     "CONCAT(p.nombres, ' ', p.apellidos) AS nombre_completo, " +
+                     "p.tipo AS tipo_persona " +
+                     "FROM usuario u " +
+                     "LEFT JOIN persona p ON u.persona_id = p.id " +
+                     "WHERE u.eliminado = 0 " +
+                     "ORDER BY p.apellidos, p.nombres";
 
         try (Connection con = Conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);

@@ -8,6 +8,7 @@ import modelo.TareaDAO;
 import modelo.Curso;
 import modelo.CursoDAO;
 import java.io.File;
+import java.util.List;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -145,8 +146,20 @@ public class TareaServlet extends HttpServlet {
         }
     }
 
-    private void manejarListarTareas(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException {
-        response.sendRedirect("DocenteDashboardServlet");
+    private void manejarListarTareas(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws ServletException, IOException {
+        modelo.Profesor docente = (modelo.Profesor) session.getAttribute("docente");
+        if (docente == null) { response.sendRedirect("DocenteDashboardServlet"); return; }
+
+        List<Curso> cursos = cursoDao.listarPorProfesor(docente.getId());
+        if (cursos.size() == 1) {
+            response.sendRedirect("TareaServlet?accion=ver&curso_id=" + cursos.get(0).getId());
+        } else {
+            request.setAttribute("cursos", cursos);
+            request.setAttribute("moduloDestino", "TareaServlet");
+            request.setAttribute("moduloAccion", "ver");  // ✅ FIX: el JSP usará ?accion=ver
+            request.setAttribute("moduloNombre", "Tareas");
+            request.getRequestDispatcher("seleccionarCurso.jsp").forward(request, response);
+        }
     }
 
     private void manejarDetalleTarea(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws ServletException, IOException {

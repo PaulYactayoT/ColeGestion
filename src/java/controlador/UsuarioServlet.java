@@ -41,7 +41,7 @@ public class UsuarioServlet extends HttpServlet {
             switch (accion) {
                 case "nuevo":
                     request.setAttribute("profesoresSinUsuario", dao.obtenerProfesoresSinUsuario());
-                    request.setAttribute("alumnosSinUsuario", dao.obtenerAlumnosSinUsuario());
+                    request.setAttribute("padresSinUsuario", dao.obtenerPadresSinUsuario());
                     request.setAttribute("administrativosSinUsuario", dao.obtenerAdministrativosSinUsuario());
                     request.getRequestDispatcher("usuarioForm.jsp").forward(request, response);
                     break;

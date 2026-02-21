@@ -202,7 +202,6 @@ public class AlumnoServlet extends HttpServlet {
             a.setApellidos(request.getParameter("apellidos"));
             a.setCorreo(request.getParameter("correo"));
             a.setDni(request.getParameter("dni"));
-            a.setTelefono(request.getParameter("telefono"));
             a.setDireccion(request.getParameter("direccion"));
             
             // Convertir fecha de String a LocalDate
@@ -280,11 +279,34 @@ public class AlumnoServlet extends HttpServlet {
             // Ejecutar operación en base de datos
             boolean resultado;
             if (id == 0) {
+                // Capturar datos del padre para registro nuevo
+                String padreNombres    = request.getParameter("padre_nombres");
+                String padreApellidos  = request.getParameter("padre_apellidos");
+                String padreCorreo     = request.getParameter("padre_correo");
+                String padreTelefono   = request.getParameter("padre_telefono");
+                String padreDni        = request.getParameter("padre_dni");
+                String padreParentesco = request.getParameter("padre_parentesco");
+
+                if (padreNombres == null || padreNombres.trim().isEmpty() ||
+                    padreApellidos == null || padreApellidos.trim().isEmpty() ||
+                    padreCorreo == null || padreCorreo.trim().isEmpty()) {
+                    session.setAttribute("error", "Los datos del padre/apoderado son obligatorios");
+                    response.sendRedirect("AlumnoServlet?accion=nuevo");
+                    return;
+                }
+
+                a.setPadreNombres(padreNombres.trim());
+                a.setPadreApellidos(padreApellidos.trim());
+                a.setPadreCorreo(padreCorreo.trim());
+                a.setPadreTelefono(padreTelefono);
+                a.setPadreDni(padreDni);
+                a.setPadreParentesco(padreParentesco != null ? padreParentesco : "PADRE");
+
                 System.out.println("Creando nuevo alumno: " + a.getNombres() + " " + a.getApellidos() + " - Turno ID: " + a.getTurnoId());
                 resultado = dao.agregar(a);
                 if (resultado) {
-                    System.out.println("Nuevo alumno creado por admin: " + a.getNombres() + " " + a.getApellidos());
-                    session.setAttribute("mensaje", "Alumno creado correctamente");
+                    System.out.println("Nuevo alumno creado con padre: " + a.getNombres() + " " + a.getApellidos());
+                    session.setAttribute("mensaje", "Alumno y padre/apoderado registrados correctamente");
                 } else {
                     session.setAttribute("error", "Error al crear el alumno. Verifique que el DNI o correo no existan.");
                 }
@@ -459,7 +481,6 @@ public class AlumnoServlet extends HttpServlet {
                     .append("\"apellidos\":\"").append(escapeJson(a.getApellidos())).append("\",")
                     .append("\"correo\":\"").append(escapeJson(a.getCorreo())).append("\",")
                     .append("\"dni\":\"").append(escapeJson(a.getDni())).append("\",")
-                    .append("\"telefono\":\"").append(escapeJson(a.getTelefono())).append("\",")
                     .append("\"direccion\":\"").append(escapeJson(a.getDireccion())).append("\",")
                     // Convertir LocalDate a String formato ISO (yyyy-MM-dd)
                     .append("\"fechaNacimiento\":\"")

@@ -381,69 +381,131 @@
                     </div>
                 <% } %>
                 
-                <!-- Formulario de Filtros -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-colors duration-300">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">filter_list</span>
-                        Seleccionar Curso y Fecha
-                    </h2>
-                    
-                    <form method="GET" action="AsistenciaServlet">
-                        <input type="hidden" name="accion" value="registrar">
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                            <div>
-                                <label for="curso_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <!-- Filtros: ESTÁTICO si ya hay curso cargado, EDITABLE si no -->
+                <% if (cursoSeleccionado != null) { %>
+                    <%-- ✅ MODO ESTÁTICO: datos de la BD, solo lectura --%>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-colors duration-300">
+                        <div class="flex items-center mb-5">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">info</span>
+                                Datos del Curso
+                            </h2>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <%-- Curso --%>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-3 border border-gray-200 dark:border-gray-600">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                                     <i class="fas fa-book text-primary"></i> Curso
-                                </label>
-                                <select name="curso_id" id="curso_id" required
-                                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
-                                    <option value="">-- Seleccione un curso --</option>
-                                    <% for (Curso c : cursos) { %>
-                                        <option value="<%= c.getId() %>" <%= c.getId() == (cursoSeleccionado != null ? cursoSeleccionado.getId() : 0) ? "selected" : "" %>>
-                                            <%= c.getNombre() %><%= c.getGradoNombre() != null ? " - " + c.getGradoNombre() : "" %>
-                                        </option>
+                                </p>
+                                <p class="font-semibold text-gray-900 dark:text-white">
+                                    <%= cursoSeleccionado.getNombre() %>
+                                    <% if (cursoSeleccionado.getGradoNombre() != null) { %>
+                                        <span class="text-xs font-normal text-gray-500 dark:text-gray-400">- <%= cursoSeleccionado.getGradoNombre() %></span>
                                     <% } %>
-                                </select>
+                                </p>
                             </div>
-                            
-                            <div>
-                                <label for="turno_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <%-- Turno --%>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-3 border border-gray-200 dark:border-gray-600">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                                     <i class="fas fa-clock text-primary"></i> Turno
-                                </label>
-                                <select name="turno_id" id="turno_id" required
-                                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
-                                    <option value="1" <%= "1".equals(turnoIdParam) ? "selected" : "" %>>Mañana</option>
-                                    <option value="2" <%= "2".equals(turnoIdParam) ? "selected" : "" %>>Tarde</option>
-                                </select>
+                                </p>
+                                <p class="font-semibold text-gray-900 dark:text-white">
+                                    <%= "1".equals(turnoIdParam) ? "Mañana" : ("2".equals(turnoIdParam) ? "Tarde" : "Turno " + turnoIdParam) %>
+                                </p>
                             </div>
-                            
-                            <div>
-                                <label for="fecha" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <%-- Fecha --%>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-3 border border-gray-200 dark:border-gray-600">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                                     <i class="fas fa-calendar text-primary"></i> Fecha
-                                </label>
-                                <input type="date" name="fecha" id="fecha" required
-                                       value="<%= fechaParam %>" 
-                                       max="<%= LocalDate.now() %>"
-                                       class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                </p>
+                                <p class="font-semibold text-gray-900 dark:text-white">
+                                    <%
+                                        // Formatear fecha de yyyy-MM-dd a dd/MM/yyyy
+                                        String fechaMostrar = fechaParam;
+                                        try {
+                                            java.time.LocalDate fd = java.time.LocalDate.parse(fechaParam);
+                                            fechaMostrar = fd.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                                        } catch(Exception ex) {}
+                                    %>
+                                    <%= fechaMostrar %>
+                                </p>
                             </div>
-                            
-                            <div>
-                                <label for="hora_clase" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <%-- Hora --%>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-3 border border-gray-200 dark:border-gray-600">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                                     <i class="fas fa-clock text-primary"></i> Hora de Clase
-                                </label>
-                                <input type="time" name="hora_clase" id="hora_clase" required
-                                       value="<%= horaClaseParam %>"
-                                       class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                </p>
+                                <p class="font-semibold text-gray-900 dark:text-white">
+                                    <%= horaClaseParam != null ? horaClaseParam : "08:00" %>
+                                </p>
                             </div>
                         </div>
-                        
-                        <button type="submit" class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-primary flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined">refresh</span>
-                            <span>Cargar Asistencia</span>
-                        </button>
-                    </form>
-                </div>
+                    </div>
+
+                <% } else { %>
+                    <%-- ✅ MODO EDITABLE: el docente aún no ha cargado un curso --%>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-colors duration-300">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">filter_list</span>
+                            Seleccionar Curso y Fecha
+                        </h2>
+
+                        <form method="GET" action="AsistenciaServlet">
+                            <input type="hidden" name="accion" value="registrar">
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                                <div>
+                                    <label for="curso_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-book text-primary"></i> Curso
+                                    </label>
+                                    <select name="curso_id" id="curso_id" required
+                                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                        <option value="">-- Seleccione un curso --</option>
+                                        <% for (Curso c : cursos) { %>
+                                            <option value="<%= c.getId() %>"><%= c.getNombre() %><%= c.getGradoNombre() != null ? " - " + c.getGradoNombre() : "" %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="turno_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-clock text-primary"></i> Turno
+                                    </label>
+                                    <select name="turno_id" id="turno_id" required
+                                            class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                        <option value="1">Mañana</option>
+                                        <option value="2">Tarde</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="fecha" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-calendar text-primary"></i> Fecha
+                                    </label>
+                                    <input type="date" name="fecha" id="fecha" required
+                                           value="<%= fechaParam %>"
+                                           max="<%= LocalDate.now() %>"
+                                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                </div>
+
+                                <div>
+                                    <label for="hora_clase" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-clock text-primary"></i> Hora de Clase
+                                    </label>
+                                    <input type="time" name="hora_clase" id="hora_clase" required
+                                           value="<%= horaClaseParam %>"
+                                           class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline focus:outline-3 focus:outline-primary flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">refresh</span>
+                                <span>Cargar Asistencia</span>
+                            </button>
+                        </form>
+                    </div>
+                <% } %>
                 
                 <!-- Tabla de Asistencias -->
                 <% if (cursoSeleccionado != null && alumnos != null && alumnos.size() > 0) { %>

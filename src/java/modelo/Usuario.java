@@ -14,6 +14,10 @@ public class Usuario {
     private Date fechaRegistro;
     private boolean activo;
     private boolean eliminado;
+    
+    // Campos extra (del JOIN con persona)
+    private String nombreCompleto;
+    private String tipoPersona;
 
     // --- CONSTRUCTORES ---
     public Usuario() {}
@@ -115,6 +119,12 @@ public class Usuario {
     }
 
     public void registrarConexion() { this.ultimaConexion = new Date(); }
+
+    public String getNombreCompleto() { return nombreCompleto; }
+    public void setNombreCompleto(String nombreCompleto) { this.nombreCompleto = nombreCompleto; }
+
+    public String getTipoPersona() { return tipoPersona; }
+    public void setTipoPersona(String tipoPersona) { this.tipoPersona = tipoPersona; }
 
     public boolean necesitaResetearPassword() {
         if (fechaRegistro == null) return false;

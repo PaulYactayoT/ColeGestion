@@ -5,6 +5,8 @@ import modelo.Curso;
 import modelo.CursoDAO;
 import modelo.Observacion;
 import modelo.ObservacionDAO;
+import modelo.Grado;
+import modelo.GradoDAO;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,6 +20,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
+import javax.servlet.http.HttpSession;
 
 @WebServlet(name = "ObservacionServlet", urlPatterns = {"/ObservacionServlet"})
 @MultipartConfig(
@@ -39,11 +42,29 @@ public class ObservacionServlet extends HttpServlet {
 
         try {
             String cursoIdParam = request.getParameter("curso_id");
+           
             if (cursoIdParam == null || cursoIdParam.isEmpty()) {
-                response.sendRedirect("docenteDashboard.jsp");
+            HttpSession sess = request.getSession(false);
+
+            modelo.Profesor docente = (modelo.Profesor) sess.getAttribute("docente");
+            if (docente == null) {
+                response.sendRedirect("DocenteDashboardServlet");
                 return;
             }
-            
+            int profesorId = docente.getId();
+            System.out.println(">>> profesorId obtenido: " + profesorId);
+
+            List<Curso> cursos = cursoDAO.listarPorProfesor(profesorId);
+            if (cursos.size() == 1) {
+                response.sendRedirect("ObservacionServlet?accion=listar&curso_id=" + cursos.get(0).getId());
+            } else {
+                request.setAttribute("cursos", cursos);
+                request.setAttribute("moduloDestino", "ObservacionServlet");
+                request.setAttribute("moduloNombre", "Observaciones");
+                request.getRequestDispatcher("seleccionarCurso.jsp").forward(request, response);
+            }
+            return;
+        }
             int cursoId = Integer.parseInt(cursoIdParam);
             Curso curso = cursoDAO.obtenerPorId(cursoId);
             request.setAttribute("curso", curso);
@@ -63,6 +84,10 @@ public class ObservacionServlet extends HttpServlet {
                 case "editar":
                     System.out.println(">>> gradoIdStr = [" + gradoIdStr + "]");
                     System.out.println(">>> turnoIdStr = [" + turnoIdStr + "]");
+                    
+                    GradoDAO gradoDAO = new GradoDAO();
+                    List<Grado> listaGrados = gradoDAO.listarActivos();
+                    request.setAttribute("listaGrados", listaGrados);
 
                     if (accion.equals("editar")) {
                         String idEditarStr = request.getParameter("id");

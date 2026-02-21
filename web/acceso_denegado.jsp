@@ -1,148 +1,146 @@
-<%-- 
-    Document   : acceso_denegado
-    Created on : 20 oct. 2025, 2:57:41 p. m.
-    Author     : milag
---%>
-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>ACCESO DENEGADO</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Denegado - San Antonio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@700&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            background: #000000;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            color: #ff0000;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Poppins', sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-        
+
         .container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             text-align: center;
-            text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+            max-width: 500px;
+            width: 90%;
+            padding: 20px;
         }
-        
+
+        .icon-wrap {
+            width: 90px;
+            height: 90px;
+            background: #eff6ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 28px;
+        }
+
+        .icon-wrap i {
+            font-size: 36px;
+            color: #3b82f6;
+        }
+
         h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 4em;
-            margin: 0;
-            animation: glitch 1s infinite;
-            letter-spacing: 5px;
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 12px;
         }
-        
-        .warning {
-            font-size: 2em;
-            margin: 20px 0;
-            color: #ffffff;
-            text-shadow: 0 0 10px #ffffff;
+
+        .desc {
+            font-size: 0.95em;
+            color: #64748b;
+            line-height: 1.7;
+            margin-bottom: 32px;
         }
-        
-        .message {
-            font-size: 1.5em;
-            border: 2px solid #ff0000;
-            padding: 15px;
-            margin: 30px auto;
-            width: 60%;
-            background: rgba(255, 0, 0, 0.1);
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+
+        .divider {
+            width: 50px;
+            height: 3px;
+            background: #3b82f6;
+            border-radius: 10px;
+            margin: 0 auto 32px;
         }
-        
-        .flashing {
-            animation: flash 0.5s infinite alternate;
+
+        .alert {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            border-radius: 8px;
+            padding: 16px 20px;
+            text-align: left;
+            margin-bottom: 36px;
         }
-        
-        .security-notice {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            font-size: 1.2em;
-            color: #cccccc;
+
+        .alert p {
+            font-size: 0.85em;
+            color: #78350f;
+            line-height: 1.6;
         }
-        
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-            100% { transform: translate(0); }
+
+        .alert strong {
+            display: block;
+            color: #92400e;
+            font-size: 0.9em;
+            margin-bottom: 4px;
         }
-        
-        @keyframes flash {
-            from { opacity: 1; }
-            to { opacity: 0.3; }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 36px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-decoration: none;
+            background: #3b82f6;
+            color: white;
+            transition: background 0.2s;
         }
-        
-        .scan-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: #00ff00;
-            top: 0;
-            animation: scan 3s linear infinite;
-            box-shadow: 0 0 10px #00ff00;
+
+        .btn-primary:hover {
+            background: #2563eb;
         }
-        
-        @keyframes scan {
-            0% { top: 0%; }
-            100% { top: 100%; }
-        }
-        
-        .access-code {
-            font-family: monospace;
-            background: #000;
-            padding: 10px;
-            margin: 10px;
-            border: 1px solid #ff0000;
-            color: #00ff00;
+
+        .footer {
+            margin-top: 48px;
+            font-size: 0.78em;
+            color: #cbd5e1;
         }
     </style>
 </head>
 <body>
-    <div class="scan-line"></div>
-    
+
     <div class="container">
-        <h1>⛔ ACCESO DENEGADO ⛔</h1>
-        
-        <div class="warning flashing">
-            ¡ALTO! ZONA RESTRINGIDA
+
+        <div class="icon-wrap">
+            <i class="fas fa-lock"></i>
         </div>
-        
-        <div class="message">
-            SU ACCESO HA SIDO BLOQUEADO POR RAZONES DE SEGURIDAD
+
+        <h1>Acceso Denegado</h1>
+        <div class="divider"></div>
+
+        <p class="desc">
+            No tienes permiso para acceder a esta sección.<br>
+            Es posible que no hayas iniciado sesión o que tu rol no tenga acceso aquí.
+        </p>
+
+        <div class="alert">
+            <strong><i class="fas fa-exclamation-triangle" style="color:#f59e0b; margin-right:6px;"></i> ¿Por qué veo esto?</strong>
+            <p>Solo los usuarios con el rol correspondiente pueden ingresar a esta sección. Si crees que es un error, comunícate con el administrador del colegio.</p>
         </div>
-        
-        <div class="access-code">
-            CÓDIGO DE INCIDENTE: ERR-ACCESS-7842
-        </div>
-        
-        <div class="message">
-            SU ACTIVIDAD HA SIDO REGISTRADA Y REPORTADA
-        </div>
-        
-        <div class="security-notice">
-            🔒 SISTEMA DE SEGURIDAD ACTIVADO - PROTOCOLO 7 🔒
-        </div>
+
+        <a href="javascript:history.back()" class="btn-primary">
+            <i class="fas fa-arrow-left"></i> Volver atrás
+        </a>
+
+        <p class="footer">© 2025 Colegio San Antonio · Sistema Escolar</p>
+
     </div>
-    
-    <script>
-        // Efecto de parpadeo aleatorio
-        setInterval(() => {
-            document.body.style.background = Math.random() > 0.9 ? '#1a0000' : '#000000';
-        }, 100);
-        
-        // Efecto de sonido (comentado para no molestar)
-        // var audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
-        // audio.loop = true;
-        // audio.play();
-    </script>
+
 </body>
 </html>

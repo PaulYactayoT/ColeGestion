@@ -20,8 +20,8 @@
     // Obtener listas de personas sin usuario
     List<PersonaSinUsuario> profesoresSinUsuario = 
         (List<PersonaSinUsuario>) request.getAttribute("profesoresSinUsuario");
-    List<PersonaSinUsuario> alumnosSinUsuario = 
-        (List<PersonaSinUsuario>) request.getAttribute("alumnosSinUsuario");
+    List<PersonaSinUsuario> padresSinUsuario = 
+        (List<PersonaSinUsuario>) request.getAttribute("padresSinUsuario");
     List<PersonaSinUsuario> administrativosSinUsuario = 
         (List<PersonaSinUsuario>) request.getAttribute("administrativosSinUsuario");
     
@@ -562,10 +562,10 @@
                                     Profesor
                                     <span class="badge bg-primary text-white"><%= profesoresSinUsuario != null ? profesoresSinUsuario.size() : 0 %></span>
                                 </div>
-                                <div class="tipo-badge" data-tipo="ALUMNO" data-rol="padre">
-                                    <i class="fas fa-user-graduate"></i>
-                                    Alumno (Padre)
-                                    <span class="badge bg-success text-white"><%= alumnosSinUsuario != null ? alumnosSinUsuario.size() : 0 %></span>
+                                <div class="tipo-badge" data-tipo="PADRE" data-rol="padre">
+                                    <i class="fas fa-user-friends"></i>
+                                    Padre/Apoderado
+                                    <span class="badge bg-success text-white"><%= padresSinUsuario != null ? padresSinUsuario.size() : 0 %></span>
                                 </div>
                                 <div class="tipo-badge" data-tipo="ADMINISTRATIVO" data-rol="administrativo">
                                     <i class="fas fa-user-cog"></i>
@@ -591,9 +591,9 @@
 
                         <!-- INFO DE PERSONA SELECCIONADA -->
                         <div class="persona-info" id="personaInfo">
-                            <strong><i class="fas fa-id-card"></i> Información de la Persona:</strong>
+                            <strong><i class="fas fa-id-card"></i> Información del Padre/Apoderado:</strong>
                             <div class="persona-detail">
-                                <strong>Nombre Completo:</strong>
+                                <strong>Nombre del Padre:</strong>
                                 <span id="infoNombre">-</span>
                             </div>
                             <div class="persona-detail">
@@ -604,12 +604,20 @@
                                 <strong>DNI:</strong>
                                 <span id="infoDni">-</span>
                             </div>
-                            <div class="persona-detail">
-                                <strong>Código:</strong>
+                            <div class="persona-detail" id="codigoRow">
+                                <strong>Parentesco:</strong>
                                 <span id="infoCodigo">-</span>
                             </div>
-                            <div class="persona-detail">
-                                <strong>Información Adicional:</strong>
+                            <!-- Sección del hijo - solo visible para padres -->
+                            <div id="hijoSection" style="display:none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 2px solid #e5e7eb;">
+                                <strong><i class="fas fa-child"></i> Hijo/a relacionado:</strong>
+                                <div class="persona-detail" style="margin-top:0.5rem;">
+                                    <strong>Nombre del Alumno:</strong>
+                                    <span id="infoHijo">-</span>
+                                </div>
+                            </div>
+                            <div class="persona-detail" id="adicionalRow">
+                                <strong>Info Adicional:</strong>
                                 <span id="infoAdicional">-</span>
                             </div>
                         </div>
@@ -790,10 +798,10 @@
             } %>
         ];
 
-        const alumnosSinUsuario = [
-            <% if (alumnosSinUsuario != null) {
-                for (int i = 0; i < alumnosSinUsuario.size(); i++) {
-                    PersonaSinUsuario p = alumnosSinUsuario.get(i);
+        const padresSinUsuario = [
+            <% if (padresSinUsuario != null) {
+                for (int i = 0; i < padresSinUsuario.size(); i++) {
+                    PersonaSinUsuario p = padresSinUsuario.get(i);
             %>
             {
                 personaId: <%= p.getPersonaId() %>,
@@ -803,7 +811,7 @@
                 dni: "<%= p.getDni() != null ? p.getDni().replace("\"", "\\\"") : "" %>",
                 codigo: "<%= p.getCodigo() != null ? p.getCodigo().replace("\"", "\\\"") : "" %>",
                 infoAdicional: "<%= p.getInformacionAdicional() != null ? p.getInformacionAdicional().replace("\"", "\\\"") : "" %>"
-            }<%= i < alumnosSinUsuario.size() - 1 ? "," : "" %>
+            }<%= i < padresSinUsuario.size() - 1 ? "," : "" %>
             <% }
             } %>
         ];
@@ -827,7 +835,7 @@
         ];
 
         console.log('📊 Profesores sin usuario cargados:', profesoresSinUsuario);
-        console.log('📊 Alumnos sin usuario cargados:', alumnosSinUsuario);
+        console.log('📊 Padres cargados:', padresSinUsuario);
         console.log('📊 Administrativos sin usuario cargados:', administrativosSinUsuario);
 
         // ===================================================================
@@ -860,7 +868,7 @@
             
             let personas = [];
             if (tipo === 'PROFESOR') personas = profesoresSinUsuario;
-            else if (tipo === 'ALUMNO') personas = alumnosSinUsuario;
+            else if (tipo === 'PADRE') personas = padresSinUsuario;
             else if (tipo === 'ADMINISTRATIVO') personas = administrativosSinUsuario;
             
             console.log('🔍 Cargando personas tipo:', tipo, '- Total:', personas.length);
@@ -932,12 +940,28 @@
         }
 
         function mostrarInfoPersona(persona) {
-            const nombreCompleto = (persona.nombres || '') + ' ' + (persona.apellidos || '');
+            const nombreCompleto = (persona.apellidos || '') + ', ' + (persona.nombres || '');
             document.getElementById('infoNombre').textContent = nombreCompleto.trim() || '-';
             document.getElementById('infoCorreo').textContent = persona.correo || '-';
             document.getElementById('infoDni').textContent = persona.dni || '-';
             document.getElementById('infoCodigo').textContent = persona.codigo || '-';
-            document.getElementById('infoAdicional').textContent = persona.infoAdicional || '-';
+            
+            // Si es un padre, mostrar la sección del hijo
+            const hijoSection = document.getElementById('hijoSection');
+            const adicionalRow = document.getElementById('adicionalRow');
+            const tipoBadgeActivo = document.querySelector('.tipo-badge.active');
+            const esPadre = tipoBadgeActivo && tipoBadgeActivo.dataset.tipo === 'PADRE';
+            
+            if (esPadre && persona.infoAdicional) {
+                // infoAdicional viene como "Hijo: Apellido, Nombre"
+                document.getElementById('infoHijo').textContent = persona.infoAdicional.replace('Hijo: ', '');
+                hijoSection.style.display = 'block';
+                adicionalRow.style.display = 'none';
+            } else {
+                document.getElementById('infoAdicional').textContent = persona.infoAdicional || '-';
+                hijoSection.style.display = 'none';
+                adicionalRow.style.display = 'flex';
+            }
             
             document.getElementById('personaInfo').classList.add('active');
         }

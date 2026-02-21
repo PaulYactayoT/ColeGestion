@@ -77,7 +77,7 @@ public class AlumnoDAO {
                               "foto, fecha_ingreso, estado, activo) " +
                               "VALUES (?, ?, ?, ?, ?, CURDATE(), ?, 1)";
             
-            psAlumno = con.prepareStatement(sqlAlumno);
+            psAlumno = con.prepareStatement(sqlAlumno, Statement.RETURN_GENERATED_KEYS);
             psAlumno.setInt(1, personaId);
             psAlumno.setInt(2, alumno.getGradoId());
             
@@ -106,7 +106,59 @@ public class AlumnoDAO {
 
             int filasAlumno = psAlumno.executeUpdate();
 
-            con.commit(); // Confirmar transacción
+            // Obtener el ID del alumno recién insertado
+            ResultSet rsAlumno = psAlumno.getGeneratedKeys();
+            int alumnoId = 0;
+            if (rsAlumno.next()) {
+                alumnoId = rsAlumno.getInt(1);
+            }
+            rsAlumno.close();
+
+            // 3. CREAR PERSONA PADRE
+            if (alumno.getPadreNombres() != null && !alumno.getPadreNombres().isEmpty() && alumnoId > 0) {
+                String sqlPadrePersona = "INSERT INTO persona (tipo, nombres, apellidos, correo, " +
+                                         "telefono, dni, activo) " +
+                                         "VALUES ('PADRE', ?, ?, ?, ?, ?, 1)";
+                PreparedStatement psPadrePersona = con.prepareStatement(sqlPadrePersona, Statement.RETURN_GENERATED_KEYS);
+                psPadrePersona.setString(1, alumno.getPadreNombres());
+                psPadrePersona.setString(2, alumno.getPadreApellidos());
+                psPadrePersona.setString(3, alumno.getPadreCorreo());
+                if (alumno.getPadreTelefono() != null && !alumno.getPadreTelefono().isEmpty()) {
+                    psPadrePersona.setString(4, alumno.getPadreTelefono());
+                } else {
+                    psPadrePersona.setNull(4, Types.VARCHAR);
+                }
+                if (alumno.getPadreDni() != null && !alumno.getPadreDni().isEmpty()) {
+                    psPadrePersona.setString(5, alumno.getPadreDni());
+                } else {
+                    psPadrePersona.setNull(5, Types.VARCHAR);
+                }
+                psPadrePersona.executeUpdate();
+
+                ResultSet rsPadrePersona = psPadrePersona.getGeneratedKeys();
+                int padrePersonaId = 0;
+                if (rsPadrePersona.next()) {
+                    padrePersonaId = rsPadrePersona.getInt(1);
+                }
+                rsPadrePersona.close();
+                psPadrePersona.close();
+
+                // 4. CREAR RELACION_FAMILIAR
+                String sqlRelacion = "INSERT INTO relacion_familiar (persona_id, alumno_id, parentesco, " +
+                                     "es_contacto_principal, activo, eliminado) " +
+                                     "VALUES (?, ?, ?, 1, 1, 0)";
+                PreparedStatement psRelacion = con.prepareStatement(sqlRelacion);
+                psRelacion.setInt(1, padrePersonaId);
+                psRelacion.setInt(2, alumnoId);
+                String parentesco = alumno.getPadreParentesco() != null ? alumno.getPadreParentesco() : "PADRE";
+                psRelacion.setString(3, parentesco);
+                psRelacion.executeUpdate();
+                psRelacion.close();
+
+                System.out.println("Padre registrado: " + alumno.getPadreNombres() + " | alumno_id: " + alumnoId);
+            }
+
+            con.commit(); // Confirmar toda la transacción
             
             System.out.println("Alumno agregado correctamente - Turno ID: " + alumno.getTurnoId());
             return filasAlumno > 0;
@@ -326,21 +378,41 @@ public class AlumnoDAO {
         return null;
     }
     
-    // Método para eliminar (borrado lógico)
+    // Método para eliminar (borrado lógico) - también limpia relacion_familiar y persona padre
     public boolean eliminar(int id) {
-        String sql = "UPDATE alumno SET eliminado = 1, activo = 0 WHERE id = ?";
-        
-        try (Connection con = Conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            
-            ps.setInt(1, id);
-            int filas = ps.executeUpdate();
+        Connection con = null;
+        try {
+            con = Conexion.getConnection();
+            con.setAutoCommit(false);
+
+            // 1. Marcar relacion_familiar como eliminada para este alumno
+            String sqlRelacion = "UPDATE relacion_familiar SET eliminado = 1, activo = 0 WHERE alumno_id = ?";
+            PreparedStatement psRelacion = con.prepareStatement(sqlRelacion);
+            psRelacion.setInt(1, id);
+            psRelacion.executeUpdate();
+            psRelacion.close();
+
+            // 2. Marcar el alumno como eliminado
+            String sqlAlumno = "UPDATE alumno SET eliminado = 1, activo = 0 WHERE id = ?";
+            PreparedStatement psAlumno = con.prepareStatement(sqlAlumno);
+            psAlumno.setInt(1, id);
+            int filas = psAlumno.executeUpdate();
+            psAlumno.close();
+
+            con.commit();
             return filas > 0;
-            
+
         } catch (SQLException e) {
+            if (con != null) {
+                try { con.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
             System.err.println("Error al eliminar alumno: " + e.getMessage());
             e.printStackTrace();
             return false;
+        } finally {
+            if (con != null) {
+                try { con.setAutoCommit(true); con.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
         }
     }
     

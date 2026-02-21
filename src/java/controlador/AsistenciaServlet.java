@@ -74,6 +74,9 @@ public class AsistenciaServlet extends HttpServlet {
                 case "verCurso":
                     verAsistenciasCurso(request, response);
                     break;
+                case "historial":
+                    verHistorialCurso(request, response);
+                    break;
                 case "registrar":
                     mostrarFormRegistro(request, response);
                     break;
@@ -249,6 +252,7 @@ public class AsistenciaServlet extends HttpServlet {
             // Docente puede ver, verCurso, registrar y actualizar
                 return "ver".equals(accion) || "verCurso".equals(accion) || 
                        "registrar".equals(accion) || "registrarGrupal".equals(accion) ||
+                       "historial".equals(accion) ||
                        "verCursoJson".equals(accion) || "verificarLimite".equals(accion) ||
                        "estadoEdicion".equals(accion) || "actualizarIndividual".equals(accion) ||
                        "actualizarLote".equals(accion) || "editar".equals(accion);
@@ -264,6 +268,37 @@ public class AsistenciaServlet extends HttpServlet {
     // ============================================================
     // MÉTODOS PARA VISUALIZACIÓN DE DATOS
     // ============================================================
+
+    // * HISTORIAL DE ASISTENCIAS POR CURSO (lista de sesiones con resumen)
+    private void verHistorialCurso(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession();
+        try {
+            String cursoIdParam = request.getParameter("curso_id");
+            if (cursoIdParam == null || cursoIdParam.isEmpty()) {
+                response.sendRedirect("AsistenciaServlet");
+                return;
+            }
+            int cursoId = Integer.parseInt(cursoIdParam);
+            CursoDAO cursoDAO = new CursoDAO();
+            Curso curso = cursoDAO.obtenerPorId(cursoId);
+            if (curso == null) {
+                session.setAttribute("error", "Curso no encontrado.");
+                response.sendRedirect("AsistenciaServlet");
+                return;
+            }
+            List<java.util.Map<String, Object>> fechas = asistenciaDAO.listarFechasConAsistencia(cursoId);
+            request.setAttribute("curso", curso);
+            request.setAttribute("fechas", fechas);
+            request.getRequestDispatcher("historialAsistencia.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.out.println("Error en verHistorialCurso: " + e.getMessage());
+            e.printStackTrace();
+            session.setAttribute("error", "Error al cargar historial.");
+            response.sendRedirect("AsistenciaServlet");
+        }
+    }
+
     // * MOSTRAR CURSOS ASIGNADOS AL DOCENTE
     private void verCursosDocente(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -272,28 +307,37 @@ public class AsistenciaServlet extends HttpServlet {
         Profesor docente = (Profesor) session.getAttribute("docente");
 
         if (docente == null) {
-            session.setAttribute("error", 
-                "Sesión expirada. Por favor inicie sesión nuevamente.");           
+            session.setAttribute("error", "Sesión expirada. Por favor inicie sesión nuevamente.");
             response.sendRedirect("index.jsp");
             return;
         }
 
         try {
-            System.out.println("Buscando cursos para profesor: " + docente.getNombres() + " " + 
-                             docente.getApellidos() + " (ID: " + docente.getId() + ")");
+            System.out.println("Buscando cursos para profesor ID: " + docente.getId());
 
             CursoDAO cursoDAO = new CursoDAO();
             List<Curso> cursos = cursoDAO.listarPorProfesor(docente.getId());
 
             System.out.println("Cursos encontrados: " + (cursos != null ? cursos.size() : 0));
-            request.setAttribute("misCursos", cursos);
-            request.getRequestDispatcher("asistenciasDocente.jsp").forward(request, response);
+
+            if (cursos == null || cursos.isEmpty()) {
+                session.setAttribute("error", "No tienes cursos asignados.");
+                response.sendRedirect("DocenteDashboardServlet");
+                return;
+            }
+
+            // ✅ SIEMPRE mostrar el selector para que el docente elija el curso
+            request.setAttribute("cursos", cursos);
+            request.setAttribute("moduloDestino", "AsistenciaServlet");
+            request.setAttribute("moduloAccion", "historial");
+            request.setAttribute("moduloNombre", "Asistencias");
+            request.getRequestDispatcher("seleccionarCurso.jsp").forward(request, response);
 
         } catch (Exception e) {
-            System.out.println("Error en verCursosDocente:");
+            System.out.println("Error en verCursosDocente: " + e.getMessage());
             e.printStackTrace();
             session.setAttribute("error", "Error al cargar los cursos: " + e.getMessage());
-            response.sendRedirect("docenteDashboard.jsp");
+            response.sendRedirect("DocenteDashboardServlet");
         }
     }
 
@@ -550,6 +594,20 @@ public class AsistenciaServlet extends HttpServlet {
             if ((cursoIdParam == null || cursoIdParam.isEmpty()) && !cursos.isEmpty()) {
                 cursoIdParam = String.valueOf(cursos.get(0).getId());
                 cursoSeleccionado = cursos.get(0);
+            }
+
+            // ✅ Si ya hay curso seleccionado pero no vienen turno/hora por URL,
+            //    obtenerlos automáticamente desde la BD
+            if (cursoSeleccionado != null) {
+                if (turnoIdParam == null || turnoIdParam.isEmpty()) {
+                    int turnoAuto = cursoDAO.obtenerTurnoIdPorCurso(cursoSeleccionado.getId());
+                    turnoIdParam = String.valueOf(turnoAuto);
+                    System.out.println(">>> TURNO AUTO desde BD: " + turnoIdParam);
+                }
+                if (horaClaseParam == null || horaClaseParam.isEmpty()) {
+                    horaClaseParam = cursoDAO.obtenerHoraInicioPorCurso(cursoSeleccionado.getId());
+                    System.out.println(">>> HORA AUTO desde BD: " + horaClaseParam);
+                }
             }
             
             // VERIFICAR LÍMITE DE EDICIÓN
