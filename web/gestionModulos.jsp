@@ -198,7 +198,13 @@
 <body class="bg-background-light dark:bg-background-dark text-[#111318] dark:text-white min-h-screen">
 <div class="flex h-screen overflow-hidden">
 
-    <%@ include file="includes/sidebar.jsp" %>
+    <%
+        String rolSidebarU = (String) session.getAttribute("rol");
+        String sidebarFileU = "administrativo".equals(rolSidebarU) 
+                             ? "includes/sidebarAdministrativo.jsp" 
+                             : "includes/sidebar.jsp";
+    %>
+    <jsp:include page="<%= sidebarFileU %>" />
 
     <main class="flex-1 flex flex-col overflow-y-auto">
         <%@ include file="includes/header.jsp" %>

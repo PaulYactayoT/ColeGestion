@@ -261,13 +261,13 @@
                             <% } %>
                         </div>
                         
-                        <a href="<%= request.getContextPath() %>/<%= mat.getRutaArchivo() %>" target="_blank" 
+                        <a href="DescargarMaterialServlet?id=<%= mat.getId() %>" 
                            class="hidden sm:flex flex-shrink-0 bg-white border border-slate-200 hover:bg-primary hover:text-white hover:border-primary text-slate-600 px-4 py-2 rounded-lg font-medium text-sm items-center gap-2 transition-all shadow-sm">
                             <i class="fas fa-download"></i> Descargar
                         </a>
                     </div>
                     
-                    <a href="<%= request.getContextPath() %>/<%= mat.getRutaArchivo() %>" target="_blank" 
+                    <a href="DescargarMaterialServlet?id=<%= mat.getId() %>" 
                        class="sm:hidden flex-shrink-0 bg-gray-50 p-3 rounded-lg text-primary border border-gray-200 shadow-sm">
                         <i class="fas fa-download"></i>
                     </a>

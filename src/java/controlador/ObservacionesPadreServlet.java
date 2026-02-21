@@ -1,10 +1,3 @@
-/*
- * SERVLET PARA CONSULTA DE OBSERVACIONES DESDE LA VISTA DE PADRES
- * 
- * Funcionalidades: Listar observaciones del alumno para vista de padres
- * Roles: Padre
- * Integracion: Relacion con alumno y cursos
- */
 package controlador;
 
 import modelo.Observacion;
@@ -12,34 +5,36 @@ import modelo.ObservacionDAO;
 import modelo.Padre;
 
 import javax.servlet.*;
+import javax.servlet.annotation.WebServlet; // Importante para que funcione el enlace
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
+@WebServlet(name = "ObservacionesPadreServlet", urlPatterns = {"/ObservacionesPadreServlet"})
 public class ObservacionesPadreServlet extends HttpServlet {
 
-    /**
-     * METODO GET - LISTAR OBSERVACIONES DEL ALUMNO (VISTA PADRES)
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession();
-        Padre padre = (Padre) session.getAttribute("padre");
+        HttpSession session = request.getSession(false);
+        Padre padre = (session != null) ? (Padre) session.getAttribute("padre") : null;
 
-        // Verificar autenticacion y datos de padre
+        // 1. Verificar autenticación
         if (padre == null) {
             response.sendRedirect("index.jsp");
             return;
         }
 
-        // Obtener observaciones del alumno desde la base de datos
+        // 2. Obtener observaciones usando el método del DAO que ya tienes
         ObservacionDAO dao = new ObservacionDAO();
         List<Observacion> lista = dao.listarPorAlumno(padre.getAlumnoId());
-        request.setAttribute("observaciones", lista);
+        
+        // 3. Pasar los datos a la vista (OJO: Usamos "listaObservaciones" para coincidir con el JSP)
+   request.setAttribute("observaciones", lista);
+        request.setAttribute("nombreAlumno", padre.getAlumnoNombre());
 
-        // Cargar vista especifica para padres
+        // 4. Redirigir a la interfaz del padre
         request.getRequestDispatcher("observacionesPadre.jsp").forward(request, response);
     }
 }

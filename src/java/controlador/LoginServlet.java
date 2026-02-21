@@ -401,6 +401,7 @@ public class LoginServlet extends HttpServlet {
     private String determinarRedireccion(String rol, String user, HttpServletRequest request, HttpServletResponse response) throws Exception {
         System.out.println("→ Determinando redirección - Rol: " + rol);
 
+        
         // ══════════════════════════════════════════
         // ROL: ADMIN
         // ══════════════════════════════════════════
@@ -428,6 +429,28 @@ public class LoginServlet extends HttpServlet {
                 System.err.println("  Error obteniendo foto admin: " + e.getMessage());
             }
             return "dashboard.jsp";
+        }
+        
+        // ══════════════════════════════════════════
+        // ROL: ADMINISTRATIVO
+        // ══════════════════════════════════════════
+        if ("administrativo".equalsIgnoreCase(rol)) {
+            try (Connection conn = Conexion.getConnection()) {
+                String fotoSql = "SELECT p.foto FROM persona p JOIN usuario u ON u.persona_id = p.id WHERE u.username = ?";
+                try (PreparedStatement ps = conn.prepareStatement(fotoSql)) {
+                    ps.setString(1, user);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        String foto = rs.getString("foto");
+                        HttpSession session = request.getSession();
+                        session.setAttribute("fotoUsuario", foto != null ? foto : "");
+                        System.out.println("  Foto administrativo: " + foto);
+                    }
+                }
+            } catch (SQLException e) {
+                System.err.println("  Error obteniendo foto administrativo: " + e.getMessage());
+            }
+            return "administrativoDashboard.jsp";
         }
 
         // ══════════════════════════════════════════

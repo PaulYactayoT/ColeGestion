@@ -1,173 +1,179 @@
-/*
- * DAO PARA GESTION DE OBSERVACIONES ACADEMICAS
- * 
- * Funcionalidades:
- * - CRUD de observaciones sobre alumnos
- * - Consultas por alumno y curso
- * - Registro de comentarios academicos y conductuales
- */
 package modelo;
 
 import conexion.Conexion;
 import java.sql.*;
 import java.util.*;
 
+/**
+ * DAO PARA GESTIÓN DE OBSERVACIONES ACADÉMICAS - VERSIÓN FINAL ESTABLE
+ */
 public class ObservacionDAO {
 
     /**
-     * AGREGAR NUEVA OBSERVACION ACADEMICA
-     * 
-     * @param o Objeto Observacion con texto y referencias
-     * @return true si el registro fue exitoso
+     * CA-01: FILTRAR ALUMNOS (IMPLEMENTACIÓN FLEXIBLE PARA TURNOS NULL)
+     * Busca por grado y turno. Si el turno en la BD es NULL, también lo incluye
+     * para evitar que alumnos registrados sin turno queden invisibles.
+     */
+    public List<Alumno> listarAlumnosPorFiltro(String nivel, int gradoId, int turnoId) {
+        List<Alumno> lista = new ArrayList<>();
+        // Ajuste clave: Se agrega (a.turno_id = ? OR a.turno_id IS NULL)
+        String sql = "SELECT a.id, p.nombres, p.apellidos " +
+                     "FROM alumno a " +
+                     "INNER JOIN persona p ON a.persona_id = p.id " +
+                     "WHERE a.grado_id = ? AND (a.turno_id = ? OR a.turno_id IS NULL) AND a.activo = 1 " + 
+                     "ORDER BY p.apellidos ASC";
+        
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, gradoId);
+            ps.setInt(2, turnoId);
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Alumno a = new Alumno();
+                a.setId(rs.getInt("id"));
+                a.setNombres(rs.getString("nombres"));
+                a.setApellidos(rs.getString("apellidos"));
+                lista.add(a);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ ERROR SQL FILTRO: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    /**
+     * GUARDAR: INSERT DIRECTO
      */
     public boolean agregar(Observacion o) {
-        String sql = "{CALL crear_observacion(?, ?, ?)}";
-
-        try (Connection con = Conexion.getConnection(); CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, o.getCursoId());
-            cs.setInt(2, o.getAlumnoId());
-            cs.setString(3, o.getTexto());
-            return cs.executeUpdate() > 0;
-
+        String sql = "INSERT INTO observacion (curso_id, alumno_id, texto, tipo, ruta_evidencia, fecha, activo) " +
+                     "VALUES (?, ?, ?, ?, ?, NOW(), 1)";
+        try (Connection con = Conexion.getConnection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, o.getCursoId());
+            ps.setInt(2, o.getAlumnoId());
+            ps.setString(3, o.getTexto());
+            ps.setString(4, (o.getTipo() != null) ? o.getTipo() : "NEUTRAL");
+            ps.setString(5, (o.getRutaEvidencia() != null) ? o.getRutaEvidencia() : "");
+            
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            System.out.println("Error al agregar observacion");
+            System.err.println("❌ ERROR AL GUARDAR: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    /**
-     * ACTUALIZAR OBSERVACION EXISTENTE
-     * 
-     * @param o Objeto Observacion con datos actualizados
-     * @return true si la actualizacion fue exitosa
-     */
     public boolean actualizar(Observacion o) {
-        String sql = "{CALL actualizar_observacion(?, ?, ?, ?)}";
-
-        try (Connection con = Conexion.getConnection(); CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, o.getId());
-            cs.setInt(2, o.getAlumnoId());
-            cs.setString(3, o.getTexto());
-            cs.setInt(4, o.getCursoId());
-            return cs.executeUpdate() > 0;
-
+        String sql = "UPDATE observacion SET alumno_id = ?, texto = ?, tipo = ?, ruta_evidencia = ? WHERE id = ?";
+        try (Connection con = Conexion.getConnection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            
+            ps.setInt(1, o.getAlumnoId());
+            ps.setString(2, o.getTexto());
+            ps.setString(3, o.getTipo());
+            ps.setString(4, o.getRutaEvidencia()); 
+            ps.setInt(5, o.getId());
+            
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            System.out.println("Error al actualizar observacion");
-            e.printStackTrace();
+            System.err.println("❌ ERROR AL ACTUALIZAR: " + e.getMessage());
             return false;
         }
     }
 
-    /**
-     * ELIMINAR OBSERVACION POR ID
-     * 
-     * @param id Identificador unico de la observacion
-     * @return true si la eliminacion fue exitosa
-     */
+    public List<Observacion> listarPorCurso(int cursoId) {
+        List<Observacion> lista = new ArrayList<>();
+        String sql = "SELECT o.id, o.curso_id, o.alumno_id, o.texto, o.tipo, o.ruta_evidencia, " +
+                     "p.nombres AS alumno_nombres, p.apellidos AS alumno_apellidos " +
+                     "FROM observacion o " +
+                     "INNER JOIN alumno a ON o.alumno_id = a.id " +
+                     "INNER JOIN persona p ON a.persona_id = p.id " +
+                     "WHERE o.curso_id = ? AND o.activo = 1 " +
+                     "ORDER BY o.id DESC";
+        
+        try (Connection con = Conexion.getConnection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, cursoId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Observacion o = new Observacion();
+                o.setId(rs.getInt("id"));
+                o.setCursoId(rs.getInt("curso_id"));
+                o.setAlumnoId(rs.getInt("alumno_id"));
+                o.setTexto(rs.getString("texto"));
+                o.setTipo(rs.getString("tipo"));
+                o.setRutaEvidencia(rs.getString("ruta_evidencia"));
+                o.setAlumnoNombre(rs.getString("alumno_nombres") + " " + rs.getString("alumno_apellidos"));
+                lista.add(o);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return lista;
+    }
+
     public boolean eliminar(int id) {
-        String sql = "{CALL eliminar_observacion(?)}";
-
-        try (Connection con = Conexion.getConnection(); CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, id);
-            return cs.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            System.out.println("Error al eliminar observacion");
-            e.printStackTrace();
-            return false;
-        }
+        String sql = "UPDATE observacion SET activo = 0 WHERE id = ?";
+        try (Connection con = Conexion.getConnection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) { return false; }
     }
 
-    /**
-     * OBTENER OBSERVACION POR ID CON INFORMACION COMPLETA
-     * 
-     * @param id Identificador de la observacion
-     * @return Objeto Observacion con datos completos o null si no existe
-     */
     public Observacion obtenerPorId(int id) {
         Observacion o = null;
-        String sql = "{CALL obtener_observacion_por_id(?)}";
-
-        try (Connection con = Conexion.getConnection(); CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, id);
-            ResultSet rs = cs.executeQuery();
-
+        String sql = "SELECT o.*, p.nombres AS alumno_nombres, p.apellidos AS alumno_apellidos " +
+                     "FROM observacion o " +
+                     "INNER JOIN alumno a ON o.alumno_id = a.id " +
+                     "INNER JOIN persona p ON a.persona_id = p.id " +
+                     "WHERE o.id = ?";
+        try (Connection con = Conexion.getConnection(); 
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 o = new Observacion();
                 o.setId(rs.getInt("id"));
                 o.setCursoId(rs.getInt("curso_id"));
                 o.setAlumnoId(rs.getInt("alumno_id"));
                 o.setTexto(rs.getString("texto"));
+                o.setTipo(rs.getString("tipo"));
+                o.setRutaEvidencia(rs.getString("ruta_evidencia"));
                 o.setAlumnoNombre(rs.getString("alumno_nombres") + " " + rs.getString("alumno_apellidos"));
-                o.setCursoNombre(rs.getString("curso_nombre"));
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
         return o;
     }
 
-    /**
-     * LISTAR OBSERVACIONES POR ALUMNO ESPECIFICO
-     * 
-     * @param alumnoId Identificador del alumno
-     * @return Lista de observaciones del alumno solicitado
-     */
-    public List<Observacion> listarPorAlumno(int alumnoId) {
-        List<Observacion> lista = new ArrayList<>();
-        String sql = "{CALL obtener_observaciones_por_alumno(?)}";
-
-        try (Connection con = Conexion.getConnection(); CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, alumnoId);
-            ResultSet rs = cs.executeQuery();
-
-            while (rs.next()) {
-                Observacion o = new Observacion();
-                o.setId(rs.getInt("id"));
-                o.setCursoId(rs.getInt("curso_id"));
-                o.setAlumnoId(rs.getInt("alumno_id"));
-                o.setTexto(rs.getString("texto"));
-                o.setCursoNombre(rs.getString("curso_nombre"));
-                lista.add(o);
-            }
-
-        } catch (Exception e) {
-            System.out.println("Error al listar observaciones por alumno");
-            e.printStackTrace();
+public List<Observacion> listarPorAlumno(int alumnoId) {
+    List<Observacion> lista = new ArrayList<>();
+    String sql = "SELECT o.id, o.curso_id, o.alumno_id, o.texto, o.tipo, " +
+                 "o.ruta_evidencia, c.nombre AS curso_nombre " +
+                 "FROM observacion o " +
+                 "INNER JOIN curso c ON o.curso_id = c.id " +
+                 "WHERE o.alumno_id = ? " +
+                 "AND o.activo = 1 AND o.eliminado = 0 " +
+                 "ORDER BY o.id DESC";
+    try (Connection con = Conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, alumnoId);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Observacion o = new Observacion();
+            o.setId(rs.getInt("id"));
+            o.setCursoId(rs.getInt("curso_id"));
+            o.setAlumnoId(rs.getInt("alumno_id"));
+            o.setTexto(rs.getString("texto"));
+            o.setTipo(rs.getString("tipo"));
+            o.setRutaEvidencia(rs.getString("ruta_evidencia"));
+            o.setCursoNombre(rs.getString("curso_nombre"));
+            lista.add(o);
         }
-
-        return lista;
+    } catch (Exception e) { 
+        e.printStackTrace(); 
     }
-
-    /**
-     * LISTAR OBSERVACIONES POR CURSO ESPECIFICO
-     * 
-     * @param cursoId Identificador del curso
-     * @return Lista de observaciones del curso solicitado
-     */
-    public List<Observacion> listarPorCurso(int cursoId) {
-        List<Observacion> lista = new ArrayList<>();
-        String sql = "{CALL obtener_observaciones_por_curso(?)}";
-
-        try (Connection con = Conexion.getConnection(); CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, cursoId);
-            ResultSet rs = cs.executeQuery();
-            while (rs.next()) {
-                Observacion o = new Observacion();
-                o.setId(rs.getInt("id"));
-                o.setCursoId(rs.getInt("curso_id"));
-                o.setAlumnoId(rs.getInt("alumno_id"));
-                o.setTexto(rs.getString("texto"));
-                o.setAlumnoNombre(rs.getString("alumno_nombres") + " " + rs.getString("alumno_apellidos"));
-                lista.add(o);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return lista;
-    }
+    return lista;
+}
 }

@@ -9,18 +9,18 @@
     String rol = (String) session.getAttribute("rol");
     Integer personaId = (Integer) session.getAttribute("personaId");
     
-    System.out.println("🔍 DEBUG - revisarJustificaciones.jsp");
+    System.out.println(" DEBUG - revisarJustificaciones.jsp");
     System.out.println("   - Rol: " + rol);
     System.out.println("   - PersonaId: " + personaId);
     
     if (rol == null || personaId == null) {
-        System.out.println("❌ ERROR: Sesión inválida - redirigiendo a login");
+        System.out.println(" ERROR: Sesión inválida - redirigiendo a login");
         response.sendRedirect("index.jsp");
         return;
     }
     
     if (!rol.equals("admin") && !rol.equals("docente")) {
-        System.out.println("❌ ERROR: Acceso denegado - rol: " + rol);
+        System.out.println(" ERROR: Acceso denegado - rol: " + rol);
         response.sendRedirect("index.jsp");
         return;
     }
@@ -39,7 +39,7 @@
         cursoId = cursoIdStr != null ? Integer.parseInt(cursoIdStr) : 0;
         turnoId = turnoIdStr != null ? Integer.parseInt(turnoIdStr) : 0;
     } catch (NumberFormatException e) {
-        System.out.println("⚠️ Error al parsear parámetros: " + e.getMessage());
+        System.out.println(" Error al parsear parámetros: " + e.getMessage());
     }
     
     // ========================================

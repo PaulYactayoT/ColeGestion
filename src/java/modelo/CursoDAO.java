@@ -179,19 +179,19 @@ public List<Curso> listarPorGrado(int gradoId) {
         public Curso obtenerPorId(int id) {
             // SQL que obtiene datos directamente de las tablas, no de la vista
             String sql = "SELECT c.*, " +
-                         "g.id as grado_id, " +
-                         "g.nombre as grado_nombre, " +
-                         "g.nivel as nivel, " +
-                         "prof.id as profesor_id, " +
-                         "CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre, " +
-                         "a.id as area_id, " +
-                         "a.nombre as area_nombre " +
-                         "FROM curso c " +
-                         "LEFT JOIN grado g ON c.grado_id = g.id " +
-                         "LEFT JOIN profesor prof ON c.profesor_id = prof.id " +
-                         "LEFT JOIN persona p ON prof.persona_id = p.id " +
-                         "LEFT JOIN area a ON c.area_id = a.id " +
-                         "WHERE c.id = ? AND c.eliminado = 0 AND c.activo = 1";
+                "g.id as grado_id, " +
+                "g.nombre as grado_nombre, " +
+                "g.nivel as grado_nivel, " +   // <-- cambia "nivel" por "grado_nivel"
+                "prof.id as profesor_id, " +
+                "CONCAT(p.nombres, ' ', p.apellidos) as profesor_nombre, " +
+                "a.id as area_id, " +
+                "a.nombre as area_nombre " +
+                "FROM curso c " +
+                "LEFT JOIN grado g ON c.grado_id = g.id " +
+                "LEFT JOIN profesor prof ON c.profesor_id = prof.id " +
+                "LEFT JOIN persona p ON prof.persona_id = p.id " +
+                "LEFT JOIN area a ON c.area_id = a.id " +
+                "WHERE c.id = ? AND c.eliminado = 0 AND c.activo = 1";
 
             try (Connection con = Conexion.getConnection(); 
                  PreparedStatement ps = con.prepareStatement(sql)) {
@@ -215,7 +215,7 @@ public List<Curso> listarPorGrado(int gradoId) {
 
                     //  Nombres para mostrar
                     curso.setGradoNombre(rs.getString("grado_nombre"));
-                    curso.setNivel(rs.getString("nivel"));
+                    curso.setNivel(rs.getString("grado_nivel")); 
                     curso.setProfesorNombre(rs.getString("profesor_nombre"));
                     curso.setArea(rs.getString("area_nombre"));
 
@@ -1044,5 +1044,40 @@ public List<Curso> listarPorAlumno(int alumnoId) {
             }
 
             return lista;
+        }
+           
+           /**
+            * OBTENER TURNO_ID DEL CURSO (desde su horario)
+            */
+           public int obtenerTurnoIdPorCurso(int cursoId) {
+            String sql1 = "SELECT h.turno_id FROM horario_clase h " +
+                          "WHERE h.curso_id = ? AND h.eliminado = 0 LIMIT 1";
+            String sql2 = "SELECT a.turno_id FROM alumno a " +
+                            "INNER JOIN curso c ON a.grado_id = c.grado_id " +
+                            "WHERE c.id = ? AND a.turno_id IS NOT NULL " +
+                            "AND a.activo = 1 " +
+                            "GROUP BY a.turno_id ORDER BY COUNT(*) DESC LIMIT 1";
+            try (Connection con = Conexion.getConnection()) {
+                try (PreparedStatement ps = con.prepareStatement(sql1)) {
+                    ps.setInt(1, cursoId);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next() && rs.getInt("turno_id") > 0) {
+                        System.out.println(">>> TURNO desde horario: " + rs.getInt("turno_id"));
+                        return rs.getInt("turno_id");
+                    }
+                }
+                try (PreparedStatement ps = con.prepareStatement(sql2)) {
+                    ps.setInt(1, cursoId);
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        System.out.println(">>> TURNO desde alumno: " + rs.getInt("turno_id"));
+                        return rs.getInt("turno_id");
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error obteniendo turno: " + e.getMessage());
+            }
+            System.out.println(">>> TURNO: usando default 1");
+            return 1;
         }
 }

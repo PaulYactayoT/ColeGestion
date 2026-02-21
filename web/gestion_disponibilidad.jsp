@@ -43,8 +43,13 @@
     <div class="flex h-screen overflow-hidden">
 
         <%-- ✅ SIDEBAR --%>
-        <%@ include file="includes/sidebar.jsp" %>
-
+        <%
+            String rolSidebarU = (String) session.getAttribute("rol");
+            String sidebarFileU = "administrativo".equals(rolSidebarU) 
+                                 ? "includes/sidebarAdministrativo.jsp" 
+                                 : "includes/sidebar.jsp";
+        %>
+        <jsp:include page="<%= sidebarFileU %>" />
         <main class="flex-1 flex flex-col overflow-y-auto">
 
             <%-- ✅ HEADER con foto dinámica --%>

@@ -20,6 +20,12 @@
     String mensaje = (String) session.getAttribute("mensaje");
     String error = (String) session.getAttribute("error");
     
+    // Leer mensaje de exito desde parametro URL
+    String successParam = request.getParameter("success");
+    if ("true".equals(successParam) && mensaje == null) {
+        mensaje = "Observacion registrada con exito.";
+    }
+    
     if (mensaje != null) session.removeAttribute("mensaje");
     if (error != null) session.removeAttribute("error");
 %>
@@ -30,7 +36,7 @@
     <%@ include file="includes/head.jsp" %>
     <title>Observaciones - <%= curso.getNombre() %></title>
     <style>
-        /* Estilos adicionales para la tabla */
+        /* Estilos para la tabla */
         .table-container {
             background: white;
             border-radius: 0.75rem;
@@ -50,30 +56,34 @@
         }
         
         .custom-table th {
-            background-color: #0b4eb8;
-            color: white;
+            background-color: #f8fafc;
+            color: #4b5563;
             font-weight: 600;
-            padding: 15px 20px;
+            padding: 1rem 1.5rem;
             text-align: left;
-            font-size: 13px;
+            font-size: 0.75rem;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         .dark .custom-table th {
-            background-color: #1e3a8a;
+            background-color: #283044;
+            color: #9ca3af;
+            border-bottom-color: #374151;
         }
         
         .custom-table td {
-            padding: 15px 20px;
+            padding: 1rem 1.5rem;
             border-bottom: 1px solid #e5e7eb;
-            color: #444;
+            color: #1f2937;
             vertical-align: middle;
-            font-size: 14px;
+            font-size: 0.875rem;
         }
         
         .dark .custom-table td {
             border-bottom-color: #374151;
-            color: #e5e7eb;
+            color: #f3f4f6;
         }
         
         .custom-table tbody tr:hover {
@@ -84,18 +94,73 @@
             background-color: #283044;
         }
         
+        /* Badges para tipo de observación */
+        .badge-positiva {
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .dark .badge-positiva {
+            background-color: #064e3b;
+            color: #a7f3d0;
+        }
+        
+        .badge-negativa {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .dark .badge-negativa {
+            background-color: #7f1d1d;
+            color: #fecaca;
+        }
+        
+        .badge-neutral {
+            background-color: #dbeafe;
+            color: #1e40af;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .dark .badge-neutral {
+            background-color: #1e3a8a;
+            color: #bfdbfe;
+        }
+        
+        /* Botones de acción */
         .btn-edit {
             background-color: #e0eaff;
             color: #0d6efd;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
             text-decoration: none;
-            font-size: 13px;
+            font-size: 0.75rem;
             font-weight: 500;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 0.375rem;
+            border: none;
+            cursor: pointer;
         }
         
         .btn-edit:hover {
@@ -105,53 +170,57 @@
         
         .btn-delete {
             background-color: #ffe5e7;
-            color: #d63345;
-            padding: 8px 16px;
-            border-radius: 6px;
+            color: #dc2626;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
             text-decoration: none;
-            font-size: 13px;
+            font-size: 0.75rem;
             font-weight: 500;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 0.375rem;
+            border: none;
+            cursor: pointer;
         }
         
         .btn-delete:hover {
-            background-color: #d63345;
+            background-color: #dc2626;
             color: white;
         }
         
         .btn-add {
             background-color: #0d6efd;
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
             font-weight: 500;
+            font-size: 0.875rem;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.5rem;
             box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
             transition: all 0.2s;
         }
         
         .btn-add:hover {
             background-color: #0b4eb8;
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
         
         .btn-back {
             background-color: white;
             color: #6b7280;
             border: 1px solid #e5e7eb;
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
             font-weight: 500;
+            font-size: 0.875rem;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.5rem;
             transition: all 0.2s;
         }
         
@@ -170,15 +239,41 @@
             background-color: #374151;
         }
         
-        .footer-custom {
-            background-color: #111827;
+        /* Curso badge */
+        .course-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
             color: white;
-            padding: 2rem 0;
-            margin-top: 2rem;
+            font-size: 0.875rem;
+            font-weight: 500;
         }
         
-        .dark .footer-custom {
-            background-color: #0f172a;
+        /* Info box */
+        .info-box {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+        
+        .dark .info-box {
+            background-color: rgba(30, 58, 138, 0.2);
+            border-color: #1e3a8a;
+        }
+        
+        /* Evidencia icon */
+        .evidencia-link {
+            color: #0d6efd;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+        }
+        
+        .evidencia-link:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -213,7 +308,7 @@
                 </div>
                 <% } %>
                 
-                <!-- Encabezado del curso -->
+                <!-- Encabezado del curso con gradiente (igual que notaForm) -->
                 <div class="bg-gradient-to-r from-primary to-blue-600 rounded-xl p-6 mb-8 text-white shadow-lg">
                     <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
@@ -222,31 +317,30 @@
                                 <strong><%= curso.getNombre() %></strong> - <%= curso.getGradoNombre() %>
                             </p>
                         </div>
-                        <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-6 py-3">
-                            <span class="text-sm uppercase tracking-wide opacity-80">Total:</span>
-                            <span class="text-2xl font-bold ml-2"><%= lista != null ? lista.size() : 0 %></span>
-                        </div>
+                        <span class="course-badge">
+                            <i class="fas fa-comment mr-2"></i>
+                            <%= lista != null ? lista.size() : 0 %> observaciones
+                        </span>
                     </div>
                 </div>
                 
                 <!-- Acciones -->
                 <div class="flex justify-between items-center mb-6">
-                    <a href="LoginServlet?accion=dashboard" class="btn-back">
-                        <i class="fas fa-arrow-left"></i> Regresar al Inicio
-                    </a>
                     <a href="ObservacionServlet?accion=registrar&curso_id=<%= curso.getId() %>" class="btn-add">
                         <i class="fas fa-plus"></i> Registrar Observación
                     </a>
                 </div>
                 
-                <!-- Tabla de observaciones -->
+                <!-- Tabla de observaciones (SIN EL HEADER INTERMEDIO) -->
                 <div class="table-container">
                     <div class="overflow-x-auto">
                         <table class="custom-table">
                             <thead>
                                 <tr>
                                     <th>Alumno</th>
+                                    <th>Tipo</th>
                                     <th>Observación</th>
+                                    <th>Evidencia</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
@@ -254,20 +348,63 @@
                                 <%
                                     if (lista != null && !lista.isEmpty()) {
                                         for (Observacion o : lista) {
+                                            String tipoClass = "";
+                                            String tipoIcon = "";
+                                            String tipoText = "";
+                                            
+                                            if ("POSITIVA".equals(o.getTipo())) {
+                                                tipoClass = "badge-positiva";
+                                                tipoIcon = "fa-smile";
+                                                tipoText = "Positiva";
+                                            } else if ("NEGATIVA".equals(o.getTipo())) {
+                                                tipoClass = "badge-negativa";
+                                                tipoIcon = "fa-frown";
+                                                tipoText = "Negativa";
+                                            } else {
+                                                tipoClass = "badge-neutral";
+                                                tipoIcon = "fa-meh";
+                                                tipoText = "Neutral";
+                                            }
                                 %>
                                 <tr>
-                                    <td class="font-medium"><%= o.getAlumnoNombre() %></td>
-                                    <td><%= o.getTexto() %></td>
-                                    <td class="text-center">
+                                    <td class="font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300">
+                                                <i class="fas fa-user-graduate text-xs"></i>
+                                            </div>
+                                            <%= o.getAlumnoNombre() %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="<%= tipoClass %>">
+                                            <i class="fas <%= tipoIcon %>"></i>
+                                            <%= tipoText %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="max-w-xs truncate" title="<%= o.getTexto() %>">
+                                            <%= o.getTexto() %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <% if (o.getRutaEvidencia() != null && !o.getRutaEvidencia().isEmpty()) { %>
+                                            <a href="#" class="evidencia-link" onclick="verEvidencia('<%= o.getRutaEvidencia() %>')">
+                                                <i class="fas fa-paperclip"></i> Ver archivo
+                                            </a>
+                                        <% } else { %>
+                                            <span class="text-gray-400 text-xs">Sin evidencia</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
                                         <div class="flex items-center justify-center gap-2">
                                             <a href="ObservacionServlet?accion=editar&id=<%= o.getId() %>&curso_id=<%= curso.getId() %>" 
-                                               class="btn-edit" title="Editar">
+                                               class="btn-edit" title="Editar observación">
                                                 <i class="fas fa-pencil-alt"></i> Editar
                                             </a>
                                             <a href="ObservacionServlet?accion=eliminar&id=<%= o.getId() %>&curso_id=<%= curso.getId() %>" 
                                                class="btn-delete" 
-                                               onclick="return confirm('¿Eliminar esta observación?')"
-                                               title="Eliminar">
+                                               onclick="return confirm('¿Estás seguro de eliminar esta observación? Esta acción no se puede deshacer.')"
+                                               title="Eliminar observación">
                                                 <i class="fas fa-trash-alt"></i> Eliminar
                                             </a>
                                         </div>
@@ -278,11 +415,10 @@
                                     } else {
                                 %>
                                 <tr>
-                                    <td colspan="3" class="text-center py-12">
+                                    <td colspan="5" class="text-center py-12">
                                         <div class="text-gray-500 dark:text-gray-400">
-                                            <i class="fas fa-comment-slash fa-3x mb-3"></i>
-                                            <p class="text-lg">No hay observaciones registradas para este curso.</p>
-                                            <p class="text-sm mt-2">Haz clic en "Registrar Observación" para agregar una nueva.</p>
+                                            <i class="fas fa-comment-slash fa-4x mb-4 opacity-50"></i>
+                                            <p class="text-lg font-medium mb-2">No hay observaciones registradas</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -292,7 +428,7 @@
                     </div>
                 </div>
                 
-                <!-- Info box -->
+                <!-- Info box (igual que notaForm) -->
                 <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <div class="flex items-start gap-3">
                         <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 mt-0.5">
@@ -304,17 +440,39 @@
                                 <li>• Las observaciones son visibles para los padres de familia</li>
                                 <li>• Puedes editar o eliminar observaciones existentes</li>
                                 <li>• Registra observaciones positivas o áreas de mejora para los estudiantes</li>
+                                <li>• Las observaciones con evidencia adjunta tienen un icono de papel clip</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
-
-            </footer>
         </main>
     </div>
 
-    <!-- Bootstrap JS (opcional, solo si necesitas funcionalidad de Bootstrap) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Función para ver evidencia (puedes personalizarla según tu necesidad)
+        function verEvidencia(ruta) {
+            // Aquí puedes abrir un modal o redirigir al archivo
+            window.open(ruta, '_blank');
+        }
+        
+        // Confirmación para eliminar
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                if (!confirm('¿Estás seguro de eliminar esta observación? Esta acción no se puede deshacer.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+        
+        // Auto-ocultar mensajes después de 5 segundos
+        setTimeout(function() {
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+    </script>
 </body>
 </html>

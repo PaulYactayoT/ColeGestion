@@ -134,8 +134,10 @@ public class DisponibilidadServlet extends HttpServlet {
                 d.setHoraInicio(horaInicio);
                 d.setHoraFin(horaFin);
                 
-                boolean exito = dao.registrarDisponibilidad(d);
-                setMensaje(request, exito, "Horario registrado correctamente.", "Error al guardar (posible duplicado).");
+                // FIX: usar mensaje real del procedimiento almacenado
+                DisponibilidadDAO.ResultadoDisponibilidad resultado = dao.registrarDisponibilidadConMensaje(d);
+                request.setAttribute("mensaje", resultado.mensaje);
+                request.setAttribute("tipoMensaje", resultado.exito ? "success" : "danger");
             }
             
         } catch (Exception e) {
@@ -239,7 +241,7 @@ public class DisponibilidadServlet extends HttpServlet {
     }
 
     private void setMensaje(HttpServletRequest request, boolean exito, String msjOk, String msjError) {
-        if (exito) {
+        if (exito) {  
             request.setAttribute("mensaje", msjOk);
             request.setAttribute("tipoMensaje", "success");
         } else {

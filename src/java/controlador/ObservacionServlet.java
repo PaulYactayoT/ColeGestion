@@ -1,132 +1,218 @@
-/*
- * SERVLET PARA GESTION DE OBSERVACIONES SOBRE ALUMNOS
- * 
- * Funcionalidades: CRUD completo de observaciones, por curso y alumno
- * Roles: Docente (gestion), Padre (consulta)
- * Integracion: Relacion con cursos, alumnos y profesores
- */
 package controlador;
 
-import modelo.Observacion;
-import modelo.ObservacionDAO;
-import modelo.AlumnoDAO;
+import modelo.Alumno;
 import modelo.Curso;
 import modelo.CursoDAO;
-import modelo.Profesor;
-
+import modelo.Observacion;
+import modelo.ObservacionDAO;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.ArrayList;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
+import javax.servlet.http.Part;
 
+@WebServlet(name = "ObservacionServlet", urlPatterns = {"/ObservacionServlet"})
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024 * 1, // 1MB
+    maxFileSize = 1024 * 1024 * 5,       // 5MB
+    maxRequestSize = 1024 * 1024 * 10    // 10MB
+)
 public class ObservacionServlet extends HttpServlet {
 
-    // DAO para operaciones con la tabla de observaciones
-    ObservacionDAO dao = new ObservacionDAO();
+    private ObservacionDAO dao = new ObservacionDAO();
+    private CursoDAO cursoDAO = new CursoDAO();
 
-    /**
-     * METODO GET - CONSULTAS Y GESTION DE OBSERVACIONES
-     * 
-     * Acciones soportadas:
-     * - listar: Listar observaciones de un curso
-     * - registrar: Formulario para crear nueva observacion
-     * - editar: Formulario para modificar observacion existente
-     * - eliminar: Eliminar observacion
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession();
-        Profesor docente = (Profesor) session.getAttribute("docente");
-
         String accion = request.getParameter("accion");
-        if (accion == null) {
-            accion = "listar"; // Accion por defecto
-        }
+        if (accion == null) accion = "listar";
 
         try {
-            // Obtener ID del curso (parametro obligatorio)
-            int cursoId = Integer.parseInt(request.getParameter("curso_id"));
-            Curso curso = new CursoDAO().obtenerPorId(cursoId);
+            String cursoIdParam = request.getParameter("curso_id");
+            if (cursoIdParam == null || cursoIdParam.isEmpty()) {
+                response.sendRedirect("docenteDashboard.jsp");
+                return;
+            }
+            
+            int cursoId = Integer.parseInt(cursoIdParam);
+            Curso curso = cursoDAO.obtenerPorId(cursoId);
             request.setAttribute("curso", curso);
 
-            // Ejecutar accion segun parametro
+            // Recuperamos parámetros de filtro
+            String nivel = request.getParameter("nivel");
+            String gradoIdStr = request.getParameter("grado_id");
+            String turnoIdStr = request.getParameter("turno_id");
+
             switch (accion) {
                 case "listar":
-                    // Listar observaciones del curso
                     request.setAttribute("lista", dao.listarPorCurso(cursoId));
                     request.getRequestDispatcher("observacionesDocente.jsp").forward(request, response);
                     break;
 
                 case "registrar":
-                    // Formulario para nueva observacion
-                    request.setAttribute("alumnos", new AlumnoDAO().listarPorGrado(curso.getGradoId()));
-                    request.getRequestDispatcher("observacionForm.jsp").forward(request, response);
-                    break;
-
                 case "editar":
-                    // Formulario para editar observacion existente
-                    int idEditar = Integer.parseInt(request.getParameter("id"));
-                    Observacion obs = dao.obtenerPorId(idEditar);
-                    request.setAttribute("observacion", obs);
-                    request.setAttribute("alumnos", new AlumnoDAO().listarPorGrado(curso.getGradoId()));
+                    System.out.println(">>> gradoIdStr = [" + gradoIdStr + "]");
+                    System.out.println(">>> turnoIdStr = [" + turnoIdStr + "]");
+
+                    if (accion.equals("editar")) {
+                        String idEditarStr = request.getParameter("id");
+                        if (idEditarStr != null) {
+                            int idEditar = Integer.parseInt(idEditarStr);
+                            Observacion obs = dao.obtenerPorId(idEditar);
+                            request.setAttribute("observacion", obs);
+                        }
+                    }
+
+                    // Lógica de filtrado: Solo filtramos si el usuario envió el grado
+                    if (gradoIdStr != null && !gradoIdStr.isEmpty()) {
+                        int gId = Integer.parseInt(gradoIdStr);
+                        int tId = (turnoIdStr != null && !turnoIdStr.isEmpty()) ? Integer.parseInt(turnoIdStr) : 1;
+                        
+                        List<Alumno> alumnosFiltrados = dao.listarAlumnosPorFiltro(nivel, gId, tId);
+                        request.setAttribute("alumnos", alumnosFiltrados);
+                        
+                        // Devolvemos los valores para mantener los SELECTS seleccionados
+                        request.setAttribute("nivel_sel", nivel);
+                        request.setAttribute("grado_sel", gId);
+                        request.setAttribute("turno_sel", tId);
+                    } else {
+                        request.setAttribute("alumnos", new ArrayList<Alumno>());
+                        if (curso != null) {
+                            int turnoAutomatico = cursoDAO.obtenerTurnoIdPorCurso(curso.getId());
+                            System.out.println(">>> TURNO DETECTADO: " + turnoAutomatico);
+
+                            String nivelCurso = curso.getNivel();
+                            int gradoCurso = curso.getGradoId();
+
+                            // Buscar alumnos automáticamente
+                            List<Alumno> alumnosAuto = dao.listarAlumnosPorFiltro(nivelCurso, gradoCurso, turnoAutomatico);
+                            request.setAttribute("alumnos", alumnosAuto);
+
+                            request.setAttribute("nivel_sel", nivelCurso);
+                            request.setAttribute("grado_sel", gradoCurso);
+                            request.setAttribute("turno_sel", turnoAutomatico);
+                        }
+                    }
                     request.getRequestDispatcher("observacionForm.jsp").forward(request, response);
                     break;
 
                 case "eliminar":
-                    // Eliminar observacion
                     int idEliminar = Integer.parseInt(request.getParameter("id"));
                     dao.eliminar(idEliminar);
                     response.sendRedirect("ObservacionServlet?accion=listar&curso_id=" + cursoId);
                     break;
-
-                default:
-                    // Redireccion por defecto
-                    response.sendRedirect("docenteDashboard.jsp");
             }
-
         } catch (Exception e) {
-            // Manejo de errores
-            e.printStackTrace();
-            response.sendRedirect("docenteDashboard.jsp");
+            mostrarErrorEnPantalla(response, e);
         }
     }
 
-    /**
-     * METODO POST - CREAR Y ACTUALIZAR OBSERVACIONES
-     * 
-     * Maneja el envio de formularios para crear nuevas observaciones
-     * y actualizar observaciones existentes
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        request.setCharacterEncoding("UTF-8");
 
-        // Determinar si es creacion (id=0) o actualizacion (id>0)
-        int id = request.getParameter("id") != null && !request.getParameter("id").isEmpty()
-                ? Integer.parseInt(request.getParameter("id")) : 0;
+        try {
+            String idStr = request.getParameter("id");
+            int id = (idStr != null && !idStr.isEmpty()) ? Integer.parseInt(idStr) : 0;
+            int cursoId = Integer.parseInt(request.getParameter("curso_id"));
+            
+            // Validar que se haya seleccionado un alumno
+            String alumnoIdStr = request.getParameter("alumno_id");
+            if (alumnoIdStr == null || alumnoIdStr.isEmpty()) {
+                throw new Exception("Debe seleccionar un alumno de la lista filtrada.");
+            }
+            int alumnoId = Integer.parseInt(alumnoIdStr);
+            
+            String texto = request.getParameter("texto");
+            String tipo = request.getParameter("tipo");
 
-        // Construir objeto observacion con datos del formulario
-        Observacion o = new Observacion();
-        o.setCursoId(Integer.parseInt(request.getParameter("curso_id")));
-        o.setAlumnoId(Integer.parseInt(request.getParameter("alumno_id")));
-        o.setTexto(request.getParameter("texto"));
+            if(texto == null || texto.trim().isEmpty()) {
+                throw new Exception("La descripción de la observación es obligatoria.");
+            }
 
-        // Ejecutar operacion en base de datos
-        boolean resultado;
-        if (id == 0) {
-            resultado = dao.agregar(o); // Nueva observacion
-            System.out.println("Nueva observacion creada para alumno ID: " + o.getAlumnoId());
-        } else {
+            // Gestionar archivo
+            String nombreArchivo = null;
+            if (id > 0) {
+                Observacion obsExistente = dao.obtenerPorId(id);
+                if (obsExistente != null) nombreArchivo = obsExistente.getRutaEvidencia();
+            }
+
+            String nuevoArchivo = subirArchivoManual(request);
+            if (nuevoArchivo != null) nombreArchivo = nuevoArchivo;
+
+            Observacion o = new Observacion();
             o.setId(id);
-            resultado = dao.actualizar(o); // Actualizar observacion
-            System.out.println("Observacion actualizada (ID: " + id + ")");
-        }
+            o.setCursoId(cursoId);
+            o.setAlumnoId(alumnoId);
+            o.setTexto(texto);
+            o.setTipo(tipo);
+            o.setRutaEvidencia(nombreArchivo);
 
-        // Redirigir a la lista de observaciones del curso
-        response.sendRedirect("ObservacionServlet?accion=listar&curso_id=" + o.getCursoId());
+            boolean exito = (id == 0) ? dao.agregar(o) : dao.actualizar(o);
+
+            if (exito) {
+                response.sendRedirect("ObservacionServlet?accion=listar&curso_id=" + cursoId + "&success=true");
+            } else {
+                throw new Exception("Error al guardar en la base de datos.");
+            }
+        } catch (Exception e) {
+            mostrarErrorEnPantalla(response, e);
+        }
+    }
+
+        private String subirArchivoManual(HttpServletRequest request) {
+        try {
+            Part filePart = request.getPart("evidencia");
+            if (filePart != null && filePart.getSize() > 0) {
+                String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+
+                // ✅ VALIDAR EXTENSIÓN - AGREGAR AQUÍ
+                String ext = fileName.toLowerCase();
+                if (!ext.endsWith(".jpg") && !ext.endsWith(".jpeg") && 
+                    !ext.endsWith(".png") && !ext.endsWith(".pdf") && 
+                    !ext.endsWith(".docx")) {
+                    System.err.println("Archivo rechazado: " + fileName);
+                    return null;
+                }
+
+                String limpio = java.text.Normalizer.normalize(fileName, java.text.Normalizer.Form.NFD)
+                                .replaceAll("[^\\p{ASCII}]", "").replaceAll("\\s+", "_");
+
+                String uniqueFileName = System.currentTimeMillis() + "_" + limpio;
+                String applicationPath = request.getServletContext().getRealPath("");
+                String uploadDir = "assets" + File.separator + "evidencias";
+                String uploadFilePath = applicationPath + File.separator + uploadDir;
+                File uploadDirFile = new File(uploadFilePath);
+                if (!uploadDirFile.exists()) uploadDirFile.mkdirs();
+                filePart.write(uploadFilePath + File.separator + uniqueFileName);
+                return uniqueFileName;
+            }
+        } catch (Exception e) { 
+            System.err.println("Error subiendo archivo: " + e.getMessage());
+        }
+        return null;
+    }
+    private void mostrarErrorEnPantalla(HttpServletResponse response, Exception e) throws IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        out.println("<html><body style='font-family:sans-serif; padding:40px; background:#fef2f2;'>");
+        out.println("<div style='max-width:600px; margin:auto; border:2px solid #ef4444; padding:20px; border-radius:12px; background:white;'>");
+        out.println("<h2 style='color:#b91c1c; margin-top:0;'>⚠️ Error de Validación</h2>");
+        out.println("<p style='color:#4b5563;'><b>Detalle:</b> " + e.getMessage() + "</p>");
+        out.println("<hr style='border:1px solid #fee2e2;'>");
+        out.println("<button onclick='history.back()' style='background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold;'>Intentar de nuevo</button>");
+        out.println("</div></body></html>");
     }
 }

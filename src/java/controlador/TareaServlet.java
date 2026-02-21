@@ -41,7 +41,7 @@ public class TareaServlet extends HttpServlet {
         
         if (!esRolValidoParaTareas(rol)) {
             session.setAttribute("error", "No tiene permisos para acceder a esta sección");
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("DocenteDashboardServlet");
             return;
         }
 
@@ -55,11 +55,11 @@ public class TareaServlet extends HttpServlet {
                 case "eliminar": manejarEliminarTarea(request, response, session); break;
                 case "listar": manejarListarTareas(request, response, session); break;
                 case "detalle": manejarDetalleTarea(request, response, session); break;
-                default: response.sendRedirect("dashboard.jsp");
+                default: response.sendRedirect("DocenteDashboardServlet");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("DocenteDashboardServlet");
         }
     }
 
@@ -75,7 +75,7 @@ public class TareaServlet extends HttpServlet {
 
         String rol = (String) session.getAttribute("rol");
         if (!esRolValidoParaTareas(rol)) {
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("DocenteDashboardServlet");
             return;
         }
 
@@ -104,11 +104,11 @@ public class TareaServlet extends HttpServlet {
 
     private void manejarVerTarea(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws ServletException, IOException {
         String cursoIdParam = request.getParameter("curso_id");
-        if (cursoIdParam == null || cursoIdParam.isEmpty()) { response.sendRedirect("dashboard.jsp"); return; }
+        if (cursoIdParam == null || cursoIdParam.isEmpty()) { response.sendRedirect("DocenteDashboardServlet"); return; }
         
         int cursoId = Integer.parseInt(cursoIdParam);
         Curso curso = cursoDao.obtenerPorId(cursoId);
-        if (curso == null) { response.sendRedirect("dashboard.jsp"); return; }
+        if (curso == null) { response.sendRedirect("DocenteDashboardServlet"); return; }
 
         request.setAttribute("curso", curso);
         // Aquí dao.listarPorCurso ya trae el estado calculado y la hora
@@ -146,7 +146,7 @@ public class TareaServlet extends HttpServlet {
     }
 
     private void manejarListarTareas(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException {
-        response.sendRedirect("dashboard.jsp");
+        response.sendRedirect("DocenteDashboardServlet");
     }
 
     private void manejarDetalleTarea(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws ServletException, IOException {
@@ -271,7 +271,7 @@ public class TareaServlet extends HttpServlet {
             
         } catch (NumberFormatException e) {
             session.setAttribute("error", "Error en formato de datos numéricos");
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("DocenteDashboardServlet");
         }
     }
 
@@ -315,11 +315,11 @@ public class TareaServlet extends HttpServlet {
                 response.sendRedirect("TareaServlet?accion=ver&curso_id=" + t.getCursoId());
             } else {
                 session.setAttribute("error", "Tarea no encontrada");
-                response.sendRedirect("dashboard.jsp");
+                response.sendRedirect("DocenteDashboardServlet");
             }
         } catch (NumberFormatException e) {
             session.setAttribute("error", "Error en formato de datos numéricos");
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect("DocenteDashboardServlet");
         }
     }
 }

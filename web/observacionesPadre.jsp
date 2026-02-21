@@ -1,164 +1,551 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="modelo.Padre, modelo.PadreDAO, modelo.ObservacionDAO, modelo.Observacion, java.util.List" %>
+<%-- 
+    Document   : observacionesPadre
+    Created on : 20 feb. 2026
+    Author     : Ocelot
+--%>
 
+<%@page import="modelo.Observacion"%>
+<%@page import="java.util.List"%>
 <%
-    // --- 1. LÃ“GICA DE SESIÃ“N ---
-    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    response.setHeader("Pragma", "no-cache");
-    response.setDateHeader("Expires", 0);
-
-    Padre padre = (Padre) session.getAttribute("padre");
-    if (padre == null) {
-        String username = (String) session.getAttribute("usuario");
-        if (username != null) {
-            PadreDAO padreDAO = new PadreDAO();
-            padre = padreDAO.obtenerPorUsername(username);
-            if (padre != null) {
-                session.setAttribute("padre", padre);
-                session.setAttribute("personaId", padre.getId());
-            }
-        }
-        if (padre == null) {
-            response.sendRedirect("index.jsp?error=padre_no_encontrado");
-            return;
-        }
-    }
-
-    boolean tieneAlumno = padre.getAlumnoId() > 0;
-    int alumnoId = padre.getAlumnoId();
+    List<Observacion> observaciones = (List<Observacion>) request.getAttribute("observaciones");
     
-    // --- 2. OBTENCIÃ“N DE DATOS ---
-    List<Observacion> observaciones = null;
+    String mensaje = (String) session.getAttribute("mensaje");
+    String error   = (String) session.getAttribute("error");
     
-    if (tieneAlumno) {
-        ObservacionDAO observacionDAO = new ObservacionDAO();
-        observaciones = observacionDAO.listarPorAlumno(alumnoId);
-    }
+    if (mensaje != null) session.removeAttribute("mensaje");
+    if (error   != null) session.removeAttribute("error");
 %>
 
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Observaciones - San Antonio</title>
-    
-    <!-- INCLUIR HEAD.JSP CON TODAS LAS CONFIGURACIONES -->
-    <jsp:include page="includes/head.jsp" />
-    
+    <%@ include file="includes/head.jsp" %>
+    <title>Observaciones de mi Hijo</title>
     <style>
-        .table-row-hover:hover td {
-            background-color: #f8fafc;
+        /* ============================================================
+           LAYOUT
+           El sidebar usa: position fixed, w-64 (= 256px), h-full, z-20
+           Por eso el main y el header deben arrancar desde 256px
+        ============================================================ */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
         }
-        .dark .table-row-hover:hover td {
-            background-color: #1e293b;
+
+        .main-content {
+            margin-left: 256px;   /* w-64 de Tailwind = 256px */
+            min-height: 100vh;
+            background-color: #f9fafb;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dark .main-content {
+            background-color: #111827;
+        }
+
+        .content-area {
+            padding: 2rem;
+            flex: 1;
+        }
+
+        /* ============================================================
+           CARD SUPERIOR
+        ============================================================ */
+        .header-card {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+            border-radius: 0.875rem;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            color: white;
+            box-shadow: 0 4px 20px rgba(29, 78, 216, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .header-card h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 4px 0;
+        }
+
+        .header-card p {
+            color: #bfdbfe;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .total-pill {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 0.875rem;
+            padding: 0.75rem 2rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .total-pill .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            display: block;
+            opacity: 0.85;
+        }
+
+        .total-pill .number {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        /* ============================================================
+           BOTÓN REGRESAR
+        ============================================================ */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: white;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-bottom: 1.25rem;
+        }
+
+        .btn-back:hover {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .dark .btn-back {
+            background-color: #283044;
+            color: #e5e7eb;
+            border-color: #4b5563;
+        }
+
+        /* ============================================================
+           TABLA
+        ============================================================ */
+        .table-container {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .dark .table-container {
+            background: #1a2233;
+            border-color: #374151;
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .col-curso     { width: 20%; }
+        .col-tipo      { width: 16%; }
+        .col-obs       { width: 42%; }
+        .col-evidencia { width: 22%; }
+
+        .custom-table thead th {
+            background-color: #0b4eb8;
+            color: white;
+            font-weight: 600;
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .dark .custom-table thead th {
+            background-color: #1e3a8a;
+        }
+
+        .custom-table tbody td {
+            padding: 14px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #374151;
+            vertical-align: middle;
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+
+        .dark .custom-table tbody td {
+            border-bottom-color: #2d3748;
+            color: #e2e8f0;
+        }
+
+        .custom-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #f5f8ff;
+        }
+
+        .dark .custom-table tbody tr:hover {
+            background-color: #22304a;
+        }
+
+        /* ============================================================
+           BADGES
+        ============================================================ */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 99px;
+            font-weight: 700;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .badge-positiva { background: #10b981; color: white; }
+        .badge-negativa { background: #ef4444; color: white; }
+        .badge-neutral  { background: #6b7280; color: white; }
+
+        /* ============================================================
+           OBSERVACIÓN
+        ============================================================ */
+        .obs-text {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .dark .obs-text { color: #e2e8f0; }
+
+        .obs-meta {
+            font-size: 11px;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ============================================================
+           BOTÓN EVIDENCIA
+        ============================================================ */
+        .btn-evidencia {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #e0eaff;
+            color: #1d4ed8;
+            padding: 7px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-evidencia:hover {
+            background-color: #1d4ed8;
+            color: white;
+        }
+
+        .sin-evidencia {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        /* ============================================================
+           ESTADO VACÍO
+        ============================================================ */
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            color: #d1d5db;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .empty-state .title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .empty-state .subtitle {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        /* ============================================================
+           CAJA INFORMATIVA
+        ============================================================ */
+        .info-box {
+            margin-top: 1.5rem;
+            padding: 1rem 1.25rem;
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.75rem;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .dark .info-box {
+            background-color: rgba(30, 58, 138, 0.15);
+            border-color: #1e40af;
+        }
+
+        .info-box-icon {
+            color: #3b82f6;
+            font-size: 1.1rem;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .info-box h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e40af;
+            margin: 0 0 8px 0;
+        }
+
+        .dark .info-box h4 { color: #93c5fd; }
+
+        .info-box ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .info-box li {
+            font-size: 0.8rem;
+            color: #1d4ed8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dark .info-box li { color: #93c5fd; }
+
+        .mini-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        /* ============================================================
+           ALERTAS
+        ============================================================ */
+        .alert {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background-color: #d1fae5;
+            border: 1px solid #6ee7b7;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background-color: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
         }
     </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 min-h-screen flex transition-colors duration-200">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
 
-    <!-- INCLUIR SIDEBAR PARA PADRE -->
-    <jsp:include page="includes/sidebarPadre.jsp" />
-    
-    <main class="flex-1 md:ml-64 flex flex-col min-h-screen">
-        
-        <!-- INCLUIR HEADER -->
+    <%-- Sidebar (position:fixed, 256px de ancho) --%>
+    <%@ include file="includes/sidebarPadre.jsp" %>
+
+    <%-- Main: empieza en 256px para no quedar detrás del sidebar --%>
+    <main class="main-content">
+
+        <%-- Header sticky (ocupa todo el ancho del main, ya desplazado) --%>
+        <% request.setAttribute("pageTitle", "Observaciones de mi Hijo"); %>
         <jsp:include page="includes/header.jsp" />
 
-        <div class="p-6 md:p-8 max-w-7xl mx-auto w-full">
-            
-            <!-- Banner principal - se mantiene igual porque es gradiente -->
-            <div class="bg-gradient-to-r from-primary to-blue-600 rounded-2xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
-                <div class="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-                
-                <div class="relative z-10">
-                    <h2 class="text-2xl font-bold flex items-center gap-2">
-                        <i class="fas fa-comments opacity-70"></i>
-                        Hoja de Observaciones
-                    </h2>
-                    <p class="text-blue-100 text-sm font-medium mt-1">
-                        Comentarios y anotaciones de los docentes sobre el desempeÃ±o de <%= padre.getAlumnoNombre() %>.
+        <div class="content-area">
+
+            <%-- Alertas --%>
+            <% if (mensaje != null) { %>
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle"></i>
+                <span><%= mensaje %></span>
+            </div>
+            <% } %>
+
+            <% if (error != null) { %>
+            <div class="alert alert-error" role="alert">
+                <i class="fas fa-exclamation-circle"></i>
+                <span><%= error %></span>
+            </div>
+            <% } %>
+
+            <%-- Card superior --%>
+            <div class="header-card">
+                <div>
+                    <h2>Historial de Observaciones</h2>
+                    <p>
+                        <i class="fas fa-child mr-1"></i>
+                        Consulte el registro de conducta y desempeño de su menor hijo.
                     </p>
                 </div>
-
-                <div class="relative z-10 flex gap-2">
-                    <a href="ExportServlet?report=observaciones&type=pdf&alumno_id=<%= alumnoId%>" 
-                       class="bg-white text-primary hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-sm transition-all dark:bg-card-dark dark:text-white dark:hover:bg-gray-800">
-                        <i class="fas fa-file-pdf"></i> Imprimir Reporte
-                    </a>
+                <div class="total-pill">
+                    <span class="label">Total</span>
+                    <span class="number"><%= observaciones != null ? observaciones.size() : 0 %></span>
                 </div>
             </div>
 
-            <!-- Tarjeta de observaciones - CON DARK MODE -->
-            <div class="bg-white dark:bg-card-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark overflow-hidden">
-                
-                <div class="p-4 border-b border-gray-100 dark:border-border-dark flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
-                    <h3 class="font-bold text-slate-700 dark:text-slate-300">Historial de Registros</h3>
-                    <div class="flex gap-2">
-                        <span class="text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-card-dark border px-2 py-1 rounded dark:border-border-dark">Orden cronolÃ³gico</span>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+            <%-- Tabla --%>
+            <div class="table-container">
+                <div style="overflow-x: auto;">
+                    <table class="custom-table">
                         <thead>
-                            <tr class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-border-dark text-xs uppercase text-slate-500 dark:text-slate-400 font-bold tracking-wider">
-                                <th class="px-6 py-4 w-1/4">Curso</th>
-                                <th class="px-6 py-4 w-3/4">Detalle de la ObservaciÃ³n</th>
+                            <tr>
+                                <th class="col-curso">Curso</th>
+                                <th class="col-tipo">Tipo</th>
+                                <th class="col-obs">Observación</th>
+                                <th class="col-evidencia">Evidencia</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-border-dark text-sm text-slate-700 dark:text-slate-300">
-                            
-                            <% if (observaciones != null && !observaciones.isEmpty()) { 
-                                for (Observacion obs : observaciones) {
+                        <tbody>
+                            <%
+                                if (observaciones != null && !observaciones.isEmpty()) {
+                                    for (Observacion o : observaciones) {
+                                        String badgeClass = "badge ";
+                                        String icon = "";
+
+                                        String tipo = o.getTipo() != null ? o.getTipo() : "";
+                                        if ("POSITIVA".equals(tipo)) {
+                                            badgeClass += "badge-positiva";
+                                            icon = "fa-smile";
+                                        } else if ("NEGATIVA".equals(tipo)) {
+                                            badgeClass += "badge-negativa";
+                                            icon = "fa-frown";
+                                        } else {
+                                            badgeClass += "badge-neutral";
+                                            icon = "fa-meh";
+                                        }
                             %>
-                            <tr class="table-row-hover transition-colors group">
-                                <td class="px-6 py-4 align-top">
-                                    <div class="flex flex-col">
-                                        <span class="font-bold text-slate-800 dark:text-slate-200 text-base mb-1"><%= obs.getCursoNombre() %></span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 align-top">
-                                    <div class="relative pl-4 border-l-2 border-gray-200 dark:border-border-dark group-hover:border-primary transition-colors">
-                                        <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-                                            <%= obs.getTexto() %>
-                                        </p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <%  } 
-                               } else { %>
-                            
                             <tr>
-                                <td colspan="2" class="px-6 py-16 text-center text-slate-500 dark:text-slate-400">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-full mb-3">
-                                            <span class="material-symbols-outlined text-4xl text-blue-300 dark:text-blue-600">thumb_up</span>
-                                        </div>
-                                        <h3 class="text-lg font-bold text-slate-700 dark:text-slate-300">Â¡Todo va bien!</h3>
-                                        <p class="text-sm mt-1 max-w-sm text-slate-500 dark:text-slate-400">
-                                            No se han registrado observaciones para este alumno hasta el momento.
-                                        </p>
+                                <td class="col-curso">
+                                    <strong><%= o.getCursoNombre() != null ? o.getCursoNombre() : "?" %></strong>
+                                </td>
+                                <td class="col-tipo">
+                                    <span class="<%= badgeClass %>">
+                                        <i class="fas <%= icon %>"></i>
+                                        <%= tipo %>
+                                    </span>
+                                </td>
+                                <td class="col-obs">
+                                    <div class="obs-text"><%= o.getTexto() %></div>
+                                    <div class="obs-meta">
+                                        <i class="far fa-calendar-alt"></i> Registro Oficial
+                                    </div>
+                                </td>
+                                <td class="col-evidencia">
+                                    <% if (o.getRutaEvidencia() != null && !o.getRutaEvidencia().isEmpty()) { %>
+                                        <a href="assets/evidencias/<%= o.getRutaEvidencia() %>"
+                                           target="_blank" class="btn-evidencia">
+                                            <i class="fas fa-paperclip"></i> Ver Evidencia
+                                        </a>
+                                    <% } else { %>
+                                        <span class="sin-evidencia">
+                                            <i class="fas fa-paperclip"></i> Sin archivo
+                                        </span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <%
+                                    }
+                                } else {
+                            %>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="empty-state">
+                                        <i class="fas fa-comment-slash"></i>
+                                        <div class="title">No hay observaciones registradas</div>
+                                        <div class="subtitle">No se han registrado observaciones para su hijo hasta el momento.</div>
                                     </div>
                                 </td>
                             </tr>
-                            
                             <% } %>
                         </tbody>
                     </table>
                 </div>
-                
-                <div class="px-6 py-4 border-t border-gray-200 dark:border-border-dark bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
-                    <span>Mostrando registros del aÃ±o escolar actual</span>
+            </div>
+
+            <%-- Caja informativa --%>
+            <div class="info-box">
+                <i class="fas fa-info-circle info-box-icon"></i>
+                <div>
+                    <h4>Información importante:</h4>
+                    <ul>
+                        <li>
+                            <span class="mini-badge" style="background:#10b981;">POSITIVAS</span>
+                            Destacan logros y buen comportamiento.
+                        </li>
+                        <li>
+                            <span class="mini-badge" style="background:#ef4444;">NEGATIVAS</span>
+                            Indican áreas de mejora o incidentes.
+                        </li>
+                        <li>
+                            <span class="mini-badge" style="background:#6b7280;">NEUTRALES</span>
+                            Son de carácter informativo.
+                        </li>
+                        <li>
+                            <i class="fas fa-lock" style="color:#3b82f6; font-size:12px;"></i>
+                            Las observaciones son visibles solo para los padres del alumno.
+                        </li>
+                    </ul>
                 </div>
             </div>
 
-        </div>
-        
-        <footer class="mt-auto py-6 text-center text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-border-dark bg-white dark:bg-card-dark">
-            &copy; 2025 Colegio San Antonio - Todos los derechos reservados.
-        </footer>
+        </div><%-- /content-area --%>
     </main>
 
+    <script>
+        // Auto-ocultar alertas tras 5 segundos
+        setTimeout(function () {
+            document.querySelectorAll('[role="alert"]').forEach(function (el) {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(function () { el.remove(); }, 500);
+            });
+        }, 5000);
+    </script>
 </body>
 </html>

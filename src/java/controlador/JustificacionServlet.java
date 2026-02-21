@@ -45,10 +45,10 @@ public class JustificacionServlet extends HttpServlet {
                 break;
             case "listar":
             case "pending":
-                response.sendRedirect("revisarJustificaciones.jsp");
+                request.getRequestDispatcher("revisarJustificaciones.jsp").forward(request, response);
                 break;
             default:
-                response.sendRedirect("revisarJustificaciones.jsp");
+                request.getRequestDispatcher("revisarJustificaciones.jsp").forward(request, response);
         }
     }
     
@@ -61,7 +61,7 @@ public class JustificacionServlet extends HttpServlet {
         System.out.println("JustificacionServlet - POST - Acción: " + accion);
         
         if (accion == null) {
-            response.sendRedirect("revisarJustificaciones.jsp");
+            request.getRequestDispatcher("revisarJustificaciones.jsp").forward(request, response);
             return;
         }
         
@@ -76,7 +76,7 @@ public class JustificacionServlet extends HttpServlet {
                 rechazarJustificacion(request, response);
                 break;
             default:
-                response.sendRedirect("revisarJustificaciones.jsp");
+                request.getRequestDispatcher("revisarJustificaciones.jsp").forward(request, response);
         }
     }
     
@@ -279,14 +279,14 @@ public class JustificacionServlet extends HttpServlet {
                 session.setAttribute("error", "Error al aprobar justificación");
             }
             
-            response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId);
+            request.getRequestDispatcher("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId).forward(request, response);
             
         } catch (Exception e) {
             System.out.println("Error al aprobar: " + e.getMessage());
             e.printStackTrace();
             HttpSession session = request.getSession();
             session.setAttribute("error", "Error: " + e.getMessage());
-            response.sendRedirect("revisarJustificaciones.jsp");
+            request.getRequestDispatcher("revisarJustificaciones.jsp").forward(request, response);
         }
     }
     
@@ -308,7 +308,7 @@ public class JustificacionServlet extends HttpServlet {
             
             if (observaciones == null || observaciones.trim().isEmpty()) {
                 session.setAttribute("error", "Debe especificar el motivo del rechazo");
-                response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId);
+                request.getRequestDispatcher("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId).forward(request, response);
                 return;
             }
             
@@ -324,14 +324,14 @@ public class JustificacionServlet extends HttpServlet {
                 session.setAttribute("error", "Error al rechazar justificación");
             }
             
-            response.sendRedirect("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId);
+            request.getRequestDispatcher("revisarJustificaciones.jsp?cursoId=" + cursoId + "&turnoId=" + turnoId).forward(request, response);
             
         } catch (Exception e) {
             System.out.println("Error al rechazar: " + e.getMessage());
             e.printStackTrace();
             HttpSession session = request.getSession();
             session.setAttribute("error", "Error: " + e.getMessage());
-            response.sendRedirect("revisarJustificaciones.jsp");
+            request.getRequestDispatcher("revisarJustificaciones.jsp").forward(request, response);
         }
     }
     

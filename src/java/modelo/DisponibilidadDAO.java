@@ -11,15 +11,29 @@ import conexion.Conexion;
 
 public class DisponibilidadDAO {
 
-    public boolean registrarDisponibilidad(Disponibilidad dispo) {
-        boolean exito = false;
+    // Resultado con éxito + mensaje real del procedimiento almacenado
+    public static class ResultadoDisponibilidad {
+        public final boolean exito;
+        public final String mensaje;
+        public ResultadoDisponibilidad(boolean exito, String mensaje) {
+            this.exito   = exito;
+            this.mensaje = mensaje;
+        }
+    }
+
+    /**
+     * Registra disponibilidad y devuelve el mensaje REAL del SP.
+     * Antes se perdía el mensaje "Bloqueado: No puedes editar un horario APROBADO"
+     * y se mostraba el genérico "Error al guardar (posible duplicado)".
+     */
+    public ResultadoDisponibilidad registrarDisponibilidadConMensaje(Disponibilidad dispo) {
         Connection con = null;
         CallableStatement cs = null;
         ResultSet rs = null;
         String sql = "{CALL sp_gestion_disponibilidad_hu10(?, ?, ?, ?, ?)}";
 
         try {
-            con = Conexion.getConnection(); 
+            con = Conexion.getConnection();
             if (con != null) {
                 cs = con.prepareCall(sql);
                 cs.setInt(1, dispo.getProfesorId());
@@ -31,21 +45,30 @@ public class DisponibilidadDAO {
                 rs = cs.executeQuery();
 
                 if (rs.next()) {
-                    exito = rs.getInt("exito") == 1;
+                    boolean exito   = rs.getInt("exito") == 1;
+                    String  mensaje = rs.getString("mensaje");
+                    System.out.println("SP → exito=" + exito + " | mensaje=" + mensaje);
+                    return new ResultadoDisponibilidad(exito, mensaje);
                 }
             }
-        } catch (SQLException e) { 
-            System.out.println("Error registro: " + e.getMessage()); 
-        } finally { 
-            try { 
-                if(rs != null) rs.close(); 
-                if(cs != null) cs.close(); 
-                if(con != null) con.close(); 
-            } catch(Exception e) {
+        } catch (SQLException e) {
+            System.out.println("Error registro: " + e.getMessage());
+            return new ResultadoDisponibilidad(false, "Error de base de datos: " + e.getMessage());
+        } finally {
+            try {
+                if (rs  != null) rs.close();
+                if (cs  != null) cs.close();
+                if (con != null) con.close();
+            } catch (Exception e) {
                 System.out.println("Error cerrando recursos: " + e.getMessage());
-            } 
+            }
         }
-        return exito;
+        return new ResultadoDisponibilidad(false, "No se pudo conectar a la base de datos.");
+    }
+
+    // Mantener compatibilidad con código existente
+    public boolean registrarDisponibilidad(Disponibilidad dispo) {
+        return registrarDisponibilidadConMensaje(dispo).exito;
     }
 
     public List<Disponibilidad> listarPorProfesor(int profesorId) {

@@ -53,15 +53,41 @@
         nombreMostrar = usuarioHeader;
         subtituloMostrar = "Docente";
     }
-    // SI ES ADMIN: Mostrar información del administrador
-    else if ("admin".equals(rolHeader) || "administrativo".equals(rolHeader)) {
+    // SI ES ADMIN
+    else if ("admin".equals(rolHeader)) {
         nombreMostrar = usuarioHeader;
         subtituloMostrar = "Administrador";
+        // La foto ya viene en sesión desde el LoginServlet
+        fotoMostrar = fotoHeader;
+    }
+    // SI ES ADMINISTRATIVO: obtener nombre completo y foto desde BD
+    else if ("administrativo".equals(rolHeader)) {
+    try (java.sql.Connection connAdm = conexion.Conexion.getConnection()) {
+        String sqlAdm = "SELECT p.nombres, p.apellidos, a.foto " +
+                        "FROM persona p " +
+                        "JOIN usuario u ON u.persona_id = p.id " +
+                        "JOIN administrativo a ON a.persona_id = p.id " +
+                        "WHERE u.username = ?";
+            try (java.sql.PreparedStatement psAdm = connAdm.prepareStatement(sqlAdm)) {
+                psAdm.setString(1, usuarioHeader);
+                java.sql.ResultSet rsAdm = psAdm.executeQuery();
+                if (rsAdm.next()) {
+                    String nombres   = rsAdm.getString("nombres")   != null ? rsAdm.getString("nombres")   : "";
+                    String apellidos = rsAdm.getString("apellidos") != null ? rsAdm.getString("apellidos") : "";
+                    nombreMostrar    = (nombres + " " + apellidos).trim();
+                    inicialMostrar   = !nombreMostrar.isEmpty() ? nombreMostrar.substring(0, 1).toUpperCase() : "A";
+                    fotoMostrar      = rsAdm.getString("foto");
+                }
+            }
+        } catch (Exception eAdm) {
+            System.err.println("Error obteniendo datos administrativo en header: " + eAdm.getMessage());
+        }
+        subtituloMostrar = "Administrativo";
     }
     
     // Determinar si tiene foto válida
     boolean tieneFoto = fotoMostrar != null && !fotoMostrar.trim().isEmpty();
-    String fotoUrl = tieneFoto ? request.getContextPath() + "/uploads/" + fotoMostrar : "";
+    String fotoUrl = tieneFoto ? request.getContextPath() + "/uploads/" + fotoMostrar.replace(" ", "%20") : "";
     
     // Obtener preferencia de tema de la cookie
     String theme = "light";

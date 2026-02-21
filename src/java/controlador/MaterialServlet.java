@@ -230,9 +230,8 @@ public class MaterialServlet extends HttpServlet {
             int cursoId = Integer.parseInt(cursoIdStr);
             String nombreArchivo = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
             
-            // Crear directorio si no existe
-            String appPath = request.getServletContext().getRealPath("");
-            String uploadPath = appPath + File.separator + UPLOAD_DIR;
+            // Carpeta fija fuera del proyecto (persiste entre despliegues)
+            String uploadPath = getUploadPath();
             File uploadDir = new File(uploadPath);
             if (!uploadDir.exists()) {
                 uploadDir.mkdirs();
@@ -289,6 +288,17 @@ public class MaterialServlet extends HttpServlet {
     }
     
     /**
+     * RUTA FIJA - fuera del proyecto para que persista entre despliegues
+     */
+    private String getUploadPath() {
+        String os = System.getProperty("os.name").toLowerCase();
+        String base = os.contains("win") ? "C:\\materiales_master4" : "/var/materiales_master4";
+        File dir = new File(base);
+        if (!dir.exists()) dir.mkdirs();
+        return base;
+    }
+
+    /**
      * ELIMINAR MATERIAL
      */
     private void eliminarMaterial(HttpServletRequest request, HttpServletResponse response,
@@ -309,8 +319,7 @@ public class MaterialServlet extends HttpServlet {
                     // Intentar eliminar archivo físico
                     if (material != null && material.getRutaArchivo() != null) {
                         try {
-                            String appPath = request.getServletContext().getRealPath("");
-                            File archivo = new File(appPath + File.separator + material.getRutaArchivo());
+                            File archivo = new File(getUploadPath() + File.separator + new File(material.getRutaArchivo()).getName());
                             if (archivo.exists()) {
                                 archivo.delete();
                             }
